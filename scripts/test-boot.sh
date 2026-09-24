@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # Boot test of a VabaxOS ISO in QEMU, without a screen, through the serial console.
-#   ./scripts/test-boot.sh [--secure-boot | --bios] [--timeout SECONDS] [ISO]
+#   ./scripts/test-boot.sh [--secure-boot | --bios] [--entry ENTRY] [--timeout SECONDS] [ISO]
 # Starts the ISO, waits for the login prompt on the serial console, logs in as
 # the live user, reads a few facts about the running system and shuts it down.
+# --entry chooses the boot menu entry (ADR-0014):
+#   voice     no key pressed: the default entry starts after the timeout
+#   novoice   presses N, "VabaxOS senza voce"
+#   recovery  presses R, "Modalità di recupero con voce"
 # Exit status: 0 if every check passes.
 set -uo pipefail
 
@@ -11,27 +15,42 @@ OUT="$REPO/out"
 
 MODE=uefi
 MODE_OPTION=()
+ENTRY=voice
 TIMEOUT=300
 ISO=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --secure-boot) MODE=secure-boot; MODE_OPTION=(--secure-boot) ;;
         --bios) MODE=bios; MODE_OPTION=(--bios) ;;
+        --entry) ENTRY="${2:?--entry vuole voice, novoice o recovery}"; shift ;;
         --timeout) TIMEOUT="${2:?--timeout vuole i secondi}"; shift ;;
-        -*) printf 'Uso: %s [--secure-boot | --bios] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
+        -*) printf 'Uso: %s [--secure-boot | --bios] [--entry voice|novoice|recovery] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
         *) ISO=("$1") ;;
     esac
     shift
 done
 
+# Hotkey of the boot menu entry, and what the kernel command line must contain.
+case "$ENTRY" in
+    voice) HOTKEY=""; WANT_VOICE=on; WANT_RECOVERY=no ;;
+    novoice) HOTKEY=n; WANT_VOICE=off; WANT_RECOVERY=no ;;
+    recovery) HOTKEY=r; WANT_VOICE=on; WANT_RECOVERY=yes ;;
+    *) printf 'Voce del menu sconosciuta: %s\n' "$ENTRY" >&2; exit 64 ;;
+esac
+
 mkdir -p "$OUT/logs"
-LOG="$OUT/logs/test-boot-$MODE-$(date +%Y-%m-%d-%H%M%S).log"
+LOG="$OUT/logs/test-boot-$MODE-$ENTRY-$(date +%Y-%m-%d-%H%M%S).log"
 : > "$LOG"
-# A free TCP port for the serial console.
-PORT="$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')"
+free_port() {
+    python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'
+}
+# Serial console, and QEMU monitor to press keys in the boot menu.
+PORT="$(free_port)"
+MONITOR_PORT="$(free_port)"
 
 "$REPO/scripts/run-qemu.sh" --headless --no-audio "${MODE_OPTION[@]}" \
-    --serial-tcp "$PORT" "${ISO[@]}" -- -no-reboot &
+    --serial-tcp "$PORT" "${ISO[@]}" -- -no-reboot \
+    -monitor "tcp:127.0.0.1:$MONITOR_PORT,server=on,wait=off" &
 QEMU_WRAPPER=$!
 
 # shellcheck disable=SC2317  # called by the EXIT trap
@@ -70,7 +89,23 @@ wait_for() {
 }
 send() { printf '%s\n' "$1" >&"$SERIAL"; }
 
-printf 'Test di avvio (%s). Log della console seriale: %s\n' "$MODE" "$LOG"
+printf 'Test di avvio (%s, voce del menu: %s). Log della console seriale: %s\n' "$MODE" "$ENTRY" "$LOG"
+
+# The boot menu gives no sign on the serial console. With UEFI the firmware
+# writes a line when it starts GRUB; with BIOS we only count the seconds.
+# The key is pressed a few times within the 10 seconds of the menu timeout;
+# the kernel command line checked below tells whether it worked.
+if [[ -n "$HOTKEY" ]]; then
+    if [[ "$MODE" != bios ]]; then
+        wait_for 'BdsDxe: starting' 'avvio di GRUB dal firmware' || exit 1
+    fi
+    sleep 2
+    for _ in 1 2 3; do
+        { printf 'sendkey %s\n' "$HOTKEY" > "/dev/tcp/127.0.0.1/$MONITOR_PORT"; } 2>/dev/null
+        sleep 1
+    done
+    printf 'INFO: premuto il tasto %s nel menu di avvio.\n' "${HOTKEY^^}"
+fi
 
 wait_for 'vabaxos login:' 'richiesta di accesso' || exit 1
 printf 'OK: richiesta di accesso sulla console seriale dopo %d secondi.\n' $((SECONDS - START))
@@ -83,7 +118,7 @@ printf 'OK: accesso come utente live.\n'
 
 # The end marker is split so the echoed command line does not match it.
 # shellcheck disable=SC2016  # expanded by the shell of the VM, not here
-send '[ -d /sys/firmware/efi ] && echo firmware=uefi || echo firmware=bios; f=$(ls /sys/firmware/efi/efivars/SecureBoot-* 2>/dev/null); echo secure-boot=$([ -n "$f" ] && od -An -t u1 "$f" | awk "{print \$NF}" || echo none); echo kernel=$(uname -r); . /etc/os-release; echo "os=$PRETTY_NAME"; echo state=$(timeout 120 systemctl is-system-running --wait); echo VABAX-""END'
+send '[ -d /sys/firmware/efi ] && echo firmware=uefi || echo firmware=bios; f=$(ls /sys/firmware/efi/efivars/SecureBoot-* 2>/dev/null); echo secure-boot=$([ -n "$f" ] && od -An -t u1 "$f" | awk "{print \$NF}" || echo none); echo kernel=$(uname -r); . /etc/os-release; echo "os=$PRETTY_NAME"; echo state=$(timeout 120 systemctl is-system-running --wait); echo voice=$(sed -n "s/.*vabaxos\.voice=\([a-z]*\).*/\1/p" /proc/cmdline); grep -q systemd.unit=multi-user.target /proc/cmdline && echo recovery=yes || echo recovery=no; echo VABAX-""END'
 wait_for '^VABAX-END' 'risultato dei controlli' || exit 1
 # Each answer is a line "key=value", once terminal control sequences are removed;
 # the echoed command line starts with the prompt instead.
@@ -112,6 +147,8 @@ case "$MODE" in
     secure-boot) check firmware "$(value firmware)" uefi; check 'secure boot' "$(value secure-boot)" 1 ;;
 esac
 check 'stato di systemd' "$(value state)" running
+check 'voce (vabaxos.voice)' "$(value voice)" "$WANT_VOICE"
+check 'modalità di recupero' "$(value recovery)" "$WANT_RECOVERY"
 printf 'INFO: kernel %s\n' "$(value kernel)"
 printf 'INFO: sistema %s\n' "$(value os)"
 
@@ -128,8 +165,8 @@ else
 fi
 
 if [[ "$FAILED" -eq 0 ]]; then
-    printf 'Risultato: test di avvio superato (%s).\n' "$MODE"
+    printf 'Risultato: test di avvio superato (%s, %s).\n' "$MODE" "$ENTRY"
 else
-    printf 'Risultato: %d controlli falliti (%s).\n' "$FAILED" "$MODE"
+    printf 'Risultato: %d controlli falliti (%s, %s).\n' "$FAILED" "$MODE" "$ENTRY"
 fi
 exit "$FAILED"
