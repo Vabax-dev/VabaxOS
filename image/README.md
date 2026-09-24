@@ -10,6 +10,7 @@ Configurazione della ISO per live-build ([ADR-0002](../docs/decisions/0002-build
 | `config/archives/` | Impostazioni di APT durante la costruzione |
 | `config/bootloaders/grub-pc/` | File del menu di avvio GRUB (UEFI e BIOS) che sostituiscono quelli di live-build |
 | `config/hooks/normal/` | Script eseguiti nel chroot durante la costruzione |
+| `config/rootfs/excludes` | File da non mettere nello squashfs (schemi di `mksquashfs -ef`, uno per riga, senza commenti) |
 
 ## Scelte della ISO minima
 
@@ -18,6 +19,7 @@ Configurazione della ISO per live-build ([ADR-0002](../docs/decisions/0002-build
 - Il sistema live si chiama `vabaxos`. L'utente è `user`, con password `live` (valori di live-config).
 - Il kernel scrive anche sulla prima porta seriale (`console=ttyS0`), dove compare una richiesta di accesso: serve ai test di avvio senza schermo. La console principale resta lo schermo (`console=tty0`), che il lettore di schermo leggerà.
 - Niente firmware non libero e niente installer, per ora: arrivano con i lavori 9 e 11.
+- Niente indici di APT nella ISO (`--apt-indices false`) e niente cache di APT nello squashfs (`config/rootfs/excludes`): live-build li scarica da deb.debian.org durante la costruzione, quindi cambierebbero ogni giorno e la ISO non sarebbe riproducibile. Nel sistema live si esegue `apt update` prima di installare.
 
 ## File presi da live-build
 
