@@ -27,11 +27,26 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends shellcheck
       - name: ShellCheck
-        run: find scripts -name '*.sh' -print0 | xargs -0 shellcheck
+        run: |
+          find scripts -name '*.sh' -print0 | xargs -0 shellcheck
+          shellcheck image/auto/config
       - name: Every workstation package exists in Debian trixie
         run: |
           grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
             | xargs apt-get install --simulate -y > /dev/null
+
+  live-build:
+    name: ISO configuration (live-build)
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install live-build
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends live-build
+      - name: lb config on image/
+        run: ./scripts/build.sh --config-only
 
   powershell:
     name: PowerShell scripts

@@ -1,0 +1,55 @@
+#!/bin/sh
+# live-build configuration of the VabaxOS ISO (ADR-0002).
+# Run by "lb config" inside the build directory prepared by scripts/build.sh.
+# Do not run it directly from image/: live-build writes files next to it.
+set -e
+
+# shellcheck source=/dev/null
+. ./build.conf
+
+SNAPSHOT_URL="http://snapshot.debian.org/archive"
+
+# Reproducibility: every timestamp in the ISO is the snapshot moment.
+# sudo drops environment variables, so the value goes in config/all,
+# which every lb command reads before anything else.
+SOURCE_DATE_EPOCH="$(date -u -d "$(echo "$VABAXOS_SNAPSHOT" \
+    | sed -E 's/^(....)(..)(..)T(..)(..)(..)Z$/\1-\2-\3 \4:\5:\6 UTC/')" +%s)"
+export SOURCE_DATE_EPOCH
+mkdir -p config
+printf 'export SOURCE_DATE_EPOCH=%s\n' "$SOURCE_DATE_EPOCH" > config/all
+
+# APT indices: the live system points to deb.debian.org, whose indices change
+# every day. Keeping them out of the ISO keeps the squashfs reproducible;
+# the live system runs "apt update" before installing anything.
+#
+# Boot parameters of the live system:
+# - hostname: the live system is called vabaxos (live-config);
+# - console: kernel messages and a login prompt on the first serial port too,
+#   so scripts/test-boot.sh can check the boot without a screen.
+#   tty0 stays last, so it remains the main console for the screen reader.
+lb config noauto \
+    --mode debian \
+    --distribution "$VABAXOS_DISTRIBUTION" \
+    --architecture amd64 \
+    --archive-areas "main non-free-firmware" \
+    --mirror-bootstrap "$SNAPSHOT_URL/debian/$VABAXOS_SNAPSHOT/" \
+    --mirror-chroot "$SNAPSHOT_URL/debian/$VABAXOS_SNAPSHOT/" \
+    --mirror-chroot-security "$SNAPSHOT_URL/debian-security/$VABAXOS_SNAPSHOT/" \
+    --mirror-binary "http://deb.debian.org/debian/" \
+    --mirror-binary-security "http://security.debian.org/debian-security/" \
+    --apt-indices false \
+    --apt-source-archives false \
+    --security true \
+    --updates true \
+    --bootloaders "grub-efi grub-pc" \
+    --uefi-secure-boot enable \
+    --binary-images iso-hybrid \
+    --debian-installer none \
+    --firmware-chroot false \
+    --firmware-binary false \
+    --memtest none \
+    --iso-application "VabaxOS" \
+    --iso-publisher "VabaxOS; https://github.com/Vabax-dev/VabaxOS" \
+    --iso-volume "VabaxOS" \
+    --bootappend-live "boot=live components quiet hostname=vabaxos console=ttyS0,115200n8 console=tty0" \
+    "$@"

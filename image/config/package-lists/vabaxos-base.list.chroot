@@ -1,0 +1,6 @@
+# Packages of the minimal VabaxOS live system.
+# live-build adds the kernel, live-boot and live-config by itself.
+
+# The live user ("user") and its administrator rights
+user-setup
+sudo
