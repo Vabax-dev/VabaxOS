@@ -45,3 +45,4 @@ Con «VabaxOS without voice» nel menu di avvio, il benvenuto compare solo come 
 
 - La velocità scelta vale per il benvenuto e per la voce della console. Per Orca, nel desktop, arriverà con la configurazione iniziale (lavoro 8).
 - Le lingue per ora sono inglese e italiano.
+- Spegnimento: con Orca attivo, a volte il sistema restava 90 secondi in silenzio prima di spegnersi. La causa non è ancora trovata (probabilmente Orca o la sua voce). Per ora VabaxOS aspetta al massimo 10 secondi i programmi della sessione.
