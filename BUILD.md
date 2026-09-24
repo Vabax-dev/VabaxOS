@@ -2,7 +2,7 @@
 
 Questa pagina spiega come si costruisce la ISO di VabaxOS e come si prova in una macchina virtuale, secondo [ADR-0002](docs/decisions/0002-build-live-build.md) e [ADR-0013](docs/decisions/0013-ambiente-di-sviluppo.md).
 
-> **Stato:** la ISO è ancora minima. Si avvia in UEFI, con Secure Boot e in BIOS, e arriva a una console testuale. Voce, desktop e installer arrivano con i prossimi lavori della v0.1 (vedi [ROADMAP.md](ROADMAP.md)).
+> **Stato:** la ISO si avvia in UEFI, con Secure Boot e in BIOS, parla dal benvenuto in poi e arriva al desktop GNOME con Orca. L'installer arriva con i prossimi lavori della v0.1 (vedi [ROADMAP.md](ROADMAP.md)).
 
 ## Cosa serve
 
@@ -19,7 +19,7 @@ Questa pagina spiega come si costruisce la ISO di VabaxOS e come si prova in una
 ./scripts/test-boot.sh    # prova l'avvio senza schermo, dalla console seriale
 ```
 
-Sulla postazione di sviluppo la prima costruzione scarica qualche centinaio di MB e dura circa 7 minuti; le successive riusano i pacchetti già scaricati e durano circa 6 minuti. La ISO minima pesa circa 280 MB. Alla fine, sulla postazione, una voce dice se la costruzione è riuscita o fallita.
+Sulla postazione di sviluppo, con il desktop GNOME, la prima costruzione scarica circa 1 GB e dura circa 12 minuti; le successive riusano i pacchetti già scaricati. La ISO pesa circa 1,1 GB. Conviene quindi costruirla una volta per gruppo di modifiche, non per ogni modifica. Alla fine, sulla postazione, una voce dice se la costruzione è riuscita o fallita.
 
 ## Cosa produce
 
@@ -50,13 +50,20 @@ Il nome della ISO segue [ADR-0015](docs/decisions/0015-versioni-e-rilasci.md):
 
 La prima porta seriale della macchina virtuale finisce in `out/logs/qemu-serial-<data>.log`: lì si leggono i messaggi del kernel e la richiesta di accesso, senza guardare lo schermo.
 
-`./scripts/test-boot.sh` fa la stessa prova in automatico: avvia la ISO senza finestra, aspetta la richiesta di accesso sulla console seriale, entra come utente live (`user`, password `live`), controlla il tipo di firmware, lo stato di Secure Boot e di systemd, poi spegne la macchina. Accetta `--secure-boot` e `--bios`. Con `--entry novoice` o `--entry recovery` preme il tasto della voce del menu di avvio (N o R) e controlla che sia partita quella; senza `--entry` verifica che, senza premere nulla, parta «VabaxOS con voce». Il log va in `out/logs/test-boot-<modalità>-<voce>-<data>.log`.
+`./scripts/test-boot.sh` fa la stessa prova in automatico: avvia la ISO senza finestra e con una scheda audio muta, aspetta la richiesta di accesso sulla console seriale, entra come utente live (`user`, password `live`), risponde al benvenuto parlato premendo Invio due volte, poi controlla firmware, Secure Boot, systemd, voce della console, desktop GNOME e Orca, e spegne la macchina. Accetta `--secure-boot` e `--bios`. Con `--entry novoice` o `--entry recovery` preme il tasto della voce del menu di avvio (N o R) e controlla che sia partita quella; senza `--entry` verifica che, senza premere nulla, parta «VabaxOS con voce». Il log va in `out/logs/test-boot-<modalità>-<voce>-<data>.log`.
+
+I programmi Vabax si provano anche senza ISO. Per esempio il benvenuto:
+
+```bash
+python3 tests/welcome/test_welcome.py
+```
 
 ## Come è fatta la configurazione
 
 - `image/build.conf`: la versione di Debian e la **data dello snapshot**.
 - `image/auto/config`: le opzioni di live-build (`lb config`).
 - `image/config/`: elenchi di pacchetti, hook, file per il menu di avvio. Vedi [image/README.md](image/README.md).
+- `packages/`: i pacchetti `vabaxos-*` (accessibilità, impostazioni, benvenuto). `scripts/build.sh` li costruisce con `scripts/build-packages.sh` e li mette nella ISO. Vedi [packages/README.md](packages/README.md).
 
 `scripts/build.sh` copia `image/` nella cartella di lavoro `build/` (ignorata da Git), esegue `lb config` e `lb build`, poi copia i risultati in `out/`. `./scripts/build.sh --config-only` esegue solo `lb config` in una cartella temporanea, senza privilegi: la CI lo usa per controllare la configurazione.
 
