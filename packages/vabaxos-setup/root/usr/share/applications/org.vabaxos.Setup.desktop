@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS setup
+Name[it]=Configurazione di VabaxOS
+Comment=View, voice, keyboard, movement and network
+Comment[it]=Vista, voce, tastiera, movimento e rete
+Keywords=accessibility;contrast;zoom;voice;orca;keyboard;network;wifi;
+Keywords[it]=accessibilità;contrasto;zoom;voce;orca;tastiera;rete;wifi;
+Exec=vabaxos-setup
+Icon=preferences-desktop-accessibility
+Categories=Settings;Accessibility;GTK;
+StartupNotify=true

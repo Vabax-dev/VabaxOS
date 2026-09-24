@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS setup
+Name[it]=Configurazione di VabaxOS
+Comment=First setup of VabaxOS, until it is completed (ADR-0014)
+Exec=vabaxos-setup --first-run
+Icon=preferences-desktop-accessibility
+OnlyShowIn=GNOME;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+# A few seconds after login, so that Orca is already speaking.
+X-GNOME-Autostart-Delay=8

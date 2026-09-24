@@ -1,0 +1,13 @@
+Package: vabaxos-setup
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-nm-1.0, network-manager, gsettings-desktop-schemas
+Recommends: orca
+Description: VabaxOS first setup
+ A guided GTK 4 program for the first login (ADR-0014): high contrast,
+ text size, zoom, pointer size, reduced motion; screen reader and voice
+ speed, pitch and volume; keyboard layout, sticky, slow and bounce keys,
+ screen keyboard, hover click; Wi-Fi networks. Every setting takes effect
+ at once and every control has a name for screen readers.
