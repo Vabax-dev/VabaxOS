@@ -334,9 +334,12 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
 fi
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send "sudo vabaxos-voice-select --engine kokoro >/dev/null; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true"
-    ask kokoro 'for i in $(seq 90); do pgrep -u user -f sd_kokoro >/dev/null && break; sleep 1; done; sleep 10; pgrep -u user -f sd_kokoro >/dev/null && echo yes || echo no' || exit 1
-    check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
+    ask orcaback 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
     check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"
+    # The module always runs; with Kokoro in use it holds the model (about
+    # 570 MB), so its memory tells that the natural voice really spoke.
+    ask kokoro 'r=$(ps -o rss= -C sd_kokoro | sort -n | tail -1); [ "${r:-0}" -gt 300000 ] && echo yes || echo "no (${r:-0} kB)"' || exit 1
+    check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
 fi
 
 # Start menu (ADR-0018): ArcMenu active; Super opens it and every control
@@ -350,7 +353,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     send "env $BUS vabaxos-a11y-check --list gnome-shell > /tmp/shell-a11y.txt 2>&1; sed 's/^/A11Y: /' /tmp/shell-a11y.txt"
     ask shella11y "tail -1 /tmp/shell-a11y.txt" || exit 1
     press esc
-    printf 'INFO: menu Start aperto con Super: %s\n' "$(value shella11y)"
+    check 'menu Start: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
 fi
 
 if [[ "$(value state)" != running ]]; then

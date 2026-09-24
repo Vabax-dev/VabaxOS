@@ -5,8 +5,9 @@
 
 Walks the AT-SPI accessibility tree of PROGRAM (the application name, for
 example vabaxos-setup) and reports every control a screen reader user can
-reach (buttons, switches, check boxes, text fields, spin buttons, combo
-boxes, list items, menu items, links, sliders) that has no accessible name.
+reach with the keyboard (shown and focusable buttons, switches, check
+boxes, text fields, spin buttons, combo boxes, list items, menu items,
+links, sliders) that has neither an accessible name nor text inside it.
 With --list it prints every node: depth, role and name.
 
 Exit status: 0 if every control has a name, 1 if some have none, 2 if the
@@ -38,11 +39,16 @@ def find_application(name):
     return None
 
 
-def labelled_by_text(node):
-    """A control named by its own children, such as a button with a label."""
+def labelled_by_text(node, depth=3):
+    """A control named by the text inside it, such as a button with a
+    label: Orca reads that text when the control has no name."""
+    if depth == 0:
+        return False
     for index in range(node.get_child_count()):
         child = node.get_child_at_index(index)
-        if child is not None and (child.get_name() or "").strip():
+        if child is None:
+            continue
+        if (child.get_name() or "").strip() or labelled_by_text(child, depth - 1):
             return True
     return False
 
@@ -54,7 +60,8 @@ def walk(node, depth, report, listing):
         states = node.get_state_set()
     except gi.repository.GLib.Error:
         return
-    showing = states.contains(Atspi.StateType.SHOWING)
+    # Only what the keyboard reaches: shown and focusable.
+    showing = states.contains(Atspi.StateType.SHOWING) and states.contains(Atspi.StateType.FOCUSABLE)
     if listing:
         print(f"{'  ' * depth}{node.get_role_name()}: {name}")
     if role in CONTROLS and showing and not name and not labelled_by_text(node):
