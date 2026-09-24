@@ -1,0 +1,11 @@
+# VabaxOS keyboard shortcuts. Super+Alt+I says the state of the computer
+# (time, battery, network, Bluetooth, volume) with vabaxos-status, next to
+# the GNOME accessibility shortcuts Super+Alt+S (screen reader) and
+# Super+Alt+8 (zoom).
+[org/gnome/settings-daemon/plugins/media-keys]
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/']
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status]
+name='VabaxOS: computer status'
+command='vabaxos-status'
+binding='<Super><Alt>i'

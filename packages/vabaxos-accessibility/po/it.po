@@ -17,3 +17,57 @@ msgstr "Rapporto di VabaxOS"
 
 msgid "Saved in $file"
 msgstr "Salvato in $file"
+
+msgid "It is {time}, {date}."
+msgstr "Sono le {time}, {date}."
+
+msgid "No battery: the computer runs on mains power."
+msgstr "Nessuna batteria: il computer va a corrente."
+
+msgid "charging"
+msgstr "in carica"
+
+msgid "on battery"
+msgstr "a batteria"
+
+msgid "full"
+msgstr "carica completa"
+
+msgid "plugged in, not charging"
+msgstr "collegato, non in carica"
+
+msgid "Battery {level} percent, {state}."
+msgstr "Batteria al {level} per cento, {state}."
+
+msgid "Wi-Fi connected to {name}, signal {signal} percent."
+msgstr "Wi-Fi collegato a {name}, segnale al {signal} per cento."
+
+msgid "Connected by cable."
+msgstr "Collegato con il cavo."
+
+msgid "Wi-Fi not connected."
+msgstr "Wi-Fi non collegato."
+
+msgid "No network."
+msgstr "Nessuna rete."
+
+msgid "No Bluetooth."
+msgstr "Nessun Bluetooth."
+
+msgid "Bluetooth off."
+msgstr "Bluetooth spento."
+
+msgid "Bluetooth on, connected to {devices}."
+msgstr "Bluetooth acceso, collegato a {devices}."
+
+msgid "Bluetooth on, nothing connected."
+msgstr "Bluetooth acceso, nessun dispositivo collegato."
+
+msgid "Volume {level} percent, muted."
+msgstr "Volume al {level} per cento, audio disattivato."
+
+msgid "Volume {level} percent."
+msgstr "Volume al {level} per cento."
+
+msgid "Computer status"
+msgstr "Stato del computer"
