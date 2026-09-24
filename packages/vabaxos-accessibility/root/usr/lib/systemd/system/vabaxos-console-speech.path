@@ -1,9 +1,0 @@
-[Unit]
-Description=VabaxOS: move console speech into the user's sound session
-
-[Path]
-# The PulseAudio socket of PipeWire appears when a user session starts.
-PathExistsGlob=/run/user/*/pulse/native
-
-[Install]
-WantedBy=multi-user.target

@@ -4,12 +4,11 @@ Dopo il [menu di avvio](menu-di-avvio.md), prima del desktop, VabaxOS parla: è 
 
 ## Primo passo: la lingua
 
-Si sente, in inglese e poi in italiano:
+Si sente, in inglese, come nelle altre distribuzioni:
 
 > Welcome to VabaxOS. Use the arrow keys to choose your language, then press Enter.
-> Benvenuto in VabaxOS. Usa le frecce per scegliere la lingua, poi premi Invio.
 
-Con le frecce su e giù si scorrono le lingue. Ognuna viene letta nella sua lingua: «English», «Italiano». Invio conferma.
+Con le frecce su e giù si scorrono le lingue. Ognuna viene letta nella sua lingua e con la sua voce: «English», «Italiano». Invio conferma. Da quel momento il benvenuto parla solo nella lingua scelta.
 
 Se la lingua è già stata scelta nel menu di avvio (lettera L), questo passo si salta.
 

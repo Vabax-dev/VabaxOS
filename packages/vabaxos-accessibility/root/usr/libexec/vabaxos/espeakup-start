@@ -3,9 +3,9 @@
 # espeak-ng plays only through PulseAudio, and root has no sound server of
 # its own: espeakup speaks through the PulseAudio socket of the user's
 # PipeWire, so console speech and Orca share the sound card instead of
-# fighting for it. The socket appears when the user logs in (in the live
-# system: automatically); vabaxos-console-speech.path then restarts espeakup.
-# Before that, the sound card stays free for the spoken welcome.
+# fighting for it. In the live system the user's PipeWire runs from boot
+# (linger); otherwise the socket appears when a user logs in, and a drop-in
+# for user@.service then restarts espeakup.
 # A voice set in /etc/default/espeakup (default_voice=) wins.
 set -e
 

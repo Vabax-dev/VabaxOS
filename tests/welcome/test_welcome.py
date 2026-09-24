@@ -91,8 +91,9 @@ class WelcomeTest(unittest.TestCase):
         code, log = w.finish()
         self.assertEqual(code, 0)
         self.assertEqual(log[0], "say en: Welcome to VabaxOS. Use the arrow keys to choose your language, then press Enter.")
-        self.assertEqual(log[1], "say it: Benvenuto in VabaxOS. Usa le frecce per scegliere la lingua, poi premi Invio.")
-        self.assertEqual(log[2], "say en: English")
+        # English only; each language is then read in its own language.
+        self.assertEqual(log[1], "say en: English")
+        self.assertNotIn("say it: Benvenuto in VabaxOS. Usa le frecce per scegliere la lingua, poi premi Invio.", log)
         self.assertIn("do set LANG=en_US.UTF-8", log)
         self.assertIn("do localectl set-x11-keymap us", log)
         self.assertEqual(log[-1], "say en: Starting the desktop. Please wait.")

@@ -2,15 +2,17 @@
 """Welcome to VabaxOS: a spoken menu on the text console, before the desktop.
 
 ADR-0016. It runs as root on tty1, started by vabaxos-welcome.service.
-First the language (skipped if chosen in the boot menu), then the mode:
+First the language, asked in English (skipped if chosen in the boot menu),
+then the mode:
 try VabaxOS, voice and keyboard, restart, shut down.
 
 Keys: up and down arrows move and read the item, Enter confirms, Esc goes
 back, F1 repeats the message. It never chooses by itself: after 30 seconds
 without keys it repeats the message once, then waits.
 
-Speech: espeak-ng played with aplay on the sound card, one sentence list at a
-time; a key press interrupts it.
+Speech: espeak-ng through the user's PipeWire when it runs (in the live system
+it starts at boot), otherwise played with aplay on the sound card; a key press
+interrupts it.
 With the boot option vabaxos.voice=off the menu is shown without speech.
 
 Tests: with VABAXOS_WELCOME_DRY_RUN=FILE nothing is spoken and nothing is
@@ -19,9 +21,11 @@ one line each ("say <lang>: <text>", "do <action>").
 """
 
 import gettext
+import glob
 import os
 import select
 import signal
+import stat
 import subprocess
 import sys
 import termios
@@ -73,6 +77,14 @@ def kernel_options():
     return dict(w.split("=", 1) if "=" in w else (w, "") for w in words)
 
 
+def sound_server():
+    """The PulseAudio socket of a user's PipeWire, or None."""
+    for socket in sorted(glob.glob("/run/user/*/pulse/native")):
+        if stat.S_ISSOCK(os.stat(socket).st_mode):
+            return socket
+    return None
+
+
 class Speaker:
     """Speaks with espeak-ng; new speech interrupts the previous one.
 
@@ -101,12 +113,21 @@ class Speaker:
                 record(f"say {lang}: {text}")
             return
         rate = str(RATES[self.rate])
-        # espeak-ng plays only through PulseAudio, which does not exist for
-        # root before the desktop, and ALSA's default device leads there too
-        # (pipewire-alsa): write the sound as WAV and play it with aplay on
-        # the system's sound card itself (sysdefault).
+        socket = sound_server()
+        env = dict(os.environ)
+        if socket:
+            # One sound server for everything: the user's PipeWire, which
+            # console speech and Orca use too (in the live system it starts
+            # at boot, before the welcome).
+            env["PULSE_SERVER"] = "unix:" + socket
+            player = ""
+        else:
+            # No sound server: espeak-ng plays only through PulseAudio, and
+            # ALSA's default device leads there too (pipewire-alsa). Write
+            # WAV and play it with aplay on the sound card itself.
+            player = " --stdout | aplay -q -D sysdefault"
         script = " && ".join(
-            f'espeak-ng -v {lang} -s {rate} --stdout -- "${i + 1}" | aplay -q -D sysdefault'
+            f'espeak-ng -v {lang} -s {rate} -- "${i + 1}"{player}'
             for i, (_, lang) in enumerate(parts)
         )
         try:
@@ -115,6 +136,7 @@ class Speaker:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 start_new_session=True,
+                env=env,
             )
         except OSError:
             self.enabled = False
@@ -234,10 +256,14 @@ def apply_rate(rate):
 
 
 def step_language(console, speaker):
-    """Returns the chosen language code."""
+    """Returns the chosen language code.
+
+    The message is in English only, as in other distributions; each language
+    in the list is read in its own language, so adding a language only needs
+    its name (Vabax, 2026-09-24).
+    """
     message = [
         ("Welcome to VabaxOS. Use the arrow keys to choose your language, then press Enter.", "en"),
-        ("Benvenuto in VabaxOS. Usa le frecce per scegliere la lingua, poi premi Invio.", "it"),
     ]
     items = [name for _, _, _, name in LANGUAGES]
     langs = [code for code, _, _, _ in LANGUAGES]
