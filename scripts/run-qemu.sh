@@ -10,6 +10,8 @@
 #   --no-audio         no sound card and no PC speaker
 #   --silent-audio     sound card and PC speaker present, but nothing is heard
 #                      (automatic tests: speech services still find a card)
+#   --record-audio F   instead of playing it, record the sound of the VM in
+#                      the WAV file F (to check beeps and speech without ears)
 #   --memory MB        memory of the VM (default 4096)
 #   --serial-log FILE  write the first serial port to FILE
 #                      (default out/logs/qemu-serial-<date>.log)
@@ -46,6 +48,7 @@ while [[ $# -gt 0 ]]; do
         --headless) HEADLESS=true ;;
         --no-audio) AUDIO=false ;;
         --silent-audio) AUDIO=silent ;;
+        --record-audio) AUDIO=record; RECORD="${2:?--record-audio vuole un file}"; shift ;;
         --memory) MEMORY="${2:?--memory vuole un numero}"; shift ;;
         --serial-log) SERIAL_LOG="${2:?--serial-log vuole un file}"; shift ;;
         --serial-tcp) SERIAL_TCP="${2:?--serial-tcp vuole una porta}"; shift ;;
@@ -105,6 +108,8 @@ esac
 if [[ "$AUDIO" != false ]]; then
     if [[ "$AUDIO" == silent ]]; then
         ARGS+=(-audiodev "none,id=snd0")
+    elif [[ "$AUDIO" == record ]]; then
+        ARGS+=(-audiodev "wav,id=snd0,path=$RECORD")
     else
         # PulseAudio: on WSL2 this is WSLg, so the VM speaks through the PC.
         ARGS+=(-audiodev "pa,id=snd0")
