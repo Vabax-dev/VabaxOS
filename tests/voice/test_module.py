@@ -30,7 +30,7 @@ class Session:
         self.record = os.path.join(workdir, "audio.raw")
         env = dict(os.environ, PYTHONPATH=os.path.join(ROOT, "usr", "lib", "python3", "dist-packages"),
                    VABAXOS_VOICE_RECORD=self.record, XDG_CACHE_HOME=os.path.join(workdir, "cache"),
-                   VABAXOS_KOKORO_DIR=DATA)
+                   VABAXOS_KOKORO_DIR=DATA, VABAXOS_VOICE_STATE=os.path.join(workdir, "state.conf"))
         self.proc = subprocess.Popen([sys.executable, MODULE, os.path.join(workdir, "kokoro.conf")],
                                      stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                      text=True, bufsize=1, env=env)
@@ -78,9 +78,12 @@ class ModuleTest(unittest.TestCase):
         cls.tmp = tempfile.TemporaryDirectory()
         with open(os.path.join(cls.tmp.name, "kokoro.conf"), "w", encoding="utf-8") as f:
             f.write("DefaultVoice it im_nicola\n")
+        with open(os.path.join(cls.tmp.name, "state.conf"), "w", encoding="utf-8") as f:
+            f.write("engine=espeak\n")  # as on a slow computer: no model at start
         cls.sd = Session(cls.tmp.name)
-        cls.sd.send("INIT")
-        cls.sd.wait_for("299 OK LOADED SUCCESSFULLY", timeout=60)
+        sent = cls.sd.send("INIT")
+        _, loaded = cls.sd.wait_for("299 OK LOADED SUCCESSFULLY", timeout=60)
+        cls.init_time = loaded - sent
         cls.sd.send("AUDIO", "audio_output_method=pulse", ".")
         cls.sd.wait_for("203 OK AUDIO INITIALIZED")
         cls.sd.send("SET", "language=it", "rate=0", "voice=NULL", ".")
@@ -97,6 +100,12 @@ class ModuleTest(unittest.TestCase):
         _, spoken = self.sd.wait_for("200 OK SPEAKING", start)
         _, begin = self.sd.wait_for("701 BEGIN", start)
         return start, begin - spoken
+
+    def test_0_init_is_quick(self):
+        # Speech Dispatcher starts every module, also where eSpeak NG was
+        # chosen: there the model must not be loaded at start.
+        print(f"\n  INIT in {self.init_time * 1000:.0f} ms")
+        self.assertLess(self.init_time, 1.0)
 
     def test_1_speaks_and_ends(self):
         size = os.path.getsize(self.sd.record) if os.path.exists(self.sd.record) else 0

@@ -35,7 +35,7 @@ from .cache import PhraseCache
 from .player import make_player
 
 CONFIG = "/etc/speech-dispatcher/modules/kokoro.conf"
-STATE = "/var/lib/vabaxos/voice.conf"
+STATE = os.environ.get("VABAXOS_VOICE_STATE", "/var/lib/vabaxos/voice.conf")
 PHRASES = os.path.join(engine.DATA_DIR, "phrases-{lang}.txt")
 
 _MARK = re.compile(r"<mark\s+name=\"([^\"]*)\"\s*/>")
@@ -64,6 +64,18 @@ def read_config(paths):
         except OSError:
             pass
     return voices
+
+
+def computer_engine(path=STATE):
+    """The engine vabaxos-voice-select chose for this computer, or None."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("engine="):
+                    return line.strip().split("=", 1)[1]
+    except OSError:
+        pass
+    return None
 
 
 def parse_ssml(text):
@@ -113,7 +125,10 @@ class Module:
         self.settings = {"rate": 0, "pitch": 0, "volume": 0, "language": "it",
                          "voice": "NULL", "synthesis_voice": "NULL"}
         self.voices = read_config([config, state])
+        self.engine = computer_engine(state)
         self.kokoro = None
+        self.load_lock = threading.Lock()
+        self.last_speech = 0.0
         self.cache = None
         self.player = None
         self.job = None
@@ -133,17 +148,37 @@ class Module:
     # -- startup -------------------------------------------------------
 
     def init(self):
-        self.kokoro = engine.Kokoro()
+        """Quick: Speech Dispatcher starts every module it finds, also on
+        computers where eSpeak NG was chosen. The model (570 MB) is loaded
+        only where Kokoro is this computer's voice, in the background, or
+        at the first message for Kokoro."""
         self.cache = PhraseCache()
         self.player = make_player(engine.SAMPLE_RATE)
-        # The first run of the model is slow: do it now, not on the first word.
-        self.kokoro.synthesize("pronto", self.voice_for("it"), "it")
-        threading.Thread(target=self.prepare_phrases, daemon=True).start()
-        return "Kokoro loaded"
+        if self.engine == "kokoro":
+            threading.Thread(target=self.warm_up, daemon=True).start()
+        return "Kokoro ready"
+
+    def load(self):
+        with self.load_lock:
+            if self.kokoro is None:
+                kokoro = engine.Kokoro()
+                # The first run of the model is slow: not on the first word.
+                kokoro.synthesize("pronto", engine.VOICES["it"][0], "it")
+                self.kokoro = kokoro
+        return self.kokoro
+
+    def warm_up(self):
+        try:
+            self.load()
+        except Exception as error:  # noqa: BLE001 - the first message will retry
+            log("cannot load Kokoro:", repr(error))
+            return
+        self.prepare_phrases()
 
     def prepare_phrases(self):
-        """Fills the disk cache with the phrases a screen reader says most,
-        while nothing is being spoken."""
+        """Fills the disk cache with the phrases a screen reader says most.
+        Only while nothing has been said for a few seconds, and never more
+        than half of the time, so speech and the desktop come first."""
         for lang in engine.VOICES:
             voice = self.voice_for(lang)
             try:
@@ -154,10 +189,11 @@ class Module:
             for phrase in phrases:
                 if self.cache.has_on_disk(voice, lang, phrase):
                     continue
-                while self.busy.is_set():
+                while self.busy.is_set() or time.monotonic() - self.last_speech < 3:
                     time.sleep(0.5)
                 options = self.kokoro.run_options()
                 self.preparing = options
+                start = time.monotonic()
                 try:
                     pcm = self.kokoro.synthesize(phrase, voice, lang, options)
                 except Exception:  # noqa: BLE001 - interrupted by speech: try again later
@@ -165,6 +201,7 @@ class Module:
                 finally:
                     self.preparing = None
                 self.cache.put(voice, lang, phrase, pcm, persist=True)
+                time.sleep(max(0.2, time.monotonic() - start))
 
     # -- voices --------------------------------------------------------
 
@@ -179,9 +216,9 @@ class Module:
         Speech Dispatcher always sends a voice type (MALE1 by default), so
         the choice for this computer comes before it."""
         chosen = self.settings.get("synthesis_voice")
-        if chosen and chosen != "NULL" and chosen in self.kokoro.voices and chosen[0] == lang[0]:
-            return chosen
         names = engine.VOICES.get(lang, [])
+        if chosen and chosen != "NULL" and chosen in names:
+            return chosen
         if self.voices.get(lang) in names:
             return self.voices[lang]
         kind = (self.settings.get("voice") or "").lower()
@@ -235,6 +272,7 @@ class Module:
     def run_job(self, text, kind):
         began = False
         try:
+            self.last_speech = time.monotonic()
             lang = self.language()
             voice = self.voice_for(lang) if lang in engine.VOICES else None
             if kind == "text":
@@ -244,6 +282,8 @@ class Module:
                 if kind == "key":
                     word = word.replace("_", " ")
                 items = [("text", word)] if word else []
+            if voice is not None:
+                self.load()
             if voice is None or (kind == "char" and not self.kokoro.tokens(text, lang)):
                 self.send("701 BEGIN")
                 began = True
@@ -296,6 +336,7 @@ class Module:
                     break
             if not self.cancel.is_set():
                 self.player.drain(self.cancel.is_set)
+            self.last_speech = time.monotonic()
             # Let the producer finish its current part and exit.
             while producer.is_alive():
                 try:
