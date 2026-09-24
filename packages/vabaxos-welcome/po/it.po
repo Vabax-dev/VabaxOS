@@ -16,8 +16,8 @@ msgstr "Benvenuto in VabaxOS. Usa le frecce per scegliere la modalità di config
 msgid "Try VabaxOS"
 msgstr "Prova VabaxOS"
 
-msgid "Voice and keyboard"
-msgstr "Voce e tastiera"
+msgid "Accessibility"
+msgstr "Accessibilità"
 
 msgid "Restart"
 msgstr "Riavvia"
@@ -48,3 +48,30 @@ msgstr "Spegnimento in corso."
 
 msgid "Starting the desktop. Please wait."
 msgstr "Avvio del desktop. Attendi."
+
+msgid "Large text: {state}"
+msgstr "Testo grande: {state}"
+
+msgid "High contrast: {state}"
+msgstr "Alto contrasto: {state}"
+
+msgid "Zoom: {state}"
+msgstr "Zoom: {state}"
+
+msgid "Sticky keys: {state}"
+msgstr "Tasti permanenti: {state}"
+
+msgid "on"
+msgstr "attivo"
+
+msgid "off"
+msgstr "spento"
+
+msgid "Install VabaxOS"
+msgstr "Installa VabaxOS"
+
+msgid "To install VabaxOS, restart the computer. After the two beeps of the boot menu, press I for the installer with voice."
+msgstr "Per installare VabaxOS, riavvia il computer. Dopo i due bip del menu di avvio, premi I per l'installer con la voce."
+
+msgid "Restart now"
+msgstr "Riavvia ora"

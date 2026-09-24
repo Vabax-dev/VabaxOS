@@ -3,8 +3,9 @@
 
 ADR-0016. It runs as root on tty1, started by vabaxos-welcome.service.
 First the language, asked in English (skipped if chosen in the boot menu),
-then the mode:
-try VabaxOS, voice and keyboard, restart, shut down.
+then the mode: try VabaxOS, install VabaxOS (when the installer is on the
+medium), accessibility (voice, keyboard, large text, high contrast, zoom,
+sticky keys: they also apply to the desktop), restart, shut down.
 
 Keys: up and down arrows move and read the item, Enter confirms, Esc goes
 back, F1 repeats the message. It never chooses by itself: after 30 seconds
@@ -43,8 +44,10 @@ LANGUAGES = [
 KEYBOARDS = [("us", "English (US)"), ("it", "Italiano")]
 RATES = [120, 150, 175, 210, 250, 300, 350]  # words per minute for espeak-ng
 DEFAULT_RATE = 2
-# Speakup rate (0-9) for each entry of RATES.
+# Speakup rate (0-9) and Orca rate (0-100, 50 is the default) for each entry
+# of RATES, so the console and the desktop speak as fast as the welcome.
 SPEAKUP_RATES = [2, 3, 4, 5, 6, 7, 8]
+ORCA_RATES = [30, 40, 50, 60, 70, 80, 90]
 
 DRY_RUN = os.environ.get("VABAXOS_WELCOME_DRY_RUN")
 
@@ -273,54 +276,162 @@ def step_language(console, speaker):
             return langs[index]
 
 
-def step_voice_keyboard(console, speaker, lang):
+class Settings:
+    """What the person chose in the welcome, for the console and the desktop."""
+
+    def __init__(self, lang):
+        self.lang = lang
+        self.layout = next(kb for c, _, kb, _ in LANGUAGES if c == lang)
+        self.large_text = False
+        self.high_contrast = False
+        self.zoom = False
+        self.sticky_keys = False
+
+
+def apply_console_font(large):
+    """Large text on the text consoles: Terminus 16x32 instead of 8x16."""
+    face, size = ("TerminusBold", "16x32") if large else ("Fixed", "8x16")
+    if DRY_RUN:
+        record(f"do console font {face} {size}")
+        return
+    path = "/etc/default/console-setup"
+    try:
+        with open(path, encoding="utf-8") as f:
+            lines = [line for line in f if not line.startswith(("FONTFACE=", "FONTSIZE="))]
+    except OSError:
+        lines = []
+    lines += [f'FONTFACE="{face}"\n', f'FONTSIZE="{size}"\n']
+    with open(path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+    run("setupcon", "--force")
+
+
+def desktop_override(settings, rate):
+    """GSettings defaults for the desktop and Orca, from the welcome's choices.
+
+    Written as a schema override, so they apply to the live user and to the
+    login screen; people can still change them later.
+    """
+    lines = ["# Written by vabaxos-welcome (ADR-0016): choices made before the desktop."]
+    lines += ["[org.gnome.Orca.Voice]", f"rate={ORCA_RATES[rate]}"]
+    if settings.large_text:
+        lines += ["[org.gnome.desktop.interface]", "text-scaling-factor=1.5", "cursor-size=48"]
+    if settings.high_contrast:
+        lines += ["[org.gnome.desktop.a11y.interface]", "high-contrast=true"]
+    if settings.zoom:
+        lines += ["[org.gnome.desktop.a11y.applications]", "screen-magnifier-enabled=true",
+                  "[org.gnome.desktop.a11y.magnifier]", "mag-factor=2.0"]
+    if settings.sticky_keys:
+        lines += ["[org.gnome.desktop.a11y.keyboard]", "stickykeys-enable=true"]
+    return "\n".join(lines) + "\n"
+
+
+def apply_desktop(settings, rate):
+    text = desktop_override(settings, rate)
+    if DRY_RUN:
+        for line in text.splitlines()[1:]:
+            record(f"do gsettings {line}")
+        return
+    schemas = "/usr/share/glib-2.0/schemas"
+    with open(f"{schemas}/96_vabaxos-welcome.gschema.override", "w", encoding="utf-8") as f:
+        f.write(text)
+    run("glib-compile-schemas", schemas)
+
+
+def state(_, on):
+    return _("on") if on else _("off")
+
+
+def step_accessibility(console, speaker, settings):
+    """Voice, keyboard, view and typing, before the desktop."""
+    lang = settings.lang
     _ = translation(lang)
-    layout = next(kb for c, _, kb, _ in LANGUAGES if c == lang)
     selected = 0
     while True:
-        keyboard_name = next(name for kb, name in KEYBOARDS if kb == layout)
+        keyboard_name = next(name for kb, name in KEYBOARDS if kb == settings.layout)
         items = [
             _("Slower voice"),
             _("Faster voice"),
             _("Keyboard: {name}").format(name=keyboard_name),
+            _("Large text: {state}").format(state=state(_, settings.large_text)),
+            _("High contrast: {state}").format(state=state(_, settings.high_contrast)),
+            _("Zoom: {state}").format(state=state(_, settings.zoom)),
+            _("Sticky keys: {state}").format(state=state(_, settings.sticky_keys)),
             _("Back"),
         ]
         message = [(_("Use the arrow keys to choose, then press Enter."), lang)]
-        index = choose(console, speaker, _("Voice and keyboard"), message,
+        index = choose(console, speaker, _("Accessibility"), message,
                        items, [lang] * len(items), selected)
-        if index is None or index == 3:
+        if index is None or index == len(items) - 1:
             return
         selected = index
         if index == 0:
             speaker.rate = max(0, speaker.rate - 1)
         elif index == 1:
             speaker.rate = min(len(RATES) - 1, speaker.rate + 1)
-        else:
+        elif index == 2:
             codes = [kb for kb, _ in KEYBOARDS]
-            layout = codes[(codes.index(layout) + 1) % len(codes)]
-            apply_keyboard(layout)
+            settings.layout = codes[(codes.index(settings.layout) + 1) % len(codes)]
+            apply_keyboard(settings.layout)
+        elif index == 3:
+            settings.large_text = not settings.large_text
+            apply_console_font(settings.large_text)
+        elif index == 4:
+            settings.high_contrast = not settings.high_contrast
+        elif index == 5:
+            settings.zoom = not settings.zoom
+        elif index == 6:
+            settings.sticky_keys = not settings.sticky_keys
 
 
-def step_mode(console, speaker, lang):
+def installer_available():
+    """The Debian installer is on the live medium (live-build --debian-installer)."""
+    if DRY_RUN:
+        return os.environ.get("VABAXOS_WELCOME_INSTALLER") == "1"
+    return os.path.exists("/run/live/medium/install")
+
+
+def step_install(console, speaker, lang):
+    """The installer starts from the boot menu: explain how, offer to restart."""
+    _ = translation(lang)
+    message = [(_("To install VabaxOS, restart the computer. After the two beeps of the "
+                  "boot menu, press I for the installer with voice."), lang)]
+    items = [_("Restart now"), _("Back")]
+    index = choose(console, speaker, _("Install VabaxOS"), message, items, [lang] * 2)
+    if index == 0:
+        speaker.say([(_("Restarting."), lang)])
+        speaker.wait()
+        run("systemctl", "reboot")
+        sys.exit(0)
+
+
+def step_mode(console, speaker, settings):
     """Returns True to continue to the desktop; restart and shut down do not return."""
+    lang = settings.lang
     _ = translation(lang)
     while True:
-        items = [_("Try VabaxOS"), _("Voice and keyboard"), _("Restart"), _("Shut down")]
+        actions = ["try"] + (["install"] if installer_available() else []) + ["a11y", "restart", "halt"]
+        names = {"try": _("Try VabaxOS"), "install": _("Install VabaxOS"),
+                 "a11y": _("Accessibility"), "restart": _("Restart"), "halt": _("Shut down")}
+        items = [names[a] for a in actions]
         message = [(_("Welcome to VabaxOS. Use the arrow keys to choose the mode of configuration or use, then press Enter."), lang)]
         index = choose(console, speaker, _("Welcome to VabaxOS"), message,
                        items, [lang] * len(items))
         if index is None:
             return False  # back to the language
-        if index == 0:
+        action = actions[index]
+        if action == "try":
             return True
-        if index == 1:
-            step_voice_keyboard(console, speaker, lang)
-        elif index == 2:
+        if action == "install":
+            step_install(console, speaker, lang)
+        elif action == "a11y":
+            step_accessibility(console, speaker, settings)
+        elif action == "restart":
             speaker.say([(_("Restarting."), lang)])
             speaker.wait()
             run("systemctl", "reboot")
             sys.exit(0)
-        elif index == 3:
+        elif action == "halt":
             speaker.say([(_("Shutting down."), lang)])
             speaker.wait()
             run("systemctl", "poweroff")
@@ -338,12 +449,14 @@ def main():
         while True:
             lang = chosen or step_language(console, speaker)
             apply_language(lang)
-            if step_mode(console, speaker, lang):
+            settings = Settings(lang)
+            if step_mode(console, speaker, settings):
                 break
             if chosen:
                 # Language chosen in the boot menu: Esc offers the list anyway.
                 chosen = None
         apply_rate(speaker.rate)
+        apply_desktop(settings, speaker.rate)
         _ = translation(lang)
         speaker.say([(_("Starting the desktop. Please wait."), lang)])
         speaker.wait()
