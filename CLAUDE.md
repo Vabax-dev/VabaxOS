@@ -51,13 +51,14 @@ Aggiornato al 2026-09-24.
 - Fatto (PR #2, unita a `main`): lavoro 2 della v0.1. ISO minima con live-build, `check-deps.sh`, `build.sh`, `run-qemu.sh`, `test-boot.sh`. `test-boot.sh` passa in UEFI, UEFI con Secure Boot e BIOS; due costruzioni danno lo stesso squashfs. Una costruzione dura circa 6 minuti.
 - Audio della VM verificato: con `run-qemu.sh` Vabax sente il segnale del menu GRUB (`play 960 440 1 0 4 440 1`, cioè due bip ravvicinati) dall'altoparlante del PC emulato, tramite WSLg.
 - Letti tutti i documenti DOC-01–32 (2026-09-24).
-- Fatto (ramo `feat/boot-menu`): lavoro 4, menu GRUB con due bip, voci con lettere (V con voce, N senza voce, R recupero, T strumenti), attesa di 10 secondi; ogni voce passa `vabaxos.voice=on|off` al sistema. `test-boot.sh --entry novoice|recovery` preme il tasto e verifica. Guida in `docs/utente/menu-di-avvio.md`. «Installa con sintesi vocale» arriva con il lavoro 9.
-- Prossimo: lavoro 5, Speakup + espeakup nella live, che legge `vabaxos.voice`.
+- Fatto (PR #4 e ramo `feat/bilingual-boot-menu`): lavoro 4, menu GRUB con due bip, voci bilingui inglese/italiano con lettere (V con voce, N senza voce, R recupero, T strumenti: C verifica, G grafica sicura, D disco, F firmware, R riavvia, S spegni), attesa di 10 secondi; ogni voce passa `vabaxos.voice=on|off` al sistema. `test-boot.sh --entry novoice|recovery` preme il tasto e verifica. Guida in `docs/utente/menu-di-avvio.md`. «Installa con sintesi vocale» arriva con il lavoro 9.
+- Prossimo: lavoro 5, Speakup + espeakup nella live, che legge `vabaxos.voice`. Poi lavoro 5b, il benvenuto parlato di ADR-0016 (accettato).
 - Poi, nell'ordine di `ROADMAP.md`: Orca automatico, `vabaxos-settings`, configurazione iniziale, installer con voce, CI che costruisce e avvia la ISO, prova su PC fisico.
 
 Idee e richieste di Vabax (2026-09-24), da riprendere al momento giusto:
 
-- Benvenuto parlato al primo avvio: una voce dice «Benvenuto in VabaxOS, usa le frecce per scegliere la modalità di configurazione o di utilizzo». GRUB non può parlare, quindi va fatto dopo l'avvio di Linux: proposta in ADR-0016 (stato Proposta).
+- Benvenuto parlato: deciso in ADR-0016 (Accettata). Vabax ha approvato il messaggio e mi ha lasciato le scelte, sul modello delle altre distribuzioni.
+- Il menu di avvio deve essere bilingue, prima l'inglese e poi l'italiano (fatto).
 - Menu Start del desktop: una via di mezzo fra il menu Start di Windows 7 e il menu Apple di macOS. GNOME non ha un menu Start: serve un ADR (estensione o programma Vabax) quando si arriva al desktop.
 - Suoni di sistema: valutare quelli di GNOME (licenze) oppure crearne di nuovi per VabaxOS (`vabaxos-branding`, temi sonori di DOC-01 §33).
 - Più lingue: per Vabax è importante. Già previsto (DOC-01 §28, ADR-0010: gettext, italiano e inglese); lingua dell'interfaccia e della voce separate.

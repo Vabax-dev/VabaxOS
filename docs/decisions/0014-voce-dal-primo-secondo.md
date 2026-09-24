@@ -3,6 +3,7 @@
 - **Stato:** Accettata
 - **Data:** 2026-09-24
 - **Responsabile:** Vabax (Project Lead, responsabile accessibilità)
+- **Modificata da:** [ADR-0016](0016-benvenuto-parlato.md) (punto 4: prima del desktop parte il benvenuto parlato)
 
 ## Contesto
 
