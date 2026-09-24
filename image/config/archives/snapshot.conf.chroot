@@ -1,0 +1,3 @@
+// Release files on snapshot.debian.org are past their Valid-Until date,
+// so APT must not reject them while the ISO is built (ADR-0002).
+Acquire::Check-Valid-Until "false";

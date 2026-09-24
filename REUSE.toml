@@ -21,3 +21,17 @@ path = ["**/*.md", "docs/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Vabax and VabaxOS contributors"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+# Files copied from live-build (Debian), GPL-3.0-or-later, see image/README.md.
+[[annotations]]
+path = [
+  "image/config/hooks/normal/*reproducible*.hook.chroot",
+  "image/config/hooks/normal/*cleanup*.hook.chroot",
+  "image/config/bootloaders/grub-pc/config.cfg",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "2006-2025 The Debian Live team and live-build contributors",
+  "2026 Vabax and VabaxOS contributors",
+]
+SPDX-License-Identifier = "GPL-3.0-or-later"

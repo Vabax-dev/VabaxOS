@@ -5,11 +5,8 @@ cache/
 *.img
 *.qcow2
 
-# live-build working files
-image/.build/
-image/chroot/
-image/binary/
-image/cache/
+# live-build working directory, created by scripts/build.sh
+/build/
 
 # Python
 __pycache__/
