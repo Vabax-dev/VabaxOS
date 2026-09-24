@@ -19,7 +19,7 @@ Questa pagina spiega come si costruisce la ISO di VabaxOS e come si prova in una
 ./scripts/test-boot.sh    # prova l'avvio senza schermo, dalla console seriale
 ```
 
-La prima costruzione scarica circa 300 MB e dura una decina di minuti. Le successive riusano i pacchetti già scaricati. Alla fine, sulla postazione, una voce dice se la costruzione è riuscita o fallita.
+Sulla postazione di sviluppo la prima costruzione scarica qualche centinaio di MB e dura circa 7 minuti; le successive riusano i pacchetti già scaricati e durano circa 6 minuti. La ISO minima pesa circa 280 MB. Alla fine, sulla postazione, una voce dice se la costruzione è riuscita o fallita.
 
 ## Cosa produce
 
@@ -65,5 +65,7 @@ La prima porta seriale della macchina virtuale finisce in `out/logs/qemu-serial-
 I pacchetti vengono da snapshot.debian.org alla data fissata in `image/build.conf`. Tutte le date dei file nella ISO sono quella dello snapshot (`SOURCE_DATE_EPOCH`), e gli hook di riproducibilità di Debian sono in `image/config/hooks/normal/`.
 
 Due costruzioni dallo stesso commit devono produrre lo stesso filesystem della ISO: il confronto si fa con la riga `squashfs-sha256` del manifest. Se non succede è un difetto da segnalare.
+
+Stato al 2026-09-24: due costruzioni consecutive sulla postazione hanno dato lo stesso squashfs. Una ricostruzione indipendente, su un'altra macchina, non è ancora stata fatta.
 
 Per ricevere gli aggiornamenti di Debian si cambia la data dello snapshot, in un commit a parte.

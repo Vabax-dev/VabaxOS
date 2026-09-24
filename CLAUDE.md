@@ -47,10 +47,17 @@ Non installare mai VabaxOS sulla postazione (il Galaxy Book). Non chiedere mai p
 
 Aggiornato al 2026-09-24.
 
-- Fatto: repository pubblico `Vabax-dev/VabaxOS`, ADR-0001–0015, guida e script della postazione Windows, CI (REUSE, ShellCheck, pacchetti Debian, PowerShell).
-- Lavoro in corso: nessuno. Il lavoro 1 della v0.1 (guida alla postazione) è scritto, ma va collaudato sulla postazione vera.
-- Prossimo: lavoro 2 della v0.1, cioè lo scheletro di live-build in `image/`, `scripts/check-deps.sh`, `scripts/build.sh` e `scripts/run-qemu.sh` (ADR-0002, `BUILD.md`). Primo obiettivo: una ISO minima che si avvia in QEMU con UEFI, verificata dalla console seriale.
-- Poi, nell'ordine di `ROADMAP.md`: menu di avvio parlante, voce in console, Orca automatico, `vabaxos-settings`, configurazione iniziale, installer con voce, CI che costruisce e avvia la ISO, prova su PC fisico.
+- Fatto: repository pubblico `Vabax-dev/VabaxOS`, ADR-0001–0015, guida e script della postazione Windows, CI (REUSE, ShellCheck, pacchetti Debian, PowerShell, `lb config`). La postazione è pronta: `verifica-postazione.sh` passa, KVM e audio WSLg funzionano, `sudo` senza password per `/usr/bin/lb`.
+- Fatto (PR #2, ramo `feat/live-build-skeleton`): lavoro 2 della v0.1. ISO minima con live-build, `check-deps.sh`, `build.sh`, `run-qemu.sh`, `test-boot.sh`. `test-boot.sh` passa in UEFI, UEFI con Secure Boot e BIOS; due costruzioni danno lo stesso squashfs. Una costruzione dura circa 6 minuti.
+- Da verificare con Vabax: l'audio della VM. Il menu GRUB suona un bip (`play` di live-build) e `run-qemu.sh` collega l'altoparlante del PC a WSLg, ma nessuno l'ha ancora ascoltato.
+- Letti tutti i documenti DOC-01–32 (2026-09-24).
+- Prossimo: lavoro 4, menu di avvio parlante (ADR-0014): bip verificato, voci del menu «con voce», «senza voce», «Installa con sintesi vocale», «Recupero con voce», attesa. Poi lavoro 5, Speakup + espeakup nella live.
+- Poi, nell'ordine di `ROADMAP.md`: Orca automatico, `vabaxos-settings`, configurazione iniziale, installer con voce, CI che costruisce e avvia la ISO, prova su PC fisico.
+
+Note pratiche:
+
+- Non modificare `scripts/build.sh` mentre una costruzione è in corso: Bash legge lo script a pezzi e si ferma con errori strani.
+- La prova senza schermo è `scripts/test-boot.sh`: entra dalla console seriale come `user`/`live` e controlla firmware, Secure Boot e systemd.
 
 ## Dove trovare le cose
 
