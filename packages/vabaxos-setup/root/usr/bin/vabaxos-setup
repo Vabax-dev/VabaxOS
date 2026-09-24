@@ -39,6 +39,7 @@ gettext.textdomain(DOMAIN)
 _ = gettext.gettext
 
 ORCA_VOICE_PATH = "/org/gnome/orca/default/voices/default/"
+ORCA_SPEECH_PATH = "/org/gnome/orca/default/speech/"
 LAYOUTS = [("it", "Italiano"), ("us", "English (US)")]
 
 
@@ -124,6 +125,24 @@ class Rows:
         row.connect("notify::active", changed)
         return row
 
+    def choice(self, title, subtitle, schema_id, key, options, path=None):
+        """A list of (label, value) for a string key."""
+        row = Adw.ComboRow(title=title, subtitle=subtitle)
+        row.set_model(Gtk.StringList.new([label for label, _ in options]))
+        settings = self.settings(schema_id, path, key)
+        if settings is None:
+            row.set_sensitive(False)
+            return row
+        values = [value for _, value in options]
+        current = settings.get_string(key)
+        row.set_selected(values.index(current) if current in values else 0)
+
+        def changed(combo, _pspec):
+            settings.set_string(key, values[combo.get_selected()])
+
+        row.connect("notify::selected", changed)
+        return row
+
 
 def group(title, description, rows):
     box = Adw.PreferencesGroup(title=title, description=description)
@@ -162,6 +181,17 @@ def voice_page(rows):
                         "org.gnome.desktop.a11y.applications", "screen-reader-enabled"),
         ]),
         group(_("Voice"), _("Changes apply to the next sentences."), [
+            rows.choice(_("Kind of voice"),
+                        _("The natural voice sounds human but needs a fast computer; "
+                          "Automatic lets VabaxOS choose at every start"),
+                        "org.gnome.Orca.Speech", "synthesizer",
+                        [(_("Automatic"), ""), (_("Natural voice (Kokoro)"), "kokoro"),
+                         (_("eSpeak NG, the fastest"), "espeak-ng")], path=ORCA_SPEECH_PATH),
+            rows.choice(_("Natural voice"), _("Automatic uses the fastest one on this computer"),
+                        voice, "family-name",
+                        [(_("Automatic"), ""), (_("Nicola, male, Italian"), "im_nicola"),
+                         (_("Sara, female, Italian"), "if_sara"), (_("Heart, female, English"), "af_heart"),
+                         (_("Michael, male, English"), "am_michael")], path=ORCA_VOICE_PATH),
             rows.number(_("Speed"), _("From 0, slowest, to 100, fastest"), voice, "rate", 0, 100, 5,
                         path=ORCA_VOICE_PATH),
             rows.number(_("Pitch"), _("From 0, lowest, to 10, highest"), voice, "pitch", 0, 10, 0.5,
