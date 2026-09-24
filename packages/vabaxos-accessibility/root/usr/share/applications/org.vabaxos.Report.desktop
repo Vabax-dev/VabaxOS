@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Export system report
+Name[it]=Esporta il rapporto di sistema
+Comment=Saves the boot log and the hardware details to a text file in the home folder
+Comment[it]=Salva il log di avvio e i dati dell'hardware in un file di testo nella cartella personale
+Exec=vabaxos-report
+Icon=vabaxos-logo
+Terminal=false
+Categories=System;Utility;
+Keywords=log;report;bug;hardware;rapporto;
