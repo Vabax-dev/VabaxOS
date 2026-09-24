@@ -1,6 +1,6 @@
 # ADR-0018: Menu Start con il logo di VabaxOS
 
-- **Stato:** Proposta
+- **Stato:** Accettata (Vabax, 2026-09-24)
 - **Data:** 2026-09-24
 - **Responsabile:** Vabax (Project Lead, responsabile accessibilità), Principal Software Engineer
 - **Sostituisce / Sostituita da:** —
