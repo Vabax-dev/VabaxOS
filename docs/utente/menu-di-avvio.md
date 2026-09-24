@@ -35,6 +35,10 @@ Negli strumenti:
 
 Si possono usare anche le frecce su e giù, poi Invio. Appena premi un tasto, l'attesa di 10 secondi si ferma.
 
+## Come appare
+
+Per chi vede poco: in alto c'è il logo di VabaxOS su fondo blu scuro. Le voci sono bianche; quella scelta è gialla. In basso c'è la barra dei secondi che mancano all'avvio automatico.
+
 ## Stato
 
 - Per ora le lingue sono inglese e italiano (DOC-01 §28).

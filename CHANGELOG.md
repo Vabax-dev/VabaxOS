@@ -21,3 +21,10 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Desktop GNOME 50 con Orca 50; un solo server audio per benvenuto, voce della console e Orca.
 - Base di sviluppo Debian testing «forky» a data fissa (ADR-0017).
 - `test-boot.sh` registra l'audio e controlla che benvenuto, voce della console e Orca si sentano.
+- Benvenuto: menu Accessibilità (voce più lenta o più veloce, tastiera, testo grande, alto contrasto, zoom, tasti permanenti) e voce Installa.
+- Programma `vabaxos-setup`: configurazione iniziale accessibile (vista, voce, tastiera e movimento, rete), letta da Orca e usabile con tastiera, zoom e contrasto.
+- Installazione con voce (tasto I) e altre modalità (O): grafica ad alto contrasto, grafica, testuale.
+- `vabaxos-a11y-check`: controlla che ogni comando di un programma abbia un nome leggibile dal lettore di schermo.
+- CI: costruzione della ISO e prove di avvio in QEMU con controllo dei suoni.
+- Logo VabaxOS in formato vettoriale; menu di avvio con il logo e colori ad alto contrasto; pacchetto `vabaxos-branding` (icona, sfondo, logo in Impostazioni > Informazioni).
+- Guide per l'utente: benvenuto, configurazione iniziale, installazione.
