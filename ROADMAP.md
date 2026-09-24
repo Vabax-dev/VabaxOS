@@ -32,7 +32,7 @@ Ogni punto diventerà un caso di test in `tests/`. I punti segnati con ★ corre
 
 - [ ] La ISO si avvia in UEFI, anche con Secure Boot attivo (ADR-0003). *Provato in QEMU con `scripts/test-boot.sh`; manca il PC fisico.*
 - [ ] La ISO si avvia in modalità BIOS legacy. *Provato in QEMU; manca il PC fisico.*
-- [ ] ★ Il menu di avvio emette un segnale acustico quando è pronto.
+- [ ] ★ Il menu di avvio emette un segnale acustico quando è pronto. *In QEMU con UEFI Vabax ha sentito due bip ravvicinati (2026-09-24); manca il PC fisico.*
 - [ ] Senza premere nulla, dopo il tempo di attesa si avvia «VabaxOS (con voce)».
 - [ ] Il menu offre «senza voce», «Installa con sintesi vocale» e «Modalità di recupero con voce».
 
@@ -70,7 +70,7 @@ Ogni lavoro diventerà una issue su GitHub, con il modello «Lavoro».
 
 1. Guida alla postazione Windows: WSL2 Debian, QEMU, audio e KVM (ADR-0013). **Scritta** ([guida](docs/sviluppo/postazione-windows.md)), da collaudare sulla postazione vera.
 2. Scheletro di live-build in `image/` e `scripts/build.sh` (ADR-0002). **Fatto:** ISO minima che arriva alla console, con `scripts/test-boot.sh`.
-3. `scripts/run-qemu.sh`: UEFI, Secure Boot, audio. **Scritto:** UEFI, Secure Boot e BIOS provati; l'audio va verificato ascoltando.
+3. `scripts/run-qemu.sh`: UEFI, Secure Boot, audio. **Fatto:** UEFI, Secure Boot e BIOS provati; audio verificato ascoltando il bip del menu.
 4. Menu di avvio parlante: segnale acustico, voci del menu, attesa (ADR-0014).
 5. Voce in console: Speakup + espeakup attivi nella live.
 6. Orca automatico in sessione e in GDM, italiano, eSpeak NG.

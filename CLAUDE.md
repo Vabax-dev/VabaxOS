@@ -48,8 +48,8 @@ Non installare mai VabaxOS sulla postazione (il Galaxy Book). Non chiedere mai p
 Aggiornato al 2026-09-24.
 
 - Fatto: repository pubblico `Vabax-dev/VabaxOS`, ADR-0001–0015, guida e script della postazione Windows, CI (REUSE, ShellCheck, pacchetti Debian, PowerShell, `lb config`). La postazione è pronta: `verifica-postazione.sh` passa, KVM e audio WSLg funzionano, `sudo` senza password per `/usr/bin/lb`.
-- Fatto (PR #2, ramo `feat/live-build-skeleton`): lavoro 2 della v0.1. ISO minima con live-build, `check-deps.sh`, `build.sh`, `run-qemu.sh`, `test-boot.sh`. `test-boot.sh` passa in UEFI, UEFI con Secure Boot e BIOS; due costruzioni danno lo stesso squashfs. Una costruzione dura circa 6 minuti.
-- Da verificare con Vabax: l'audio della VM. Il menu GRUB suona un bip (`play` di live-build) e `run-qemu.sh` collega l'altoparlante del PC a WSLg, ma nessuno l'ha ancora ascoltato.
+- Fatto (PR #2, unita a `main`): lavoro 2 della v0.1. ISO minima con live-build, `check-deps.sh`, `build.sh`, `run-qemu.sh`, `test-boot.sh`. `test-boot.sh` passa in UEFI, UEFI con Secure Boot e BIOS; due costruzioni danno lo stesso squashfs. Una costruzione dura circa 6 minuti.
+- Audio della VM verificato: con `run-qemu.sh` Vabax sente il segnale del menu GRUB (`play 960 440 1 0 4 440 1`, cioè due bip ravvicinati) dall'altoparlante del PC emulato, tramite WSLg.
 - Letti tutti i documenti DOC-01–32 (2026-09-24).
 - Prossimo: lavoro 4, menu di avvio parlante (ADR-0014): bip verificato, voci del menu «con voce», «senza voce», «Installa con sintesi vocale», «Recupero con voce», attesa. Poi lavoro 5, Speakup + espeakup nella live.
 - Poi, nell'ordine di `ROADMAP.md`: Orca automatico, `vabaxos-settings`, configurazione iniziale, installer con voce, CI che costruisce e avvia la ISO, prova su PC fisico.
