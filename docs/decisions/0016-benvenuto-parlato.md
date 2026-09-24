@@ -25,7 +25,7 @@ In tutti e tre i casi prima si sceglie la lingua, poi fra «prova» e «installa
 
 ## Decisione
 
-1. **Il menu GRUB resta** (ADR-0014): due bip, voci bilingui (prima l'inglese, poi l'italiano), lettere, avvio automatico «con voce» dopo 10 secondi. È l'unica cosa che funziona prima di Linux.
+1. **Il menu GRUB resta** (ADR-0014): due bip, lettere, avvio automatico «con voce» dopo 10 secondi. È l'unica cosa che funziona prima di Linux. Il menu è in inglese, come nelle altre distribuzioni; la voce «Language» (L) ricarica il menu nella lingua scelta, i due bip suonano di nuovo come conferma, e la lingua passa al sistema (`vabaxos.lang`, più `locales` e `keyboard-layouts` di live-config). Da quel momento si usa solo la lingua scelta.
 2. **Dopo il menu parte il «Benvenuto in VabaxOS»,** un programma in modalità testo sulla prima console. Parte appena Linux ha l'audio, prima del desktop grafico. Parla con eSpeak NG e non ha bisogno del desktop, quindi funziona anche se la grafica non parte.
 3. **Primo passo, la lingua.** Il messaggio è in inglese e in italiano: «Welcome to VabaxOS. Use the arrow keys to choose your language, then press Enter. Benvenuto in VabaxOS. Usa le frecce per scegliere la lingua, poi premi Invio.» Ogni lingua dell'elenco viene letta nella sua lingua, con la voce di quella lingua: «English», «Italiano». All'inizio le lingue sono inglese e italiano (DOC-01 §28); se ne aggiungono altre con le traduzioni.
 4. **Secondo passo, la modalità.** Nella lingua scelta: «Usa le frecce per scegliere la modalità di configurazione o di utilizzo, poi premi Invio.» Le scelte sono:
@@ -44,6 +44,10 @@ In tutti e tre i casi prima si sceglie la lingua, poi fra «prova» e «installa
    - con «VabaxOS senza voce» (`vabaxos.voice=off`) lo stesso menu compare solo come testo sullo schermo;
    - con «Recovery mode» il benvenuto non parte: si va dritti alla console;
    - il parametro del kernel `vabaxos.welcome=off` lo salta, per i test automatici (`scripts/test-boot.sh`) e la CI.
+
+## Aggiornamenti
+
+- 2026-09-24: Vabax ha scelto un menu di avvio tutto in inglese, con la possibilità di cambiare lingua prima dell'avvio, invece delle scritte in due lingue. Punto 1 aggiornato.
 
 ## Alternative considerate
 
