@@ -26,7 +26,7 @@ UP, DOWN, ENTER, ESC = b"\x1b[A", b"\x1b[B", b"\r", b"\x1b"
 class Welcome:
     """Runs the welcome in a pseudo-terminal and presses keys."""
 
-    def __init__(self, options="", installer=False):
+    def __init__(self, options="", installer=False, live=True):
         self.tmp = tempfile.TemporaryDirectory()
         self.log = os.path.join(self.tmp.name, "dry-run.log")
         locale_dir = os.path.join(self.tmp.name, "locale")
@@ -44,6 +44,7 @@ class Welcome:
                    VABAXOS_WELCOME_OPTIONS=options,
                    VABAXOS_WELCOME_LOCALE_DIR=locale_dir,
                    VABAXOS_WELCOME_INSTALLER="1" if installer else "0",
+                   VABAXOS_WELCOME_LIVE="1" if live else "0",
                    PYTHONDONTWRITEBYTECODE="1")
         self.pid, self.fd = pty.fork()
         if self.pid == 0:
@@ -136,6 +137,23 @@ class WelcomeTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(log.count("say en: Welcome to VabaxOS. Use the arrow keys to choose your language, then press Enter."), 2)
         self.assertEqual(log[-1], "say it: Avvio del desktop. Attendi.")
+
+    def test_installed_system_runs_once(self):
+        # In an installed system the first entry starts VabaxOS, and the
+        # welcome marks itself done so it does not come back (ADR-0016).
+        w = Welcome(live=False)
+        w.press(DOWN, ENTER, ENTER)
+        code, log = w.finish()
+        self.assertEqual(code, 0)
+        self.assertIn("say it: Avvia VabaxOS", log)
+        self.assertNotIn("say it: Prova VabaxOS", log)
+        self.assertIn("do touch /var/lib/vabaxos/welcome-done", log)
+
+    def test_live_system_is_not_marked_done(self):
+        w = Welcome()
+        w.press(ENTER, ENTER)
+        _, log = w.finish()
+        self.assertNotIn("do touch /var/lib/vabaxos/welcome-done", log)
 
     def test_shut_down(self):
         w = Welcome()

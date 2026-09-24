@@ -78,3 +78,6 @@ msgstr "Per installare VabaxOS, riavvia il computer. Dopo i due bip del menu di 
 
 msgid "Restart now"
 msgstr "Riavvia ora"
+
+msgid "Start VabaxOS"
+msgstr "Avvia VabaxOS"

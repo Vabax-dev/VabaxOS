@@ -405,13 +405,37 @@ def step_install(console, speaker, lang):
         sys.exit(0)
 
 
+def live_system():
+    """Running from the live medium, where every start is the first one."""
+    if DRY_RUN:
+        return os.environ.get("VABAXOS_WELCOME_LIVE", "1") == "1"
+    return os.path.isdir("/run/live/medium")
+
+
+DONE_FILE = "/var/lib/vabaxos/welcome-done"
+
+
+def mark_done():
+    """In an installed system the welcome runs only at the first start
+    (ADR-0016, point 7): its service has ConditionPathExists=!DONE_FILE."""
+    if live_system():
+        return
+    if DRY_RUN:
+        record(f"do touch {DONE_FILE}")
+        return
+    os.makedirs(os.path.dirname(DONE_FILE), exist_ok=True)
+    with open(DONE_FILE, "w", encoding="utf-8") as f:
+        f.write("VabaxOS welcome completed\n")
+
+
 def step_mode(console, speaker, settings):
     """Returns True to continue to the desktop; restart and shut down do not return."""
     lang = settings.lang
     _ = translation(lang)
     while True:
         actions = ["try"] + (["install"] if installer_available() else []) + ["a11y", "restart", "halt"]
-        names = {"try": _("Try VabaxOS"), "install": _("Install VabaxOS"),
+        start = _("Try VabaxOS") if live_system() else _("Start VabaxOS")
+        names = {"try": start, "install": _("Install VabaxOS"),
                  "a11y": _("Accessibility"), "restart": _("Restart"), "halt": _("Shut down")}
         items = [names[a] for a in actions]
         message = [(_("Welcome to VabaxOS. Use the arrow keys to choose the mode of configuration or use, then press Enter."), lang)]
@@ -457,6 +481,7 @@ def main():
                 chosen = None
         apply_rate(speaker.rate)
         apply_desktop(settings, speaker.rate)
+        mark_done()
         _ = translation(lang)
         speaker.say([(_("Starting the desktop. Please wait."), lang)])
         speaker.wait()

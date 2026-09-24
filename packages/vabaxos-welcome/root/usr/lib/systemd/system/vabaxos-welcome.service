@@ -4,6 +4,9 @@ Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/decisions/0016
 # Not with vabaxos.welcome=off (automatic tests) nor in recovery mode.
 ConditionKernelCommandLine=!vabaxos.welcome=off
 ConditionKernelCommandLine=!systemd.unit=multi-user.target
+# In an installed system only at the first start (ADR-0016, point 7); in
+# the live system /var/lib is new at every start.
+ConditionPathExists=!/var/lib/vabaxos/welcome-done
 After=systemd-user-sessions.service live-config.service sound.target systemd-localed.service
 Before=display-manager.service getty@tty1.service
 
