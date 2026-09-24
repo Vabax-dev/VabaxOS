@@ -50,7 +50,7 @@ Il nome della ISO segue [ADR-0015](docs/decisions/0015-versioni-e-rilasci.md):
 
 La prima porta seriale della macchina virtuale finisce in `out/logs/qemu-serial-<data>.log`: lì si leggono i messaggi del kernel e la richiesta di accesso, senza guardare lo schermo.
 
-`./scripts/test-boot.sh` fa la stessa prova in automatico: avvia la ISO senza finestra, aspetta la richiesta di accesso sulla console seriale, entra come utente live (`user`, password `live`), controlla il tipo di firmware, lo stato di Secure Boot e di systemd, poi spegne la macchina. Accetta `--secure-boot` e `--bios`. Il log va in `out/logs/test-boot-<modalità>-<data>.log`.
+`./scripts/test-boot.sh` fa la stessa prova in automatico: avvia la ISO senza finestra, aspetta la richiesta di accesso sulla console seriale, entra come utente live (`user`, password `live`), controlla il tipo di firmware, lo stato di Secure Boot e di systemd, poi spegne la macchina. Accetta `--secure-boot` e `--bios`. Con `--entry novoice` o `--entry recovery` preme il tasto della voce del menu di avvio (N o R) e controlla che sia partita quella; senza `--entry` verifica che, senza premere nulla, parta «VabaxOS con voce». Il log va in `out/logs/test-boot-<modalità>-<voce>-<data>.log`.
 
 ## Come è fatta la configurazione
 
