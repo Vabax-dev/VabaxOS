@@ -1,0 +1,5 @@
+# VabaxOS: Orca starts by itself, at the login screen and in the desktop
+# (ADR-0005, ADR-0014). vabaxos-voice-off.service turns it off when the
+# boot option vabaxos.voice=off is set.
+[org.gnome.desktop.a11y.applications]
+screen-reader-enabled=true

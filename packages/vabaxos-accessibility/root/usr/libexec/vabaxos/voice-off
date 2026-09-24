@@ -1,0 +1,11 @@
+#!/bin/sh
+# "Without voice" (vabaxos.voice=off): Orca must not start, neither at the
+# login screen nor in the desktop. A later schema override wins over
+# 90_vabaxos-accessibility.gschema.override for every user.
+set -e
+schemas=/usr/share/glib-2.0/schemas
+cat > "$schemas/95_vabaxos-voice-off.gschema.override" <<'OVERRIDE'
+[org.gnome.desktop.a11y.applications]
+screen-reader-enabled=false
+OVERRIDE
+glib-compile-schemas "$schemas"

@@ -1,0 +1,10 @@
+Package: vabaxos-accessibility
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: espeakup, espeak-ng, orca, speech-dispatcher-espeak-ng, init-system-helpers
+Description: VabaxOS accessibility defaults
+ Speech from the first second (ADR-0005, ADR-0014): Speakup with
+ eSpeak NG reads the text console, and Orca starts in the desktop.
+ The boot option vabaxos.voice=off turns both off.

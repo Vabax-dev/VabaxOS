@@ -1,0 +1,16 @@
+#!/bin/sh
+# Starts espeakup with the voice of the system language (ADR-0006).
+# A voice set in /etc/default/espeakup (default_voice=) wins.
+set -e
+
+voice="${default_voice:-}"
+if [ -z "$voice" ]; then
+    LANG=
+    # shellcheck source=/dev/null
+    [ -r /etc/default/locale ] && . /etc/default/locale
+    case "$LANG" in
+        it_*) voice=it ;;
+        *) voice=en ;;
+    esac
+fi
+exec /usr/bin/espeakup --default-voice="$voice"
