@@ -8,7 +8,7 @@
 - I privilegi di amministratore (`sudo`), perché live-build lavora in un chroot.
 - Circa 20 GB liberi e una connessione a Internet per scaricare i pacchetti.
 
-La guida passo passo per preparare la postazione Windows con NVDA è un lavoro della v0.1.
+Per preparare la postazione Windows con NVDA segui la [guida alla postazione](docs/sviluppo/postazione-windows.md).
 
 ## I tre comandi
 

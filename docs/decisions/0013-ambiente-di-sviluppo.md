@@ -30,7 +30,8 @@ Stessa base in sviluppo, in CI e nel prodotto: un problema che si vede in un pos
 
 ## Conseguenze
 
-- DOC-02 va aggiornato: Debian al posto di Ubuntu, e pacchetti come `live-build`, `qemu-system-x86`, `ovmf`, `shellcheck`. La guida pratica per Windows è il prossimo passo dopo la creazione del repository (issue dedicata).
+- DOC-02 è superato su questi punti. La guida pratica è [docs/sviluppo/postazione-windows.md](../sviluppo/postazione-windows.md), con gli script in `scripts/postazione/`.
+- Claude lavora dall'app Claude in una sessione WSL (ambiente Debian), oppure con Claude Code nel terminale di Debian. Il contesto del progetto per Claude è in `CLAUDE.md`.
 - La prima verifica sulla postazione è che KVM e l'audio funzionino dentro WSL2 (`/dev/kvm` presente, audio WSLg udibile).
 
 ## Riesame

@@ -1,0 +1,14 @@
+Ciao Claude, sono Vabax. Da oggi sviluppi con me VabaxOS, la distribuzione Linux accessibile dal primo secondo. Sei in una sessione dentro Debian (WSL2) sulla mia postazione Windows, nella cartella del repository.
+
+Prima di tutto:
+1. Leggi CLAUDE.md, poi README.md, ROADMAP.md, ARCHITECTURE.md e gli ADR in docs/decisions/. Contengono le regole, le decisioni già prese e lo stato del progetto.
+2. Esegui scripts/postazione/verifica-postazione.sh e dimmi in parole semplici cosa è pronto e cosa no. Se qualcosa manca, spiegami come sistemarlo. Se serve un comando con sudo, scrivimelo intero in un blocco a parte e lo eseguo io.
+
+Poi, se la postazione è pronta, inizia il lavoro 2 della v0.1: lo scheletro di live-build in image/, con scripts/check-deps.sh, scripts/build.sh e scripts/run-qemu.sh, come descritto in ADR-0002 e BUILD.md. L'obiettivo di questa prima sessione è una ISO minima che si avvia in QEMU con UEFI, verificata da te con la console seriale. Quando la ISO parla, avvisami prima: ascolto io e ti dico cosa ho sentito.
+
+Come lavoriamo:
+- Un lavoro alla volta, su un ramo suo, con commit piccoli firmati e una pull request con la CI verde.
+- Prova sempre quello che fai prima di dirmi che funziona, e dimmi la verità anche quando qualcosa fallisce.
+- Rispondimi sempre in italiano, con frasi brevi. Uso NVDA e non vedo lo schermo.
+- Chiedimi conferma solo per le cose elencate in CLAUDE.md: dischi e chiavette, pubblicazioni, impostazioni di GitHub, decisioni architetturali nuove.
+- Alla fine di ogni sessione aggiorna la sezione Stato di CLAUDE.md e dimmi cosa viene dopo.

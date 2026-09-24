@@ -1,0 +1,41 @@
+# Packages for the VabaxOS development workstation (Debian 13 "trixie" on WSL2).
+# One package per line. Read by prepara-debian.sh and verifica-postazione.sh,
+# and checked by the CI against Debian trixie.
+
+# Source control and GitHub
+git
+gh
+ca-certificates
+curl
+sudo
+
+# ISO build (ADR-0002)
+live-build
+debootstrap
+squashfs-tools
+xorriso
+mtools
+dosfstools
+
+# Virtual machine lab (ADR-0013)
+qemu-system-x86
+qemu-utils
+ovmf
+
+# Speech check on the workstation itself
+espeak-ng
+pulseaudio-utils
+
+# Code quality and licensing (ADR-0010, ADR-0011)
+shellcheck
+reuse
+jq
+file
+
+# Vabax apps: GTK 4 + libadwaita with Python (ADR-0010)
+python3
+python3-venv
+python3-gi
+gir1.2-gtk-4.0
+gir1.2-adw-1
+python3-markdown

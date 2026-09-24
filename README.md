@@ -32,6 +32,8 @@ La v0.1 di VabaxOS esiste per risolvere proprio questi problemi, e ognuno divent
 | [BUILD.md](BUILD.md) | Come si costruisce la ISO (in preparazione) |
 | [docs/decisions/](docs/decisions/README.md) | Decisioni architetturali (ADR) |
 | [docs/specs/](docs/specs/README.md) | I 32 documenti di progetto originali |
+| [docs/sviluppo/](docs/sviluppo/postazione-windows.md) | Guida alla postazione di sviluppo su Windows |
+| [CLAUDE.md](CLAUDE.md) | Istruzioni per Claude, che sviluppa VabaxOS con il fondatore |
 | `image/` | Configurazione della ISO (live-build) |
 | `packages/` | Pacchetti Debian di VabaxOS |
 | `scripts/` | Script di costruzione, avvio in QEMU e test |
