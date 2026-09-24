@@ -64,6 +64,8 @@ Piano della notte del 2026-09-24, deciso con Vabax (lavoro autonomo fino al bloc
 - Blocco 4 «Il sistema installato»: pacchetti VabaxOS e voce nel sistema installato (preseed), prova automatica di installazione in QEMU con riavvio e voce, benvenuto solo al primo avvio, esportazione del log di avvio, voce senza Internet.
 - Blocco 5 «Desktop accessibile e identità»: Orca con File, Terminale (`nmtui`), Impostazioni; spegnimento e riavvio con conferma letta; sospensione; **font uniformi, identità visiva unica (sfondi, animazioni, icone)**; **suoni di sistema: trovarne con licenza libera e generarne molti nostri, Vabax sceglie domattina**; **gestione batteria e risparmio energetico, Wi-Fi e Bluetooth accessibili**.
 - Blocco 6 «Lettore di documenti»: programma GTK 4 che legge txt, PDF, EPUB, DOCX con Kokoro; navigazione per frase e paragrafo, velocità con Sonic, segnalibri, esportazione audio.
+- Blocco 6, aggiunta di Vabax (2026-09-24, notte): **aggiornamenti** (come gestirli, come renderli rapidi, come l'utente aggiorna i componenti da solo in modo accessibile) e **sicurezza** (aggiornamenti di sicurezza, firme, repository APT Vabax, ADR-0015). Per le scelte che spettano a Vabax: ADR «Proposta».
+- Regola della notte (Vabax): **poco tempo sulle ISO**. Una costruzione per blocco al massimo, ma le prove sempre: test unitari, Broadway, `test-boot.sh` sulla ISO del blocco.
 
 Idee e richieste di Vabax (2026-09-24), da riprendere al momento giusto:
 
