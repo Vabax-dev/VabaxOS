@@ -237,6 +237,7 @@ ask firmware '[ -d /sys/firmware/efi ] && echo uefi || echo bios' || exit 1
 ask secureboot 'f=$(ls /sys/firmware/efi/efivars/SecureBoot-* 2>/dev/null); [ -n "$f" ] && od -An -t u1 "$f" | awk "{print \$NF}" || echo none' || exit 1
 ask kernel 'uname -r' || exit 1
 ask os '. /etc/os-release; echo $PRETTY_NAME' || exit 1
+ask logo '. /etc/os-release; echo $LOGO' || exit 1
 ask voice 'sed -n "s/.*vabaxos\.voice=\([a-z]*\).*/\1/p" /proc/cmdline' || exit 1
 ask recovery 'grep -q systemd.unit=multi-user.target /proc/cmdline && echo yes || echo no' || exit 1
 ask speech 'systemctl is-active espeakup' || exit 1
@@ -268,6 +269,7 @@ check 'Orca' "$(value orca)" "$WANT_ORCA"
 check lingua "$(value lang)" "$WANT_LANG"
 printf 'INFO: kernel %s\n' "$(value kernel)"
 printf 'INFO: sistema %s\n' "$(value os)"
+check 'nome e logo VabaxOS' "$(value logo)" vabaxos-logo
 
 # Sound. In the desktop, a desktop notification must be read by Orca (it is
 # read whatever window has the focus). Then the third text console, where

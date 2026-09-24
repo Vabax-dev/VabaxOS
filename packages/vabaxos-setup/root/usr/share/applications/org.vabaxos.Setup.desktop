@@ -7,6 +7,6 @@ Comment[it]=Vista, voce, tastiera, movimento e rete
 Keywords=accessibility;contrast;zoom;voice;orca;keyboard;network;wifi;
 Keywords[it]=accessibilità;contrasto;zoom;voce;orca;tastiera;rete;wifi;
 Exec=vabaxos-setup
-Icon=preferences-desktop-accessibility
+Icon=vabaxos-logo
 Categories=Settings;Accessibility;GTK;
 StartupNotify=true

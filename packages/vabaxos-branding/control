@@ -1,0 +1,10 @@
+Package: vabaxos-branding
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: gsettings-desktop-schemas
+Description: VabaxOS name, logo and desktop background
+ The VabaxOS logo as a system icon (vabaxos-logo) and a calm navy desktop
+ background with the logo. The name and the logo are a trademark of Vabax
+ (ADR-0011), see /usr/share/doc/vabaxos-branding/copyright.

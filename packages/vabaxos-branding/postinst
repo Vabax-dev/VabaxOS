@@ -1,0 +1,24 @@
+#!/bin/sh
+# Shows the VabaxOS name and logo in GNOME Settings > About (LOGO=, an icon
+# name). /usr/lib/os-release belongs to base-files: it is moved aside with
+# dpkg-divert and rebuilt from Debian's copy, which dpkg keeps up to date.
+# ID stays "debian", so tools that check the base keep working.
+set -e
+
+rebuild() {
+    sed -e 's/^PRETTY_NAME=.*/PRETTY_NAME="VabaxOS 0.1 (Debian forky)"/' \
+        -e '/^LOGO=/d' /usr/lib/os-release.debian > /usr/lib/os-release.new
+    echo 'LOGO=vabaxos-logo' >> /usr/lib/os-release.new
+    mv /usr/lib/os-release.new /usr/lib/os-release
+}
+
+case "$1" in
+    configure)
+        dpkg-divert --package vabaxos-branding --add --rename \
+            --divert /usr/lib/os-release.debian /usr/lib/os-release
+        rebuild
+        ;;
+    triggered)
+        rebuild
+        ;;
+esac
