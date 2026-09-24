@@ -1,0 +1,10 @@
+Package: vabaxos-welcome
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: python3, espeak-ng, kmod, console-setup, init-system-helpers
+Description: Welcome to VabaxOS, spoken, before the desktop
+ A text menu on the first console that speaks with eSpeak NG (ADR-0016):
+ language, then try VabaxOS, voice and keyboard, restart or shut down.
+ It works without the graphical desktop.

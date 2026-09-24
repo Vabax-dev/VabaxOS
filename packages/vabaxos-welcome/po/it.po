@@ -1,0 +1,50 @@
+# Italian translation of vabaxos-welcome (ADR-0016).
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-welcome\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Welcome to VabaxOS"
+msgstr "Benvenuto in VabaxOS"
+
+msgid "Welcome to VabaxOS. Use the arrow keys to choose the mode of configuration or use, then press Enter."
+msgstr "Benvenuto in VabaxOS. Usa le frecce per scegliere la modalità di configurazione o di utilizzo, poi premi Invio."
+
+msgid "Try VabaxOS"
+msgstr "Prova VabaxOS"
+
+msgid "Voice and keyboard"
+msgstr "Voce e tastiera"
+
+msgid "Restart"
+msgstr "Riavvia"
+
+msgid "Shut down"
+msgstr "Spegni"
+
+msgid "Use the arrow keys to choose, then press Enter."
+msgstr "Usa le frecce per scegliere, poi premi Invio."
+
+msgid "Slower voice"
+msgstr "Voce più lenta"
+
+msgid "Faster voice"
+msgstr "Voce più veloce"
+
+msgid "Keyboard: {name}"
+msgstr "Tastiera: {name}"
+
+msgid "Back"
+msgstr "Indietro"
+
+msgid "Restarting."
+msgstr "Riavvio in corso."
+
+msgid "Shutting down."
+msgstr "Spegnimento in corso."
+
+msgid "Starting the desktop. Please wait."
+msgstr "Avvio del desktop. Attendi."
