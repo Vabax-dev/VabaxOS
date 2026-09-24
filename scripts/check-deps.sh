@@ -63,10 +63,23 @@ if [[ ${#MISSING[@]} -gt 0 && "$INSTALL" == true ]]; then
         mapfile -t MISSING < <(missing_packages)
     fi
 fi
+# live-build from forky (ADR-0017), after the Debian 13 packages above.
+if [[ "$INSTALL" == true && $EUID -eq 0 ]]; then
+    "$(dirname "${BASH_SOURCE[0]}")/install-live-build.sh" || problem "installazione di live-build di forky non riuscita."
+fi
 if [[ ${#MISSING[@]} -eq 0 ]]; then
     ok "Pacchetti per costruire e avviare la ISO installati."
 else
     problem "Mancano questi pacchetti: ${MISSING[*]}. Comando: sudo apt install ${MISSING[*]}"
+fi
+
+# Forky images need live-build from forky (ADR-0017).
+LB_MIN="1:20250814"
+lb_version="$(dpkg-query -W -f='${Version}' live-build 2>/dev/null || true)"
+if [[ -n "$lb_version" ]] && dpkg --compare-versions "$lb_version" ge "$LB_MIN"; then
+    ok "live-build $lb_version."
+elif [[ -n "$lb_version" ]]; then
+    problem "live-build $lb_version è troppo vecchio, serve $LB_MIN. Comando: sudo bash scripts/install-live-build.sh"
 fi
 
 if [[ $EUID -eq 0 ]]; then

@@ -3,6 +3,7 @@
 - **Stato:** Accettata
 - **Data:** 2026-09-24
 - **Responsabile:** Vabax (Project Lead)
+- **Sostituita in parte da:** [ADR-0017](0017-base-debian-testing-forky.md) (serie 0.x su Debian testing «forky»)
 
 ## Contesto
 

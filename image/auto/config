@@ -18,6 +18,9 @@ export SOURCE_DATE_EPOCH
 mkdir -p config
 printf 'export SOURCE_DATE_EPOCH=%s\n' "$SOURCE_DATE_EPOCH" > config/all
 
+# Testing ("forky", ADR-0017) has no separate security or updates archive:
+# --security false --updates false, as in Debian's own testing live images.
+#
 # APT indices: the live system points to deb.debian.org, whose indices change
 # every day. Keeping them out of the ISO keeps the squashfs reproducible;
 # the live system runs "apt update" before installing anything.
@@ -38,13 +41,11 @@ lb config noauto \
     --archive-areas "main non-free-firmware" \
     --mirror-bootstrap "$SNAPSHOT_URL/debian/$VABAXOS_SNAPSHOT/" \
     --mirror-chroot "$SNAPSHOT_URL/debian/$VABAXOS_SNAPSHOT/" \
-    --mirror-chroot-security "$SNAPSHOT_URL/debian-security/$VABAXOS_SNAPSHOT/" \
     --mirror-binary "http://deb.debian.org/debian/" \
-    --mirror-binary-security "http://security.debian.org/debian-security/" \
     --apt-indices false \
     --apt-source-archives false \
-    --security true \
-    --updates true \
+    --security false \
+    --updates false \
     --bootloaders "grub-efi grub-pc" \
     --uefi-secure-boot enable \
     --binary-images iso-hybrid \

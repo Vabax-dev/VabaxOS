@@ -138,6 +138,14 @@ Lo script fa otto passi. Quando chiede la password, è quella di Debian della Pa
 7. **Prova della voce:** il PC dice «La postazione VabaxOS sta parlando». Se la senti, l'audio fra Debian e Windows funziona.
 8. **Riavvio di WSL:** premi Invio e la finestra si chiude.
 
+Poi, riaperta la finestra di Debian, installa la versione di live-build che serve per costruire VabaxOS su Debian testing «forky» ([ADR-0017](../decisions/0017-base-debian-testing-forky.md)). Lo script scarica il pacchetto, ne controlla l'impronta e lo installa; chiede la password di Debian:
+
+```bash
+sudo bash ~/projects/VabaxOS/scripts/install-live-build.sh
+```
+
+Alla fine scrive «OK: installato live-build 1:20250814».
+
 ## Parte 6 — Collegare GitHub
 
 Serve perché io possa salvare il lavoro sul repository. **L'accesso lo fai tu**: la password non passa mai da me.
