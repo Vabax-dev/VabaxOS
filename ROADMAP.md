@@ -38,18 +38,18 @@ Ogni punto diventerà un caso di test in `tests/`. I punti segnati con ★ corre
 
 **Voce**
 
-- [ ] ★ I messaggi della console vengono letti (Speakup + espeakup).
-- [ ] La voce funziona senza connessione a Internet.
-- [ ] ★ Orca parte da solo nella sessione live, in italiano con eSpeak NG.
+- [ ] ★ I messaggi della console vengono letti (Speakup + espeakup). *Provato in QEMU con `test-boot.sh`, che registra l'audio, e ascoltato da Vabax (2026-09-24); manca il PC fisico.*
+- [ ] La voce funziona senza connessione a Internet. *eSpeak NG gira in locale; manca una prova con la rete staccata.*
+- [ ] ★ Orca parte da solo nella sessione live, in italiano con eSpeak NG. *In italiano quando la lingua è scelta nel menu o nel benvenuto (ADR-0016); in inglese altrimenti.* *Provato in QEMU con `test-boot.sh`, che registra l'audio, e ascoltato da Vabax (2026-09-24); manca il PC fisico.*
 - [ ] ★ Super+Alt+S accende e spegne Orca.
-- [ ] ★ Dal desktop si passa a una console testuale con voce e si torna indietro.
+- [ ] ★ Dal desktop si passa a una console testuale con voce e si torna indietro. *Provato in QEMU con `test-boot.sh`, che registra l'audio, e ascoltato da Vabax (2026-09-24); manca il PC fisico.*
 
 **Configurazione e desktop**
 
-- [ ] ★ Il tour di GNOME non compare. Al suo posto parte la configurazione iniziale Vabax, tutta da tastiera: lingua, voce e velocità, tastiera, rete Wi-Fi.
+- [ ] ★ Il tour di GNOME non compare. Al suo posto parte la configurazione iniziale Vabax, tutta da tastiera: lingua, voce e velocità, tastiera, rete Wi-Fi. *Il tour non è più installato e il benvenuto parlato chiede lingua, voce e tastiera (ADR-0016); manca la rete, con la configurazione iniziale (lavoro 8).*
 - [ ] Dal desktop si aprono, da tastiera e con Orca: menu applicazioni, terminale, file manager, impostazioni.
 - [ ] ★ Il terminale viene letto da Orca, anche con programmi come `nmtui`.
-- [ ] ★ Nella sessione live la sospensione automatica è disattivata. Dopo una sospensione manuale Orca riprende a parlare, oppure il difetto è documentato.
+- [ ] ★ Nella sessione live la sospensione automatica è disattivata. Dopo una sospensione manuale Orca riprende a parlare, oppure il difetto è documentato. *Disattivata da `vabaxos-settings`; manca la prova della sospensione manuale.*
 - [ ] Spegnimento e riavvio si fanno da tastiera con conferma letta.
 
 **Installazione e hardware**
@@ -68,14 +68,14 @@ Ogni punto diventerà un caso di test in `tests/`. I punti segnati con ★ corre
 
 Ogni lavoro diventerà una issue su GitHub, con il modello «Lavoro».
 
-1. Guida alla postazione Windows: WSL2 Debian, QEMU, audio e KVM (ADR-0013). **Scritta** ([guida](docs/sviluppo/postazione-windows.md)), da collaudare sulla postazione vera.
+1. Guida alla postazione Windows: WSL2 Debian, QEMU, audio e KVM (ADR-0013). **Fatto:** [guida](docs/sviluppo/postazione-windows.md) collaudata sulla postazione di Vabax.
 2. Scheletro di live-build in `image/` e `scripts/build.sh` (ADR-0002). **Fatto:** ISO minima che arriva alla console, con `scripts/test-boot.sh`.
 3. `scripts/run-qemu.sh`: UEFI, Secure Boot, audio. **Fatto:** UEFI, Secure Boot e BIOS provati; audio verificato ascoltando il bip del menu.
-4. Menu di avvio parlante: segnale acustico, voci del menu, attesa (ADR-0014). **Fatto:** due bip, voci bilingui inglese/italiano con lettere (V, N, R, T), attesa di 10 secondi, [guida](docs/utente/menu-di-avvio.md). Il menu GRUB non può parlare: la voce parte con il sistema (lavoro 5).
-5. Voce in console: Speakup + espeakup attivi nella live.
-5b. Benvenuto parlato «Benvenuto in VabaxOS»: lingua, poi prova, installa, voce e tastiera, riavvia, spegni (ADR-0016).
-6. Orca automatico in sessione e in GDM, italiano, eSpeak NG.
-7. Pacchetto `vabaxos-settings`: tour disattivato, sospensione disattivata in live, valori predefiniti.
+4. Menu di avvio parlante: segnale acustico, voci del menu, attesa (ADR-0014). **Fatto:** due bip, menu in inglese con scelta della lingua (L), lettere V, N, R, T, attesa di 10 secondi, [guida](docs/utente/menu-di-avvio.md). Il menu GRUB non può parlare: la voce parte con il sistema (lavoro 5).
+5. Voce in console: Speakup + espeakup attivi nella live. **Fatto** (`vabaxos-accessibility`), anche in modalità di recupero.
+5b. Benvenuto parlato «Benvenuto in VabaxOS»: lingua, poi prova, installa, voce e tastiera, riavvia, spegni (ADR-0016). **Fatto** (`vabaxos-welcome`, [guida](docs/utente/benvenuto.md)); «Installa» arriva con il lavoro 9.
+6. Orca automatico in sessione e in GDM, italiano, eSpeak NG. **Fatto** su GNOME 50 e Orca 50 (ADR-0017), con un solo server audio per tutte le voci ([architettura](ARCHITECTURE.md)).
+7. Pacchetto `vabaxos-settings`: tour disattivato, sospensione disattivata in live, valori predefiniti. **Fatto.**
 8. Configurazione iniziale Vabax (GTK 4): lingua, voce, tastiera, rete.
 9. Installer Debian con sintesi vocale e firmware, preseed per i pacchetti Vabax (ADR-0007).
 10. CI: costruzione della ISO e test di avvio in QEMU.

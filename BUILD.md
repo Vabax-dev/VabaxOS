@@ -6,7 +6,7 @@ Questa pagina spiega come si costruisce la ISO di VabaxOS e come si prova in una
 
 ## Cosa serve
 
-- Un sistema **Debian 13** amd64: su Windows è la distribuzione Debian di WSL2, in CI il container `debian:trixie`.
+- Un sistema **Debian 13** amd64: su Windows è la distribuzione Debian di WSL2, in CI il container `debian:trixie`. La ISO invece è Debian testing «forky» (ADR-0017): serve **live-build 1:20250814** di forky, che si installa con `sudo bash scripts/install-live-build.sh` (controlla l'impronta del pacchetto).
 - I privilegi di amministratore, perché live-build lavora in un chroot. Lo script chiama `sudo /usr/bin/lb`: sulla postazione si può permettere solo quel comando senza password (vedi la [guida alla postazione](docs/sviluppo/postazione-windows.md)).
 - Circa 20 GB liberi e una connessione a Internet per scaricare i pacchetti.
 
@@ -19,7 +19,7 @@ Questa pagina spiega come si costruisce la ISO di VabaxOS e come si prova in una
 ./scripts/test-boot.sh    # prova l'avvio senza schermo, dalla console seriale
 ```
 
-Sulla postazione di sviluppo, con il desktop GNOME, la prima costruzione scarica circa 1 GB e dura circa 12 minuti; le successive riusano i pacchetti già scaricati. La ISO pesa circa 1,1 GB. Conviene quindi costruirla una volta per gruppo di modifiche, non per ogni modifica. Alla fine, sulla postazione, una voce dice se la costruzione è riuscita o fallita.
+Sulla postazione di sviluppo, con il desktop GNOME, la prima costruzione scarica circa 1 GB e dura circa 12 minuti; le successive riusano i pacchetti già scaricati. La ISO pesa circa 1,3 GB. Conviene quindi costruirla una volta per gruppo di modifiche, non per ogni modifica. Alla fine, sulla postazione, una voce dice se la costruzione è riuscita o fallita.
 
 ## Cosa produce
 
@@ -50,7 +50,7 @@ Il nome della ISO segue [ADR-0015](docs/decisions/0015-versioni-e-rilasci.md):
 
 La prima porta seriale della macchina virtuale finisce in `out/logs/qemu-serial-<data>.log`: lì si leggono i messaggi del kernel e la richiesta di accesso, senza guardare lo schermo.
 
-`./scripts/test-boot.sh` fa la stessa prova in automatico: avvia la ISO senza finestra e con una scheda audio muta, aspetta la richiesta di accesso sulla console seriale, entra come utente live (`user`, password `live`), risponde al benvenuto parlato premendo Invio due volte, poi controlla firmware, Secure Boot, systemd, voce della console, desktop GNOME e Orca, e spegne la macchina. Accetta `--secure-boot` e `--bios`. Con `--entry novoice` o `--entry recovery` preme il tasto della voce del menu di avvio (N o R) e controlla che sia partita quella; senza `--entry` verifica che, senza premere nulla, parta «VabaxOS con voce». Il log va in `out/logs/test-boot-<modalità>-<voce>-<data>.log`.
+`./scripts/test-boot.sh` fa la stessa prova in automatico, come farebbe una persona: avvia la ISO senza finestra e con una scheda audio muta, aspetta la richiesta di accesso sulla console seriale, risponde al benvenuto parlato con i tasti, poi entra come utente live (`user`, password `live`) e controlla firmware, Secure Boot, systemd, voce della console, desktop GNOME, Orca e lingua. **Registra anche l'audio** della macchina virtuale e fallisce se una voce che deve parlare è muta: il benvenuto, Orca che legge una notifica prima e dopo il passaggio a una console di testo, e la voce di quella console. Con «without voice» controlla invece che tutto taccia. Alla fine spegne la macchina e misura lo spegnimento. Accetta `--secure-boot` e `--bios`. Con `--lang it` sceglie l'italiano nel menu di avvio. Con `--entry novoice` o `--entry recovery` preme il tasto della voce del menu di avvio (N o R) e controlla che sia partita quella; senza `--entry` verifica che, senza premere nulla, parta «VabaxOS con voce». Il log va in `out/logs/test-boot-<modalità>-<voce>-<data>.log`, accanto alle registrazioni audio (`.wav`).
 
 I programmi Vabax si provano anche senza ISO. Per esempio il benvenuto:
 
