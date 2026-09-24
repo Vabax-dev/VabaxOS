@@ -18,6 +18,9 @@ export SOURCE_DATE_EPOCH
 mkdir -p config
 printf 'export SOURCE_DATE_EPOCH=%s\n' "$SOURCE_DATE_EPOCH" > config/all
 
+# Testing ("forky", ADR-0017) has no separate security or updates archive:
+# --security false --updates false, as in Debian's own testing live images.
+#
 # APT indices: the live system points to deb.debian.org, whose indices change
 # every day. Keeping them out of the ISO keeps the squashfs reproducible;
 # the live system runs "apt update" before installing anything.
@@ -27,6 +30,10 @@ printf 'export SOURCE_DATE_EPOCH=%s\n' "$SOURCE_DATE_EPOCH" > config/all
 # - console: kernel messages and a login prompt on the first serial port too,
 #   so scripts/test-boot.sh can check the boot without a screen.
 #   tty0 stays last, so it remains the main console for the screen reader.
+# - plymouth.enable=0: no boot splash; the console stays plain text, which
+#   Speakup reads and the spoken welcome uses (ADR-0016).
+# - systemd.show_status=error: on the console only failures, no "start job
+#   is running" lines over the welcome; failures are still read aloud.
 lb config noauto \
     --mode debian \
     --distribution "$VABAXOS_DISTRIBUTION" \
@@ -34,13 +41,11 @@ lb config noauto \
     --archive-areas "main non-free-firmware" \
     --mirror-bootstrap "$SNAPSHOT_URL/debian/$VABAXOS_SNAPSHOT/" \
     --mirror-chroot "$SNAPSHOT_URL/debian/$VABAXOS_SNAPSHOT/" \
-    --mirror-chroot-security "$SNAPSHOT_URL/debian-security/$VABAXOS_SNAPSHOT/" \
     --mirror-binary "http://deb.debian.org/debian/" \
-    --mirror-binary-security "http://security.debian.org/debian-security/" \
     --apt-indices false \
     --apt-source-archives false \
-    --security true \
-    --updates true \
+    --security false \
+    --updates false \
     --bootloaders "grub-efi grub-pc" \
     --uefi-secure-boot enable \
     --binary-images iso-hybrid \
@@ -51,5 +56,5 @@ lb config noauto \
     --iso-application "VabaxOS" \
     --iso-publisher "VabaxOS; https://github.com/Vabax-dev/VabaxOS" \
     --iso-volume "VabaxOS" \
-    --bootappend-live "boot=live components quiet hostname=vabaxos console=ttyS0,115200n8 console=tty0" \
+    --bootappend-live "boot=live components quiet hostname=vabaxos console=ttyS0,115200n8 console=tty0 plymouth.enable=0 systemd.show_status=error" \
     "$@"

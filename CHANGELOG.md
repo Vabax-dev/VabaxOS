@@ -16,3 +16,8 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Prima ISO minima con live-build (`image/`): pacchetti da snapshot.debian.org a data fissa, avvio GRUB in UEFI, Secure Boot e BIOS, console seriale per i test.
 - Script `check-deps.sh`, `build.sh` (ISO, `SHA256SUMS`, manifest, log datato), `run-qemu.sh` (UEFI, Secure Boot, BIOS, audio) e `test-boot.sh` (test di avvio dalla console seriale).
 - CI: controllo della configurazione di live-build.
+- Menu di avvio in inglese con scelta della lingua (L); benvenuto parlato «Welcome to VabaxOS» prima del desktop (ADR-0016).
+- Pacchetti `vabaxos-accessibility` (voce della console, Orca), `vabaxos-settings` (niente tour, niente sospensione automatica), `vabaxos-welcome`.
+- Desktop GNOME 50 con Orca 50; un solo server audio per benvenuto, voce della console e Orca.
+- Base di sviluppo Debian testing «forky» a data fissa (ADR-0017).
+- `test-boot.sh` registra l'audio e controlla che benvenuto, voce della console e Orca si sentano.

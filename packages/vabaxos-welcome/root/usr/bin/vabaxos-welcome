@@ -1,0 +1,358 @@
+#!/usr/bin/python3
+"""Welcome to VabaxOS: a spoken menu on the text console, before the desktop.
+
+ADR-0016. It runs as root on tty1, started by vabaxos-welcome.service.
+First the language, asked in English (skipped if chosen in the boot menu),
+then the mode:
+try VabaxOS, voice and keyboard, restart, shut down.
+
+Keys: up and down arrows move and read the item, Enter confirms, Esc goes
+back, F1 repeats the message. It never chooses by itself: after 30 seconds
+without keys it repeats the message once, then waits.
+
+Speech: espeak-ng through the user's PipeWire when it runs (in the live system
+it starts at boot), otherwise played with aplay on the sound card; a key press
+interrupts it.
+With the boot option vabaxos.voice=off the menu is shown without speech.
+
+Tests: with VABAXOS_WELCOME_DRY_RUN=FILE nothing is spoken and nothing is
+changed on the system; what would be said and done is written to FILE,
+one line each ("say <lang>: <text>", "do <action>").
+"""
+
+import gettext
+import glob
+import os
+import select
+import signal
+import stat
+import subprocess
+import sys
+import termios
+import tty
+
+LOCALE_DIR = os.environ.get("VABAXOS_WELCOME_LOCALE_DIR", "/usr/share/locale")
+DOMAIN = "vabaxos-welcome"
+REPEAT_AFTER = 30  # seconds without keys before the message is repeated once
+
+# code, locale, keyboard layout, name written in the language itself
+LANGUAGES = [
+    ("en", "en_US.UTF-8", "us", "English"),
+    ("it", "it_IT.UTF-8", "it", "Italiano"),
+]
+KEYBOARDS = [("us", "English (US)"), ("it", "Italiano")]
+RATES = [120, 150, 175, 210, 250, 300, 350]  # words per minute for espeak-ng
+DEFAULT_RATE = 2
+# Speakup rate (0-9) for each entry of RATES.
+SPEAKUP_RATES = [2, 3, 4, 5, 6, 7, 8]
+
+DRY_RUN = os.environ.get("VABAXOS_WELCOME_DRY_RUN")
+
+# Key names returned by read_key().
+UP, DOWN, ENTER, ESC, F1, TIMEOUT = "up", "down", "enter", "esc", "f1", "timeout"
+
+
+def record(line):
+    with open(DRY_RUN, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+
+def run(*command):
+    """Runs a system command, or only records it in a dry run."""
+    if DRY_RUN:
+        record("do " + " ".join(command))
+        return
+    subprocess.run(list(command), check=False,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def kernel_options():
+    if DRY_RUN:
+        return dict(w.split("=", 1) for w in os.environ.get("VABAXOS_WELCOME_OPTIONS", "").split())
+    try:
+        with open("/proc/cmdline", encoding="utf-8") as f:
+            words = f.read().split()
+    except OSError:
+        words = []
+    return dict(w.split("=", 1) if "=" in w else (w, "") for w in words)
+
+
+def sound_server():
+    """The PulseAudio socket of a user's PipeWire, or None."""
+    for socket in sorted(glob.glob("/run/user/*/pulse/native")):
+        if stat.S_ISSOCK(os.stat(socket).st_mode):
+            return socket
+    return None
+
+
+class Speaker:
+    """Speaks with espeak-ng; new speech interrupts the previous one.
+
+    say() takes a list of (text, language) parts, spoken in order, each
+    with the voice of its language. All parts run in one process group,
+    so a key press stops them all at once.
+    """
+
+    def __init__(self, enabled):
+        self.enabled = enabled
+        self.rate = DEFAULT_RATE
+        self.process = None
+
+    def stop(self):
+        if self.process and self.process.poll() is None:
+            os.killpg(self.process.pid, signal.SIGTERM)
+            self.process.wait()
+        self.process = None
+
+    def say(self, parts):
+        self.stop()
+        if not self.enabled:
+            return
+        if DRY_RUN:
+            for text, lang in parts:
+                record(f"say {lang}: {text}")
+            return
+        rate = str(RATES[self.rate])
+        socket = sound_server()
+        env = dict(os.environ)
+        if socket:
+            # One sound server for everything: the user's PipeWire, which
+            # console speech and Orca use too (in the live system it starts
+            # at boot, before the welcome).
+            env["PULSE_SERVER"] = "unix:" + socket
+            player = ""
+        else:
+            # No sound server: espeak-ng plays only through PulseAudio, and
+            # ALSA's default device leads there too (pipewire-alsa). Write
+            # WAV and play it with aplay on the sound card itself.
+            player = " --stdout | aplay -q -D sysdefault"
+        script = " && ".join(
+            f'espeak-ng -v {lang} -s {rate} -- "${i + 1}"{player}'
+            for i, (_, lang) in enumerate(parts)
+        )
+        try:
+            self.process = subprocess.Popen(
+                ["sh", "-c", script, "vabaxos-welcome"] + [text for text, _ in parts],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+                env=env,
+            )
+        except OSError:
+            self.enabled = False
+
+    def wait(self):
+        if self.process:
+            self.process.wait()
+
+
+class Console:
+    """Raw keyboard input and plain text output on the terminal."""
+
+    def __init__(self):
+        self.fd = sys.stdin.fileno()
+        self.saved = termios.tcgetattr(self.fd)
+        tty.setcbreak(self.fd)
+
+    def restore(self):
+        termios.tcsetattr(self.fd, termios.TCSADRAIN, self.saved)
+
+    def read_key(self, timeout):
+        ready, _, _ = select.select([self.fd], [], [], timeout)
+        if not ready:
+            return TIMEOUT
+        data = os.read(self.fd, 16)
+        # A lone Esc; escape sequences arrive together in one read.
+        if data == b"\x1b":
+            ready, _, _ = select.select([self.fd], [], [], 0.05)
+            if not ready:
+                return ESC
+            data += os.read(self.fd, 16)
+        if data in (b"\r", b"\n"):
+            return ENTER
+        if data in (b"\x1b[A", b"\x1bOA"):
+            return UP
+        if data in (b"\x1b[B", b"\x1bOB"):
+            return DOWN
+        if data in (b"\x1b[[A", b"\x1bOP", b"\x1b[11~"):
+            return F1
+        return None
+
+    @staticmethod
+    def show(title, message, items, selected):
+        lines = ["\x1b[H\x1b[2J", title, "", message, ""]
+        for i, item in enumerate(items):
+            lines.append(("> " if i == selected else "  ") + item)
+        sys.stdout.write("\n".join(lines) + "\n")
+        sys.stdout.flush()
+
+
+def choose(console, speaker, title, message, items, item_langs, selected=0):
+    """Shows a menu and returns the index chosen with Enter, or None for Esc.
+
+    message: list of (text, language) parts, spoken in order.
+    item_langs: the language of each item, so that it is read with its voice.
+    """
+    text = " ".join(t for t, _ in message)
+
+    def announce():
+        speaker.say(message + [(items[selected], item_langs[selected])])
+
+    console.show(title, text, items, selected)
+    announce()
+    repeated = False
+    while True:
+        key = console.read_key(None if repeated else REPEAT_AFTER)
+        if key == TIMEOUT:
+            repeated = True
+            announce()
+        elif key in (UP, DOWN):
+            selected = (selected + (1 if key == DOWN else -1)) % len(items)
+            console.show(title, text, items, selected)
+            speaker.say([(items[selected], item_langs[selected])])
+        elif key == ENTER:
+            speaker.stop()
+            return selected
+        elif key == ESC:
+            speaker.stop()
+            return None
+        elif key == F1:
+            announce()
+
+
+def translation(code):
+    return gettext.translation(DOMAIN, LOCALE_DIR, languages=[code], fallback=True).gettext
+
+
+def apply_language(code):
+    """Makes the chosen language the system language, for the desktop too."""
+    locale = next(loc for c, loc, _, _ in LANGUAGES if c == code)
+    layout = next(kb for c, _, kb, _ in LANGUAGES if c == code)
+    if DRY_RUN:
+        record(f"do set LANG={locale}")
+    else:
+        with open("/etc/default/locale", "w", encoding="utf-8") as f:
+            f.write(f"LANG={locale}\n")
+    run("systemctl", "set-environment", f"LANG={locale}")
+    apply_keyboard(layout)
+
+
+def apply_keyboard(layout):
+    run("localectl", "set-x11-keymap", layout)
+    run("setupcon", "--force")
+
+
+def apply_rate(rate):
+    """Console speech speed, used by espeakup when it starts."""
+    run("modprobe", "speakup_soft")
+    if DRY_RUN:
+        record(f"do speakup rate {SPEAKUP_RATES[rate]}")
+        return
+    try:
+        with open("/sys/accessibility/speakup/soft/rate", "w", encoding="ascii") as f:
+            f.write(str(SPEAKUP_RATES[rate]))
+    except OSError:
+        pass
+
+
+def step_language(console, speaker):
+    """Returns the chosen language code.
+
+    The message is in English only, as in other distributions; each language
+    in the list is read in its own language, so adding a language only needs
+    its name (Vabax, 2026-09-24).
+    """
+    message = [
+        ("Welcome to VabaxOS. Use the arrow keys to choose your language, then press Enter.", "en"),
+    ]
+    items = [name for _, _, _, name in LANGUAGES]
+    langs = [code for code, _, _, _ in LANGUAGES]
+    while True:
+        index = choose(console, speaker, "VabaxOS", message, items, langs)
+        if index is not None:
+            return langs[index]
+
+
+def step_voice_keyboard(console, speaker, lang):
+    _ = translation(lang)
+    layout = next(kb for c, _, kb, _ in LANGUAGES if c == lang)
+    selected = 0
+    while True:
+        keyboard_name = next(name for kb, name in KEYBOARDS if kb == layout)
+        items = [
+            _("Slower voice"),
+            _("Faster voice"),
+            _("Keyboard: {name}").format(name=keyboard_name),
+            _("Back"),
+        ]
+        message = [(_("Use the arrow keys to choose, then press Enter."), lang)]
+        index = choose(console, speaker, _("Voice and keyboard"), message,
+                       items, [lang] * len(items), selected)
+        if index is None or index == 3:
+            return
+        selected = index
+        if index == 0:
+            speaker.rate = max(0, speaker.rate - 1)
+        elif index == 1:
+            speaker.rate = min(len(RATES) - 1, speaker.rate + 1)
+        else:
+            codes = [kb for kb, _ in KEYBOARDS]
+            layout = codes[(codes.index(layout) + 1) % len(codes)]
+            apply_keyboard(layout)
+
+
+def step_mode(console, speaker, lang):
+    """Returns True to continue to the desktop; restart and shut down do not return."""
+    _ = translation(lang)
+    while True:
+        items = [_("Try VabaxOS"), _("Voice and keyboard"), _("Restart"), _("Shut down")]
+        message = [(_("Welcome to VabaxOS. Use the arrow keys to choose the mode of configuration or use, then press Enter."), lang)]
+        index = choose(console, speaker, _("Welcome to VabaxOS"), message,
+                       items, [lang] * len(items))
+        if index is None:
+            return False  # back to the language
+        if index == 0:
+            return True
+        if index == 1:
+            step_voice_keyboard(console, speaker, lang)
+        elif index == 2:
+            speaker.say([(_("Restarting."), lang)])
+            speaker.wait()
+            run("systemctl", "reboot")
+            sys.exit(0)
+        elif index == 3:
+            speaker.say([(_("Shutting down."), lang)])
+            speaker.wait()
+            run("systemctl", "poweroff")
+            sys.exit(0)
+
+
+def main():
+    options = kernel_options()
+    speaker = Speaker(options.get("vabaxos.voice", "on") != "off")
+    chosen = options.get("vabaxos.lang")
+    if chosen not in [code for code, _, _, _ in LANGUAGES]:
+        chosen = None
+    console = Console()
+    try:
+        while True:
+            lang = chosen or step_language(console, speaker)
+            apply_language(lang)
+            if step_mode(console, speaker, lang):
+                break
+            if chosen:
+                # Language chosen in the boot menu: Esc offers the list anyway.
+                chosen = None
+        apply_rate(speaker.rate)
+        _ = translation(lang)
+        speaker.say([(_("Starting the desktop. Please wait."), lang)])
+        speaker.wait()
+    finally:
+        speaker.stop()
+        console.restore()
+        sys.stdout.write("\x1b[H\x1b[2J")
+        sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    main()

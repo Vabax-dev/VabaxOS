@@ -1,0 +1,31 @@
+#!/bin/sh
+# Starts espeakup with the voice of the system language (ADR-0006).
+# espeak-ng plays only through PulseAudio, and root has no sound server of
+# its own: espeakup speaks through the PulseAudio socket of the user's
+# PipeWire, so console speech and Orca share the sound card instead of
+# fighting for it. In the live system the live user's manager, and so its
+# PipeWire, starts before espeakup (image/config/includes.chroot_after_packages);
+# otherwise the socket appears when a user logs in, and a drop-in for
+# user@.service then restarts espeakup.
+# A voice set in /etc/default/espeakup (default_voice=) wins.
+set -e
+
+voice="${default_voice:-}"
+if [ -z "$voice" ]; then
+    LANG=
+    # shellcheck source=/dev/null
+    [ -r /etc/default/locale ] && . /etc/default/locale
+    case "$LANG" in
+        it_*) voice=it ;;
+        *) voice=en ;;
+    esac
+fi
+
+for socket in /run/user/*/pulse/native; do
+    if [ -S "$socket" ]; then
+        export PULSE_SERVER="unix:$socket"
+        break
+    fi
+done
+
+exec /usr/bin/espeakup --default-voice="$voice"

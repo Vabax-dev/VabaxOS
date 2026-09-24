@@ -1,0 +1,13 @@
+[Unit]
+Description=VabaxOS without voice: keep Orca off
+Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/utente/menu-di-avvio.md
+ConditionKernelCommandLine=vabaxos.voice=off
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/vabaxos/voice-off
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

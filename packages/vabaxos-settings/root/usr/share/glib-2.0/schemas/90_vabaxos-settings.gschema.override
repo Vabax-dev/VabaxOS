@@ -1,0 +1,16 @@
+# VabaxOS default settings (ADR-0004, ADR-0014). Users can still change them.
+
+# No "Welcome to GNOME" tour: with Orca it could not be closed (debian-
+# accessibility, May 2026). The VabaxOS welcome replaces it (ADR-0016).
+[org.gnome.shell]
+welcome-dialog-last-shown-version='999'
+
+# No automatic suspend: after resume Orca may stay silent (ADR-0014,
+# point 5). To be reviewed when resume is proven.
+[org.gnome.settings-daemon.plugins.power]
+sleep-inactive-ac-type='nothing'
+sleep-inactive-battery-type='nothing'
+
+# No screen lock when idle: in the live system nobody knows the password.
+[org.gnome.desktop.screensaver]
+lock-enabled=false

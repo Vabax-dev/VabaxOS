@@ -1,0 +1,26 @@
+[Unit]
+Description=Welcome to VabaxOS (spoken, before the desktop)
+Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/decisions/0016-benvenuto-parlato.md
+# Not with vabaxos.welcome=off (automatic tests) nor in recovery mode.
+ConditionKernelCommandLine=!vabaxos.welcome=off
+ConditionKernelCommandLine=!systemd.unit=multi-user.target
+After=systemd-user-sessions.service live-config.service sound.target systemd-localed.service
+Before=display-manager.service getty@tty1.service
+
+[Service]
+Type=oneshot
+# A boot splash would keep the console; it quits by itself only when the
+# desktop starts, which waits for the welcome.
+ExecStartPre=-/usr/bin/plymouth quit
+ExecStart=/usr/bin/vabaxos-welcome
+StandardInput=tty
+StandardOutput=tty
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+# The user may take as long as needed.
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=graphical.target

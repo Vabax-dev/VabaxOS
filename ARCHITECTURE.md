@@ -12,10 +12,10 @@ Dal basso verso l'alto:
 
 1. **Firmware e avvio:** UEFI con Secure Boot oppure BIOS. Shim e GRUB firmati da Debian. Il menu di avvio emette un segnale acustico. (ADR-0003, ADR-0014)
 2. **Kernel:** Linux di Debian, firmato. Speakup, il lettore di schermo del kernel, legge la console. (ADR-0003, ADR-0005)
-3. **Sistema di base:** Debian 13 «trixie» con systemd, NetworkManager, PipeWire e WirePlumber. (ADR-0001)
+3. **Sistema di base:** Debian testing «forky» a data fissa durante la serie 0.x, poi Debian 14 stable, con systemd, NetworkManager, PipeWire e WirePlumber. (ADR-0001, ADR-0017)
 4. **Voce e Braille:** speech-dispatcher con eSpeak NG (Piper opzionale), espeakup per la console, BRLTTY per il Braille. (ADR-0005, ADR-0006)
 5. **Accessibilità:** AT-SPI2, il bus attraverso cui le applicazioni descrivono al lettore di schermo cosa c'è sullo schermo. (ADR-0004)
-6. **Desktop:** GNOME 48 su Wayland, con XWayland, configurato da VabaxOS. Orca parte da solo, anche nella schermata di accesso. (ADR-0004, ADR-0005)
+6. **Desktop:** GNOME 50 su Wayland, con XWayland, configurato da VabaxOS. Orca parte da solo, anche nella schermata di accesso. (ADR-0004, ADR-0005)
 7. **Componenti Vabax:** pacchetti `vabaxos-*` (impostazioni, accessibilità, marchio) e programmi GTK 4 (configurazione iniziale, poi Centro Accessibilità e gli altri). (ADR-0008, ADR-0010)
 8. **Applicazioni:** pacchetti Debian e Flatpak. (ADR-0008)
 
@@ -25,7 +25,7 @@ Dal basso verso l'alto:
 repository Git (image/, packages/, scripts/)
         │
         ▼
-scripts/build.sh  ── Debian 13 (WSL2 oppure container in CI)
+scripts/build.sh  ── Debian 13 con live-build di forky (WSL2 oppure container in CI)
         │   pacchetti da snapshot.debian.org a data fissa
         ▼
 live-build  ──►  out/VabaxOS-<versione>-amd64.iso
@@ -39,6 +39,16 @@ scripts/run-qemu.sh  ── QEMU + OVMF, con audio
         ▼
 PC fisico di prova, in modalità live
 ```
+
+## La voce, dal primo secondo
+
+Nella ISO live c'è **un solo server audio**: il PipeWire dell'utente live, che parte all'avvio, prima del benvenuto. Tutte le voci passano da lì, così non si contendono mai la scheda audio:
+
+- il **benvenuto parlato** (ADR-0016), prima del desktop;
+- la **voce della console** (Speakup con espeakup), anche in modalità di recupero;
+- **Orca** nel desktop.
+
+Programmi che partono come amministratore, come il benvenuto ed espeakup, raggiungono PipeWire attraverso il suo punto di accesso PulseAudio. Se PipeWire non c'è, il benvenuto suona direttamente sulla scheda. WirePlumber tiene sempre sveglia l'uscita audio, così la voce non perde le prime sillabe.
 
 ## Componenti di VabaxOS
 

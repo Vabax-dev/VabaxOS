@@ -8,7 +8,7 @@
 
 ## In breve
 
-- **Base:** Debian 13 «trixie» stable, per PC x86-64 con UEFI (e BIOS dove possibile).
+- **Base:** Debian, per PC x86-64 con UEFI (e BIOS dove possibile). Durante lo sviluppo (serie 0.x) Debian testing «forky» bloccata a una data, per avere GNOME 50 e Orca 50 ([ADR-0017](docs/decisions/0017-base-debian-testing-forky.md)); dalla v1.0 Debian 14 «forky» stable.
 - **Desktop:** GNOME su Wayland, personalizzato per VabaxOS.
 - **Lettore di schermo:** Orca, con voce eSpeak NG che funziona senza Internet. In console c'è Speakup, così la voce non manca nemmeno fuori dal desktop.
 - **Installazione:** installer Debian con sintesi vocale, già usato da persone cieche.
@@ -61,6 +61,6 @@ VabaxOS è un progetto di [Vabax](https://vabax.it), scrittore e divulgatore non
 
 **Status: design phase.** The technical decisions are made and recorded as [ADRs](docs/decisions/README.md), but there is nothing to download yet. The first milestone is **v0.1**: a live ISO that boots, talks and reaches the desktop.
 
-Stack: Debian 13 "trixie", GNOME on Wayland, the Orca screen reader with offline eSpeak NG speech, Speakup on the console, and the speech-enabled Debian Installer. Vabax apps use GTK 4. Code is licensed under GPL-3.0-or-later and documentation under CC BY-SA 4.0.
+Stack: Debian (testing "forky" pinned to a snapshot date during the 0.x series, Debian 14 "forky" stable from v1.0), GNOME 50 on Wayland, the Orca screen reader with offline eSpeak NG speech, Speakup on the console, and the speech-enabled Debian Installer. Vabax apps use GTK 4. Code is licensed under GPL-3.0-or-later and documentation under CC BY-SA 4.0.
 
 Project documents are in Italian for now. Code, commit messages and identifiers are in English. Issues in either language are welcome.

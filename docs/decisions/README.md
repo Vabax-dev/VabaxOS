@@ -22,7 +22,7 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 
 | ADR | Decisione | Stato |
 |---|---|---|
-| [0001](0001-base-debian-trixie.md) | Base del sistema: Debian 13 «trixie» stable | Accettata |
+| [0001](0001-base-debian-trixie.md) | Base del sistema: Debian 13 «trixie» stable | Accettata; per la serie 0.x vedi ADR-0017 |
 | [0002](0002-build-live-build.md) | Costruzione della ISO: live-build di Debian | Accettata |
 | [0003](0003-kernel-e-avvio.md) | Kernel e avvio: kernel Debian firmato, GRUB con Secure Boot | Accettata |
 | [0004](0004-desktop-gnome-wayland.md) | Desktop: GNOME su Wayland | Accettata |
@@ -38,3 +38,4 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0014](0014-voce-dal-primo-secondo.md) | Voce dal primo secondo: accessibilità attiva di default | Accettata |
 | [0015](0015-versioni-e-rilasci.md) | Versioni, canali e nomi degli artefatti | Accettata |
 | [0016](0016-benvenuto-parlato.md) | Benvenuto parlato all'avvio, prima del desktop | Accettata |
+| [0017](0017-base-debian-testing-forky.md) | Base di sviluppo: Debian testing «forky» a data fissa (serie 0.x) | Accettata |

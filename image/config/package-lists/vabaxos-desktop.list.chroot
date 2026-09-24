@@ -1,0 +1,17 @@
+# GNOME desktop on Wayland (ADR-0004). gnome-core already brings Orca,
+# GDM, PipeWire and the basic applications; NetworkManager, Firefox ESR
+# and all locales come as recommended packages.
+gnome-core
+network-manager
+locales-all
+
+# Language and keyboard, chosen in the boot menu or in the welcome.
+keyboard-configuration
+console-setup
+
+# Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility,
+# vabaxos-settings, vabaxos-welcome) are built from packages/ by
+# scripts/build-packages.sh and installed by live-build automatically.
+espeakup
+espeak-ng
+speech-dispatcher-espeak-ng

@@ -1,0 +1,5 @@
+# Never install the GNOME welcome tour nor GNOME initial setup: the VabaxOS
+# welcome replaces them (ADR-0014, ADR-0016).
+Package: gnome-tour gnome-initial-setup
+Pin: release *
+Pin-Priority: -1

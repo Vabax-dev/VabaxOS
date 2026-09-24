@@ -4,7 +4,9 @@ Questo file si carica a ogni sessione. Contiene quello che serve per lavorare su
 
 ## Chi sei nel progetto
 
-Sei il **Principal Software Engineer** di VabaxOS (DOC-19): scrivi il codice, costruisci e provi la ISO, mantieni CI, script e documentazione. **Vabax** è il fondatore e Project Lead: decide la visione, le priorità e approva le decisioni architetturali. Vabax ti ha affidato lo sviluppo in modo continuativo: porta avanti la roadmap in autonomia, un lavoro alla volta, e chiedi solo quando serve davvero una sua decisione.
+Sei il **Principal Software Engineer** di VabaxOS (DOC-19): scrivi il codice, costruisci e provi la ISO, mantieni CI, script e documentazione. **Vabax** è il fondatore e Project Lead: decide la visione, le priorità e approva le decisioni architetturali. Vabax ti ha affidato lo sviluppo in modo continuativo: porta avanti la roadmap in autonomia e chiedi solo quando serve davvero una sua decisione.
+
+**Si lavora a blocchi** (decisione di Vabax, 2026-09-24): si decidono insieme 3-5 punti della roadmap, si sviluppano su un solo ramo con un commit per punto, si verificano insieme (test automatici, una costruzione della ISO, una sola sessione di ascolto con un elenco di cosa Vabax deve sentire), poi una pull request per blocco. Non rifare la ISO per ogni piccola modifica.
 
 ## Chi è l'utente
 
@@ -19,7 +21,7 @@ Sei il **Principal Software Engineer** di VabaxOS (DOC-19): scrivi il codice, co
 - Le decisioni sono negli **ADR** in `docs/decisions/`. Il codice non può contraddirli. Una decisione nuova o diversa si propone con un nuovo ADR (stato «Proposta») e **Vabax deve approvarla** prima che diventi «Accettata».
 - Se un documento in `docs/specs/` (DOC-01–32) e un ADR non coincidono, vale l'ADR.
 - La roadmap operativa e i criteri della v0.1 sono in `ROADMAP.md`.
-- Flusso di lavoro (ADR-0012): un ramo per lavoro (`feat/…`, `fix/…`, `docs/…`), commit in inglese con Conventional Commits e firma DCO (`git commit -s`), pull request, CI verde, poi merge su `main`. Puoi fare il merge delle tue pull request quando la CI è verde e il lavoro è verificato.
+- Flusso di lavoro (ADR-0012): un ramo per blocco o per lavoro (`feat/…`, `fix/…`, `docs/…`), commit in inglese con Conventional Commits e firma DCO (`git commit -s`), pull request, CI verde, poi merge su `main`. Puoi fare il merge delle tue pull request quando la CI è verde e il lavoro è verificato.
 - Linguaggi (ADR-0010): Bash per la costruzione (con ShellCheck), Python + GTK 4 + libadwaita per i programmi Vabax, Rust solo per servizi che lo giustificano. **Niente Qt.** Stringhe per l'utente sempre traducibili con gettext.
 - Licenze (ADR-0011): ogni file nuovo deve essere coperto da `REUSE.toml` o avere l'intestazione SPDX. `reuse lint` deve passare.
 - Prima di dire che qualcosa funziona, **provalo**: ShellCheck, `reuse lint`, costruzione della ISO, avvio in QEMU. Riporta i risultati come sono, anche quando qualcosa fallisce.
@@ -47,26 +49,28 @@ Non installare mai VabaxOS sulla postazione (il Galaxy Book). Non chiedere mai p
 
 Aggiornato al 2026-09-24.
 
-- Fatto: repository pubblico `Vabax-dev/VabaxOS`, ADR-0001–0015, guida e script della postazione Windows, CI (REUSE, ShellCheck, pacchetti Debian, PowerShell, `lb config`). La postazione è pronta: `verifica-postazione.sh` passa, KVM e audio WSLg funzionano, `sudo` senza password per `/usr/bin/lb`.
-- Fatto (PR #2, unita a `main`): lavoro 2 della v0.1. ISO minima con live-build, `check-deps.sh`, `build.sh`, `run-qemu.sh`, `test-boot.sh`. `test-boot.sh` passa in UEFI, UEFI con Secure Boot e BIOS; due costruzioni danno lo stesso squashfs. Una costruzione dura circa 6 minuti.
-- Audio della VM verificato: con `run-qemu.sh` Vabax sente il segnale del menu GRUB (`play 960 440 1 0 4 440 1`, cioè due bip ravvicinati) dall'altoparlante del PC emulato, tramite WSLg.
-- Letti tutti i documenti DOC-01–32 (2026-09-24).
-- Fatto (PR #4 e ramo `feat/bilingual-boot-menu`): lavoro 4, menu GRUB con due bip, voci bilingui inglese/italiano con lettere (V con voce, N senza voce, R recupero, T strumenti: C verifica, G grafica sicura, D disco, F firmware, R riavvia, S spegni), attesa di 10 secondi; ogni voce passa `vabaxos.voice=on|off` al sistema. `test-boot.sh --entry novoice|recovery` preme il tasto e verifica. Guida in `docs/utente/menu-di-avvio.md`. «Installa con sintesi vocale» arriva con il lavoro 9.
-- Prossimo: lavoro 5, Speakup + espeakup nella live, che legge `vabaxos.voice`. Poi lavoro 5b, il benvenuto parlato di ADR-0016 (accettato).
-- Poi, nell'ordine di `ROADMAP.md`: Orca automatico, `vabaxos-settings`, configurazione iniziale, installer con voce, CI che costruisce e avvia la ISO, prova su PC fisico.
+- Fatto: repository pubblico `Vabax-dev/VabaxOS`, ADR-0001–0017, guida e script della postazione Windows, CI (REUSE, ShellCheck, pacchetti Debian, PowerShell, `lb config`, pacchetti VabaxOS e test del benvenuto). La postazione è pronta: `verifica-postazione.sh` passa, KVM e audio WSLg funzionano, `sudo` senza password per `/usr/bin/lb`, live-build 1:20250814 di forky installato con `scripts/install-live-build.sh`.
+- Fatto e unito a `main`: lavoro 2 (ISO con live-build, `build.sh`, `run-qemu.sh`, `test-boot.sh`), lavoro 4 (menu GRUB con due bip, lettere V, N, R, L, T, attesa di 10 secondi). Letti tutti i documenti DOC-01–32.
+- **ADR-0017 (Accettata, scelta di Vabax):** la serie 0.x si costruisce su Debian testing «forky» a data fissa (GNOME 50, Orca 50, PipeWire 1.6), con `--security false --updates false` come le ISO live di testing di Debian.
+- Fatto, blocco 1 «VabaxOS parla» (ramo `feat/block1-voice`, PR #6): menu di avvio in inglese con scelta della lingua (L); pacchetti `vabaxos-accessibility`, `vabaxos-settings`, `vabaxos-welcome` in `packages/`, costruiti da `scripts/build-packages.sh`; desktop GNOME 50 con Orca 50; benvenuto parlato (ADR-0016, messaggio iniziale solo in inglese, poi le lingue lette ciascuna nella sua voce). Su forky `test-boot.sh` passa in tutte le modalità con l'audio verificato, e Vabax ha ascoltato tutto il percorso (2026-09-24): benvenuto, Orca con le notifiche, voce della console, ritorno al desktop.
+- Architettura dell'audio (dopo molte prove): un solo server audio, il PipeWire dell'utente live, attivo dall'avvio: benvenuto ed espeakup richiedono `user@1000.service`, che parte dopo live-config (`image/config/includes.chroot_after_packages`; un file di linger non basta perché logind lo legge prima che l'utente esista). Benvenuto, espeakup e Orca parlano tutti attraverso di lui; il benvenuto ripiega su `aplay -D sysdefault` solo se non c'è un server. espeak-ng (pcaudiolib) suona solo via PulseAudio: da root serve `PULSE_SERVER`.
+- Prossimo: finire il blocco 1 su forky, poi blocco 2 (configurazione iniziale, installer con voce e firmware, CI che costruisce e avvia la ISO, prova su PC fisico).
 
 Idee e richieste di Vabax (2026-09-24), da riprendere al momento giusto:
 
-- Benvenuto parlato: deciso in ADR-0016 (Accettata). Vabax ha approvato il messaggio e mi ha lasciato le scelte, sul modello delle altre distribuzioni.
-- Il menu di avvio deve essere bilingue, prima l'inglese e poi l'italiano (fatto).
 - Menu Start del desktop: una via di mezzo fra il menu Start di Windows 7 e il menu Apple di macOS. GNOME non ha un menu Start: serve un ADR (estensione o programma Vabax) quando si arriva al desktop.
 - Suoni di sistema: valutare quelli di GNOME (licenze) oppure crearne di nuovi per VabaxOS (`vabaxos-branding`, temi sonori di DOC-01 §33).
-- Più lingue: per Vabax è importante. Già previsto (DOC-01 §28, ADR-0010: gettext, italiano e inglese); lingua dell'interfaccia e della voce separate.
+- Più lingue: per Vabax è importante. Lingua dell'interfaccia e della voce separate; una lingua nuova deve richiedere solo le sue traduzioni.
+- Problema noto da verificare: con GNOME 50, Orca in Firefox ed Electron a volte legge solo le etichette (vedi ADR-0017).
+- Voce: Vabax non ama eSpeak NG («fa schifo»), anche se tono, volume e velocità vanno bene. ADR-0006 prevede Piper opzionale dalla v0.3: valutare se anticiparlo o provare RHVoice.
 
 Note pratiche:
 
-- Non modificare `scripts/build.sh` mentre una costruzione è in corso: Bash legge lo script a pezzi e si ferma con errori strani.
-- La prova senza schermo è `scripts/test-boot.sh`: entra dalla console seriale come `user`/`live` e controlla firmware, Secure Boot e systemd.
+- **Prima di ogni blocco cerca online i problemi noti e le soluzioni già esistenti** (richiesta di Vabax): il blocco 1 è stato lento perché i problemi audio sono emersi uno alla volta.
+- Verifica la voce senza orecchie prima di chiamare Vabax: `scripts/test-boot.sh` registra l'audio e fallisce se benvenuto, console o Orca sono muti; `scripts/run-qemu.sh --record-audio FILE` e `scripts/lib/wav-timeline.py` per le prove a mano.
+- `test-boot.sh` risponde al benvenuto con i tasti prima di entrare dalla console seriale: un accesso durante il benvenuto cambierebbe l'audio.
+- Non modificare uno script mentre è in esecuzione (per esempio `build.sh` o `test-boot.sh`): Bash lo legge a pezzi.
+- Una costruzione con GNOME dura circa 12 minuti (di più la prima volta dopo un cambio di distribuzione o di snapshot).
 
 ## Dove trovare le cose
 

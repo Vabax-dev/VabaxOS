@@ -30,6 +30,7 @@ jobs:
         run: |
           find scripts -name '*.sh' -print0 | xargs -0 shellcheck
           shellcheck image/auto/config
+          shellcheck packages/*/postinst packages/*/postrm packages/*/root/usr/libexec/vabaxos/*
       - name: Every workstation package exists in Debian trixie
         run: |
           grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
@@ -41,12 +42,31 @@ jobs:
     container: debian:trixie
     steps:
       - uses: actions/checkout@v7
-      - name: Install live-build
+      - name: Install live-build from forky (ADR-0017)
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends live-build
+          apt-get install -y --no-install-recommends curl ca-certificates
+          bash scripts/install-live-build.sh
       - name: lb config on image/
         run: ./scripts/build.sh --config-only
+
+  packages:
+    name: VabaxOS packages and welcome tests
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      # Git before checkout, so the checkout is a Git repository.
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3 git ca-certificates
+      - uses: actions/checkout@v7
+      - name: Trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Build the packages
+        run: ./scripts/build-packages.sh /tmp/packages
+      - name: Welcome tests (no speech, no system changes)
+        run: python3 tests/welcome/test_welcome.py
 
   powershell:
     name: PowerShell scripts
