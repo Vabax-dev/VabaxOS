@@ -27,6 +27,10 @@ printf 'export SOURCE_DATE_EPOCH=%s\n' "$SOURCE_DATE_EPOCH" > config/all
 # - console: kernel messages and a login prompt on the first serial port too,
 #   so scripts/test-boot.sh can check the boot without a screen.
 #   tty0 stays last, so it remains the main console for the screen reader.
+# - plymouth.enable=0: no boot splash; the console stays plain text, which
+#   Speakup reads and the spoken welcome uses (ADR-0016).
+# - systemd.show_status=error: on the console only failures, no "start job
+#   is running" lines over the welcome; failures are still read aloud.
 lb config noauto \
     --mode debian \
     --distribution "$VABAXOS_DISTRIBUTION" \
@@ -51,5 +55,5 @@ lb config noauto \
     --iso-application "VabaxOS" \
     --iso-publisher "VabaxOS; https://github.com/Vabax-dev/VabaxOS" \
     --iso-volume "VabaxOS" \
-    --bootappend-live "boot=live components quiet hostname=vabaxos console=ttyS0,115200n8 console=tty0" \
+    --bootappend-live "boot=live components quiet hostname=vabaxos console=ttyS0,115200n8 console=tty0 plymouth.enable=0 systemd.show_status=error" \
     "$@"

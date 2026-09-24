@@ -48,11 +48,16 @@ lb_root() {
 }
 
 # Copies image/ into a build directory and runs "lb config" there.
+# With a second argument "packages", the VabaxOS packages (packages/) are
+# built into config/packages.chroot, where live-build installs them.
 prepare_config() {
     local dir="$1"
     rm -rf "$dir/auto" "$dir/config" "$dir/build.conf"
     mkdir -p "$dir"
     cp -a "$IMAGE/auto" "$IMAGE/config" "$IMAGE/build.conf" "$dir/"
+    if [[ "${2:-}" == packages ]]; then
+        "$REPO/scripts/build-packages.sh" "$dir/config/packages.chroot"
+    fi
     (cd "$dir" && lb config)
 }
 
@@ -100,8 +105,11 @@ fi
 
 # Clean the previous build and configure again. live-build caches the
 # bootstrapped base system: keep the cache only while the snapshot and the
-# lb config options are the same as in the build that filled it.
-CACHE_KEY="$(cat "$IMAGE/build.conf" "$IMAGE/auto/config" | sha256sum | cut -d' ' -f1)"
+# lb config options that shape the base system are the same as in the build
+# that filled it. Boot parameters and package lists do not count here.
+CACHE_KEY="$({ cat "$IMAGE/build.conf"
+    grep -E -- '--(mode|distribution|architecture|archive-areas|mirror-bootstrap|mirror-chroot|debootstrap-options|keyring-packages)' "$IMAGE/auto/config"
+} | sha256sum | cut -d' ' -f1)"
 CACHE_STAMP="$WORK/.vabaxos-cache-key"
 if [[ -d "$WORK" ]]; then
     if [[ -f "$CACHE_STAMP" && "$(cat "$CACHE_STAMP")" == "$CACHE_KEY" ]]; then
@@ -111,7 +119,7 @@ if [[ -d "$WORK" ]]; then
         (cd "$WORK" && lb_root clean --purge)
     fi
 fi
-prepare_config "$WORK"
+prepare_config "$WORK" packages
 printf '%s\n' "$CACHE_KEY" > "$CACHE_STAMP"
 
 printf '\nlive-build: inizio (snapshot Debian %s)\n' "$VABAXOS_SNAPSHOT"
