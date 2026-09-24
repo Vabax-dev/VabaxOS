@@ -31,7 +31,6 @@ jobs:
           find scripts -name '*.sh' -print0 | xargs -0 shellcheck
           shellcheck image/auto/config
           shellcheck packages/*/postinst packages/*/postrm packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
-          python3 -m py_compile packages/vabaxos-accessibility/root/usr/bin/vabaxos-status
       - name: Every workstation package exists in Debian trixie
         run: |
           grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
@@ -73,6 +72,12 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Build the packages
         run: ./scripts/build-packages.sh /tmp/packages
+      - name: Python programs compile
+        run: |
+          for f in packages/*/root/usr/bin/* packages/*/root/usr/lib/speech-dispatcher-modules/*; do
+            if head -1 "$f" | grep -q python3; then python3 -m py_compile "$f"; fi
+          done
+          python3 -m compileall -q packages/*/root/usr/lib/python3
       - name: Welcome tests (no speech, no system changes)
         run: python3 tests/welcome/test_welcome.py
       - name: Setup tests (hidden Broadway display, settings in memory)
