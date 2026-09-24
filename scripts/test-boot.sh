@@ -322,6 +322,37 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'tasti del mouse: GNOME Shell' "$(value mousekeys)" stabile
 fi
 
+# Desktop voice chosen at boot (ADR-0019): the service must succeed and
+# write the default module. In the test VM (4 GB, 2 processors) the choice
+# is usually eSpeak NG; then Kokoro is forced and Orca must still speak.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select' || exit 1
+    ask voicemodule 'sed -n "s/^DefaultModule //p" /etc/speech-dispatcher/clients/zz-vabaxos-voice.conf' || exit 1
+    ask voicereason 'grep "^#" /var/lib/vabaxos/voice.conf | tr -d "#"' || exit 1
+    check "scelta della voce all'avvio" "$(value voiceselect)" success
+    printf 'INFO: voce del desktop scelta: %s (%s)\n' "$(value voicemodule)" "$(value voicereason)"
+fi
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    send "sudo vabaxos-voice-select --engine kokoro >/dev/null; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true"
+    ask kokoro 'for i in $(seq 90); do pgrep -u user -f sd_kokoro >/dev/null && break; sleep 1; done; sleep 10; pgrep -u user -f sd_kokoro >/dev/null && echo yes || echo no' || exit 1
+    check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
+    check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"
+fi
+
+# Start menu (ADR-0018): ArcMenu active; Super opens it and every control
+# must have a name for Orca. The full accessibility tree of GNOME Shell
+# goes to the serial log, to see what the screen reader finds.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask arcmenu "env $BUS gnome-extensions list --enabled --active | grep -c arcmenu@arcmenu.com" || exit 1
+    check 'menu Start (ArcMenu) attivo' "$(value arcmenu)" 1
+    press meta_l
+    sleep 3
+    send "env $BUS vabaxos-a11y-check --list gnome-shell > /tmp/shell-a11y.txt 2>&1; sed 's/^/A11Y: /' /tmp/shell-a11y.txt"
+    ask shella11y "tail -1 /tmp/shell-a11y.txt" || exit 1
+    press esc
+    printf 'INFO: menu Start aperto con Super: %s\n' "$(value shella11y)"
+fi
+
 if [[ "$(value state)" != running ]]; then
     ask failed 'systemctl --failed --no-legend --plain | cut -d" " -f1 | paste -sd,' || exit 1
     printf 'INFO: unità fallite: %s\n' "$(value failed)"

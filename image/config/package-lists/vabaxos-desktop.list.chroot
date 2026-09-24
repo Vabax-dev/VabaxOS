@@ -2,6 +2,8 @@
 # GDM, PipeWire and the basic applications; NetworkManager, Firefox ESR
 # and all locales come as recommended packages.
 gnome-core
+# Start menu with the VabaxOS logo (ADR-0018), set up by vabaxos-settings.
+gnome-shell-extension-arc-menu
 network-manager
 locales-all
 

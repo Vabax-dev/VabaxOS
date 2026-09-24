@@ -1,0 +1,17 @@
+# VabaxOS Start menu (ADR-0018): ArcMenu, "Redmond" layout (like the
+# Windows 7 Start menu), with the VabaxOS logo as its button. Super opens
+# it; the GNOME overview stays on Super+A. System commands include
+# Suspend, as in the macOS Apple menu. Defaults: users can change them.
+# A dconf system database instead of a GSettings override, because the
+# Debian package 69.2-1 installs its schema only inside the extension.
+[org/gnome/shell]
+enabled-extensions=['arcmenu@arcmenu.com']
+
+[org/gnome/shell/extensions/arcmenu]
+menu-layout='redmond'
+menu-button-icon='/usr/share/icons/hicolor/scalable/apps/vabaxos-logo.svg'
+position-in-panel='Left'
+arcmenu-hotkey=['Super_L']
+arcmenu-hotkey-overlay-key-enabled=true
+power-options=[(0, true), (1, true), (2, true), (3, true), (4, true), (5, false), (6, false), (7, false)]
+update-notifier-enabled=false

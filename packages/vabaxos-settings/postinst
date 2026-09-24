@@ -1,0 +1,6 @@
+#!/bin/sh
+# Compiles the VabaxOS dconf defaults (/etc/dconf/db/vabaxos.d).
+set -e
+if [ "$1" = configure ] && command -v dconf >/dev/null; then
+    dconf update
+fi
