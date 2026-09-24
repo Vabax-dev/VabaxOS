@@ -55,12 +55,14 @@ jobs:
     runs-on: ubuntu-latest
     container: debian:trixie
     steps:
-      - uses: actions/checkout@v7
+      # Git before checkout, so the checkout is a Git repository.
       - name: Install tools
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends python3 git
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          apt-get install -y --no-install-recommends python3 git ca-certificates
+      - uses: actions/checkout@v7
+      - name: Trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Build the packages
         run: ./scripts/build-packages.sh /tmp/packages
       - name: Welcome tests (no speech, no system changes)

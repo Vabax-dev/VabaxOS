@@ -18,8 +18,17 @@ mkdir -p "$OUT"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-# Same timestamps in every build, so the ISO stays reproducible.
-export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$REPO" log -1 --format=%ct)}"
+# Same timestamps in every build, so the ISO stays reproducible: the date of
+# the last commit, or, outside a Git checkout, the snapshot date of the ISO.
+if [[ -z "${SOURCE_DATE_EPOCH:-}" ]]; then
+    SOURCE_DATE_EPOCH="$(git -C "$REPO" log -1 --format=%ct 2>/dev/null || true)"
+fi
+if [[ -z "$SOURCE_DATE_EPOCH" ]]; then
+    # shellcheck source=/dev/null
+    . "$REPO/image/build.conf"
+    SOURCE_DATE_EPOCH="$(date -u -d "$(sed -E 's/^(....)(..)(..)T(..)(..)(..)Z$/\1-\2-\3 \4:\5:\6 UTC/' <<< "$VABAXOS_SNAPSHOT")" +%s)"
+fi
+export SOURCE_DATE_EPOCH
 
 for dir in "$REPO"/packages/*/; do
     name="$(basename "$dir")"
