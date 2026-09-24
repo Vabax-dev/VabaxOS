@@ -18,6 +18,12 @@ export SOURCE_DATE_EPOCH
 mkdir -p config
 printf 'export SOURCE_DATE_EPOCH=%s\n' "$SOURCE_DATE_EPOCH" > config/all
 
+# Installer (ADR-0007): the Debian Installer in "live" mode copies this live
+# system to the disk. As in Debian's own testing live images it is built
+# from git at the date of the snapshot (SOURCE_DATE_EPOCH): prebuilt testing
+# installer images often do not match the kernel of the archive.
+# Firmware (Wi-Fi, sound) is included in the live system and the installer.
+#
 # Testing ("forky", ADR-0017) has no separate security or updates archive:
 # --security false --updates false, as in Debian's own testing live images.
 #
@@ -49,9 +55,11 @@ lb config noauto \
     --bootloaders "grub-efi grub-pc" \
     --uefi-secure-boot enable \
     --binary-images iso-hybrid \
-    --debian-installer none \
-    --firmware-chroot false \
-    --firmware-binary false \
+    --debian-installer live \
+    --debian-installer-distribution git \
+    --debian-installer-gui true \
+    --firmware-chroot true \
+    --firmware-binary true \
     --memtest none \
     --iso-application "VabaxOS" \
     --iso-publisher "VabaxOS; https://github.com/Vabax-dev/VabaxOS" \
