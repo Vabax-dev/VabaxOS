@@ -20,12 +20,18 @@ Nella lingua scelta si sente:
 
 Le scelte:
 
-- **Prova VabaxOS**: parte il desktop, con Orca che legge lo schermo. Il disco del computer non viene toccato.
-- **Voce e tastiera**: voce più lenta o più veloce, tastiera italiana o inglese. «Indietro» torna all'elenco.
+- **Prova VabaxOS**: parte il desktop, con Orca che legge lo schermo. Il disco del computer non viene toccato. Poco dopo si apre la [configurazione iniziale](configurazione.md).
+- **Installa VabaxOS**: spiega come avviare l'installer (riavvia e, dopo i due bip, premi I) e offre di riavviare subito.
+- **Accessibilità**: ogni voce dice il suo stato, per esempio «Alto contrasto: spento». Invio lo cambia.
+  - voce più lenta o più veloce;
+  - tastiera italiana o inglese;
+  - testo grande: caratteri più grandi subito nella console, e testo e puntatore più grandi nel desktop;
+  - alto contrasto nel desktop;
+  - zoom nel desktop;
+  - tasti permanenti nel desktop, per premere le combinazioni un tasto alla volta.
+  Le scelte valgono anche nel desktop, e la velocità della voce anche per Orca. «Indietro» torna all'elenco.
 - **Riavvia**.
 - **Spegni**.
-
-«Installa VabaxOS» comparirà quando la ISO conterrà l'installer (lavoro 9).
 
 ## Tasti
 
@@ -42,6 +48,5 @@ Con «VabaxOS without voice» nel menu di avvio, il benvenuto compare solo come 
 
 ## Limiti noti
 
-- La velocità scelta vale per il benvenuto e per la voce della console. Per Orca, nel desktop, arriverà con la configurazione iniziale (lavoro 8).
 - Le lingue per ora sono inglese e italiano.
 - Spegnimento: con Orca attivo, a volte il sistema restava 90 secondi in silenzio prima di spegnersi. La causa non è ancora trovata (probabilmente Orca o la sua voce). Per ora VabaxOS aspetta al massimo 10 secondi i programmi della sessione.
