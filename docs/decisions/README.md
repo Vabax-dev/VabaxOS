@@ -37,4 +37,4 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0013](0013-ambiente-di-sviluppo.md) | Ambiente di sviluppo: Windows 11 + WSL2 Debian + QEMU | Accettata |
 | [0014](0014-voce-dal-primo-secondo.md) | Voce dal primo secondo: accessibilità attiva di default | Accettata |
 | [0015](0015-versioni-e-rilasci.md) | Versioni, canali e nomi degli artefatti | Accettata |
-| [0016](0016-benvenuto-parlato.md) | Benvenuto parlato all'avvio, prima del desktop | Proposta |
+| [0016](0016-benvenuto-parlato.md) | Benvenuto parlato all'avvio, prima del desktop | Accettata |
