@@ -128,10 +128,14 @@ ask() {
     send "echo \"$key\"=\"\$($command)\" ; echo VABAX-\"\"DONE-$key"
     wait_for "^VABAX-DONE-$key" "risposta: $key"
 }
-# Each answer is a line "key=value", once terminal control sequences are removed;
-# the echoed command line starts with the prompt instead.
+# Each answer is a line "key=value", once terminal control sequences are removed:
+# CSI sequences (colours, cursor) and OSC sequences, such as the OSC 3008
+# context markers that systemd 258 and later write around each command.
+# The echoed command line starts with the prompt instead.
 value() {
-    tr -d '\r' < "$LOG" | sed -e 's/\x1b\[[0-9;?=!]*[A-Za-z]//g' | sed -n "s/^$1=//p" | tail -n 1
+    tr -d '\r' < "$LOG" \
+        | sed -e 's/\x1b\][^\x07\x1b]*\(\x07\|\x1b\\\)//g' -e 's/\x1b\[[0-9;?=!]*[A-Za-z]//g' \
+        | sed -n "s/^$1=//p" | tail -n 1
 }
 
 printf 'Test di avvio (%s, voce del menu: %s). Log della console seriale: %s\n' "$MODE" "$ENTRY" "$LOG"
@@ -241,17 +245,18 @@ check lingua "$(value lang)" "$WANT_LANG"
 printf 'INFO: kernel %s\n' "$(value kernel)"
 printf 'INFO: sistema %s\n' "$(value os)"
 
-# Sound. In the desktop, a new terminal window takes the focus, and Orca
-# must announce it (more reliable than the Activities overview). Then the
-# third text console, where Speakup must read the login prompt, and back to
-# the desktop (or the first console), where Orca must announce a new
-# terminal again. Ctrl+Shift+Q closes the terminal.
+# Sound. In the desktop, a desktop notification must be read by Orca (it is
+# read whatever window has the focus). Then the third text console, where
+# Speakup must read the login prompt, and back to the desktop (or the first
+# console), where Orca must read a new notification.
 orca_speaks() {
-    send 'env XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus setsid gtk-launch org.gnome.Ptyxis >/dev/null 2>&1 &'
-    record "$1" 10
-    press ctrl-shift-q
-    sleep 3
+    send "env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications.Notify VabaxOS 0 '' 'Test $1' 'VabaxOS test' '[]' '{}' 5000 >/dev/null"
+    record "$1" 8
 }
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    # Orca speaks through speech-dispatcher, which starts with Orca.
+    ask sd 'for i in $(seq 60); do pgrep -u user -x speech-dispatch >/dev/null && break; sleep 1; done; sleep 5; pgrep -u user -x speech-dispatch >/dev/null && echo yes || echo no' || exit 1
+fi
 if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'Orca udibile nel desktop' "$(orca_speaks orca)" "$WANT_SOUND"
     ask vt 'loginctl show-session $(loginctl list-sessions --no-legend | awk "\$3==\"user\" && \$4==\"seat0\" {print \$1}" | head -1) -p VTNr --value' || exit 1
