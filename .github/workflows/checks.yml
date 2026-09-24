@@ -59,9 +59,15 @@ jobs:
       - name: Install tools
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends python3 git ca-certificates \
-            python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas
+          apt-get install -y --no-install-recommends python3 git ca-certificates curl \
+            python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas \
+            python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0
       - uses: actions/checkout@v7
+      # Large files of the packages (the Kokoro model), downloaded once.
+      - uses: actions/cache@v4
+        with:
+          path: cache/downloads
+          key: downloads-${{ hashFiles('packages/*/fetch') }}
       - name: Trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Build the packages
@@ -70,6 +76,11 @@ jobs:
         run: python3 tests/welcome/test_welcome.py
       - name: Setup tests (hidden Broadway display, settings in memory)
         run: python3 tests/setup/test_setup.py
+      - name: Voice tests (Kokoro module, audio to a file)
+        run: |
+          dpkg-deb -x /tmp/packages/vabaxos-voice_*.deb /tmp/voice
+          export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
+          python3 tests/voice/test_module.py
 
   powershell:
     name: PowerShell scripts

@@ -1,0 +1,257 @@
+# Phrases Orca and GNOME say often: vabaxos-voice prepares them in advance,
+# so they start at once (ADR-0019). One per line.
+button
+toggle button
+check box
+checked
+not checked
+radio button
+switch
+on
+off
+pressed
+not pressed
+menu
+menu item
+submenu
+menu bar
+popup menu
+combo box
+text
+password text
+label
+link
+visited
+heading
+heading level 1
+heading level 2
+heading level 3
+list
+list item
+table
+row
+column
+cell
+tree
+tree item
+expanded
+collapsed
+tab
+page
+frame
+dialog
+alert
+notification
+tool bar
+status bar
+panel
+slider
+progress bar
+spin button
+image
+icon
+document
+editable
+read only
+unavailable
+required
+blank
+space
+enter
+caps lock on
+caps lock off
+home
+end
+page up
+page down
+delete
+backspace
+undo
+redo
+copy
+cut
+paste
+select all
+selected
+unselected
+Yes
+No
+OK
+Cancel
+Close
+Open
+Save
+Save As
+Back
+Next
+Done
+Help
+Settings
+Preferences
+Search
+File
+Edit
+View
+Tools
+Window
+New
+Quit
+Restart
+Power Off
+Suspend
+Lock
+Log Out
+About
+Activities
+Applications
+All programs
+Favorites
+Recent
+Documents
+Downloads
+Pictures
+Music
+Videos
+Home
+Desktop
+Trash
+Terminal
+Firefox
+Files
+Screen reader on
+Screen reader off
+Wi-Fi
+Bluetooth
+Volume
+Battery
+Network
+connected
+disconnected
+Start menu
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+k
+l
+m
+n
+o
+p
+q
+r
+s
+t
+u
+v
+w
+x
+y
+z
