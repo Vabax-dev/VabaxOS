@@ -3,9 +3,10 @@
 # espeak-ng plays only through PulseAudio, and root has no sound server of
 # its own: espeakup speaks through the PulseAudio socket of the user's
 # PipeWire, so console speech and Orca share the sound card instead of
-# fighting for it. In the live system the user's PipeWire runs from boot
-# (linger); otherwise the socket appears when a user logs in, and a drop-in
-# for user@.service then restarts espeakup.
+# fighting for it. In the live system the live user's manager, and so its
+# PipeWire, starts before espeakup (image/config/includes.chroot_after_packages);
+# otherwise the socket appears when a user logs in, and a drop-in for
+# user@.service then restarts espeakup.
 # A voice set in /etc/default/espeakup (default_voice=) wins.
 set -e
 
