@@ -1,0 +1,95 @@
+#!/usr/bin/python3
+"""Checks a running program the way a screen reader sees it (ADR-0010).
+
+    vabaxos-a11y-check [--wait SECONDS] [--list] PROGRAM
+
+Walks the AT-SPI accessibility tree of PROGRAM (the application name, for
+example vabaxos-setup) and reports every control a screen reader user can
+reach (buttons, switches, check boxes, text fields, spin buttons, combo
+boxes, list items, menu items, links, sliders) that has no accessible name.
+With --list it prints every node: depth, role and name.
+
+Exit status: 0 if every control has a name, 1 if some have none, 2 if the
+program was not found.
+"""
+
+import sys
+import time
+
+import gi
+
+gi.require_version("Atspi", "2.0")
+from gi.repository import Atspi  # noqa: E402
+
+CONTROLS = {
+    Atspi.Role.PUSH_BUTTON, Atspi.Role.TOGGLE_BUTTON, Atspi.Role.CHECK_BOX,
+    Atspi.Role.RADIO_BUTTON, Atspi.Role.SWITCH if hasattr(Atspi.Role, "SWITCH") else Atspi.Role.TOGGLE_BUTTON,
+    Atspi.Role.ENTRY, Atspi.Role.PASSWORD_TEXT, Atspi.Role.SPIN_BUTTON, Atspi.Role.COMBO_BOX,
+    Atspi.Role.LIST_ITEM, Atspi.Role.MENU_ITEM, Atspi.Role.LINK, Atspi.Role.SLIDER,
+}
+
+
+def find_application(name):
+    desktop = Atspi.get_desktop(0)
+    for index in range(desktop.get_child_count()):
+        app = desktop.get_child_at_index(index)
+        if app is not None and app.get_name() == name:
+            return app
+    return None
+
+
+def labelled_by_text(node):
+    """A control named by its own children, such as a button with a label."""
+    for index in range(node.get_child_count()):
+        child = node.get_child_at_index(index)
+        if child is not None and (child.get_name() or "").strip():
+            return True
+    return False
+
+
+def walk(node, depth, report, listing):
+    try:
+        role = node.get_role()
+        name = (node.get_name() or "").strip()
+        states = node.get_state_set()
+    except gi.repository.GLib.Error:
+        return
+    showing = states.contains(Atspi.StateType.SHOWING)
+    if listing:
+        print(f"{'  ' * depth}{node.get_role_name()}: {name}")
+    if role in CONTROLS and showing and not name and not labelled_by_text(node):
+        report.append(f"{node.get_role_name()} without a name (depth {depth})")
+    for index in range(node.get_child_count()):
+        child = node.get_child_at_index(index)
+        if child is not None:
+            walk(child, depth + 1, report, listing)
+
+
+def main(argv):
+    args = argv[1:]
+    listing = "--list" in args
+    wait = 10.0
+    if "--wait" in args:
+        wait = float(args[args.index("--wait") + 1])
+    names = [a for i, a in enumerate(args) if not a.startswith("--") and (i == 0 or args[i - 1] != "--wait")]
+    if not names:
+        print(__doc__)
+        return 2
+    deadline = time.monotonic() + wait
+    app = find_application(names[0])
+    while app is None and time.monotonic() < deadline:
+        time.sleep(0.5)
+        app = find_application(names[0])
+    if app is None:
+        print(f"{names[0]}: not found on the accessibility bus")
+        return 2
+    report = []
+    walk(app, 0, report, listing)
+    for line in report:
+        print("NO NAME: " + line)
+    print(f"{names[0]}: {len(report)} controls without a name")
+    return 1 if report else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
