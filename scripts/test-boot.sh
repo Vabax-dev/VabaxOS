@@ -359,6 +359,43 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'menu Start: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
 fi
 
+# Desktop programs (block 5, ROADMAP v0.1): Files, Terminal and the
+# Settings panels for Wi-Fi, Bluetooth and Power must open, and the
+# controls without a name are counted. GNOME programs are not ours: the
+# counts are information, with the full trees in the serial log.
+DESKTOP_ENV="$BUS WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000"
+app_a11y() {
+    local key="$1" launch="$2" name="$3"
+    send "env $DESKTOP_ENV $launch >/dev/null 2>&1 &"
+    ask "$key" "env $BUS vabaxos-a11y-check --wait 40 $name > /tmp/$key.txt 2>&1; tail -1 /tmp/$key.txt" || exit 1
+    send "sed 's/^/A11Y-$key: /' /tmp/$key.txt | grep 'NO NAME' ; pkill -f '$launch' ; sleep 2"
+    printf 'INFO: %s\n' "$(value "$key")"
+}
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    app_a11y files nautilus nautilus
+    app_a11y terminal ptyxis ptyxis
+    app_a11y wifi 'gnome-control-center wifi' control-center
+    app_a11y bluetooth 'gnome-control-center bluetooth' control-center
+    app_a11y power 'gnome-control-center power' control-center
+    ask status "env $BUS vabaxos-status battery" || exit 1
+    printf 'INFO: vabaxos-status: %s\n' "$(value status)"
+    ask soundtheme "env $BUS gsettings get org.gnome.desktop.sound theme-name" || exit 1
+    check 'tema dei suoni' "$(value soundtheme)" "'vabaxos-cristallo'"
+    ask font "env $BUS gsettings get org.gnome.desktop.interface font-name" || exit 1
+    check 'font del desktop' "$(value font)" "'Atkinson Hyperlegible Next 11'"
+fi
+
+# Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    send 'sudo systemctl suspend'
+    sleep 15
+    monitor system_wakeup
+    sleep 10
+    ask resumed 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "System returned from sleep"' || exit 1
+    printf 'INFO: ripresa dalla sospensione: %s\n' "$(value resumed)"
+    check 'Orca udibile dopo la sospensione' "$(orca_speaks orca-resume)" "$WANT_SOUND"
+fi
+
 if [[ "$(value state)" != running ]]; then
     ask failed 'systemctl --failed --no-legend --plain | cut -d" " -f1 | paste -sd,' || exit 1
     printf 'INFO: unità fallite: %s\n' "$(value failed)"

@@ -108,6 +108,9 @@ else
 fi
 
 MACHINE=q35
+# Suspend to RAM (S3) is off by default on q35: on, to test suspend and
+# resume like on a laptop.
+ARGS+=(-global ICH9-LPC.disable_s3=0)
 case "$FIRMWARE" in
     uefi | secure-boot)
         if [[ "$FIRMWARE" == secure-boot ]]; then
