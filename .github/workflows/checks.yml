@@ -15,3 +15,45 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: fsfe/reuse-action@v6
+
+  shell:
+    name: Shell scripts and Debian packages
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends shellcheck
+      - name: ShellCheck
+        run: find scripts -name '*.sh' -print0 | xargs -0 shellcheck
+      - name: Every workstation package exists in Debian trixie
+        run: |
+          grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
+            | xargs apt-get install --simulate -y > /dev/null
+
+  powershell:
+    name: PowerShell scripts
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $failed = $false
+          Get-ChildItem -Path scripts -Recurse -Filter *.ps1 | ForEach-Object {
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errors)
+            if ($errors) { $errors | Format-List | Out-String | Write-Host; $failed = $true }
+            else { Write-Host "OK: $($_.Name)" }
+          }
+          if ($failed) { exit 1 }
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $results = Invoke-ScriptAnalyzer -Path scripts -Recurse -Severity Error,Warning `
+            -ExcludeRule PSAvoidUsingWriteHost
+          if ($results) { $results | Format-Table -AutoSize | Out-String | Write-Host; exit 1 }
+          Write-Host 'OK: no findings'

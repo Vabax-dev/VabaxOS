@@ -10,3 +10,6 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Decisioni architetturali ADR-0001–0015, che chiudono le dieci decisioni da prendere prima della v0.1.
 - I 32 documenti di progetto originali in `docs/specs/`.
 - Modelli per issue e pull request, CI di controllo delle licenze (REUSE).
+- Guida alla postazione di sviluppo su Windows con NVDA e script di preparazione e verifica (`scripts/postazione/`).
+- `CLAUDE.md` e prompt di avvio per lo sviluppo con Claude.
+- CI: ShellCheck, verifica dei pacchetti Debian della postazione, analisi degli script PowerShell.

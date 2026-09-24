@@ -68,7 +68,7 @@ Ogni punto diventerà un caso di test in `tests/`. I punti segnati con ★ corre
 
 Ogni lavoro diventerà una issue su GitHub, con il modello «Lavoro».
 
-1. Guida alla postazione Windows: WSL2 Debian, QEMU, audio e KVM (ADR-0013).
+1. Guida alla postazione Windows: WSL2 Debian, QEMU, audio e KVM (ADR-0013). **Scritta** ([guida](docs/sviluppo/postazione-windows.md)), da collaudare sulla postazione vera.
 2. Scheletro di live-build in `image/` e `scripts/build.sh` (ADR-0002).
 3. `scripts/run-qemu.sh`: UEFI, Secure Boot, audio.
 4. Menu di avvio parlante: segnale acustico, voci del menu, attesa (ADR-0014).

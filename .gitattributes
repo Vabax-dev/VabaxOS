@@ -6,3 +6,4 @@
 *.ogg binary
 *.wav binary
 *.iso binary
+*.cmd text eol=crlf
