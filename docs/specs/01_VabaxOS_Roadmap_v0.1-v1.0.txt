@@ -1,0 +1,2627 @@
+VABAXOS ROADMAP TECNICA E ARCHITETTURA Dalla v0.1 alla v1.0
+
+Documento di progettazione iniziale Data: 23 settembre 2026 Stato: Draft
+tecnico v0.1
+
+======================================================================
+0. OBIETTIVO DEL PROGETTO
+======================================================================
+
+VabaxOS sarà una distribuzione Linux completa, leggera, stabile, veloce
+e progettata con un principio fondamentale:
+
+    ACCESSIBILITY FIRST
+
+L’accessibilità non sarà un componente aggiunto dopo l’installazione.
+Dovrà essere parte integrante dell’esperienza di boot, installazione,
+configurazione, desktop e utilizzo quotidiano.
+
+Obiettivo della versione 1.0: - supporto principale a sistemi x86 e
+x86-64; - boot su hardware PC compatibile; - funzionamento sia su
+macchine fisiche sia virtuali; - ambiente desktop completo; - installer
+accessibile; - screen reader integrato e avviato automaticamente quando
+richiesto; - sintesi vocale funzionante fin dal primo avvio; - supporto
+tastiera e navigazione senza mouse; - rete, audio, Bluetooth e storage
+funzionanti; - sistema di aggiornamento; - applicazioni essenziali; -
+ISO live installabile; - documentazione; - sistema di build
+riproducibile; - base architetturale pronta per ARM nella serie 2.x.
+
+NOTA SUL SUPPORTO HARDWARE: “tutti x86/x64” deve essere interpretato
+come obiettivo di compatibilità architetturale, non come promessa che
+ogni singolo PC esistente funzionerà perfettamente. GPU, Wi-Fi, audio,
+firmware, Secure Boot, periferiche proprietarie e configurazioni OEM
+possono richiedere driver o firmware specifici. La v1.0 dovrà puntare a
+un’elevata compatibilità con il normale hardware PC x86-64 e a una
+matrice hardware ufficiale.
+
+La serie 2.x aggiungerà ARM/ARM64 e il lavoro specifico necessario per
+dispositivi ARM, Chromebook e Mac, con particolare attenzione ai Mac
+Apple Silicon.
+
+====================================================================== 1.
+RICERCA PRELIMINARE: RISORSE OPEN SOURCE DA STUDIARE PRIMA DEL CODICE
+======================================================================
+
+Prima di costruire componenti proprietari di VabaxOS, il progetto dovrà
+cercare, valutare e documentare le risorse open source già disponibili.
+
+Regola del progetto:
+
+    NON REINVENTARE UN COMPONENTE SE ESISTE GIÀ UNA BASE OPEN SOURCE
+    SOLIDA, MANTENUTA E COMPATIBILE CON LA LICENZA DI VABAXOS.
+
+Ogni componente esterno dovrà essere valutato per: - licenza; - stato di
+manutenzione; - qualità del codice; - compatibilità hardware; -
+sicurezza; - prestazioni; - accessibilità; - API disponibili; - facilità
+di personalizzazione; - possibilità di distribuirlo nell’ISO; -
+eventuali obblighi di redistribuzione/modifica; - dipendenze; -
+compatibilità con aggiornamenti futuri.
+
+Risorse individuate nella ricerca preliminare:
+
+1.  Linux Kernel Ruolo: kernel principale di VabaxOS. Motivazioni:
+    enorme supporto hardware, molte architetture, driver, networking,
+    storage, sicurezza, virtualizzazione e maturità. Documentazione
+    ufficiale: https://docs.kernel.org/ Architetture x86:
+    https://docs.kernel.org/arch/x86/ Architetture ARM:
+    https://docs.kernel.org/arch/arm/ Architetture ARM64:
+    https://docs.kernel.org/arch/arm64/
+
+2.  systemd Ruolo: init system/PID 1 e infrastruttura di sistema.
+    Fornisce gestione dei servizi, parallelizzazione dell’avvio,
+    cgroups, logging e numerosi componenti di base. Sito:
+    https://systemd.io/
+
+3.  systemd-boot Ruolo: boot manager UEFI candidato per VabaxOS. È
+    semplice e integrato con l’ecosistema systemd. Documentazione:
+    https://systemd.io/BOOT/ Durante la fase di compatibilità verrà
+    comunque valutato anche GRUB.
+
+4.  Wayland Ruolo: protocollo grafico/display moderno. VabaxOS dovrà
+    privilegiare Wayland, mantenendo compatibilità con applicazioni X11
+    tramite XWayland quando necessario. Documentazione:
+    https://wayland.freedesktop.org/docs/
+
+5.  AT-SPI2 Ruolo: infrastruttura principale di accessibilità Linux. È
+    il canale attraverso il quale lo screen reader può ottenere ruoli,
+    nomi, stati, testo, azioni, documenti, tabelle e altre informazioni
+    dalle applicazioni accessibili. Documentazione:
+    https://gnome.pages.gitlab.gnome.org/at-spi2-core/
+
+6.  Orca Ruolo: riferimento open source per screen reader Linux e
+    possibile base di studio/integrabilità. Orca supporta speech e
+    display Braille e utilizza AT-SPI. Documentazione:
+    https://help.gnome.org/orca/ Non verrà assunto automaticamente come
+    soluzione finale: VabaxOS dovrà valutare se forkare/personalizzare
+    Orca, contribuire upstream o creare un proprio Vabax Screen Reader
+    basato sulle API Linux.
+
+7.  NVDA Ruolo: principale riferimento funzionale per progettare
+    l’esperienza dello screen reader VabaxOS. NVDA è open source e il
+    codice corrente utilizza GPL-2.0-or-later. Tuttavia NVDA è
+    fortemente legato alle API e all’architettura di Windows. Non è
+    quindi un componente che può essere semplicemente copiato su Linux.
+    Repository: https://github.com/nvaccess/nvda Decisione preliminare:
+
+    -   studiare architettura, UX, navigazione, speech, braille, input,
+        web navigation e addon;
+    -   riutilizzare codice solo quando tecnicamente e legalmente
+        possibile;
+    -   non progettare VabaxOS assumendo che NVDA possa essere portato
+        direttamente su Linux.
+
+8.  PipeWire + WirePlumber Ruolo: audio e gestione dei dispositivi
+    multimediali. PipeWire offre audio/video routing e compatibilità con
+    diversi protocolli; WirePlumber gestisce dispositivi e policy.
+    Documentazione: https://docs.pipewire.org/ VabaxOS dovrà utilizzare
+    PipeWire come base audio moderna.
+
+9.  NetworkManager Ruolo: rete Ethernet, Wi-Fi, VPN e gestione delle
+    connessioni. È una soluzione standard dell’ecosistema Linux desktop.
+    Sito/documentazione: https://networkmanager.dev/docs/
+
+10. Flatpak Ruolo: distribuzione di applicazioni desktop isolate e
+    portabili. Potrà essere utilizzato insieme al sistema pacchetti
+    nativo di VabaxOS. Documentazione: https://docs.flatpak.org/
+
+11. Calamares Ruolo: possibile base per l’installer grafico. È modulare
+    e configurabile e dispone di moduli per welcome, lingua, tastiera,
+    partizioni, utenti, riepilogo, installazione e conclusione.
+    Documentazione: https://calamares.io/docs/users-guide/ Requisito
+    VabaxOS: rendere l’intero installer utilizzabile da tastiera e
+    screen reader, oppure sviluppare un frontend/accessibility layer
+    VabaxOS specifico.
+
+12. Debian Live / live-build Ruolo: possibile tecnologia iniziale per
+    costruire immagini Live. live-build automatizza la costruzione e
+    personalizzazione di sistemi Live basati su Debian. Documentazione:
+    https://live-team.pages.debian.org/live-manual/ Valutare se
+    utilizzarlo nella fase prototipale.
+
+13. Linux From Scratch / Beyond Linux From Scratch Ruolo: risorsa
+    didattica e architetturale. Non è necessariamente la tecnologia di
+    build definitiva, ma è utile per comprendere profondamente come
+    viene assemblato un sistema Linux.
+    https://www.linuxfromscratch.org/lfs/
+    https://www.linuxfromscratch.org/blfs/
+
+14. Buildroot Ruolo: strumento di studio e possibile riferimento per
+    sistemi minimali e cross-compilazione. È però orientato soprattutto
+    all’embedded; non sarà la scelta predefinita per il desktop VabaxOS.
+    https://buildroot.org/docs.html
+
+15. Yocto Project / OpenEmbedded Ruolo: riferimento per sistemi Linux
+    personalizzati e multi-arch. Potrà essere rivalutato in futuro per
+    ARM e dispositivi specifici, ma per una distribuzione desktop x86
+    iniziale aumenta la complessità. https://www.yoctoproject.org/
+    https://docs.yoctoproject.org/
+
+16. eSpeak NG / motori TTS Ruolo: fallback TTS leggero e disponibile
+    offline. Dovrà essere valutato insieme a motori vocali di qualità
+    superiore. La sintesi deve funzionare anche senza connessione
+    Internet.
+
+17. Piper e altri TTS neurali locali Ruolo: possibile motore vocale di
+    qualità superiore. Piper offre modelli vocali locali e supporto
+    x86-64/ARM64 in diversi progetti/repository, ma ogni voce deve
+    essere controllata per la relativa licenza. Risorsa da studiare:
+    https://github.com/rhasspy/piper NOTA: il repository storico di
+    Piper risulta archiviato; prima di integrarlo definitivamente
+    bisognerà individuare il mantenitore e repository attivo da
+    utilizzare.
+
+======================================================================
+2. SCELTE ARCHITETTURALI PRELIMINARI
+======================================================================
+
+Kernel: Linux
+
+Init: systemd
+
+Boot: UEFI + systemd-boot come prima scelta GRUB come
+compatibilità/fallback da valutare
+
+Display: Wayland
+
+Compatibilità grafica: XWayland
+
+Accessibility: AT-SPI2
+
+Screen reader: Vabax Screen Reader, sviluppato progressivamente sulla
+base delle API Linux e prendendo Orca/NVDA come riferimenti funzionali.
+
+Audio: PipeWire + WirePlumber
+
+Networking: NetworkManager
+
+Application packaging: pacchetti nativi + Flatpak
+
+Installer: Calamares fortemente personalizzato oppure installer VabaxOS
+dedicato
+
+Filesystem: ext4 come default iniziale. Btrfs potrà essere valutato per
+snapshot/rollback nelle release future.
+
+Boot mode: UEFI come standard principale. Legacy BIOS/CSM da supportare
+nella misura necessaria per ampliare la compatibilità x86.
+
+Architettura v1.0: x86-64 come target principale. x86 32-bit sarà
+valutato con attenzione perché il supporto desktop moderno e il parco
+hardware sono molto più limitati. L’obiettivo dichiarato del progetto
+resta x86/x86-64, ma la matrice hardware ufficiale dovrà distinguere
+chiaramente x86 32-bit da x86-64.
+
+Architettura v2.0: ARM64 prima di ARM32. Chromebook e Mac richiederanno
+profili/platform target dedicati.
+
+======================================================================
+3. PRINCIPI DI PROGETTAZIONE
+======================================================================
+
+1.  Accessibility First Ogni schermata fondamentale deve essere
+    utilizzabile senza vista.
+
+2.  Offline First per l’accessibilità Il primo boot, la configurazione
+    iniziale e lo screen reader non devono dipendere da Internet.
+
+3.  Fast Boot Ridurre al minimo i servizi avviati inutilmente. Usare
+    avvio parallelo e servizi on-demand dove appropriato.
+
+4.  Lightweight Poche applicazioni preinstallate, niente bloatware,
+    servizi ridotti, memoria e CPU utilizzate in modo responsabile.
+
+5.  Stable Separazione tra componenti core e applicazioni. Aggiornamenti
+    testati prima della distribuzione stabile.
+
+6.  Secure by default Aggiornamenti firmati, privilegi minimi, firewall
+    configurabile, sandboxing applicativo, gestione sicura delle
+    credenziali.
+
+7.  Keyboard First Ogni funzione del sistema deve avere una modalità
+    completa tramite tastiera.
+
+8.  Screen Reader First Non basta che un’app “funzioni con Orca”: i
+    componenti VabaxOS devono essere progettati per esporre
+    correttamente semantica e stato alle tecnologie assistive.
+
+9.  Modular Il desktop, lo screen reader, il TTS, l’installer e le
+    applicazioni devono essere componenti sostituibili.
+
+10. Open Source First Preferenza per software libero/open source e
+    componenti con licenze compatibili con la distribuzione.
+
+======================================================================
+4. OBIETTIVO DELLA v0.1
+======================================================================
+
+La v0.1 NON deve essere un sistema operativo completo.
+
+Deve però dimostrare la cosa più importante:
+
+    BOOT -> CONFIGURAZIONE ACCESSIBILE -> DESKTOP
+
+Target minimo della v0.1:
+
+-   ISO Live x86-64;
+-   avvio in macchina virtuale;
+-   avvio su almeno un PC fisico;
+-   boot UEFI;
+-   kernel Linux;
+-   init system;
+-   rilevamento hardware di base;
+-   audio funzionante;
+-   TTS offline funzionante;
+-   screen reader attivo;
+-   configurazione iniziale accessibile;
+-   collegamento Wi-Fi;
+-   creazione/selezione utente;
+-   desktop grafico;
+-   menu applicazioni;
+-   terminale;
+-   file manager;
+-   impostazioni;
+-   spegnimento/riavvio;
+-   logging di base.
+
+La v0.1 sarà quindi una Proof of Concept reale.
+
+======================================================================
+5. ROADMAP GENERALE
+======================================================================
+
+v0.1 - Proof of Concept v0.2 - Core System v0.3 - Accessibility Alpha
+v0.4 - Desktop Alpha v0.5 - Installer Alpha v0.6 - Hardware & Networking
+v0.7 - Applications & Package System v0.8 - Accessibility Beta v0.9 -
+Release Candidate v1.0 - Stable Release
+
+======================================================================
+6. v0.1 — PROOF OF CONCEPT
+======================================================================
+
+OBIETTIVO: Arrivare dal boot al desktop con voce.
+
+Fase 0.1.1 - Repository - creare repository principale; - definire
+struttura monorepo o multi-repository; - definire licenze; - creare
+CONTRIBUTING.md; - creare CODE_OF_CONDUCT.md; - creare SECURITY.md; -
+creare ARCHITECTURE.md; - creare BUILD.md.
+
+Fase 0.1.2 - Build system - creare ambiente Linux di build; - definire
+toolchain; - creare script build.sh; - generare filesystem; - generare
+kernel; - generare initramfs; - creare ISO bootabile.
+
+Fase 0.1.3 - Kernel - configurazione kernel x86-64; - UEFI; - ACPI; -
+USB; - HID; - NVMe; - SATA; - framebuffer/KMS; - networking; - audio; -
+filesystem; - virtualizzazione.
+
+Fase 0.1.4 - Boot - UEFI; - boot manager; - kernel; - initramfs; - avvio
+systemd; - splash/console minimale.
+
+Fase 0.1.5 - Speech bootstrap - inizializzare audio; - inizializzare
+TTS; - riprodurre una frase di test; - rendere il TTS disponibile prima
+del desktop.
+
+Fase 0.1.6 - Screen reader - integrare inizialmente Orca come tecnologia
+di riferimento; - configurare AT-SPI; - avvio automatico; - profilo
+Vabax; - scorciatoie fondamentali; - speech; - braille se disponibile.
+
+Fase 0.1.7 - Desktop - scegliere GNOME come base iniziale oppure un
+ambiente Wayland minimale costruito con componenti esistenti; -
+integrare screen reader; - creare tema Vabax; - creare wallpaper; -
+creare menu; - creare terminale; - creare file manager.
+
+RISULTATO v0.1: Inserimento ISO -> boot -> voce -> configurazione minima
+-> desktop.
+
+======================================================================
+7. v0.2 — CORE SYSTEM
+======================================================================
+
+OBIETTIVO: Trasformare la Proof of Concept in una distribuzione
+strutturata.
+
+-   filesystem standard;
+-   utenti e gruppi;
+-   sudo/polkit;
+-   gestione servizi;
+-   journald;
+-   log rotation;
+-   timezone;
+-   locale;
+-   tastiera;
+-   hostname;
+-   gestione energia;
+-   gestione dischi;
+-   gestione USB;
+-   gestione stampanti;
+-   supporto Bluetooth;
+-   aggiornamenti di sicurezza;
+-   configurazione persistente;
+-   recovery mode.
+
+Creare: - vabaxctl; - vabax-system; - vabax-update; -
+vabax-accessibility.
+
+======================================================================
+8. v0.3 — ACCESSIBILITY ALPHA
+======================================================================
+
+OBIETTIVO: Iniziare lo sviluppo del vero Vabax Screen Reader.
+
+Architettura prevista:
+
+Vabax Screen Reader | +– Accessibility backend | +– AT-SPI2 | +– desktop
+integration | +– Navigation engine | +– focus | +– object navigation |
++– document navigation | +– web navigation | +– Speech engine | +–
+speech dispatcher / audio layer | +– TTS providers | +– Braille engine |
++– Input engine | +– Profiles | +– Add-on/plugin API
+
+Funzioni: - lettura focus; - lettura testo; - eco tastiera; - ruoli; -
+stati; - navigazione oggetti; - intestazioni; - link; - liste; -
+tabelle; - moduli; - notifiche; - finestre; - cursore; - clipboard; -
+revisione testo; - impostazioni vocali.
+
+======================================================================
+9. v0.4 — DESKTOP ALPHA
+======================================================================
+
+OBIETTIVO: Creare l’identità visiva e funzionale di VabaxOS.
+
+Componenti: - Vabax Shell; - Vabax Settings; - Vabax File Manager; -
+Vabax Terminal; - Vabax Control Center; - Vabax Accessibility Center; -
+notifiche; - quick settings; - task switching; - gestione finestre.
+
+Accessibilità: - tutto navigabile da tastiera; - focus sempre esposto; -
+nomi accessibili obbligatori; - ruoli corretti; - annunci coerenti; -
+shortcut documentate; - modalità semplificata opzionale.
+
+======================================================================
+10. v0.5 — INSTALLER ALPHA
+======================================================================
+
+OBIETTIVO: Installazione completa senza assistenza esterna.
+
+Procedura:
+
+Boot ISO -> Welcome -> Accessibility -> Lingua -> Layout tastiera ->
+Connessione -> Disco -> Partizioni -> Utente -> Password -> Timezone ->
+Riepilogo -> Installazione -> Bootloader -> Riavvio
+
+REQUISITO CRITICO: Una persona cieca deve poter installare VabaxOS da
+sola.
+
+L’installer deve: - parlare; - avere focus corretto; - annunciare
+errori; - confermare operazioni distruttive; - offrire installazione
+automatica; - offrire partizionamento manuale; - spiegare i dischi in
+modo comprensibile; - non richiedere il mouse.
+
+======================================================================
+11. v0.6 — HARDWARE & NETWORKING
+======================================================================
+
+OBIETTIVO: Ampliare drasticamente la compatibilità.
+
+Test: - Intel; - AMD; - Intel integrated graphics; - AMD graphics; -
+NVIDIA dove tecnicamente possibile; - Wi-Fi Intel; - Wi-Fi Realtek; -
+Ethernet; - Bluetooth; - USB; - NVMe; - SATA; - webcam; - touchpad; -
+tastiere; - monitor esterni; - HDMI/DisplayPort; - laptop battery; -
+suspend/resume.
+
+Creare una Hardware Compatibility Database.
+
+Ogni test deve registrare: - modello; - CPU; - GPU; - Wi-Fi; - audio; -
+storage; - firmware; - boot; - sospensione; - accessibilità.
+
+======================================================================
+12. v0.7 — APPLICATIONS & PACKAGE SYSTEM
+======================================================================
+
+OBIETTIVO: Rendere VabaxOS utile come sistema quotidiano.
+
+Applicazioni base: - browser; - file manager; - terminale; - editor di
+testo; - calcolatrice; - visualizzatore documenti; - lettore
+multimediale; - screenshot; - impostazioni; - software center; -
+updater.
+
+Vabax Apps: - Vabax Settings; - Vabax Accessibility; - Vabax Terminal; -
+Vabax Files; - Vabax Store; - Vabax Update; - eventuali programmi già
+sviluppati dal progetto.
+
+Packaging: - pacchetti nativi; - Flatpak per applicazioni desktop; -
+repository VabaxOS; - metadata accessibilità.
+
+======================================================================
+13. v0.8 — ACCESSIBILITY BETA
+======================================================================
+
+OBIETTIVO: Portare l’accessibilità da “funzionante” a “centrale”.
+
+Test approfonditi: - GTK; - Qt; - Chromium; - Firefox; - LibreOffice; -
+terminali; - file manager; - dialoghi; - notifiche; - web; - PDF; -
+multimedia; - Bluetooth; - Wi-Fi; - impostazioni.
+
+Screen reader: - profili; - script applicativi; - plugin API; - sintesi
+vocale configurabile; - dizionari; - pronunce; - modalità web
+avanzata; - navigazione rapida; - Braille; - toni; - suoni di
+interfaccia.
+
+Creare: Vabax Accessibility Guidelines.
+
+======================================================================
+14. v0.9 — RELEASE CANDIDATE
+======================================================================
+
+OBIETTIVO: Bloccare le funzionalità e concentrarsi sulla stabilità.
+
+Feature freeze.
+
+Solo: - bug fixing; - sicurezza; - compatibilità; - performance; -
+accessibilità; - installer; - documentazione.
+
+Test automatici: - boot test; - install test; - login test; - screen
+reader test; - TTS test; - networking test; - audio test; - shutdown
+test.
+
+Test manuali: - ciechi; - ipovedenti; - utenti vedenti; - hardware
+differente; - VM; - laptop; - desktop.
+
+======================================================================
+15. v1.0 — STABLE
+======================================================================
+
+VabaxOS 1.0 dovrà essere una distribuzione realmente utilizzabile.
+
+REQUISITI MINIMI:
+
+BOOT - UEFI; - compatibilità BIOS dove possibile; - ISO Live; -
+installazione permanente; - recovery.
+
+ARCHITETTURA - x86-64 principale; - x86 32-bit valutato e documentato; -
+kernel Linux stabile supportato.
+
+DESKTOP - Wayland; - XWayland; - desktop Vabax; - gestione finestre; -
+notifiche; - settings.
+
+ACCESSIBILITÀ - screen reader integrato; - TTS offline; - Braille; -
+keyboard navigation; - accessibilità web; - profili; - shortcut; -
+accessibilità installer.
+
+SISTEMA - systemd; - NetworkManager; - PipeWire/WirePlumber; - gestione
+energia; - Bluetooth; - USB; - storage; - aggiornamenti.
+
+APPLICAZIONI - browser; - file manager; - terminale; - editor; -
+multimedia; - software center; - strumenti Vabax.
+
+SICUREZZA - repository firmati; - aggiornamenti; - sandbox applicativa
+dove possibile; - firewall; - gestione privilegi; - security advisories.
+
+DOCUMENTAZIONE - installazione; - aggiornamento; - accessibilità; -
+troubleshooting; - hardware compatibility; - sviluppo; - API.
+
+======================================================================
+16. ROADMAP DOPO LA v1.0
+======================================================================
+
+v1.1 - bug fixing; - hardware compatibility; - miglioramenti screen
+reader; - nuove applicazioni.
+
+v1.2 - accessibility certification; - Vabax Store migliorato; -
+backup; - recovery migliorata.
+
+v1.5 - snapshot/rollback; - migliore gestione GPU; - maggiore supporto
+hardware.
+
+v2.0 - ARM64; - Chromebook selezionati; - dispositivi ARM; - Mac
+Intel; - ricerca e sviluppo per Apple Silicon; - immagini specifiche per
+piattaforma.
+
+======================================================================
+17. PERFORMANCE
+======================================================================
+
+VabaxOS dovrà essere leggero senza sacrificare funzionalità.
+
+Obiettivi da misurare:
+
+Boot: - tempo dal firmware al login; - tempo dal bootloader al
+desktop; - tempo fino alla prima frase pronunciata.
+
+Memoria: - RAM utilizzata dopo il boot; - RAM utilizzata con screen
+reader; - RAM utilizzata con desktop idle.
+
+CPU: - utilizzo idle; - utilizzo durante speech; - utilizzo durante
+aggiornamento; - utilizzo durante applicazioni.
+
+Disco: - dimensione ISO; - spazio occupato dopo installazione; - tempo
+di avvio applicazioni.
+
+Accessibilità: - tempo tra evento UI e annuncio; - latenza TTS; - tempo
+di risposta shortcut; - stabilità dello screen reader.
+
+Non verranno fissati numeri arbitrari prima dei benchmark reali. Prima
+si costruisce una baseline, poi si ottimizza.
+
+======================================================================
+18. STRUTTURA DEL REPOSITORY
+======================================================================
+
+Possibile struttura:
+
+VabaxOS/ | +– build/ +– boot/ +– kernel/ +– rootfs/ +– system/ +–
+installer/ +– accessibility/ | +– screen-reader/ | +– speech/ | +–
+braille/ | +– atspi/ | +– desktop/ | +– shell/ | +– settings/ | +–
+files/ | +– terminal/ | +– applications/ +– packages/ +– themes/ +–
+artwork/ +– tests/ +– docs/ +– scripts/ +– hardware/ +– security/ +–
+tools/
+
+======================================================================
+19. VABAX ACCESSIBILITY API
+======================================================================
+
+Nel medio periodo VabaxOS dovrà definire API proprie.
+
+Esempio concettuale:
+
+VabaxAccessibleObject - name - role - state - value - description -
+actions - children - parent
+
+VabaxSpeech - speak() - interrupt() - pause() - resume() - setVoice() -
+setRate() - setPitch() - setVolume()
+
+VabaxBraille - display() - cursor() - routing()
+
+VabaxNavigation - next() - previous() - first() - last() -
+nextHeading() - nextLink() - nextForm() - nextTable()
+
+L’obiettivo è creare un livello coerente sopra le tecnologie Linux
+esistenti senza rompere la compatibilità con AT-SPI.
+
+======================================================================
+20. VABAXOS ACCESSIBILITY CENTER
+======================================================================
+
+Un’applicazione centrale del sistema.
+
+Sezioni:
+
+Screen Reader - attivo/disattivo; - voce; - velocità; - tono; -
+volume; - punteggiatura; - eco tastiera; - profili.
+
+Braille - display; - tabelle; - cursore; - modalità.
+
+Vision - ingrandimento; - contrasto; - cursore; - temi.
+
+Audio - suoni interfaccia; - volume; - feedback.
+
+Input - shortcut; - tastiera; - mouse; - touchpad; - switch access.
+
+Web - modalità navigazione; - contenuti dinamici; - descrizioni.
+
+======================================================================
+21. VABAXOS STORE
+======================================================================
+
+Ogni applicazione dovrà avere metadata accessibilità.
+
+Esempio:
+
+Nome: Example App Screen reader: Supportato Keyboard: Completa Braille:
+Supportato High Contrast: Supportato Wayland: Nativo XWayland: Sì
+
+Non assegnare inizialmente un punteggio numerico. Definire prima criteri
+verificabili.
+
+In futuro: Vabax Accessible Certification.
+
+======================================================================
+22. TESTING
+======================================================================
+
+Il testing sarà una parte fondamentale del progetto.
+
+Livelli:
+
+1.  Unit test
+2.  Integration test
+3.  Accessibility test
+4.  Boot test
+5.  Installer test
+6.  Hardware test
+7.  Performance test
+8.  Security test
+9.  Regression test
+10. Human usability test
+
+Una release non sarà considerata pronta soltanto perché “si avvia”.
+
+======================================================================
+23. REQUISITI DI ACCESSIBILITÀ PER LA v1.0
+======================================================================
+
+La seguente lista è un gate di rilascio.
+
+[ ] Il boot è utilizzabile senza vista. [ ] La configurazione iniziale è
+parlante. [ ] L’utente può configurare la rete senza mouse. [ ] L’utente
+può creare un account senza mouse. [ ] L’utente può installare il
+sistema senza assistenza. [ ] Il desktop è navigabile con tastiera. [ ]
+Il file manager è accessibile. [ ] Il browser è utilizzabile con screen
+reader. [ ] Il terminale è accessibile. [ ] Le impostazioni sono
+accessibili. [ ] Le notifiche vengono annunciate. [ ] Il sistema può
+essere spento senza mouse. [ ] Il sistema può essere riavviato senza
+mouse. [ ] Il TTS funziona offline. [ ] Il screen reader può essere
+configurato offline. [ ] Il Braille funziona con hardware supportato. [
+] Gli aggiornamenti non disabilitano l’accessibilità. [ ] Esiste una
+modalità di recupero accessibile. [ ] La documentazione principale è
+accessibile.
+
+======================================================================
+24. PRINCIPIO FONDAMENTALE DEL PROGETTO
+======================================================================
+
+VabaxOS non deve essere:
+
+    "Linux + Orca + qualche programma."
+
+Deve diventare:
+
+    "Una piattaforma Linux progettata per rendere l'accessibilità
+     una caratteristica fondamentale del sistema operativo."
+
+Il primo traguardo concreto è molto più semplice:
+
+    BOOT
+      |
+      v
+    VOCE
+      |
+      v
+    CONFIGURAZIONE
+      |
+      v
+    DESKTOP
+      |
+      v
+    VABAXOS v0.1
+
+Da lì il progetto cresce per iterazioni fino alla v1.0.
+
+======================================================================
+25. RISORSE DA TENERE COME RIFERIMENTO
+======================================================================
+
+Linux Kernel: https://docs.kernel.org/
+
+x86: https://docs.kernel.org/arch/x86/
+
+ARM: https://docs.kernel.org/arch/arm/
+
+ARM64: https://docs.kernel.org/arch/arm64/
+
+systemd: https://systemd.io/
+
+systemd-boot: https://systemd.io/BOOT/
+
+Wayland: https://wayland.freedesktop.org/docs/
+
+AT-SPI2: https://gnome.pages.gitlab.gnome.org/at-spi2-core/
+
+Orca: https://help.gnome.org/orca/
+
+NVDA: https://github.com/nvaccess/nvda
+
+PipeWire: https://docs.pipewire.org/
+
+NetworkManager: https://networkmanager.dev/docs/
+
+Flatpak: https://docs.flatpak.org/
+
+Calamares: https://calamares.io/docs/users-guide/
+
+Debian Live: https://live-team.pages.debian.org/live-manual/
+
+Linux From Scratch: https://www.linuxfromscratch.org/lfs/
+
+Buildroot: https://buildroot.org/docs.html
+
+Yocto: https://www.yoctoproject.org/
+
+======================================================================
+26. DECISIONI DA PRENDERE PRIMA DELLA v0.1
+======================================================================
+
+1.  Desktop iniziale: GNOME personalizzato oppure shell Wayland più
+    minimale?
+
+2.  Base userspace: Debian/Ubuntu-like iniziale oppure costruzione più
+    indipendente?
+
+3.  Build system: Debian live-build per il prototipo oppure pipeline
+    VabaxOS completamente personalizzata?
+
+4.  Installer: Calamares modificato oppure installer VabaxOS dedicato?
+
+5.  Screen reader: Orca fork/personalizzazione oppure nuovo Vabax Screen
+    Reader?
+
+6.  TTS: eSpeak NG come fallback + motore neurale locale opzionale?
+
+7.  Packaging: pacchetti nativi + Flatpak?
+
+8.  Filesystem: ext4 iniziale, Btrfs successivamente?
+
+9.  Boot: systemd-boot + GRUB fallback?
+
+10. Desktop: GNOME/GTK, KDE/Qt o ambiente Vabax proprietario?
+
+======================================================================
+27. PRIMO MILESTONE OPERATIVO
+======================================================================
+
+Il primo obiettivo tecnico del progetto sarà:
+
+    VABAXOS v0.1 ALPHA 1
+
+Con:
+
+-   ISO x86-64;
+-   boot UEFI;
+-   Linux kernel;
+-   systemd;
+-   audio;
+-   TTS;
+-   screen reader;
+-   configurazione iniziale;
+-   Wayland;
+-   desktop;
+-   terminale;
+-   file manager;
+-   spegnimento.
+
+Quando questa build funziona in QEMU/VM e su almeno un PC fisico,
+VabaxOS avrà smesso di essere soltanto un’idea.
+
+Sarà un sistema operativo reale.
+
+======================================================================
+FINE DEL DOCUMENTO
+======================================================================
+
+
+======================================================================
+28. LOCALIZATION & INTERNATIONALIZATION
+======================================================================
+
+VabaxOS sarà progettato fin dall'inizio per essere multilingue.
+
+PRINCIPI:
+- nessuna stringa hard-coded nelle applicazioni Vabax;
+- supporto GNU gettext/i18n;
+- lingua dell'interfaccia indipendente dalla lingua della voce TTS;
+- formati regionali separati dalla lingua;
+- tastiera separata dalla lingua;
+- pacchetti linguistici installabili e rimovibili;
+- fallback linguistico definito;
+- traduzione completa anche dell'installer e dello screen reader.
+
+LINGUE INIZIALI:
+- Italiano;
+- English.
+
+LINGUE FUTURE:
+- Français;
+- Español;
+- Deutsch;
+- Português;
+- Nederlands;
+- Polski;
+- Svenska;
+- Norsk;
+- Dansk;
+- Suomi;
+- Čeština;
+- Türkçe;
+- العربية;
+- Українська;
+- Русский;
+- 中文简体;
+- 中文繁體;
+- 日本語;
+- 한국어;
+- altre lingue tramite contributi della comunità.
+
+La lingua dovrà poter essere scelta già dal primo boot, prima
+dell'installazione.
+
+Configurazioni indipendenti:
+- lingua interfaccia;
+- lingua screen reader;
+- lingua TTS;
+- voce;
+- layout tastiera;
+- formato data;
+- formato ora;
+- formato numerico;
+- valuta;
+- unità di misura;
+- regione.
+
+Il sistema dovrà supportare anche più lingue contemporaneamente.
+
+======================================================================
+29. TASTIERA E INPUT
+======================================================================
+
+La tastiera sarà un componente fondamentale di VabaxOS.
+
+OBIETTIVI:
+- supporto completo a tastiere USB;
+- supporto tastiere Bluetooth;
+- tastiere integrate dei notebook;
+- layout internazionali;
+- dead keys;
+- composizione caratteri;
+- tasti multimediali;
+- tasti funzione;
+- tasti speciali;
+- tastiere ergonomiche;
+- rimappatura;
+- scorciatoie personalizzabili.
+
+Il sistema dovrà distinguere:
+- layout fisico;
+- layout logico;
+- lingua;
+- metodo di input.
+
+Vabax Keyboard Manager:
+- selezione layout;
+- aggiunta/rimozione layout;
+- cambio rapido;
+- indicatori accessibili;
+- rimappatura;
+- macro dove appropriato;
+- gestione dei tasti modificatori;
+- shortcut globali;
+- shortcut per applicazione;
+- profili.
+
+ACCESSIBILITÀ:
+- sticky keys;
+- slow keys;
+- bounce keys;
+- toggle keys;
+- repeat keys;
+- controllo del ritardo di ripetizione;
+- controllo della velocità di ripetizione;
+- feedback audio opzionale;
+- feedback visivo;
+- configurazione completa senza mouse.
+
+Ogni shortcut di VabaxOS dovrà essere documentata e non dovrà
+confliggere inutilmente con le scorciatoie fondamentali dello
+screen reader.
+
+======================================================================
+30. MOUSE, TOUCHPAD E PUNTAMENTO
+======================================================================
+
+VabaxOS dovrà supportare:
+- mouse USB;
+- mouse Bluetooth;
+- touchpad;
+- trackpoint;
+- touch screen;
+- penna/stylus quando supportata dal dispositivo.
+
+Impostazioni:
+- velocità puntatore;
+- accelerazione;
+- scrolling;
+- natural scrolling;
+- pulsante primario;
+- doppio clic;
+- velocità doppio clic;
+- trascinamento;
+- click-lock;
+- tap-to-click;
+- tap con più dita;
+- gesti;
+- disabilitazione touchpad durante digitazione.
+
+ACCESSIBILITÀ:
+- tasti mouse;
+- click dwell;
+- click assistito;
+- controllo del tremolio;
+- dimensione cursore;
+- contrasto cursore;
+- evidenziazione posizione cursore;
+- alternative completamente da tastiera.
+
+======================================================================
+31. MULTIFINESTRA
+======================================================================
+
+VabaxOS dovrà supportare un vero sistema di gestione delle finestre.
+
+Funzioni:
+- apertura;
+- chiusura;
+- minimizzazione;
+- massimizzazione;
+- ridimensionamento;
+- spostamento;
+- snap;
+- affiancamento;
+- fullscreen;
+- sempre in primo piano;
+- cambio finestra;
+- gestione workspace;
+- finestre modali;
+- dialoghi;
+- notifiche.
+
+Shortcut fondamentali:
+- cambio finestra;
+- chiusura;
+- minimizzazione;
+- massimizzazione;
+- spostamento;
+- ridimensionamento;
+- cambio workspace;
+- visualizzazione overview.
+
+ACCESSIBILITÀ:
+Lo screen reader deve conoscere:
+- finestra attiva;
+- titolo;
+- applicazione proprietaria;
+- stato;
+- posizione;
+- dialoghi;
+- notifiche;
+- elementi modali.
+
+Il cambio finestra deve essere annunciato in modo coerente.
+
+======================================================================
+32. MULTITASKING E WORKSPACE
+======================================================================
+
+VabaxOS dovrà gestire contemporaneamente numerosi processi e
+applicazioni mantenendo reattività.
+
+Funzioni:
+- processi;
+- thread;
+- priorità;
+- sospensione;
+- terminazione;
+- monitoraggio;
+- cambio applicazione;
+- workspace virtuali;
+- sessioni;
+- processi in background.
+
+Il desktop dovrà offrire:
+- workspace 1, 2, 3, ...;
+- spostamento delle finestre tra workspace;
+- scorciatoie;
+- annunci accessibili;
+- panoramica accessibile.
+
+Vabax Task Manager:
+- processi;
+- CPU;
+- RAM;
+- GPU quando disponibile;
+- rete;
+- disco;
+- terminazione processo;
+- ordinamento;
+- ricerca.
+
+======================================================================
+33. AUDIO E SUONI DI SISTEMA
+======================================================================
+
+PipeWire sarà la base audio.
+
+VabaxOS dovrà distinguere:
+- audio applicazioni;
+- audio sistema;
+- TTS;
+- notifiche;
+- suoni di interfaccia;
+- microfono;
+- chiamate/communications;
+- Bluetooth audio.
+
+Vabax Sound Center:
+- volume globale;
+- volume per applicazione;
+- dispositivi di output;
+- dispositivi di input;
+- microfono;
+- bilanciamento;
+- profili;
+- equalizzazione dove appropriato;
+- routing.
+
+SUONI PERSONALIZZATI:
+
+L'utente potrà personalizzare:
+- avvio;
+- login;
+- errore;
+- avviso;
+- notifica;
+- collegamento USB;
+- scollegamento USB;
+- cambio dispositivo;
+- screenshot;
+- svuotamento cestino;
+- completamento download;
+- batteria scarica;
+- collegamento alimentazione;
+- cambio workspace;
+- focus;
+- eventi dello screen reader.
+
+I suoni saranno organizzati in Sound Themes.
+
+Esempi:
+- Vabax Default;
+- Vabax Minimal;
+- Vabax Classic;
+- Custom.
+
+L'utente potrà importare un proprio tema sonoro.
+
+======================================================================
+34. NOTIFICHE
+======================================================================
+
+Sistema centralizzato per:
+- applicazioni;
+- sistema;
+- aggiornamenti;
+- rete;
+- batteria;
+- sicurezza;
+- dispositivi.
+
+Funzioni:
+- durata;
+- priorità;
+- raggruppamento;
+- cronologia;
+- silenziamento;
+- modalità non disturbare.
+
+ACCESSIBILITÀ:
+Ogni notifica deve essere esposta semanticamente allo screen reader.
+
+L'utente potrà scegliere:
+- annuncia tutte;
+- annuncia solo importanti;
+- non annunciare;
+- annuncia solo tramite suono;
+- annuncia tramite TTS.
+
+======================================================================
+35. CLIPBOARD E DRAG & DROP
+======================================================================
+
+VabaxOS dovrà gestire:
+- clipboard testo;
+- immagini;
+- file;
+- selezioni;
+- clipboard primaria dove disponibile.
+
+Funzioni future:
+- cronologia clipboard;
+- gestione sicura dei dati sensibili;
+- esclusione password;
+- ricerca.
+
+Drag & drop dovrà avere alternative accessibili:
+- taglia;
+- copia;
+- incolla;
+- sposta;
+- seleziona destinazione.
+
+Nessuna funzione importante dovrà richiedere esclusivamente drag & drop.
+
+======================================================================
+36. FILESYSTEM E GESTIONE FILE
+======================================================================
+
+Vabax File Manager:
+- cartelle;
+- file;
+- ricerca;
+- copia;
+- sposta;
+- rinomina;
+- elimina;
+- cestino;
+- proprietà;
+- permessi;
+- archivi;
+- dispositivi;
+- supporti rimovibili;
+- condivisioni di rete.
+
+Filesystem iniziale:
+- ext4.
+
+Da valutare:
+- Btrfs;
+- snapshot;
+- rollback;
+- compressione;
+- filesystem aggiuntivi.
+
+VabaxOS dovrà gestire correttamente:
+- USB;
+- dischi esterni;
+- SD;
+- NVMe;
+- SATA;
+- partizioni;
+- filesystem comuni.
+
+======================================================================
+37. USB, BLUETOOTH E DISPOSITIVI
+======================================================================
+
+Plug & Play:
+- rilevamento;
+- montaggio;
+- notifica;
+- accessibilità.
+
+USB:
+- tastiere;
+- mouse;
+- storage;
+- audio;
+- display;
+- telefoni;
+- stampanti;
+- dispositivi Braille.
+
+Bluetooth:
+- cuffie;
+- tastiere;
+- mouse;
+- smartphone;
+- dispositivi Braille;
+- audio.
+
+Vabax Device Center:
+- dispositivi connessi;
+- stato;
+- batteria;
+- pairing;
+- rimozione;
+- diagnostica.
+
+======================================================================
+38. DISPLAY E GRAFICA
+======================================================================
+
+Wayland sarà il target principale.
+
+Supporto:
+- singolo monitor;
+- multi-monitor;
+- risoluzioni;
+- refresh rate;
+- orientamento;
+- scaling;
+- HDR quando disponibile;
+- monitor esterni;
+- HDMI;
+- DisplayPort;
+- USB-C display.
+
+Accessibilità:
+- scaling;
+- zoom;
+- lente;
+- contrasto;
+- temi;
+- cursore;
+- dimensione testo;
+- riduzione animazioni;
+- riduzione trasparenze.
+
+XWayland garantirà compatibilità con applicazioni X11.
+
+======================================================================
+39. GESTIONE ENERGIA
+======================================================================
+
+Notebook:
+- batteria;
+- alimentazione;
+- sospensione;
+- ibernazione quando supportata;
+- spegnimento display;
+- luminosità;
+- risparmio energetico.
+
+Vabax Power Manager:
+- profilo prestazioni;
+- profilo bilanciato;
+- risparmio energetico;
+- batteria;
+- soglie;
+- comportamento a batteria scarica.
+
+ACCESSIBILITÀ:
+Tutti gli eventi importanti della batteria devono poter essere annunciati
+dal sistema e dallo screen reader.
+
+======================================================================
+40. RETE
+======================================================================
+
+NetworkManager sarà il componente principale.
+
+Supporto:
+- Ethernet;
+- Wi-Fi;
+- hotspot;
+- VPN;
+- proxy;
+- DNS;
+- IPv4;
+- IPv6;
+- tethering.
+
+Vabax Network Center:
+- reti disponibili;
+- connessione;
+- password;
+- stato;
+- diagnostica;
+- indirizzi;
+- DNS;
+- VPN.
+
+Tutto accessibile senza mouse.
+
+======================================================================
+41. SICUREZZA E ACCOUNT
+======================================================================
+
+Funzioni:
+- utenti;
+- gruppi;
+- password;
+- autenticazione;
+- sudo/polkit;
+- lock screen;
+- logout;
+- cambio utente;
+- guest session opzionale.
+
+Security Center:
+- aggiornamenti;
+- firewall;
+- applicazioni;
+- permessi;
+- dispositivi;
+- privacy.
+
+Il sistema dovrà evitare di annunciare accidentalmente password o
+informazioni sensibili tramite lo screen reader.
+
+======================================================================
+42. PRIVACY
+======================================================================
+
+Controlli per:
+- microfono;
+- fotocamera;
+- posizione;
+- rete;
+- applicazioni;
+- file;
+- clipboard;
+- telemetria.
+
+Principio:
+La telemetria non sarà obbligatoria.
+
+Le impostazioni di privacy dovranno essere leggibili e modificabili
+senza mouse.
+
+======================================================================
+43. AGGIORNAMENTI E RECOVERY
+======================================================================
+
+Vabax Update:
+- aggiornamenti automatici opzionali;
+- aggiornamento manuale;
+- cronologia;
+- changelog;
+- sicurezza;
+- rollback quando supportato.
+
+Obiettivo futuro:
+aggiornamenti atomici e rollback.
+
+Recovery:
+- avvio diagnostico;
+- riparazione boot;
+- ripristino;
+- terminale;
+- log;
+- rete;
+- ripristino configurazione.
+
+La modalità recovery dovrà essere accessibile tramite console e voce
+quando tecnicamente possibile.
+
+======================================================================
+44. INSTALLAZIONE E PARTIZIONAMENTO
+======================================================================
+
+Installer accessibile con:
+- installazione automatica;
+- affiancamento ad altri sistemi;
+- partizionamento manuale;
+- cifratura;
+- bootloader;
+- utenti;
+- lingua;
+- tastiera;
+- rete;
+- timezone.
+
+Cifratura:
+- valutare LUKS2 come standard.
+
+L'installer dovrà descrivere verbalmente:
+- disco;
+- dimensione;
+- partizioni;
+- filesystem;
+- punto di mount;
+- operazioni distruttive.
+
+======================================================================
+45. SOFTWARE CENTER
+======================================================================
+
+Vabax Store dovrà permettere:
+- ricerca;
+- installazione;
+- aggiornamento;
+- disinstallazione;
+- categorie;
+- dettagli;
+- permessi;
+- accessibilità.
+
+Ogni applicazione dovrà dichiarare:
+- tecnologia;
+- Wayland/X11;
+- supporto screen reader;
+- supporto tastiera;
+- Braille;
+- contrasto;
+- accessibilità web se pertinente.
+
+======================================================================
+46. ACCESSIBILITÀ DELLE APPLICAZIONI
+======================================================================
+
+VabaxOS dovrà fornire linee guida per gli sviluppatori.
+
+Requisiti:
+- nomi accessibili;
+- ruoli;
+- stati;
+- descrizioni;
+- focus;
+- navigazione tastiera;
+- eventi;
+- dialoghi;
+- notifiche;
+- testo;
+- tabelle;
+- menu.
+
+Creare:
+Vabax Accessibility Guidelines
+Vabax Accessibility API
+Vabax Accessibility Test Suite
+
+======================================================================
+47. SUPPORTO WEB
+======================================================================
+
+Il browser è uno dei componenti più importanti per un utente di
+screen reader.
+
+VabaxOS dovrà verificare:
+- Firefox;
+- Chromium;
+- accessibilità HTML;
+- ARIA;
+- moduli;
+- tabelle;
+- landmark;
+- intestazioni;
+- contenuti dinamici;
+- notifiche live;
+- PDF;
+- video;
+- sottotitoli.
+
+Lo screen reader dovrà avere modalità di navigazione web avanzata.
+
+======================================================================
+48. TERMINALE E SHELL
+======================================================================
+
+Vabax Terminal:
+- terminale accessibile;
+- copia/incolla;
+- selezione;
+- ricerca;
+- tab;
+- profili;
+- colori;
+- font;
+- scorciatoie;
+- TTS compatibile.
+
+Shell iniziali:
+- Bash;
+- eventualmente Zsh/Fish.
+
+VabaxOS non dovrà impedire all'utente esperto di utilizzare
+direttamente gli strumenti Linux standard.
+
+======================================================================
+49. STAMPA E SCANSIONE
+======================================================================
+
+Supporto:
+- stampanti;
+- scanner;
+- USB;
+- rete;
+- PDF.
+
+Accessibilità:
+- dialoghi accessibili;
+- stato stampa;
+- errori;
+- coda;
+- annuncio completamento.
+
+======================================================================
+50. MULTIMEDIA
+======================================================================
+
+Applicazioni e codec dovranno essere valutati secondo:
+- licenze;
+- disponibilità;
+- compatibilità;
+- prestazioni.
+
+Supporto:
+- audio;
+- video;
+- immagini;
+- streaming;
+- sottotitoli;
+- dispositivi esterni.
+
+======================================================================
+51. ACCESSIBILITÀ FISICA E ASSISTIVE TECHNOLOGY
+======================================================================
+
+VabaxOS dovrà supportare progressivamente:
+- display Braille;
+- tastiere speciali;
+- switch;
+- dispositivi USB assistivi;
+- dispositivi Bluetooth assistivi;
+- sintesi vocale;
+- riconoscimento vocale;
+- input alternativi.
+
+Il sistema dovrà mantenere una chiara separazione tra:
+- hardware;
+- driver;
+- backend;
+- API;
+- interfaccia.
+
+======================================================================
+52. RICONOSCIMENTO VOCALE E CONTROLLO VOCALE
+======================================================================
+
+Funzione futura.
+
+Obiettivi:
+- dettatura;
+- comandi;
+- apertura applicazioni;
+- navigazione;
+- gestione finestre;
+- controllo accessibilità.
+
+Dovrà essere possibile avere un motore locale/offline.
+
+La funzione non sarà un requisito bloccante per la v1.0, ma l'architettura
+dovrà lasciare spazio a questa integrazione.
+
+======================================================================
+53. OCR E DESCRIZIONE DEL CONTENUTO
+======================================================================
+
+Funzione futura.
+
+Vabax Accessibility Engine potrà integrare:
+- OCR;
+- riconoscimento immagini;
+- descrizione automatica;
+- riconoscimento testo da screenshot;
+- lettura documenti.
+
+Dovrà essere chiaramente indicato quando l'output è una stima generata
+automaticamente.
+
+======================================================================
+54. PROFILI UTENTE
+======================================================================
+
+L'utente potrà avere profili:
+- Standard;
+- Blind;
+- Low Vision;
+- Motor;
+- Cognitive;
+- Custom.
+
+Il profilo non deve bloccare altre funzioni.
+
+Ogni profilo potrà modificare:
+- screen reader;
+- TTS;
+- contrasto;
+- zoom;
+- tastiera;
+- mouse;
+- suoni;
+- notifiche;
+- shortcut;
+- animazioni.
+
+======================================================================
+55. TEMI E PERSONALIZZAZIONE
+======================================================================
+
+VabaxOS dovrà essere personalizzabile senza compromettere l'accessibilità.
+
+Elementi:
+- tema chiaro;
+- tema scuro;
+- contrasto elevato;
+- colori;
+- font;
+- dimensione;
+- cursore;
+- icone;
+- suoni;
+- animazioni;
+- trasparenze;
+- pannelli;
+- dock/taskbar.
+
+Ogni tema dovrà essere verificabile per contrasto e leggibilità.
+
+======================================================================
+56. GESTIONE DELLE SESSIONI
+======================================================================
+
+Supporto:
+- login;
+- logout;
+- lock;
+- cambio utente;
+- sessione grafica;
+- sessione terminale;
+- ripristino applicazioni quando possibile.
+
+Lo screen reader deve essere disponibile nella schermata di login
+e durante le fasi necessarie della sessione.
+
+======================================================================
+57. ACCESSIBILITÀ DEL BOOT E DEL LOGIN
+======================================================================
+
+Questo è un requisito fondamentale.
+
+L'utente deve poter:
+- avviare VabaxOS;
+- scegliere una voce;
+- scegliere una lingua;
+- inserire password;
+- selezionare utente;
+- ricevere errori;
+- accedere al desktop;
+
+senza necessità di vedere lo schermo.
+
+======================================================================
+58. ARCHITETTURA DEI SERVIZI VABAX
+======================================================================
+
+Possibili servizi:
+
+vabaxd
+    Demone principale di integrazione Vabax.
+
+vabax-accessibilityd
+    Servizi di accessibilità.
+
+vabax-speechd
+    Gestione speech.
+
+vabax-inputd
+    Gestione input e shortcut.
+
+vabax-notifyd
+    Gestione notifiche.
+
+vabax-deviced
+    Gestione dispositivi.
+
+vabax-updated
+    Aggiornamenti.
+
+vabax-session
+    Gestione sessione.
+
+I nomi sono provvisori e dovranno essere definiti prima dell'API freeze.
+
+======================================================================
+59. VABAXOS DEVELOPMENT SDK
+======================================================================
+
+Per rendere l'ecosistema sviluppabile:
+
+- API documentate;
+- template applicazioni;
+- librerie;
+- esempi;
+- accessibility inspector;
+- accessibility checker;
+- documentazione;
+- CLI;
+- debugger;
+- test suite.
+
+Comando previsto:
+
+vabax create-app
+
+Possibili template:
+- GTK;
+- Qt;
+- CLI;
+- accessibility-first app.
+
+======================================================================
+60. ACCESSIBILITY INSPECTOR
+======================================================================
+
+Applicazione per sviluppatori e tester.
+
+Mostra:
+- ruolo;
+- nome;
+- stato;
+- valore;
+- parent;
+- children;
+- eventi;
+- proprietà;
+- focus.
+
+Permetterà di capire immediatamente perché un elemento non viene
+annunciato correttamente dallo screen reader.
+
+======================================================================
+61. DIAGNOSTICA
+======================================================================
+
+Vabax Diagnostics:
+- hardware;
+- driver;
+- audio;
+- rete;
+- TTS;
+- screen reader;
+- AT-SPI;
+- display;
+- Bluetooth;
+- storage;
+- boot.
+
+Modalità:
+- semplice;
+- avanzata.
+
+Output esportabile per il supporto tecnico.
+
+======================================================================
+62. LOGGING E SUPPORTO
+======================================================================
+
+L'utente potrà generare un report:
+
+vabax-support-report
+
+che raccoglie:
+- versione;
+- kernel;
+- hardware;
+- servizi;
+- log rilevanti;
+- stato accessibilità;
+- errori.
+
+I dati sensibili dovranno essere esclusi o anonimizzati.
+
+======================================================================
+63. COMPATIBILITÀ HARDWARE
+======================================================================
+
+La matrice hardware dovrà distinguere:
+
+CPU
+GPU
+Audio
+Wi-Fi
+Bluetooth
+Ethernet
+Storage
+USB
+Touchpad
+Keyboard
+Display
+Camera
+Power
+Suspend
+Assistive Technology
+
+Ogni dispositivo potrà avere:
+- Supported;
+- Partially Supported;
+- Experimental;
+- Unsupported;
+- Requires Firmware.
+
+Non utilizzare "100% compatible" come promessa tecnica.
+
+======================================================================
+64. REQUISITI DI QUALITÀ DELLA v1.0
+======================================================================
+
+Prima della release:
+
+- boot affidabile;
+- installazione affidabile;
+- aggiornamento affidabile;
+- recovery funzionante;
+- desktop stabile;
+- multitasking stabile;
+- networking stabile;
+- audio stabile;
+- TTS stabile;
+- screen reader stabile;
+- gestione tastiera stabile;
+- gestione mouse stabile;
+- finestre stabile;
+- notifiche accessibili;
+- localizzazione completa delle lingue ufficiali;
+- documentazione completa.
+
+======================================================================
+65. NUOVA CHECKLIST v1.0
+======================================================================
+
+[ ] Boot accessibile
+[ ] Login accessibile
+[ ] Installer accessibile
+[ ] Desktop accessibile
+[ ] Screen reader
+[ ] TTS offline
+[ ] Braille
+[ ] Tastiera
+[ ] Layout internazionali
+[ ] Shortcut
+[ ] Mouse
+[ ] Touchpad
+[ ] Touchscreen
+[ ] Multifinestra
+[ ] Multitasking
+[ ] Workspace
+[ ] Notifiche
+[ ] Clipboard
+[ ] Drag & drop con alternative
+[ ] File manager
+[ ] Gestione storage
+[ ] USB
+[ ] Bluetooth
+[ ] Audio
+[ ] Microfono
+[ ] Suoni personalizzati
+[ ] Temi sonori
+[ ] Display
+[ ] Multi-monitor
+[ ] Scaling
+[ ] Zoom
+[ ] Contrasto
+[ ] Gestione energia
+[ ] Wi-Fi
+[ ] Ethernet
+[ ] VPN
+[ ] Account
+[ ] Privacy
+[ ] Sicurezza
+[ ] Aggiornamenti
+[ ] Recovery
+[ ] Software Center
+[ ] Browser accessibile
+[ ] Terminale
+[ ] Stampa
+[ ] Scanner
+[ ] Multimedia
+[ ] Localizzazione
+[ ] Formati regionali
+[ ] Profili accessibilità
+[ ] Accessibility Inspector
+[ ] Diagnostics
+[ ] Support Report
+[ ] Documentazione
+[ ] Hardware Compatibility Database
+
+======================================================================
+66. PRINCIPIO DI COMPLETENZA
+======================================================================
+
+Quando si progetta una nuova funzione di VabaxOS, non si deve chiedere
+soltanto:
+
+    "Funziona?"
+
+La domanda corretta sarà:
+
+    "Funziona?"
+    "È stabile?"
+    "È veloce?"
+    "È sicura?"
+    "È accessibile?"
+    "È utilizzabile da tastiera?"
+    "È utilizzabile dallo screen reader?"
+    "È localizzabile?"
+    "Funziona offline quando necessario?"
+    "Funziona su hardware differente?"
+    "Può essere diagnosticata?"
+    "Può essere aggiornata senza rompere il sistema?"
+
+Questa checklist diventa parte del processo di sviluppo di VabaxOS.
+
+
+======================================================================
+67. GAMING & COMPATIBILITÀ APPLICATIVA
+======================================================================
+
+VabaxOS dovrà essere compatibile il più possibile con l'ecosistema
+Linux esistente e dovrà offrire un ambiente ottimizzato per il gaming.
+
+PRINCIPIO:
+
+    Se un'applicazione Linux è compatibile con gli standard utilizzati
+    da VabaxOS, non deve essere inutilmente modificata per funzionare.
+
+La compatibilità sarà ottenuta mantenendo la massima compatibilità con
+gli standard Linux e integrando i layer necessari.
+
+FORMATI/APPLICAZIONI DA SUPPORTARE:
+- pacchetti nativi della distribuzione;
+- Flatpak;
+- AppImage;
+- applicazioni GTK;
+- applicazioni Qt;
+- applicazioni Wayland;
+- applicazioni X11 tramite XWayland;
+- applicazioni CLI;
+- Steam;
+- giochi Linux nativi;
+- giochi Windows compatibili tramite Proton/Wine.
+
+Il supporto a formati esterni potrà essere installato on-demand per
+mantenere leggera l'installazione base.
+
+======================================================================
+68. VABAX APP COMPATIBILITY CENTER
+======================================================================
+
+VabaxOS dovrà includere un sistema per identificare e gestire le
+applicazioni.
+
+Funzioni:
+- riconoscimento del formato;
+- verifica architettura;
+- verifica dipendenze;
+- verifica runtime;
+- installazione;
+- aggiornamento;
+- disinstallazione;
+- integrazione desktop;
+- controllo permessi;
+- informazioni sull'accessibilità.
+
+Esempio concettuale:
+
+Application detected
+Format: AppImage
+Architecture: x86-64
+Dependencies: OK
+Wayland: Supported
+Screen reader: Unknown
+
+[Launch]
+[Install]
+[Check accessibility]
+
+Per pacchetti Windows:
+
+Windows application detected
+Compatibility layer: Wine/Proton
+Recommended environment: Proton Experimental
+
+Il sistema dovrà informare l'utente sui possibili problemi senza
+presentare la compatibilità come garantita quando non è verificata.
+
+======================================================================
+69. VABAX GAMING STACK
+======================================================================
+
+Stack di riferimento:
+
+Linux Kernel
+    |
+Graphics drivers
+    |
+Mesa / Vulkan
+    |
+Wayland
+    |
+Gamescope
+    |
+Steam
+    |
+Proton / Wine
+    |
+Game
+
+Componenti da valutare/includere:
+- Vulkan;
+- Mesa;
+- Gamescope;
+- Steam;
+- Proton;
+- Wine;
+- GameMode;
+- MangoHud;
+- controller support;
+- shader cache;
+- VRR quando supportato.
+
+Non tutti i componenti dovranno essere installati nella configurazione
+minima.
+
+======================================================================
+70. VABAX GAMING CENTER
+======================================================================
+
+Interfaccia centralizzata per il gaming.
+
+Funzioni:
+- giochi installati;
+- giochi Linux;
+- giochi Proton;
+- giochi Wine;
+- Steam;
+- launcher;
+- controller;
+- GPU;
+- profili;
+- performance;
+- diagnostica.
+
+Vabax Gaming Center dovrà essere accessibile da screen reader.
+
+======================================================================
+71. GAME PROFILES
+======================================================================
+
+Ogni gioco potrà avere un profilo.
+
+Parametri:
+- GPU;
+- modalità energetica;
+- risoluzione;
+- refresh rate;
+- FPS limit;
+- Gamescope;
+- FSR/NIS quando disponibili;
+- VSync;
+- VRR;
+- MangoHud;
+- GameMode;
+- variabili d'ambiente;
+- Proton version;
+- Wine version;
+- controller;
+- audio;
+- impostazioni accessibilità.
+
+Esempio:
+
+Game Profile
+-------------
+GPU: Dedicated
+Power: Performance
+Resolution: 1920x1080
+FPS: 120
+Gamescope: ON
+FSR: OFF
+MangoHud: ON
+GameMode: ON
+Proton: Experimental
+
+Le impostazioni devono essere configurabili manualmente.
+
+======================================================================
+72. PERFORMANCE GAMING
+======================================================================
+
+VabaxOS dovrà evitare ottimizzazioni aggressive o instabili.
+
+Obiettivi:
+- bassa latenza;
+- scheduler appropriato;
+- gestione energetica;
+- driver aggiornati;
+- Vulkan;
+- shader cache;
+- riduzione dei processi inutili;
+- gestione corretta CPU/GPU;
+- modalità performance;
+- monitoraggio.
+
+Metriche:
+- FPS;
+- frame time;
+- 1% low;
+- CPU;
+- GPU;
+- RAM;
+- VRAM;
+- temperature;
+- consumo;
+- latenza.
+
+Vabax Performance Monitor potrà visualizzare tali informazioni.
+
+======================================================================
+73. GAME ACCESSIBILITY LAYER
+======================================================================
+
+Funzione distintiva di VabaxOS.
+
+Quando un gioco espone informazioni accessibili, VabaxOS dovrà
+sfruttarle.
+
+Possibili funzioni:
+- lettura menu;
+- lettura testo;
+- lettura chat;
+- notifiche;
+- feedback audio;
+- shortcut;
+- OCR;
+- descrizione immagini;
+- gestione accessibilità;
+- profili specifici.
+
+LIMITAZIONE:
+
+Un gioco che non espone informazioni accessibili non può essere reso
+automaticamente completamente accessibile.
+
+VabaxOS dovrà quindi offrire strumenti di assistenza senza promettere
+funzionalità che il gioco non permette tecnicamente.
+
+======================================================================
+74. COMPATIBILITÀ HARDWARE PER GAMING
+======================================================================
+
+Test dedicati per:
+- AMD GPU;
+- Intel GPU;
+- NVIDIA GPU;
+- GPU integrate;
+- CPU Intel;
+- CPU AMD;
+- controller USB;
+- controller Bluetooth;
+- cuffie;
+- microfoni;
+- monitor ad alto refresh;
+- VRR;
+- multi-monitor.
+
+La compatibilità sarà documentata nella Hardware Compatibility Database.
+
+======================================================================
+75. COMPATIBILITÀ CON SOFTWARE LINUX
+======================================================================
+
+Obiettivo:
+
+    VabaxOS deve comportarsi come un sistema Linux standard quanto
+    più possibile.
+
+Applicazioni target:
+- GTK;
+- Qt;
+- Electron;
+- Java;
+- Python;
+- Rust;
+- C/C++;
+- applicazioni CLI;
+- AppImage;
+- Flatpak;
+- pacchetti nativi.
+
+La compatibilità non dovrà essere ottenuta introducendo modifiche
+incompatibili al kernel o alle API standard senza una necessità reale.
+
+======================================================================
+76. COMPATIBILITÀ WINDOWS
+======================================================================
+
+VabaxOS potrà offrire supporto per applicazioni e giochi Windows
+attraverso:
+- Wine;
+- Proton;
+- eventuali layer compatibili futuri.
+
+Il sistema dovrà distinguere:
+
+Native
+    Applicazione Linux nativa.
+
+Compatible
+    Applicazione Windows funzionante tramite layer.
+
+Experimental
+    Funzionamento parziale o non verificato.
+
+Unsupported
+    Applicazione non funzionante.
+
+======================================================================
+77. VABAX COMPATIBILITY DATABASE
+======================================================================
+
+Database centralizzato.
+
+Hardware:
+- modello;
+- CPU;
+- GPU;
+- Wi-Fi;
+- audio;
+- Bluetooth;
+- storage;
+- display;
+- input;
+- power.
+
+Software:
+- nome;
+- versione;
+- formato;
+- architettura;
+- Wayland;
+- X11;
+- screen reader;
+- Braille;
+- Proton;
+- Wine;
+- performance;
+- problemi noti.
+
+Game:
+- nativo;
+- Proton;
+- versione Proton;
+- FPS;
+- problemi;
+- launcher;
+- anti-cheat;
+- accessibilità.
+
+======================================================================
+78. OTTIMIZZAZIONE SENZA BLOAT
+======================================================================
+
+VabaxOS non dovrà diventare una distribuzione pesante semplicemente
+per includere tutte le funzionalità.
+
+Principio:
+
+    Core minimale + componenti installabili.
+
+Esempi:
+- TTS aggiuntivi on-demand;
+- lingue on-demand;
+- codec dove necessario;
+- Wine/Proton on-demand;
+- strumenti gaming on-demand;
+- Flatpak runtime on-demand;
+- software opzionale on-demand.
+
+======================================================================
+79. DIVISIONE DEL LAVORO TRA AI
+======================================================================
+
+Il progetto potrà utilizzare tre ruoli distinti.
+
+VABAX / ARCHITECT & PROJECT LEAD
+Responsabilità:
+- visione del progetto;
+- architettura;
+- requisiti;
+- roadmap;
+- decisioni tecniche;
+- API;
+- accessibilità;
+- integrazione;
+- revisione finale;
+- gestione milestone;
+- documentazione principale.
+
+CLAUDE PRO / PRINCIPAL SOFTWARE ENGINEER
+Responsabilità:
+- implementazione;
+- codice;
+- repository;
+- script;
+- build system;
+- configurazione Linux;
+- systemd;
+- installer;
+- servizi;
+- Python;
+- C/C++;
+- Rust quando necessario;
+- test automatici;
+- refactoring;
+- debugging;
+- CI/CD.
+
+GEMINI PRO / RESEARCH, COMPATIBILITY & TEST ENGINEER
+Responsabilità:
+- ricerca tecnica;
+- documentazione upstream;
+- confronto tecnologie;
+- open source discovery;
+- licenze;
+- compatibilità hardware;
+- compatibilità software;
+- Proton/Wine;
+- Vulkan/Mesa;
+- gaming;
+- benchmark;
+- test matrix;
+- individuazione problemi;
+- verifica delle implementazioni.
+
+REGOLA:
+Nessun modello deve riscrivere arbitrariamente il lavoro dell'altro.
+Le modifiche devono rispettare la specifica tecnica corrente.
+
+======================================================================
+80. CICLO DI SVILUPPO MULTI-AI
+======================================================================
+
+1. Vabax definisce il requisito.
+
+2. Gemini effettua la ricerca tecnica.
+
+3. Vabax valuta la ricerca e prende la decisione architetturale.
+
+4. Claude implementa la specifica.
+
+5. Gemini verifica:
+   - documentazione;
+   - compatibilità;
+   - test;
+   - regressioni;
+   - alternative.
+
+6. Vabax esegue la review architetturale.
+
+7. Claude corregge i problemi.
+
+8. Test automatici.
+
+9. Test su VM.
+
+10. Test su hardware reale.
+
+11. Milestone.
+
+======================================================================
+81. TASK TRACKING
+======================================================================
+
+Ogni attività deve avere un identificatore.
+
+Esempio:
+
+VABAX-001
+Boot x86-64
+
+VABAX-002
+Kernel configuration
+
+VABAX-003
+TTS bootstrap
+
+VABAX-004
+Screen reader startup
+
+VABAX-005
+Wayland session
+
+VABAX-006
+Desktop
+
+VABAX-007
+Installer
+
+VABAX-008
+NetworkManager integration
+
+VABAX-009
+Gaming stack
+
+VABAX-010
+App Compatibility Center
+
+Ogni task deve contenere:
+- obiettivo;
+- requisiti;
+- dipendenze;
+- implementazione;
+- test;
+- criteri di completamento;
+- documentazione.
+
+======================================================================
+82. DEFINITION OF DONE
+======================================================================
+
+Un componente è considerato completato solamente quando:
+
+[ ] Implementato
+[ ] Compilabile
+[ ] Testato
+[ ] Documentato
+[ ] Accessibile
+[ ] Localizzabile
+[ ] Integrato
+[ ] Verificato su VM
+[ ] Verificato su hardware quando pertinente
+[ ] Nessuna regressione nota
+[ ] Licenze verificate
+
+======================================================================
+83. MILESTONE GAMING
+======================================================================
+
+v0.7:
+- Steam;
+- Flatpak;
+- AppImage;
+- compatibilità applicativa iniziale.
+
+v0.8:
+- Proton;
+- Wine;
+- Gamescope;
+- GameMode;
+- MangoHud;
+- controller;
+- Game Profiles.
+
+v0.9:
+- test gaming;
+- benchmark;
+- compatibilità;
+- ottimizzazione;
+- Game Accessibility Layer.
+
+v1.0:
+- Gaming Stack stabile;
+- documentazione;
+- Compatibility Database;
+- profili;
+- diagnostica;
+- supporto giochi Linux;
+- supporto giochi Windows compatibili.
+
+======================================================================
+84. OBIETTIVO VABAXOS 1.0 COMPLETO
+======================================================================
+
+VabaxOS 1.0 dovrà combinare:
+
+Linux
++
+Accessibilità First
++
+Desktop moderno
++
+Multilingua
++
+Compatibilità Linux
++
+Gaming
++
+Sicurezza
++
+Performance
++
+Personalizzazione
++
+Stabilità
+
+Il sistema non dovrà sacrificare stabilità e compatibilità per ottenere
+funzioni spettacolari.
+
+Ogni componente dovrà essere introdotto con una motivazione tecnica,
+test e possibilità di disattivazione quando opportuno.
+
+======================================================================
+85. VABAXOS 2.0 — MULTI-ARCHITECTURE
+======================================================================
+
+Dopo la stabilizzazione x86/x86-64:
+
+ARM64
+- supporto generale;
+- immagini ARM;
+- Chromebook selezionati;
+- dispositivi ARM;
+- laptop ARM.
+
+Mac:
+- Mac Intel;
+- Mac Apple Silicon;
+- boot e firmware specifici;
+- driver;
+- GPU;
+- audio;
+- Wi-Fi;
+- tastiera;
+- trackpad;
+- gestione energia.
+
+Il supporto Apple Silicon sarà trattato come progetto hardware dedicato
+e non come semplice estensione del supporto PC.
+
+======================================================================
+86. ROADMAP CONSOLIDATA
+======================================================================
+
+v0.1
+BOOT + VOCE + CONFIGURAZIONE + DESKTOP
+
+v0.2
+CORE SYSTEM
+
+v0.3
+SCREEN READER ALPHA
+
+v0.4
+DESKTOP ALPHA
+
+v0.5
+INSTALLER
+
+v0.6
+HARDWARE + NETWORK
+
+v0.7
+APPLICATIONS + COMPATIBILITY
+
+v0.8
+ACCESSIBILITY BETA + GAMING
+
+v0.9
+RELEASE CANDIDATE + STABILITY
+
+v1.0
+STABLE x86/x86-64
+
+v1.x
+MATURAZIONE, HARDWARE, APPLICAZIONI, GAMING, ACCESSIBILITÀ
+
+v2.0
+ARM64 + CHROMEBOOK + MAC
+
+======================================================================
+87. VISIONE FINALE
+======================================================================
+
+VabaxOS non nasce per competere semplicemente con Ubuntu, Fedora,
+Debian o altre distribuzioni.
+
+Nasce per esplorare un'altra idea:
+
+    un sistema operativo Linux nel quale accessibilità, compatibilità,
+    performance e semplicità siano progettate insieme.
+
+L'obiettivo non è aggiungere un lettore di schermo a un desktop esistente.
+
+L'obiettivo è fare in modo che una persona possa accendere un computer,
+sentire VabaxOS parlare, installarlo autonomamente, configurarlo,
+utilizzare applicazioni Linux, navigare sul web, lavorare, programmare,
+giocare, collegare dispositivi, personalizzare il sistema e aggiornarlo
+senza che la disabilità visiva costituisca un ostacolo strutturale.
+
+======================================================================
+FINE DELLA ROADMAP CONSOLIDATA
+======================================================================

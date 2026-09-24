@@ -1,0 +1,36 @@
+# Build output (ADR-0002)
+out/
+cache/
+*.iso
+*.img
+*.qcow2
+
+# live-build working files
+image/.build/
+image/chroot/
+image/binary/
+image/cache/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+.pytest_cache/
+
+# Rust
+target/
+
+# Secrets never go in the repository
+.env
+*.key
+*.pem
+secring.*
+
+# Editors and systems
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

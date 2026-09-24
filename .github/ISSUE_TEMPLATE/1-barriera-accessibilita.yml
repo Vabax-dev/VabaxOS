@@ -1,0 +1,63 @@
+name: Barriera di accessibilità
+description: Qualcosa non si può fare, o si fa male, con lettore di schermo, tastiera, Braille, ingrandimento o altri ausili.
+title: "[Accessibilità] "
+labels: ["type/a11y-barrier", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Grazie. Le barriere di accessibilità sono le segnalazioni più importanti per VabaxOS.
+        Non serve dichiarare la tua disabilità né usare il tuo nome vero.
+  - type: textarea
+    id: attivita
+    attributes:
+      label: Cosa stavi cercando di fare
+      description: L'attività, per esempio «collegarmi al Wi-Fi dalla configurazione iniziale».
+    validations:
+      required: true
+  - type: textarea
+    id: barriera
+    attributes:
+      label: Cosa è successo
+      description: Cosa hai sentito, letto in Braille o visto, e dove ti sei fermato.
+    validations:
+      required: true
+  - type: textarea
+    id: atteso
+    attributes:
+      label: Cosa ti aspettavi
+    validations:
+      required: true
+  - type: dropdown
+    id: blocco
+    attributes:
+      label: Quanto ti blocca
+      options:
+        - Non posso completare l'attività in nessun modo
+        - Posso completarla, ma con un giro lungo o con aiuto
+        - È fastidioso, ma la completo
+    validations:
+      required: true
+  - type: textarea
+    id: ausili
+    attributes:
+      label: Ausili usati
+      description: Per esempio Orca e versione, voce, display Braille, ingrandimento, solo tastiera.
+    validations:
+      required: true
+  - type: input
+    id: versione
+    attributes:
+      label: Versione di VabaxOS
+      description: Nome della ISO o commit.
+  - type: input
+    id: macchina
+    attributes:
+      label: Macchina
+      description: QEMU oppure modello del PC.
+  - type: textarea
+    id: log
+    attributes:
+      label: Log o dettagli (facoltativo)
+      description: Togli password, nomi delle reti e dati personali prima di incollare.
+      render: text

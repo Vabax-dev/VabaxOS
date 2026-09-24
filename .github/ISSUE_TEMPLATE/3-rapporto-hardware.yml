@@ -1,0 +1,56 @@
+name: Rapporto hardware
+description: Racconta come funziona VabaxOS sul tuo PC, anche se funziona tutto.
+title: "[Hardware] "
+labels: ["type/hardware-report"]
+body:
+  - type: markdown
+    attributes:
+      value: Non inserire numeri di serie o altri dati che identificano te o la macchina.
+  - type: input
+    id: modello
+    attributes:
+      label: Produttore e modello
+      placeholder: Per esempio Samsung Galaxy Book4 360
+    validations:
+      required: true
+  - type: input
+    id: versione
+    attributes:
+      label: Versione di VabaxOS
+    validations:
+      required: true
+  - type: dropdown
+    id: avvio
+    attributes:
+      label: Modalità di avvio
+      options:
+        - UEFI con Secure Boot
+        - UEFI senza Secure Boot
+        - BIOS legacy
+        - Non lo so
+    validations:
+      required: true
+  - type: checkboxes
+    id: funziona
+    attributes:
+      label: Cosa funziona
+      options:
+        - label: Segnale acustico del menu di avvio
+        - label: Voce in console
+        - label: Voce sul desktop (Orca)
+        - label: Tastiera
+        - label: Touchpad
+        - label: Schermo
+        - label: Audio da altoparlanti
+        - label: Audio da cuffie
+        - label: Wi-Fi
+        - label: Ethernet
+        - label: Bluetooth
+        - label: Sospensione e risveglio
+        - label: Display Braille
+  - type: textarea
+    id: dettagli
+    attributes:
+      label: Dettagli e problemi
+      description: Utile anche l'output di `lspci -nn` e `lsusb`.
+      render: text

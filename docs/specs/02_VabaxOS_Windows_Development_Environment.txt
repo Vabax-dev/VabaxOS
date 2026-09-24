@@ -1,0 +1,1432 @@
+VABAXOS
+GUIDA ALL'AMBIENTE DI SVILUPPO ACCESSIBILE SU WINDOWS
+Windows 11 + WSL2 + Ubuntu + Git + VS Code + QEMU
+
+Versione documento: 1.0
+Data: 23 settembre 2026
+Progetto: VabaxOS
+
+======================================================================
+0. SCOPO
+======================================================================
+
+Questo documento prepara una workstation Windows per sviluppare VabaxOS
+nel lungo periodo.
+
+L'architettura scelta è:
+
+Windows 11
+    |
+    +-- NVDA / accessibilità Windows
+    |
+    +-- Git / GitHub
+    |
+    +-- VS Code
+    |
+    +-- Windows Terminal / PowerShell
+    |
+    +-- QEMU
+    |
+    +-- WSL2
+          |
+          +-- Ubuntu 24.04 LTS
+                |
+                +-- GCC / Clang / LLVM
+                +-- C / C++
+                +-- Python
+                +-- Rust
+                +-- CMake / Ninja
+                +-- Git
+                +-- QEMU tools
+                +-- x86-64 cross compilation
+                +-- VabaxOS build system
+
+PRINCIPIO FONDAMENTALE:
+
+Windows è la workstation principale.
+WSL2 è l'ambiente Linux di sviluppo.
+QEMU è il laboratorio virtuale.
+L'hardware fisico viene utilizzato soltanto dopo che una build è stata
+verificata in virtualizzazione.
+
+Questo evita di compromettere il PC principale durante le prime fasi.
+
+======================================================================
+1. PRIMA DI INIZIARE
+======================================================================
+
+Requisiti consigliati:
+
+- Windows 11 aggiornato;
+- CPU x86-64 con virtualizzazione hardware;
+- almeno 16 GB RAM;
+- almeno 100 GB liberi;
+- preferibilmente SSD/NVMe;
+- connessione Internet;
+- account GitHub;
+- NVDA aggiornato;
+- cuffie o altoparlanti per testare TTS e audio.
+
+Per il progetto completo è consigliabile avere più spazio.
+Kernel, toolchain, sorgenti, cache, ISO, VM e repository possono crescere
+rapidamente.
+
+Non è necessario installare Linux in dual boot.
+
+WSL2 fornisce un ambiente GNU/Linux integrato in Windows. Microsoft
+raccomanda `wsl --install` per le installazioni moderne e WSL2 viene
+impostato come default dalle installazioni attuali.
+Fonte ufficiale:
+https://learn.microsoft.com/windows/wsl/install
+
+======================================================================
+2. ACCESSIBILITÀ WINDOWS
+======================================================================
+
+Prima di costruire VabaxOS, l'ambiente di sviluppo deve essere
+completamente utilizzabile con NVDA.
+
+Verificare:
+
+[ ] NVDA avvia correttamente.
+[ ] Windows Terminal è navigabile.
+[ ] PowerShell è utilizzabile.
+[ ] Esplora file è utilizzabile.
+[ ] VS Code è utilizzabile.
+[ ] GitHub è utilizzabile.
+[ ] Dialoghi di salvataggio sono accessibili.
+[ ] Output del terminale viene letto correttamente.
+[ ] Copia/incolla funziona.
+[ ] Navigazione tra finestre funziona.
+
+È consigliabile usare scorciatoie da tastiera il più possibile.
+
+Per il progetto è importante che ogni procedura descritta in questo
+documento possa essere eseguita senza mouse quando possibile.
+
+======================================================================
+3. WINDOWS TERMINAL
+======================================================================
+
+Windows Terminal sarà il punto di accesso principale a:
+
+- PowerShell;
+- WSL;
+- eventualmente altre shell.
+
+Aprire Windows Terminal.
+
+Creare un profilo per Ubuntu/WSL se non viene creato automaticamente.
+
+Impostazioni consigliate:
+
+- font leggibile;
+- dimensione adeguata;
+- output non eccessivamente decorato;
+- profilo facilmente raggiungibile da tastiera;
+- copia/incolla funzionante.
+
+Non usare configurazioni che nascondano errori o output del terminale.
+
+======================================================================
+4. INSTALLARE WSL2
+======================================================================
+
+Aprire PowerShell come amministratore.
+
+Eseguire:
+
+wsl --install
+
+Riavviare Windows se richiesto.
+
+La procedura ufficiale abilita i componenti necessari, installa il
+kernel WSL e una distribuzione Linux predefinita.
+
+Fonte:
+https://learn.microsoft.com/windows/wsl/install
+
+Dopo il riavvio verificare:
+
+wsl --status
+
+e:
+
+wsl --version
+
+Poi:
+
+wsl --list --verbose
+
+Dovrebbe comparire una distribuzione Linux con VERSION 2.
+
+Se Ubuntu non è installato o si desidera specificarlo esplicitamente:
+
+wsl --list --online
+
+poi:
+
+wsl --install -d Ubuntu-24.04
+
+Se il nome disponibile è diverso, utilizzare il nome restituito da
+`wsl --list --online`.
+
+======================================================================
+5. CONFIGURAZIONE WSL
+======================================================================
+
+Avviare Ubuntu.
+
+Creare il proprio utente Linux quando richiesto.
+
+Verificare:
+
+whoami
+
+hostname
+
+uname -a
+
+Verificare WSL da Windows:
+
+wsl --list --verbose
+
+Obiettivo:
+
+Ubuntu    Running    2
+
+Aggiornare:
+
+sudo apt update
+sudo apt upgrade
+
+Riavviare WSL quando necessario:
+
+wsl --shutdown
+
+e poi riaprire Ubuntu.
+
+Documentazione ufficiale:
+https://learn.microsoft.com/windows/wsl/setup/environment
+
+======================================================================
+6. DOVE METTERE IL REPOSITORY
+======================================================================
+
+Per un progetto Linux pesante è preferibile lavorare principalmente nel
+filesystem Linux di WSL anziché fare tutto sotto `/mnt/c`.
+
+Directory consigliata:
+
+~/projects/VabaxOS
+
+Creazione:
+
+mkdir -p ~/projects
+cd ~/projects
+
+Il repository sarà:
+
+~/projects/VabaxOS
+
+Windows può accedere ai file Linux tramite:
+
+\\wsl$
+
+ma il build principale deve essere eseguito dentro WSL.
+
+Questo riduce problemi di performance e differenze di permessi.
+
+======================================================================
+7. INSTALLARE GLI STRUMENTI BASE
+======================================================================
+
+Dentro Ubuntu:
+
+sudo apt update
+
+sudo apt install -y \
+    git \
+    build-essential \
+    gcc \
+    g++ \
+    clang \
+    llvm \
+    lld \
+    make \
+    cmake \
+    ninja-build \
+    pkg-config \
+    python3 \
+    python3-pip \
+    python3-venv \
+    curl \
+    wget \
+    rsync \
+    cpio \
+    xorriso \
+    dosfstools \
+    mtools \
+    file \
+    unzip \
+    zip \
+    tree \
+    jq \
+    bc \
+    flex \
+    bison \
+    libssl-dev \
+    libelf-dev \
+    libncurses-dev \
+    dwarves
+
+Controllare:
+
+gcc --version
+clang --version
+cmake --version
+ninja --version
+python3 --version
+git --version
+xorriso --version
+
+======================================================================
+8. RUST
+======================================================================
+
+Installare Rust tramite rustup:
+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+Seguire la procedura.
+
+Ricaricare la shell:
+
+source "$HOME/.cargo/env"
+
+Verificare:
+
+rustc --version
+cargo --version
+
+Rust non verrà usato ovunque.
+Sarà disponibile per componenti nuovi in cui sicurezza della memoria,
+concorrenza o robustezza lo rendano conveniente.
+
+======================================================================
+9. GIT
+======================================================================
+
+Git deve essere installato sia in Windows sia in WSL quando serve.
+
+Windows:
+https://git-scm.com/install/windows
+
+Da PowerShell si può usare:
+
+winget install --id Git.Git -e --source winget
+
+In WSL:
+
+sudo apt install git
+
+Configurare identità:
+
+git config --global user.name "Vabax"
+git config --global user.email "EMAIL_ASSOCIATA_A_GITHUB"
+
+Controllare:
+
+git config --global --list
+
+NON inserire password o token dentro repository o script.
+
+======================================================================
+10. GITHUB
+======================================================================
+
+Creare il repository:
+
+VabaxOS
+
+Possibile organizzazione futura:
+
+VabaxOS/
+    VabaxOS
+    documentation
+    accessibility
+    applications
+    ...
+
+Per iniziare può essere sufficiente un singolo repository.
+
+Clone:
+
+cd ~/projects
+git clone URL_DEL_REPOSITORY VabaxOS
+
+Entrare:
+
+cd VabaxOS
+
+Verificare:
+
+git status
+
+======================================================================
+11. BRANCHING
+======================================================================
+
+Non sviluppare direttamente su `main`.
+
+Struttura consigliata:
+
+main
+develop
+feature/...
+fix/...
+research/...
+
+Esempio:
+
+feature/build-system
+
+oppure:
+
+feature/vabax-001-build
+
+Ogni task importante deve avere un identificatore VABAX.
+
+Esempio:
+
+VABAX-001
+Reproducible Build Environment
+
+======================================================================
+12. VS CODE
+======================================================================
+
+Installare Visual Studio Code su Windows.
+
+Installare l'estensione:
+
+Remote - WSL
+
+Obiettivo:
+
+VS Code Windows
+    |
+    +-- Remote WSL
+          |
+          +-- Ubuntu
+                |
+                +-- ~/projects/VabaxOS
+
+Aprire il repository da WSL:
+
+cd ~/projects/VabaxOS
+code .
+
+Se il comando `code` non è disponibile, aprire VS Code e utilizzare
+"Connect to WSL" oppure installare/configurare il comando da VS Code.
+
+Il vantaggio è che l'interfaccia grafica resta Windows, mentre terminale,
+toolchain e file vengono gestiti nell'ambiente Linux.
+
+======================================================================
+13. ACCESSIBILITÀ DI VS CODE
+======================================================================
+
+Con NVDA verificare:
+
+- editor;
+- Explorer;
+- terminale;
+- pannello problemi;
+- Git;
+- ricerca;
+- Source Control;
+- dialoghi;
+- suggerimenti;
+- completamento codice.
+
+Configurare le impostazioni di accessibilità di VS Code secondo le
+proprie preferenze.
+
+Evitare estensioni non necessarie.
+
+Il principio è:
+
+editor stabile + poche estensioni + toolchain riproducibile.
+
+======================================================================
+14. QEMU
+======================================================================
+
+QEMU sarà il laboratorio principale per VabaxOS.
+
+Sito ufficiale:
+https://www.qemu.org/
+
+È possibile installare QEMU anche su Windows.
+La pagina ufficiale di download pubblica le release disponibili.
+
+Su Windows sarà utile soprattutto per lanciare rapidamente VM.
+
+Dentro WSL possono inoltre essere installati gli strumenti QEMU:
+
+sudo apt install -y qemu-system-x86 qemu-utils
+
+Verificare:
+
+qemu-system-x86_64 --version
+
+La documentazione QEMU per Windows Hypervisor Platform descrive
+l'accelerazione WHPX su Windows:
+https://www.qemu.org/docs/master/system/whpx.html
+
+======================================================================
+15. PERCHÉ USARE QEMU
+======================================================================
+
+La prima VabaxOS sarà x86-64.
+
+Il PC Windows sarà il laboratorio.
+
+VabaxOS.iso
+    |
+    v
+QEMU
+    |
+    v
+PC x86-64 virtuale
+    |
+    +-- UEFI
+    +-- CPU virtuale
+    +-- RAM
+    +-- disco
+    +-- rete
+    +-- audio
+    +-- USB
+
+Questo permette di testare il boot senza modificare il PC fisico.
+
+======================================================================
+16. TOOLCHAIN CROSS-COMPILAZIONE
+======================================================================
+
+VabaxOS sarà compilata per x86-64.
+
+Anche se l'ambiente host fosse diverso, la toolchain deve essere
+esplicitamente controllata.
+
+Per il target iniziale:
+
+x86_64
+
+Componenti da controllare:
+
+- gcc;
+- binutils;
+- clang;
+- lld;
+- nasm eventualmente;
+- linker;
+- assembler;
+- libc del target quando necessario.
+
+Non costruire una cross-toolchain completa manualmente finché non serve.
+
+Prima verificare se la base scelta per VabaxOS fornisce già toolchain
+adeguate.
+
+La scelta definitiva della toolchain sarà documentata in
+ARCHITECTURE.md.
+
+======================================================================
+17. KERNEL LINUX
+======================================================================
+
+Il kernel sarà compilato nel progetto quando arriveremo al build system.
+
+NON scaricare e modificare casualmente il kernel nel repository.
+
+Struttura prevista:
+
+kernel/
+    config/
+    patches/
+    scripts/
+
+Il codice upstream del kernel potrà essere scaricato durante il build
+oppure gestito tramite un meccanismo di source pinning.
+
+Ogni versione del kernel utilizzata dovrà essere registrata.
+
+Esempio:
+
+Linux X.Y.Z
+
+con:
+- checksum;
+- sorgente;
+- patch;
+- configurazione;
+- motivazione della versione scelta.
+
+======================================================================
+18. BOOT E UEFI
+======================================================================
+
+VabaxOS v0.1 utilizzerà UEFI come target principale.
+
+Dovranno essere disponibili strumenti per:
+
+- EFI System Partition;
+- filesystem FAT;
+- immagini EFI;
+- bootloader;
+- initramfs;
+- kernel.
+
+Pacchetti utili già installabili in Ubuntu:
+
+sudo apt install -y \
+    grub-efi-amd64-bin \
+    grub-pc-bin \
+    dosfstools \
+    mtools
+
+La scelta definitiva tra systemd-boot e GRUB sarà registrata in un ADR.
+
+======================================================================
+19. BUILD SYSTEM
+======================================================================
+
+Il progetto dovrà arrivare a un comando riproducibile:
+
+./build.sh
+
+oppure:
+
+./scripts/build.sh
+
+Risultato:
+
+build/
+    VabaxOS-x86_64.iso
+
+Il build system dovrà:
+
+1. controllare dipendenze;
+2. scaricare o verificare sorgenti;
+3. preparare toolchain;
+4. compilare kernel;
+5. creare root filesystem;
+6. installare userspace;
+7. creare initramfs;
+8. preparare UEFI;
+9. creare ISO;
+10. calcolare checksum;
+11. produrre log.
+
+Non usare comandi manuali diversi a ogni build.
+
+======================================================================
+20. SCRIPT DI SVILUPPO
+======================================================================
+
+Directory:
+
+scripts/
+
+Possibili script:
+
+check-deps.sh
+build.sh
+clean.sh
+run-qemu.sh
+test-boot.sh
+package.sh
+format.sh
+lint.sh
+fetch-sources.sh
+
+Esempio:
+
+./scripts/check-deps.sh
+
+poi:
+
+./scripts/build.sh
+
+poi:
+
+./scripts/run-qemu.sh
+
+======================================================================
+21. LOG E DIAGNOSTICA
+======================================================================
+
+Ogni build dovrebbe produrre:
+
+build/logs/
+
+Esempio:
+
+build/logs/build-YYYY-MM-DD-HHMMSS.log
+
+Non sovrascrivere automaticamente l'ultimo log.
+
+Per i test:
+
+tests/logs/
+
+Quando qualcosa fallisce, salvare:
+
+- comando;
+- errore;
+- ambiente;
+- versione;
+- log.
+
+======================================================================
+22. AMBIENTE PYTHON
+======================================================================
+
+Per gli strumenti Python del progetto:
+
+python3 -m venv .venv
+
+Attivare:
+
+source .venv/bin/activate
+
+Aggiornare pip:
+
+python -m pip install --upgrade pip
+
+Le dipendenze devono essere documentate.
+
+Preferire:
+
+requirements.txt
+
+oppure:
+
+pyproject.toml
+
+Evitare installazioni globali inutili.
+
+======================================================================
+23. AMBIENTE C/C++
+======================================================================
+
+Compilatori:
+
+gcc
+g++
+
+e:
+
+clang
+clang++
+
+Verificare:
+
+gcc --version
+clang --version
+ld --version
+
+Usare CMake/Ninja solo quando il componente lo richiede.
+
+Non introdurre un build system complesso senza motivo.
+
+======================================================================
+24. AUTOMAZIONE
+======================================================================
+
+Ogni operazione ripetitiva deve essere automatizzata.
+
+Esempi:
+
+- preparazione ambiente;
+- download sorgenti;
+- verifica checksum;
+- build;
+- test;
+- creazione ISO;
+- avvio QEMU;
+- pulizia;
+- packaging.
+
+Obiettivo:
+
+una persona nuova nel progetto deve poter clonare il repository e
+seguire BUILD.md senza conoscere tutta l'architettura interna.
+
+======================================================================
+25. CLAUDE PRO E GEMINI PRO
+======================================================================
+
+Il computer deve essere il luogo in cui il codice viene realmente
+eseguito e verificato.
+
+Le AI non devono essere considerate l'ambiente di build.
+
+GEMINI PRO:
+- ricerca;
+- confronto tecnologie;
+- documentazione upstream;
+- compatibilità;
+- benchmark;
+- QA;
+- ricerca open source;
+- licenze.
+
+CLAUDE PRO:
+- implementazione;
+- codice;
+- refactoring;
+- test;
+- debugging;
+- build system;
+- script;
+- servizi;
+- integrazione.
+
+VABAX:
+- decisioni architetturali;
+- requisiti;
+- priorità;
+- review;
+- integrazione finale.
+
+Workflow:
+
+Specifica
+    |
+    v
+Ricerca Gemini
+    |
+    v
+Decisione architetturale
+    |
+    v
+Implementazione Claude
+    |
+    v
+Build locale
+    |
+    v
+Test Gemini
+    |
+    v
+Review
+    |
+    v
+Merge
+
+======================================================================
+26. ARCHITECTURE DECISION RECORDS
+======================================================================
+
+Creare:
+
+docs/decisions/
+
+Esempi:
+
+ADR-001-base-distribution.md
+ADR-002-build-system.md
+ADR-003-kernel.md
+ADR-004-bootloader.md
+ADR-005-wayland.md
+ADR-006-accessibility-stack.md
+ADR-007-audio.md
+ADR-008-package-system.md
+
+Ogni ADR deve contenere:
+
+Titolo
+Stato
+Data
+Contesto
+Decisione
+Alternative
+Motivazione
+Conseguenze
+
+Questo impedisce che il progetto cambi direzione casualmente.
+
+======================================================================
+27. BACKUP
+======================================================================
+
+Il repository GitHub è il riferimento principale del codice.
+
+Non deve però essere l'unico backup.
+
+Backup consigliati:
+
+1. GitHub remoto;
+2. copia locale;
+3. backup del repository;
+4. backup delle configurazioni importanti;
+5. backup delle VM quando necessario.
+
+Non mettere nel repository:
+
+- password;
+- token;
+- chiavi private;
+- credenziali;
+- file `.env` sensibili;
+- certificati privati.
+
+Creare:
+
+.gitignore
+
+e:
+
+.env.example
+
+quando necessario.
+
+======================================================================
+28. SICUREZZA
+======================================================================
+
+Prima di eseguire script trovati online:
+
+- leggere il contenuto;
+- controllare la fonte;
+- verificare il repository;
+- controllare la licenza;
+- evitare `curl | sh` quando non è necessario;
+- usare HTTPS;
+- verificare checksum/firme quando disponibili.
+
+Il progetto VabaxOS deve applicare la stessa disciplina anche ai
+componenti scaricati durante il build.
+
+======================================================================
+29. AGGIORNAMENTI PERIODICI
+======================================================================
+
+Ogni mese:
+
+- Windows Update;
+- WSL update;
+- aggiornamento Ubuntu;
+- Git;
+- VS Code;
+- toolchain;
+- QEMU quando appropriato.
+
+In WSL:
+
+sudo apt update
+sudo apt upgrade
+
+Da PowerShell:
+
+wsl --update
+
+Controllare:
+
+wsl --version
+wsl --status
+
+Non aggiornare automaticamente il kernel o componenti critici di
+VabaxOS senza prima verificare l'effetto sul build.
+
+======================================================================
+30. MANUTENZIONE DEL PROGETTO
+======================================================================
+
+Ogni release deve registrare:
+
+- versione kernel;
+- versione toolchain;
+- versione base userspace;
+- versione QEMU usata nei test;
+- dipendenze;
+- commit;
+- checksum ISO.
+
+Esempio:
+
+VabaxOS 0.1.0-alpha1
+
+Build:
+Git commit XXXXXXX
+
+Kernel:
+X.Y.Z
+
+Toolchain:
+GCC X
+Clang X
+Rust X
+
+Test:
+QEMU X
+
+======================================================================
+31. TEST IN QEMU
+======================================================================
+
+Prima di ogni test:
+
+./scripts/build.sh
+
+Poi:
+
+./scripts/run-qemu.sh
+
+Controllare:
+
+[ ] ISO avviabile
+[ ] UEFI
+[ ] kernel
+[ ] initramfs
+[ ] systemd
+[ ] console
+[ ] audio quando disponibile
+[ ] rete quando disponibile
+[ ] shutdown
+[ ] reboot
+
+Successivamente:
+
+[ ] TTS
+[ ] screen reader
+[ ] Wayland
+[ ] desktop
+[ ] installer
+
+======================================================================
+32. TEST SU HARDWARE REALE
+======================================================================
+
+NON usare il PC principale come primo hardware di test.
+
+Quando la VM è stabile:
+
+1. preparare USB;
+2. avviare VabaxOS in modalità Live;
+3. non installare immediatamente;
+4. verificare hardware;
+5. verificare accessibilità;
+6. raccogliere log;
+7. spegnere;
+8. analizzare i risultati.
+
+Solo successivamente valutare l'installazione.
+
+======================================================================
+33. CHIAVETTA USB
+======================================================================
+
+Quando la ISO sarà pronta:
+
+VabaxOS-x86_64.iso
+    |
+    v
+USB
+    |
+    v
+PC reale
+
+Utilizzare uno strumento affidabile per scrivere la ISO.
+
+NON sovrascrivere accidentalmente un disco contenente dati.
+
+Prima del test verificare attentamente il dispositivo USB selezionato.
+
+======================================================================
+34. TEST HARDWARE INIZIALE
+======================================================================
+
+Il primo PC fisico può essere utilizzato come banco prova.
+
+Raccogliere:
+
+CPU
+GPU
+RAM
+Wi-Fi
+Ethernet
+Audio
+Bluetooth
+NVMe/SATA
+USB
+Touchpad
+Keyboard
+Display
+Battery
+
+Risultati:
+
+Supported
+Partially Supported
+Experimental
+Unsupported
+Requires Firmware
+
+======================================================================
+35. STRUTTURA DELLA CARTELLA DI LAVORO
+======================================================================
+
+Dentro WSL:
+
+~/projects/
+    VabaxOS/
+    external/
+    toolchains/
+    cache/
+    artifacts/
+
+NON mettere tutto direttamente nella directory home.
+
+Il repository principale deve rimanere pulito.
+
+======================================================================
+36. ARTIFACTS
+======================================================================
+
+Build prodotti:
+
+artifacts/
+
+Esempi:
+
+VabaxOS-x86_64-alpha1.iso
+VabaxOS-x86_64-alpha1.iso.sha256
+VabaxOS-x86_64-alpha1-build.log
+
+Gli artifact temporanei possono essere eliminati.
+
+Gli artifact delle release devono essere archiviati.
+
+======================================================================
+37. WORKFLOW QUOTIDIANO
+======================================================================
+
+Inizio giornata:
+
+1. aprire Windows;
+2. aprire WSL;
+3. aggiornare repository;
+4. controllare branch;
+5. leggere issue/task;
+6. lavorare;
+7. build;
+8. test;
+9. commit;
+10. push.
+
+Comandi tipici:
+
+cd ~/projects/VabaxOS
+
+git status
+
+git pull
+
+./scripts/check-deps.sh
+
+./scripts/build.sh
+
+./scripts/run-qemu.sh
+
+git status
+
+git add .
+
+git commit -m "..."
+
+git push
+
+======================================================================
+38. WORKFLOW PER UN NUOVO TASK
+======================================================================
+
+Esempio:
+
+VABAX-004 — TTS Bootstrap
+
+1. Leggere issue.
+2. Leggere ARCHITECTURE.md.
+3. Leggere ADR pertinenti.
+4. Gemini ricerca soluzioni.
+5. Definire decisione.
+6. Claude implementa.
+7. Build.
+8. Test.
+9. QA.
+10. Review.
+11. Merge.
+12. Aggiornare documentazione.
+
+======================================================================
+39. NON FARE
+======================================================================
+
+Non:
+
+- sviluppare direttamente in `main`;
+- modificare manualmente file generati dal build;
+- installare casualmente pacchetti globali;
+- copiare codice senza controllare licenza;
+- eseguire script sconosciuti come root;
+- testare subito sul disco principale;
+- cambiare base Linux senza ADR;
+- cambiare kernel senza registrare versione;
+- introdurre dipendenze non documentate;
+- considerare una build riuscita solo perché la ISO viene creata.
+
+======================================================================
+40. CHECKLIST AMBIENTE COMPLETO
+======================================================================
+
+WINDOWS
+
+[ ] Windows 11 aggiornato
+[ ] NVDA funzionante
+[ ] Windows Terminal
+[ ] PowerShell
+[ ] Git
+[ ] GitHub
+[ ] VS Code
+[ ] Remote WSL
+[ ] QEMU
+
+WSL
+
+[ ] WSL2
+[ ] Ubuntu 24.04 LTS
+[ ] account Linux
+[ ] apt aggiornato
+[ ] Git
+[ ] GCC
+[ ] Clang
+[ ] LLVM
+[ ] CMake
+[ ] Ninja
+[ ] Python
+[ ] Rust
+[ ] xorriso
+[ ] UEFI tools
+[ ] QEMU tools
+
+VABAXOS
+
+[ ] repository
+[ ] README
+[ ] ROADMAP
+[ ] ARCHITECTURE
+[ ] BUILD
+[ ] CONTRIBUTING
+[ ] SECURITY
+[ ] docs/decisions
+[ ] scripts/
+[ ] tests/
+
+TEST
+
+[ ] build script
+[ ] ISO
+[ ] QEMU
+[ ] UEFI
+[ ] boot
+[ ] kernel
+[ ] systemd
+
+======================================================================
+41. PRIMO MILESTONE OPERATIVO
+======================================================================
+
+Il primo obiettivo dell'ambiente è poter eseguire:
+
+cd ~/projects/VabaxOS
+
+./scripts/check-deps.sh
+
+./scripts/build.sh
+
+./scripts/run-qemu.sh
+
+e ottenere:
+
+Windows
+    |
+    v
+WSL2
+    |
+    v
+VabaxOS build
+    |
+    v
+VabaxOS-x86_64.iso
+    |
+    v
+QEMU
+    |
+    v
+VabaxOS boot
+
+Quando questo funziona, l'ambiente di sviluppo è pronto per VABAX-001.
+
+======================================================================
+42. PRIMO OBIETTIVO VABAXOS
+======================================================================
+
+Non tentare immediatamente di costruire:
+
+- screen reader completo;
+- desktop completo;
+- installer;
+- gaming;
+- store;
+- supporto ARM;
+- supporto Mac.
+
+Il primo obiettivo è:
+
+BOOT
+  ->
+KERNEL
+  ->
+INITRAMFS
+  ->
+SYSTEMD
+  ->
+CONSOLE
+
+Poi:
+
+AUDIO
+  ->
+TTS
+  ->
+ACCESSIBILITY
+  ->
+WAYLAND
+  ->
+DESKTOP
+
+Questo ordine riduce enormemente la complessità del debugging.
+
+======================================================================
+43. MANUTENZIONE A LUNGO TERMINE
+======================================================================
+
+L'ambiente deve rimanere riproducibile per anni.
+
+Per ogni release importante:
+
+- congelare le versioni;
+- registrare toolchain;
+- registrare kernel;
+- registrare dipendenze;
+- registrare commit;
+- produrre checksum;
+- salvare build log;
+- aggiornare documentazione.
+
+In futuro sarà opportuno creare un container o una VM dedicata alla
+build riproducibile di VabaxOS.
+
+Obiettivo finale:
+
+"Un nuovo sviluppatore può preparare l'ambiente da zero seguendo questa
+guida e ottenere lo stesso risultato."
+
+======================================================================
+44. RIFERIMENTI UFFICIALI
+======================================================================
+
+Microsoft WSL:
+https://learn.microsoft.com/windows/wsl/
+
+Installazione WSL:
+https://learn.microsoft.com/windows/wsl/install
+
+Ambiente di sviluppo WSL:
+https://learn.microsoft.com/windows/wsl/setup/environment
+
+Comandi WSL:
+https://learn.microsoft.com/windows/wsl/basic-commands
+
+Git for Windows:
+https://git-scm.com/install/windows
+
+QEMU:
+https://www.qemu.org/
+
+QEMU WHPX:
+https://www.qemu.org/docs/master/system/whpx.html
+
+======================================================================
+45. NOTA FINALE
+======================================================================
+
+Questo documento non descrive soltanto come installare alcuni programmi.
+
+Descrive l'ambiente di sviluppo permanente di VabaxOS.
+
+La workstation Windows deve essere considerata:
+
+    VABAXOS DEVELOPMENT STATION
+
+Il sistema operativo che stiamo sviluppando sarà Linux, ma il computer
+da cui lo sviluppiamo resterà Windows.
+
+La separazione è intenzionale:
+
+Windows
+    = ambiente personale e workstation
+
+WSL2
+    = ambiente Linux di sviluppo
+
+QEMU
+    = laboratorio virtuale
+
+Hardware reale
+    = laboratorio di compatibilità
+
+GitHub
+    = sorgente ufficiale del progetto
+
+Gemini
+    = ricerca e QA
+
+Claude
+    = implementazione
+
+Vabax
+    = direzione e architettura
+
+Il primo risultato concreto non sarà ancora un desktop.
+
+Sarà una pipeline affidabile:
+
+    SOURCE
+      |
+    BUILD
+      |
+    KERNEL
+      |
+    ROOTFS
+      |
+    ISO
+      |
+    QEMU
+      |
+    BOOT
+
+Da quel momento VabaxOS potrà iniziare a essere costruito realmente.

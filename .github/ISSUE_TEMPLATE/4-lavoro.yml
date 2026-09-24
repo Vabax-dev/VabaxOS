@@ -1,0 +1,33 @@
+name: Lavoro (task)
+description: Un lavoro pianificato, collegato alla roadmap.
+title: ""
+labels: ["type/task"]
+body:
+  - type: textarea
+    id: obiettivo
+    attributes:
+      label: Obiettivo
+    validations:
+      required: true
+  - type: textarea
+    id: perche
+    attributes:
+      label: Perché
+      description: Collegamento a roadmap, requisito o ADR.
+    validations:
+      required: true
+  - type: textarea
+    id: ambito
+    attributes:
+      label: Cosa è incluso e cosa no
+  - type: textarea
+    id: criteri
+    attributes:
+      label: Criteri di accettazione
+      description: Verificabili. Includi come si prova con tastiera e lettore di schermo, se pertinente.
+    validations:
+      required: true
+  - type: textarea
+    id: dipendenze
+    attributes:
+      label: Dipendenze e domande aperte

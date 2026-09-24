@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Vulnerabilità di sicurezza
+    url: https://github.com/Vabax-dev/VabaxOS/blob/main/SECURITY.md
+    about: Non aprire issue pubbliche per problemi di sicurezza. Leggi come segnalarli in privato.

@@ -1,0 +1,56 @@
+name: Difetto
+description: Qualcosa non funziona come dovrebbe.
+title: "[Difetto] "
+labels: ["type/bug", "needs-triage"]
+body:
+  - type: textarea
+    id: descrizione
+    attributes:
+      label: Cosa succede
+    validations:
+      required: true
+  - type: textarea
+    id: passi
+    attributes:
+      label: Come si riproduce
+      description: Passi numerati, dal punto di partenza.
+      placeholder: |
+        1. Avvio la ISO con «VabaxOS (con voce)»
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: atteso
+    attributes:
+      label: Cosa ti aspettavi
+    validations:
+      required: true
+  - type: dropdown
+    id: gravita
+    attributes:
+      label: Gravità (DOC-07)
+      options:
+        - "S0 critico: perdita di dati o sistema non avviabile"
+        - "S1 bloccante: un'attività essenziale è impossibile"
+        - "S2 grave: funzione degradata, ma c'è un'alternativa"
+        - "S3 minore"
+    validations:
+      required: true
+  - type: input
+    id: versione
+    attributes:
+      label: Versione di VabaxOS
+      description: Nome della ISO o commit.
+    validations:
+      required: true
+  - type: input
+    id: macchina
+    attributes:
+      label: Macchina
+      description: QEMU (con la riga di comando) oppure modello del PC.
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Togli password, nomi delle reti e dati personali prima di incollare.
+      render: text
