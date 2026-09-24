@@ -8,6 +8,8 @@
 #   --bios             legacy BIOS instead of UEFI
 #   --headless         no window (the VM cannot be used from the keyboard)
 #   --no-audio         no sound card and no PC speaker
+#   --silent-audio     sound card and PC speaker present, but nothing is heard
+#                      (automatic tests: speech services still find a card)
 #   --memory MB        memory of the VM (default 4096)
 #   --serial-log FILE  write the first serial port to FILE
 #                      (default out/logs/qemu-serial-<date>.log)
@@ -43,6 +45,7 @@ while [[ $# -gt 0 ]]; do
         --bios) FIRMWARE=bios ;;
         --headless) HEADLESS=true ;;
         --no-audio) AUDIO=false ;;
+        --silent-audio) AUDIO=silent ;;
         --memory) MEMORY="${2:?--memory vuole un numero}"; shift ;;
         --serial-log) SERIAL_LOG="${2:?--serial-log vuole un file}"; shift ;;
         --serial-tcp) SERIAL_TCP="${2:?--serial-tcp vuole una porta}"; shift ;;
@@ -99,9 +102,13 @@ case "$FIRMWARE" in
     bios) ;;
 esac
 
-if [[ "$AUDIO" == true ]]; then
-    # PulseAudio: on WSL2 this is WSLg, so the VM speaks through the PC.
-    ARGS+=(-audiodev "pa,id=snd0")
+if [[ "$AUDIO" != false ]]; then
+    if [[ "$AUDIO" == silent ]]; then
+        ARGS+=(-audiodev "none,id=snd0")
+    else
+        # PulseAudio: on WSL2 this is WSLg, so the VM speaks through the PC.
+        ARGS+=(-audiodev "pa,id=snd0")
+    fi
     ARGS+=(-device intel-hda -device "hda-duplex,audiodev=snd0")
     # PC speaker, for the beep of the boot menu (ADR-0003, ADR-0014).
     MACHINE+=",pcspk-audiodev=snd0"
