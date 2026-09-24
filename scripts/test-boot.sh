@@ -3,7 +3,9 @@
 #   ./scripts/test-boot.sh [--secure-boot | --bios] [--entry ENTRY] [--lang it] [--timeout SECONDS] [ISO]
 # Starts the ISO, waits for the login prompt on the serial console, logs in as
 # the live user, answers the spoken welcome, checks the running system and
-# shuts it down.
+# shuts it down. It also records the sound of the VM (QEMU wavcapture) and
+# checks that the welcome, console speech and Orca are really heard, or
+# silent with "without voice". The recordings stay next to the log.
 # --entry chooses the boot menu entry (ADR-0014):
 #   voice     no key pressed: the default entry starts after the timeout
 #   novoice   presses N, "VabaxOS without voice"
@@ -38,9 +40,9 @@ done
 
 # For each boot menu entry: hotkey, and what the running system must show.
 case "$ENTRY" in
-    voice) HOTKEY=""; WANT_VOICE=on; WANT_RECOVERY=no; WANT_SPEECH=active; WANT_DESKTOP=yes; WANT_ORCA=yes ;;
-    novoice) HOTKEY=n; WANT_VOICE=off; WANT_RECOVERY=no; WANT_SPEECH=inactive; WANT_DESKTOP=yes; WANT_ORCA=no ;;
-    recovery) HOTKEY=r; WANT_VOICE=on; WANT_RECOVERY=yes; WANT_SPEECH=active; WANT_DESKTOP=no; WANT_ORCA=no ;;
+    voice) HOTKEY=""; WANT_VOICE=on; WANT_RECOVERY=no; WANT_SPEECH=active; WANT_DESKTOP=yes; WANT_ORCA=yes; WANT_SOUND=yes ;;
+    novoice) HOTKEY=n; WANT_VOICE=off; WANT_RECOVERY=no; WANT_SPEECH=inactive; WANT_DESKTOP=yes; WANT_ORCA=no; WANT_SOUND=no ;;
+    recovery) HOTKEY=r; WANT_VOICE=on; WANT_RECOVERY=yes; WANT_SPEECH=active; WANT_DESKTOP=no; WANT_ORCA=no; WANT_SOUND=yes ;;
     *) printf 'Voce del menu sconosciuta: %s\n' "$ENTRY" >&2; exit 64 ;;
 esac
 case "$MENU_LANG" in
@@ -100,8 +102,23 @@ wait_for() {
     done
 }
 send() { printf '%s\n' "$1" >&"$SERIAL"; }
+# Sends a command to the QEMU monitor.
+monitor() { { printf '%s\n' "$1" > "/dev/tcp/127.0.0.1/$MONITOR_PORT"; } 2>/dev/null; sleep 0.3; }
 # Presses a key on the VM keyboard (QEMU key names: ret, n, r, ...).
-press() { { printf 'sendkey %s\n' "$1" > "/dev/tcp/127.0.0.1/$MONITOR_PORT"; } 2>/dev/null; }
+press() { monitor "sendkey $1"; }
+# Records the sound of the VM for SECONDS into <log>-NAME.wav, then prints
+# "yes" if there was sound (speech or beeps), "no" if it was silent.
+record() {
+    local wav="${LOG%.log}-$1.wav"
+    monitor "wavcapture $wav snd0"
+    sleep "$2"
+    monitor "stopcapture 0"
+    if python3 "$REPO/scripts/lib/wav-timeline.py" "$wav" 2>/dev/null | grep -q 'voce\|tono'; then
+        echo yes
+    else
+        echo no
+    fi
+}
 
 # Asks the VM for a value: runs COMMAND in the shell of the VM and waits for
 # the line "KEY=<output>". Answers are read with value().
@@ -148,12 +165,6 @@ fi
 wait_for 'vabaxos login:' 'richiesta di accesso' || exit 1
 printf 'OK: richiesta di accesso sulla console seriale dopo %d secondi.\n' $((SECONDS - START))
 
-send user
-wait_for 'Password:' 'richiesta della password' || exit 1
-send live
-wait_for 'user@vabaxos:~\$' 'prompt della shell' || exit 1
-printf 'OK: accesso come utente live.\n'
-
 FAILED=0
 check() {
     if [[ "$2" == "$3" ]]; then
@@ -164,18 +175,33 @@ check() {
     fi
 }
 
-# The spoken welcome waits on the first console (ADR-0016). Answer it with
-# Enter: the first language (English), then "Try VabaxOS". With the language
-# chosen in the boot menu there is no language step. Not in recovery mode.
+# The spoken welcome waits on the first console (ADR-0016). Answer it like a
+# person, before logging in on the serial console: a login there would start
+# the user's sound server while the welcome still uses the sound card.
+# Enter chooses the first language (English), or F1 repeats the message when
+# the language came from the boot menu; the welcome then reads the modes,
+# which is recorded; Enter again chooses "Try VabaxOS". Not in recovery mode.
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    ask welcome 'for i in $(seq 90); do s=$(systemctl is-active vabaxos-welcome); [ "$s" = activating ] && break; sleep 1; done; echo $s' || exit 1
-    check 'benvenuto in attesa' "$(value welcome)" activating
+    sleep 5
     if [[ -z "$MENU_LANG" ]]; then
         press ret
-        sleep 3
+    else
+        press f1
     fi
+    check 'voce del benvenuto udibile' "$(record welcome 8)" "$WANT_SOUND"
     press ret
-    printf 'INFO: premuto Invio nel benvenuto (lingua, se chiesta, poi Try VabaxOS).\n'
+    printf 'INFO: risposto al benvenuto (lingua o F1, poi Try VabaxOS).\n'
+fi
+
+send user
+wait_for 'Password:' 'richiesta della password' || exit 1
+send live
+wait_for 'user@vabaxos:~\$' 'prompt della shell' || exit 1
+printf 'OK: accesso come utente live.\n'
+
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask welcome 'for i in $(seq 30); do s=$(systemctl show -p ActiveState --value vabaxos-welcome); [ "$s" = activating ] || break; sleep 1; done; echo $s-$(systemctl show -p Result --value vabaxos-welcome)' || exit 1
+    check 'benvenuto concluso' "$(value welcome)" inactive-success
 fi
 
 ask state 'timeout 180 systemctl is-system-running --wait' || exit 1
@@ -214,6 +240,33 @@ check 'Orca' "$(value orca)" "$WANT_ORCA"
 check lingua "$(value lang)" "$WANT_LANG"
 printf 'INFO: kernel %s\n' "$(value kernel)"
 printf 'INFO: sistema %s\n' "$(value os)"
+
+# Sound. In the desktop, a new terminal window takes the focus, and Orca
+# must announce it (more reliable than the Activities overview). Then the
+# third text console, where Speakup must read the login prompt, and back to
+# the desktop (or the first console), where Orca must announce a new
+# terminal again. Ctrl+Shift+Q closes the terminal.
+orca_speaks() {
+    send 'env XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus setsid gtk-launch org.gnome.Ptyxis >/dev/null 2>&1 &'
+    record "$1" 10
+    press ctrl-shift-q
+    sleep 3
+}
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    check 'Orca udibile nel desktop' "$(orca_speaks orca)" "$WANT_SOUND"
+    ask vt 'loginctl show-session $(loginctl list-sessions --no-legend | awk "\$3==\"user\" && \$4==\"seat0\" {print \$1}" | head -1) -p VTNr --value' || exit 1
+    BACK_VT="$(value vt)"
+else
+    BACK_VT=1
+fi
+press ctrl-alt-f3
+check 'voce della console udibile' "$(record console 10)" "$WANT_SOUND"
+press "ctrl-alt-f${BACK_VT:-1}"
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    sleep 3
+    check 'Orca udibile al ritorno dalla console' "$(orca_speaks orca-ritorno)" "$WANT_SOUND"
+fi
+
 if [[ "$(value state)" != running ]]; then
     ask failed 'systemctl --failed --no-legend --plain | cut -d" " -f1 | paste -sd,' || exit 1
     printf 'INFO: unità fallite: %s\n' "$(value failed)"
