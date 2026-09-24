@@ -1,0 +1,13 @@
+Package: vabaxos-sounds
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: sound
+Priority: optional
+Depends: sound-theme-freedesktop, gsettings-desktop-schemas
+Recommends: gnome-session-canberra
+Description: VabaxOS system sounds
+ Three sound themes made for VabaxOS: Cristallo (bells), Morbido (soft
+ mallets) and Aria (gentle pads). They share the motif of the boot menu
+ beeps: rising when something starts or arrives, falling when it ends or
+ leaves, so events can be told apart without seeing the screen. Sounds
+ the themes do not have come from the freedesktop theme.
