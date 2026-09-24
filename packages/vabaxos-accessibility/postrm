@@ -2,4 +2,6 @@
 set -e
 if [ "$1" = remove ] || [ "$1" = purge ]; then
     deb-systemd-helper purge vabaxos-voice-off.service >/dev/null || true
+    deb-systemd-helper purge vabaxos-console-speech.path >/dev/null || true
+    systemctl --global disable vabaxos-audio-check.service >/dev/null 2>&1 || true
 fi

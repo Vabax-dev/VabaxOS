@@ -9,7 +9,8 @@ Keys: up and down arrows move and read the item, Enter confirms, Esc goes
 back, F1 repeats the message. It never chooses by itself: after 30 seconds
 without keys it repeats the message once, then waits.
 
-Speech: espeak-ng, one process at a time; a key press interrupts it.
+Speech: espeak-ng played with aplay on the sound card, one sentence list at a
+time; a key press interrupts it.
 With the boot option vabaxos.voice=off the menu is shown without speech.
 
 Tests: with VABAXOS_WELCOME_DRY_RUN=FILE nothing is spoken and nothing is
@@ -100,8 +101,13 @@ class Speaker:
                 record(f"say {lang}: {text}")
             return
         rate = str(RATES[self.rate])
+        # espeak-ng plays only through PulseAudio, which does not exist for
+        # root before the desktop, and ALSA's default device leads there too
+        # (pipewire-alsa): write the sound as WAV and play it with aplay on
+        # the system's sound card itself (sysdefault).
         script = " && ".join(
-            f'espeak-ng -v {lang} -s {rate} -- "${i + 1}"' for i, (_, lang) in enumerate(parts)
+            f'espeak-ng -v {lang} -s {rate} --stdout -- "${i + 1}" | aplay -q -D sysdefault'
+            for i, (_, lang) in enumerate(parts)
         )
         try:
             self.process = subprocess.Popen(
