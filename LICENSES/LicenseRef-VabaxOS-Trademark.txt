@@ -1,0 +1,13 @@
+VabaxOS name and logo
+
+Copyright 2026 Vabax. All rights reserved.
+
+"VabaxOS", "Vabax" and the VabaxOS logo are trademarks of Vabax (ADR-0011).
+They are not covered by the free licenses of the rest of VabaxOS.
+
+Until the trademark guidelines are published (before the first public
+alpha release), the logo files may be copied and redistributed only
+unmodified and as part of VabaxOS or of material that talks about
+VabaxOS. Any other use, including modified versions and use for other
+products or derived distributions, requires written permission from
+Vabax: https://vabax.it

@@ -28,6 +28,7 @@ path = [
   "image/config/hooks/normal/*reproducible*.hook.chroot",
   "image/config/hooks/normal/*cleanup*.hook.chroot",
   "image/config/bootloaders/grub-pc/config.cfg",
+  "image/config/bootloaders/grub-pc/live-theme/theme.txt",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = [
@@ -35,3 +36,10 @@ SPDX-FileCopyrightText = [
   "2026 Vabax and VabaxOS contributors",
 ]
 SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Name and logo: reserved trademark (ADR-0011), see LICENSES/LicenseRef-VabaxOS-Trademark.txt.
+[[annotations]]
+path = ["artwork/logo-*", "image/config/bootloaders/splash.svg", "packages/vabaxos-branding/root/**/vabaxos-logo*.svg"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Vabax"
+SPDX-License-Identifier = "LicenseRef-VabaxOS-Trademark"
