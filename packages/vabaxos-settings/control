@@ -1,0 +1,10 @@
+Package: vabaxos-settings
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: gsettings-desktop-schemas
+Description: VabaxOS default settings for GNOME
+ Defaults that keep the desktop usable without sight (ADR-0004,
+ ADR-0014): no GNOME welcome tour, no automatic suspend, no screen lock
+ that asks for a password.
