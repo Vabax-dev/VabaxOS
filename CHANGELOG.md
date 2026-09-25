@@ -35,3 +35,6 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - `vabaxos-status` (Super+Alt+I): ora, batteria, rete, Bluetooth e volume letti da Orca.
 - Lettore di documenti con voce naturale (`vabaxos-reader`): testo, PDF, Word, EPUB, HTML; frasi, paragrafi, segnalibri, esportazione audio.
 - `vabaxos-update`: aggiornamenti annunciati a voce, subito o al riavvio, anche Flatpak; proposta ADR-0020 su aggiornamenti e sicurezza. Flatpak nella ISO.
+- Tema sonoro VabaxOS, scelto da Vabax: il timbro dei suoni di Ubuntu (Yaru) con melodie nostre; cattura dello schermo di freedesktop.
+- Sistema completo: LibreOffice con dizionario italiano, Thunderbird, Braille (brltty), riconoscimento del testo (anche nel lettore di documenti), Rhythmbox, libri DAISY, registratore, backup, archivi, password; aiuto di VabaxOS nel sistema e nel menu Start; proposta ADR-0021 su firewall e cifratura.
+- Interfaccia familiare: barra delle applicazioni, icone di sistema, pulsanti Riduci e Ingrandisci, icone sul desktop, cronologia degli appunti, finestre affiancate, Ctrl+Maiusc+Esc; programma «Programmi di VabaxOS» per l'avvio automatico, la disinstallazione e i programmi di Windows (Bottles).

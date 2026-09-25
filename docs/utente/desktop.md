@@ -1,8 +1,20 @@
 # Il desktop di VabaxOS
 
+## Com'è fatto
+
+Come in Windows:
+
+- **in basso, la barra delle applicazioni**: a sinistra il simbolo di VabaxOS (il [menu Start](menu-start.md)), poi i programmi aperti e quelli fissati; a destra le icone dei programmi in esecuzione, il Wi-Fi, il volume, la batteria e l'orologio. Con Orca: Ctrl+Alt+Tab porta il cursore sulla barra;
+- **ogni finestra** ha i pulsanti Riduci a icona, Ingrandisci e Chiudi;
+- **le finestre si affiancano**: Super+Freccia sinistra o destra le mette a metà schermo, e si possono mettere anche in un quarto;
+- **le icone sul desktop**: Cartella personale e Cestino.
+
 ## Tasti utili
 
 - **Super**: apre il [menu Start](menu-start.md).
+- **Ctrl+Maiusc+Esc**: il Monitor di sistema, come Gestione attività di Windows.
+- **Ctrl+Alt+H**: la cronologia degli appunti, cioè le ultime cose copiate.
+- **Alt+Tab**: passa da una finestra all'altra.
 - **Super+Alt+I**: dice lo stato del computer: ora e data, batteria, rete Wi-Fi o cavo, Bluetooth, volume. È una notifica, quindi Orca la legge dovunque sia il cursore. Da terminale: `vabaxos-status`, oppure `vabaxos-status battery` per la sola batteria.
 - **Super+Alt+S**: accende e spegne Orca.
 - **Super+Alt+8**: accende e spegne lo zoom.
@@ -30,6 +42,15 @@ gsettings set org.gnome.desktop.sound theme-name vabaxos-morbido
 ```
 
 Crediti: il cestino e il timbro del tema Campane sono di Mads Rosendahl (tema Yaru di Ubuntu, CC BY-SA 4.0); la cattura dello schermo è di horsthorstensen su freesound (CC BY-SA).
+
+## Programmi all'avvio e disinstallazione
+
+**Programmi di VabaxOS**, nel menu Start, elenca i programmi installati. Per ognuno:
+
+- l'interruttore **Avvio automatico**, per farlo partire all'accesso;
+- il pulsante **Disinstalla**, che chiede conferma. I componenti che servono a VabaxOS per parlare e funzionare, come Orca e la voce, lì non si possono disinstallare.
+
+La sezione **Programmi di Windows** installa Bottles, che fa funzionare molti programmi .exe. Si scarica da Flathub, quindi serve Internet.
 
 ## Energia, Wi-Fi e Bluetooth
 
