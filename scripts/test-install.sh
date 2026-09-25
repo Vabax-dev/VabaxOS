@@ -10,7 +10,8 @@
 #    end; 6 processors, because unpacking the system takes long.
 # 2. Starts the installed system from the disk and checks it on the
 #    serial console, logged in as the test user: VabaxOS packages, live
-#    packages removed, console speech heard, welcome at the first start
+#    packages removed, console speech heard, the accessibility chosen
+#    before installing kept (ADR-0023), welcome at the first start
 #    only, speech with no network card.
 #
 # The disk lives in a temporary folder in out/; --keep keeps it (out/test-install.qcow2).
@@ -166,6 +167,8 @@ xorriso -osirrox on -indev "$ISO" -extract /install/gtk/vmlinuz "$WORK/vmlinuz" 
 LOG="$OUT/logs/test-install-$STAMP-installer.log"
 APPEND="auto=true priority=critical preseed/file=/cdrom/preseed/vabaxos-test.cfg"
 APPEND+=" locale=en_US.UTF-8 keyboard-configuration/xkb-keymap=us speakup.synth=soft vga=788"
+# Choices made in the welcome before installing (ADR-0023), as vabaxos-install passes them.
+APPEND+=" vabaxos.a11y=high-contrast,large-text vabaxos.rate=5"
 APPEND+=" --- console=ttyS0,115200n8"
 start_vm "$LOG" --silent-audio --memory 4096 --cpus 6 --disk "$DISK" "$ISO" -- \
     -kernel "$WORK/vmlinuz" -initrd "$WORK/initrd.gz" -append "$APPEND"
@@ -191,11 +194,10 @@ start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" --from-disk
 printf 'INFO: primo avvio del sistema installato (log: %s)\n' "$LOG"
 # The welcome speaks about 8 seconds after the firmware, before the serial
 # login prompt, then waits: record from the start, then answer it as a
-# user would (language, then Start VabaxOS).
+# user would. The language comes from the installer (ADR-0023): Enter
+# chooses Start VabaxOS at once.
 check 'benvenuto al primo avvio udibile' "$(record welcome 40)" yes
 wait_for 'login: *$' 'richiesta di accesso sulla console seriale' 600 || exit 1
-press ret
-sleep 6
 press ret
 sleep 10
 login || exit 1
@@ -208,6 +210,10 @@ ask speech 'systemctl is-active espeakup'
 ask gdm 'systemctl is-active gdm'
 ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select'
 ask user 'id -un'
+# The installer saved the choices for the welcome, which applied them.
+ask choices 'tr "\n" " " < /var/lib/vabaxos/installer-choices | sed "s/ $//"'
+ask contrast 'gsettings get org.gnome.desktop.a11y.interface high-contrast'
+ask textsize 'gsettings get org.gnome.desktop.interface text-scaling-factor'
 printf 'INFO: sistema %s\n' "$(value os)"
 # Diagnosis in the serial log: the welcome, the sound servers and Orca of
 # each user, and the login screen.
@@ -219,6 +225,9 @@ check 'voce della console (espeakup)' "$(value speech)" active
 check 'schermata di accesso (GDM)' "$(value gdm)" active
 check "scelta della voce all'avvio" "$(value voiceselect)" success
 check 'benvenuto concluso e segnato' "$(value welcome | tr -s ' ')" "inactive done"
+check "scelte dell'installazione salvate" "$(value choices)" "vabaxos.a11y=high-contrast,large-text vabaxos.rate=5 vabaxos.lang=en"
+check 'alto contrasto dal benvenuto prima di installare' "$(value contrast)" true
+check 'testo grande dal benvenuto prima di installare' "$(value textsize)" 1.5
 # Orca at the login screen speaks when the focus moves: Tab, then listen.
 press tab
 check 'schermata di accesso udibile' "$(record greeter 8)" yes

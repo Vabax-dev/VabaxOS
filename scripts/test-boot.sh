@@ -12,6 +12,9 @@
 #   recovery  presses R, "Recovery mode with voice" (console only)
 #   install   presses I, "Install VabaxOS with voice": checks only that the
 #             Debian Installer speaks (no serial console there), then stops
+#   welcome-install  no key pressed; in the welcome: English, Install VabaxOS,
+#             Install now (ADR-0023): the live system must restart into the
+#             installer with kexec, without the firmware, and it must speak
 # --lang it chooses Italian in the boot menu first (L, then I).
 # Exit status: 0 if every check passes.
 # Commands in single quotes run in the shell of the VM, not here:
@@ -34,7 +37,7 @@ while [[ $# -gt 0 ]]; do
         --entry) ENTRY="${2:?--entry vuole voice, novoice o recovery}"; shift ;;
         --lang) MENU_LANG="${2:?--lang vuole it}"; shift ;;
         --timeout) TIMEOUT="${2:?--timeout vuole i secondi}"; shift ;;
-        -*) printf 'Uso: %s [--secure-boot | --bios] [--entry voice|novoice|recovery] [--lang it] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
+        -*) printf 'Uso: %s [--secure-boot | --bios] [--entry voice|novoice|recovery|install|welcome-install] [--lang it] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
         *) ISO=("$1") ;;
     esac
     shift
@@ -46,6 +49,7 @@ case "$ENTRY" in
     novoice) HOTKEY=n; WANT_VOICE=off; WANT_RECOVERY=no; WANT_SPEECH=inactive; WANT_DESKTOP=yes; WANT_ORCA=no; WANT_SOUND=no ;;
     recovery) HOTKEY=r; WANT_VOICE=on; WANT_RECOVERY=yes; WANT_SPEECH=active; WANT_DESKTOP=no; WANT_ORCA=no; WANT_SOUND=yes ;;
     install) HOTKEY=i; WANT_SOUND=yes ;;
+    welcome-install) HOTKEY=""; WANT_SOUND=yes ;;
     *) printf 'Voce del menu sconosciuta: %s\n' "$ENTRY" >&2; exit 64 ;;
 esac
 case "$MENU_LANG" in
@@ -169,23 +173,24 @@ if [[ -n "$HOTKEY" || -n "$MENU_LANG" ]]; then
     fi
 fi
 
-# The installer has no serial console: record its speech, then stop the VM.
-if [[ "$ENTRY" == install ]]; then
-    FAILED=0
-    sleep 40
-    HEARD=no
+# The installer has no serial console: record its speech, up to a minute.
+installer_speaks() {
+    local part
     for part in 1 2 3; do
         if [[ "$(record "installer-$part" 20)" == yes ]]; then
-            HEARD=yes
-            break
+            printf 'OK: l'\''installer parla (registrazione %s).\n' "$part"
+            return 0
         fi
     done
-    if [[ "$HEARD" == yes ]]; then
-        printf 'OK: l'\''installer parla (registrazione %s).\n' "$part"
+    printf 'FALLITO: l'\''installer non parla dopo 100 secondi.\n'
+    return 1
+}
+if [[ "$ENTRY" == install ]]; then
+    sleep 40
+    if installer_speaks; then
         printf 'Risultato: test di avvio superato (%s, install).\n' "$MODE"
         exit 0
     fi
-    printf 'FALLITO: l'\''installer non parla dopo 100 secondi.\n'
     printf 'Risultato: 1 controlli falliti (%s, install).\n' "$MODE"
     exit 1
 fi
@@ -202,6 +207,33 @@ check() {
         FAILED=$((FAILED + 1))
     fi
 }
+
+# Install from the welcome (ADR-0023): English, Install VabaxOS, Install now.
+# The live system restarts into the installer with kexec: with UEFI, one
+# more "BdsDxe: starting" from the firmware would mean a normal restart.
+if [[ "$ENTRY" == welcome-install ]]; then
+    FIRMWARE_STARTS="$(grep -ac 'BdsDxe: starting' "$LOG")"
+    sleep 5
+    press ret
+    check 'voce del benvenuto udibile' "$(record welcome 8)" yes
+    press down
+    sleep 2
+    press ret
+    sleep 5
+    press ret
+    printf 'INFO: nel benvenuto: Install VabaxOS, poi Install now.\n'
+    sleep 40
+    if [[ "$MODE" != bios ]]; then
+        check 'riavvio senza firmware (kexec)' "$(( $(grep -ac 'BdsDxe: starting' "$LOG") - FIRMWARE_STARTS ))" 0
+    fi
+    installer_speaks || FAILED=$((FAILED + 1))
+    if [[ "$FAILED" -eq 0 ]]; then
+        printf 'Risultato: test di avvio superato (%s, welcome-install).\n' "$MODE"
+        exit 0
+    fi
+    printf 'Risultato: %d controlli falliti (%s, welcome-install).\n' "$FAILED" "$MODE"
+    exit 1
+fi
 
 # The spoken welcome waits on the first console (ADR-0016). Answer it like a
 # person, before logging in on the serial console: a login there would start
