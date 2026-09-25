@@ -1,0 +1,22 @@
+# Italian translation of vabaxos-settings (the extension vabaxos-keys).
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: it\n"
+
+msgid "Desktop"
+msgstr "Desktop"
+
+msgid "desktop %d of %d"
+msgstr "area di lavoro %d di %d"
+
+msgid "1 window open"
+msgstr "1 finestra aperta"
+
+msgid "%d windows open"
+msgstr "%d finestre aperte"
+
+msgid "Where am I"
+msgstr "Dove sono"

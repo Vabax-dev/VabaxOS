@@ -26,8 +26,10 @@ enabled-extensions=['button-names@vabaxos.org', 'arcmenu@arcmenu.com', 'dash-to-
 menu-layout='redmond'
 menu-button-icon='/usr/share/icons/hicolor/scalable/apps/vabaxos-logo.svg'
 position-in-panel='Left'
-arcmenu-hotkey=['Super_L']
-arcmenu-hotkey-overlay-key-enabled=true
+# Super opens the VabaxOS Start menu (vabaxos-keys, block 12, ADR-0025 proposed);
+# ArcMenu stays on the taskbar, for the mouse.
+arcmenu-hotkey=@as []
+arcmenu-hotkey-overlay-key-enabled=false
 power-options=[(0, true), (1, true), (2, true), (3, true), (4, true), (5, false), (6, false), (7, false)]
 update-notifier-enabled=false
 # No user picture: it says nothing to a screen reader user.

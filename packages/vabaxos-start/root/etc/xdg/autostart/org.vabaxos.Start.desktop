@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Start menu
+Name[it]=Menu Start
+Comment=Starts the VabaxOS Start menu hidden, so Super opens it at once
+Exec=vabaxos-start --background
+Icon=vabaxos-logo
+Terminal=false
+NoDisplay=true
+OnlyShowIn=GNOME;
+X-GNOME-Autostart-Phase=Applications

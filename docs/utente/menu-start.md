@@ -1,18 +1,40 @@
 # Il menu Start
 
-In basso a sinistra, nella barra delle applicazioni, c'è il simbolo di VabaxOS: è il **menu Start** ([ADR-0018](../decisions/0018-menu-start.md)). È una via di mezzo fra il menu Start di Windows 7 e il menu Apple di macOS.
+**Super** (il tasto con il logo di Windows) apre il **menu Start** di VabaxOS ([ADR-0025](../decisions/0025-menu-start-vabaxos.md), proposta). Super di nuovo, oppure **Esc**, lo chiude, e il focus torna alla finestra in cui eri. Anche **Super+S** lo apre.
 
-## Come si usa
+## Cercare
 
-- **Super** (il tasto con il logo di Windows) apre e chiude il menu. Anche **Super+S**.
-- Appena si apre si può **scrivere**: il menu cerca programmi, impostazioni e file.
-- **Frecce** per scorrere, **Invio** per aprire, **Esc** per chiudere.
-- La panoramica di GNOME, con tutte le finestre, è su **Super+Tab**.
+Il menu si apre con il **focus nel campo di ricerca**: scrivi, e i risultati arrivano mentre scrivi. Orca dice quanti sono.
 
-## Cosa contiene
+- Si cercano programmi, impostazioni (Wi-Fi, Bluetooth, Audio, Accessibilità...), cartelle, file recenti e comandi (Blocca, Esci, Sospendi, Riavvia, Spegni).
+- Non serve scrivere il nome intero né gli accenti: «posta» trova il programma di posta, «citta» trova «Città».
+- **Invio** apre il primo risultato; **Freccia giù** va ai risultati, poi le frecce li scorrono.
+- **Esc** cancella la ricerca; di nuovo, chiude il menu.
 
-- a sinistra i programmi preferiti e recenti, e «Tutti i programmi»;
-- a destra le cartelle principali (Documenti, Scaricati, Immagini...) e le Impostazioni;
-- in basso i comandi di sistema: Esci, Blocca, Riavvia, Spegni, Sospendi.
+## Le categorie
 
-Il menu è l'estensione ArcMenu di GNOME, con lo schema «Redmond». Si può cambiare nelle sue impostazioni.
+Con il campo di ricerca vuoto, **Tab** va alle categorie:
+
+- **Preferiti:** i programmi fissati nella barra delle applicazioni;
+- **Programmi**, divisi come in Windows: Ufficio, Internet, Musica e video, Grafica, Accessibilità, Giochi, Istruzione, Sviluppo, Accessori, Sistema, Altri programmi;
+- **Strumenti di VabaxOS:** Programmi di VabaxOS, impostazioni del lettore di schermo, aiuto, lettore di documenti e gli altri;
+- **Impostazioni:** le pagine delle Impostazioni;
+- **Cartelle:** Cartella personale, Scrivania, Documenti, Scaricati, Musica, Immagini, Video, Cestino;
+- **File recenti;**
+- **Spegni o esci:** Blocca, Esci, Sospendi, Riavvia, Spegni.
+
+Le categorie sono un albero, come le cartelle in Windows:
+
+- **Freccia destra** apre una categoria; premuta ancora, entra nel suo contenuto;
+- **Freccia sinistra** chiude la categoria, oppure torna a quella che la contiene;
+- **Frecce su e giù** scorrono;
+- **una lettera** salta alla voce che comincia con quella lettera;
+- **Invio** apre il programma, l'impostazione o la cartella.
+
+Orca dice di ogni categoria quanti elementi ha e se è aperta o chiusa.
+
+## Con il mouse
+
+Nella barra delle applicazioni, in basso a sinistra, il simbolo di VabaxOS apre il menu ArcMenu ([ADR-0018](../decisions/0018-menu-start.md)), con i programmi, le cartelle e i comandi di sistema.
+
+La panoramica di GNOME, con tutte le finestre, è su **Super+Tab**.

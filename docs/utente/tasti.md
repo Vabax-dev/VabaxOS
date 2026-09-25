@@ -37,6 +37,7 @@ Il tasto **Super** è il tasto con il logo, quello che su Windows si chiama tast
 - **Super+P**: gli schermi, per esempio un proiettore.
 - **Super+Spazio**: cambia la lingua della tastiera.
 - **Super+Alt+I**: VabaxOS dice lo stato del computer: ora, batteria, rete, Bluetooth, volume.
+- **Super+Alt+D**: dove sei: il programma e la finestra, l'area di lavoro, quante finestre sono aperte. Vedi [Muoversi con la tastiera](navigazione.md).
 
 ## Copia, taglia e incolla
 

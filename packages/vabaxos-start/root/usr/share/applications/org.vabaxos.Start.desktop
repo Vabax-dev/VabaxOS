@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Start menu
+Name[it]=Menu Start
+Comment=Search programs, settings and files; categories you open with the arrows
+Comment[it]=Cerca programmi, impostazioni e file; categorie che si aprono con le frecce
+Exec=vabaxos-start
+Icon=vabaxos-logo
+Terminal=false
+NoDisplay=true
+DBusActivatable=true
+Categories=System;

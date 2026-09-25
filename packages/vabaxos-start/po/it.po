@@ -1,0 +1,154 @@
+# Italian translation of vabaxos-start.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: it\n"
+
+msgid "{name}, {count} items"
+msgstr "{name}, {count} elementi"
+
+msgid "{name}, 1 item"
+msgstr "{name}, 1 elemento"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Search programs, settings and files"
+msgstr "Cerca programmi, impostazioni e file"
+
+msgid "Categories"
+msgstr "Categorie"
+
+msgid "Results"
+msgstr "Risultati"
+
+msgid "Nothing found"
+msgstr "Nessun risultato"
+
+msgid "No results"
+msgstr "Nessun risultato"
+
+msgid "1 result"
+msgstr "1 risultato"
+
+msgid "{count} results"
+msgstr "{count} risultati"
+
+msgid "Results: {message}"
+msgstr "Risultati: {message}"
+
+msgid "It did not open: {error}"
+msgstr "Non si è aperto: {error}"
+
+msgid "Office"
+msgstr "Ufficio"
+
+msgid "Internet"
+msgstr "Internet"
+
+msgid "Music and video"
+msgstr "Musica e video"
+
+msgid "Graphics"
+msgstr "Grafica"
+
+msgid "Accessibility"
+msgstr "Accessibilità"
+
+msgid "Games"
+msgstr "Giochi"
+
+msgid "Education"
+msgstr "Istruzione"
+
+msgid "Development"
+msgstr "Sviluppo"
+
+msgid "Accessories"
+msgstr "Accessori"
+
+msgid "System"
+msgstr "Sistema"
+
+msgid "Other programs"
+msgstr "Altri programmi"
+
+msgid "Home folder"
+msgstr "Cartella personale"
+
+msgid "Desktop"
+msgstr "Scrivania"
+
+msgid "Documents"
+msgstr "Documenti"
+
+msgid "Downloads"
+msgstr "Scaricati"
+
+msgid "Music"
+msgstr "Musica"
+
+msgid "Pictures"
+msgstr "Immagini"
+
+msgid "Videos"
+msgstr "Video"
+
+msgid "Lock"
+msgstr "Blocca"
+
+msgid "Log out"
+msgstr "Esci"
+
+msgid "Suspend"
+msgstr "Sospendi"
+
+msgid "Restart"
+msgstr "Riavvia"
+
+msgid "Power off"
+msgstr "Spegni"
+
+msgid "program"
+msgstr "programma"
+
+msgid "setting"
+msgstr "impostazione"
+
+msgid "category"
+msgstr "categoria"
+
+msgid "folder"
+msgstr "cartella"
+
+msgid "Trash"
+msgstr "Cestino"
+
+msgid "Favorites"
+msgstr "Preferiti"
+
+msgid "Programs"
+msgstr "Programmi"
+
+msgid "VabaxOS tools"
+msgstr "Strumenti di VabaxOS"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Folders"
+msgstr "Cartelle"
+
+msgid "Recent files"
+msgstr "File recenti"
+
+msgid "file"
+msgstr "file"
+
+msgid "Power"
+msgstr "Spegni o esci"
+
+msgid "command"
+msgstr "comando"

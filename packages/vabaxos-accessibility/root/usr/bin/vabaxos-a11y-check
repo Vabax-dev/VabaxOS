@@ -2,6 +2,7 @@
 """Checks a running program the way a screen reader sees it (ADR-0010).
 
     vabaxos-a11y-check [--wait SECONDS] [--list | --focused] PROGRAM
+    vabaxos-a11y-check [--wait SECONDS] --watch-focus SECONDS PROGRAM
 
 Walks the AT-SPI accessibility tree of PROGRAM (the application name, for
 example vabaxos-setup, or a part of it, such as nautilus) and reports every control a screen reader user can
@@ -10,7 +11,10 @@ boxes, text fields, spin buttons, combo boxes, list items, menu items,
 links, sliders) that has neither an accessible name nor text inside it.
 With --list it prints every node: depth, role and name. With --focused it
 prints only what has the keyboard focus, as Orca would announce it (role and
-name), for the tests of the keys.
+name), for the tests of the keys. With --watch-focus it listens for SECONDS
+to where the focus goes (while a test presses Tab, block 11), prints each
+stop and a summary: stops, different controls reached, controls the
+keyboard can reach, stops without a name, focus that left the program.
 
 Exit status: 0 if every control has a name, 1 if some have none, 2 if the
 program was not found.
@@ -146,13 +150,55 @@ def focused(node):
     return None
 
 
+def reachable(node, found, depth=0):
+    """Shown, focusable controls a screen reader user can reach."""
+    try:
+        states = node.get_state_set()
+        if (node.get_role() in CONTROLS and states.contains(Atspi.StateType.SHOWING)
+                and states.contains(Atspi.StateType.FOCUSABLE) and not decoration(node)):
+            found.append(node)
+        for index in range(node.get_child_count()):
+            child = node.get_child_at_index(index)
+            if child is not None and depth < 60:
+                reachable(child, found, depth + 1)
+    except gi.repository.GLib.Error:
+        pass
+    return found
+
+
+def watch_focus(app, seconds):
+    """Every focus change for SECONDS: (inside the program, role, name)."""
+    from gi.repository import GLib
+    stops = []
+    app_name = app.get_name()
+
+    def changed(event):
+        if not event.detail1:
+            return
+        node = event.source
+        try:
+            owner = node.get_application()
+            inside = owner is not None and owner.get_name() == app_name
+            stops.append((inside, node.get_role_name(), text_of(node), node))
+        except GLib.Error:
+            stops.append((False, "gone", "", None))
+
+    listener = Atspi.EventListener.new(changed)
+    listener.register("object:state-changed:focused")
+    GLib.timeout_add(int(seconds * 1000), lambda: (Atspi.event_quit(), False)[1])
+    Atspi.event_main()
+    listener.deregister("object:state-changed:focused")
+    return stops
+
+
 def main(argv):
     args = argv[1:]
     listing = "--list" in args
     wait = 10.0
     if "--wait" in args:
         wait = float(args[args.index("--wait") + 1])
-    names = [a for i, a in enumerate(args) if not a.startswith("--") and (i == 0 or args[i - 1] != "--wait")]
+    names = [a for i, a in enumerate(args)
+             if not a.startswith("--") and (i == 0 or args[i - 1] not in ("--wait", "--watch-focus"))]
     if not names:
         print(__doc__)
         return 2
@@ -164,6 +210,18 @@ def main(argv):
     if app is None:
         print(f"{names[0]}: not found on the accessibility bus")
         return 2
+    if "--watch-focus" in args:
+        seconds = float(args[args.index("--watch-focus") + 1])
+        controls = reachable(app, [])
+        stops = watch_focus(app, seconds)
+        inside = [(role, name, node) for is_in, role, name, node in stops if is_in]
+        for is_in, role, name, _node in stops:
+            print(f"STOP: {'' if is_in else 'OUTSIDE '}{role}: {name}")
+        unnamed = sum(1 for role, name, _n in inside if not name.strip())
+        unique = len({(role, name) for role, name, _n in inside})
+        print(f"{names[0]}: tab: stops={len(stops)} unique={unique} controls={len(controls)} "
+              f"unnamed={unnamed} outside={len(stops) - len(inside)}")
+        return 0
     if "--focused" in args:
         node = focused(app)
         if node is None:
