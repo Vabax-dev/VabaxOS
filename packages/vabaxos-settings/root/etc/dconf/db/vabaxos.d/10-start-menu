@@ -23,6 +23,13 @@ power-options=[(0, true), (1, true), (2, true), (3, true), (4, true), (5, false)
 update-notifier-enabled=false
 # No user picture: it says nothing to a screen reader user.
 show-user-avatar=false
+# Folders and programs in one list on the right: with two lists ArcMenu
+# puts a separator between them that the keyboard reaches and that has no
+# name (found by vabaxos-a11y-check).
+directory-shortcuts=[{'id': 'ArcMenu_Home', 'name': 'Home', 'icon': 'ArcMenu_Home'}, {'id': 'ArcMenu_Documents', 'name': 'Documents', 'icon': 'ArcMenu_Documents'}, {'id': 'ArcMenu_Downloads', 'name': 'Downloads', 'icon': 'ArcMenu_Downloads'}, {'id': 'ArcMenu_Music', 'name': 'Music', 'icon': 'ArcMenu_Music'}, {'id': 'ArcMenu_Pictures', 'name': 'Pictures', 'icon': 'ArcMenu_Pictures'}, {'id': 'ArcMenu_Videos', 'name': 'Videos', 'icon': 'ArcMenu_Videos'}, {'id': 'org.gnome.Settings.desktop'}, {'id': 'org.gnome.Ptyxis.desktop'}, {'id': 'ArcMenu_Software', 'name': 'Software'}, {'id': 'ArcMenu_ActivitiesOverview', 'name': 'Activities Overview', 'icon': 'view-fullscreen-symbolic'}]
+application-shortcuts=@aa{ss} []
+show-external-devices=false
+show-bookmarks=false
 menu-button-appearance='Icon_Text'
 menu-button-text='Start'
 power-display-style='Menu'

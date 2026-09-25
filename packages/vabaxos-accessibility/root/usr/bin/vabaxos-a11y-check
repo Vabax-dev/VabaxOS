@@ -39,7 +39,7 @@ def find_application(name):
     return None
 
 
-def labelled_by_text(node, depth=3):
+def labelled_by_text(node, depth=5):
     """A control named by the text inside it, such as a button with a
     label: Orca reads that text when the control has no name."""
     if depth == 0:
