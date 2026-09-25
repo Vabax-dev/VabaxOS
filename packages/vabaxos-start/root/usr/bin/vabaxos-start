@@ -73,6 +73,9 @@ class StartWindow(Adw.ApplicationWindow):
         self.search.update_property([Gtk.AccessibleProperty.LABEL], [_("Search programs, settings and files")])
         self.search.connect("search-changed", lambda *_a: self.update_results())
         self.search.connect("activate", lambda *_a: self.open_first_result())
+        # Escape in the search field: the entry takes it (stop-search), so
+        # it never reaches the window's keys (found in the VM).
+        self.search.connect("stop-search", lambda *_a: self.escape())
         search_keys = Gtk.EventControllerKey()
         search_keys.connect("key-pressed", self.search_key)
         self.search.add_controller(search_keys)
@@ -265,13 +268,18 @@ class StartWindow(Adw.ApplicationWindow):
 
     def window_key(self, _controller, keyval, _keycode, _state):
         if keyval == Gdk.KEY_Escape:
-            if self.search.get_text():
-                self.search.set_text("")
-                self.search.grab_focus()
-            else:
-                self.set_visible(False)
+            self.escape()
             return True
         return False
+
+    def escape(self):
+        """Escape clears the search; with nothing written, closes the menu."""
+        if self.search.get_text():
+            self.search.set_text("")
+            self.update_results()
+            self.search.grab_focus()
+        else:
+            self.set_visible(False)
 
     # -- showing -------------------------------------------------------------
 

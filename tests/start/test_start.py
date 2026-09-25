@@ -88,8 +88,8 @@ def check(application):
         window.search.set_text("zzzz")
         window.update_results()
         print("NONE:%s" % window.stack.get_visible_child_name(), flush=True)
-        window.window_key(None, Gdk.KEY_Escape, 0, 0)       # clears the search
-        cleared = window.search.get_text() == ""
+        window.search.emit("stop-search")                   # Escape in the field: clears the search
+        cleared = window.search.get_text() == "" and window.stack.get_visible_child_name() == "tree"
         window.window_key(None, Gdk.KEY_Escape, 0, 0)       # closes the menu
         print("ESCAPE:%s,%s" % (cleared, window.get_visible()), flush=True)
     GLib.timeout_add(500, steps)
