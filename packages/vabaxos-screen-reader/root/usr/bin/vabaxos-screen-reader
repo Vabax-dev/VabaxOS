@@ -300,9 +300,11 @@ class ScreenReaderWindow(Adw.ApplicationWindow):
     # -- actions ------------------------------------------------------------
 
     def say(self, text):
-        self.toasts.add_toast(Adw.Toast.new(text))
-        self.update_property([Gtk.AccessibleProperty.DESCRIPTION], [text])
-        self.announce(text, Gtk.AccessibleAnnouncementPriority.MEDIUM)
+        """A short message, which the screen reader reads: a toast, as in
+        vabaxos-setup (Gtk.Accessible.announce() crashed with GTK 4.18)."""
+        toast = Adw.Toast.new(text)
+        toast.set_timeout(4)
+        self.toasts.add_toast(toast)
 
     def use_profile(self):
         name = self.profile_row.get_selected_item().get_string()
