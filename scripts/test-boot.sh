@@ -601,14 +601,11 @@ if [[ "$WANT_ORCA" == yes ]]; then
         check "Tab in $name: il focus resta nel programma" "$(tab_value "tab$key" outside)" 0
         check "Tab in $name: il focus si sposta" "$( (( $(tab_value "tab$key" unique) > 3 )) && echo yes || echo no)" yes
     done
-    # Not LibreOffice: its accessibility tree kept vabaxos-a11y-check waiting
-    # for ten minutes (2026-09-25).
-    for program in "files|nautilus|nautilus" "settings|gnome-control-center|settings" \
-                   "editor|gnome-text-editor|gnome-text-editor"; do
-        IFS='|' read -r key launch name <<< "$program"
-        tab_walk "tab$key" "$launch" "$name"
-        printf 'INFO: Tab in %s: %s\n' "$name" "$(value "tab$key")"
-    done
+    # Only Files among GNOME's programs: with LibreOffice and with Settings
+    # (not found on the accessibility bus) the VM stopped answering for ten
+    # minutes (2026-09-25).
+    tab_walk tabfiles nautilus nautilus
+    printf 'INFO: Tab in nautilus: %s\n' "$(value tabfiles)"
 fi
 
 # A new window takes the focus even when a program already has it and the
