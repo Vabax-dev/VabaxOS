@@ -11,14 +11,18 @@ Come in Windows:
 
 ## Tasti utili
 
+VabaxOS usa i tasti di Windows 11: l'elenco completo è nella guida [I tasti di VabaxOS](tasti.md). I più usati:
+
 - **Super**: apre il [menu Start](menu-start.md).
+- **Super+T**: i programmi della barra delle applicazioni; **Super+B**: l'area di notifica.
+- **Super+A**: impostazioni rapide (Wi-Fi, Bluetooth, volume); **Super+N**: notifiche.
 - **Ctrl+Maiusc+Esc**: il Monitor di sistema, come Gestione attività di Windows.
-- **Ctrl+Alt+H**: la cronologia degli appunti, cioè le ultime cose copiate.
+- **Super+V**: la cronologia degli appunti, cioè le ultime cose copiate.
 - **Alt+Tab**: passa da una finestra all'altra.
 - **Super+Alt+I**: dice lo stato del computer: ora e data, batteria, rete Wi-Fi o cavo, Bluetooth, volume. È una notifica, quindi Orca la legge dovunque sia il cursore. Da terminale: `vabaxos-status`, oppure `vabaxos-status battery` per la sola batteria.
 - **Super+Alt+S**: accende e spegne Orca.
 - **Super+Alt+8**: accende e spegne lo zoom.
-- **Super+A**: la panoramica di GNOME con tutti i programmi.
+- **Super+Tab**: la panoramica di GNOME con tutte le finestre.
 
 ## Come appare
 
@@ -26,7 +30,7 @@ Per chi vede poco, VabaxOS usa ovunque lo stesso aspetto:
 
 - il font **Atkinson Hyperlegible Next**, disegnato per chi vede poco: lettere facili da distinguere, come I, l e 1;
 - il viola del logo come colore dei pulsanti e delle selezioni;
-- la percentuale della batteria sempre visibile nella barra in alto;
+- la percentuale della batteria sempre visibile nella barra;
 - il logo nella schermata di accesso e nel menu Start.
 
 Tutto si cambia nelle Impostazioni e nella [configurazione iniziale](configurazione.md): contrasto, dimensione del testo, zoom.

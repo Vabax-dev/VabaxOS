@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<schemalist>
+  <schema id="org.gnome.shell.extensions.vabaxos-keys" path="/org/gnome/shell/extensions/vabaxos-keys/">
+    <key name="focus-taskbar" type="as">
+      <default><![CDATA[['<Super>t']]]></default>
+      <summary>Move the keyboard focus to the taskbar (again: the next program)</summary>
+    </key>
+    <key name="focus-tray" type="as">
+      <default><![CDATA[['<Super>b']]]></default>
+      <summary>Move the keyboard focus to the notification area</summary>
+    </key>
+    <key name="minimize-or-restore" type="as">
+      <default><![CDATA[['<Super>Down']]]></default>
+      <summary>Restore a maximized or tiled window, otherwise minimize it</summary>
+    </key>
+  </schema>
+</schemalist>

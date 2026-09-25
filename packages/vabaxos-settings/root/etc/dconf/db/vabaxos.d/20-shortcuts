@@ -3,7 +3,7 @@
 # the GNOME accessibility shortcuts Super+Alt+S (screen reader) and
 # Super+Alt+8 (zoom).
 [org/gnome/settings-daemon/plugins/media-keys]
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/']
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status]
 name='VabaxOS: computer status'
@@ -16,3 +16,9 @@ binding='<Super><Alt>i'
 name='VabaxOS: task manager'
 command='gnome-system-monitor'
 binding='<Control><Shift>Escape'
+
+# Super+U opens the accessibility settings, like Windows.
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility]
+name='VabaxOS: accessibility settings'
+command='gnome-control-center universal-access'
+binding='<Super>u'

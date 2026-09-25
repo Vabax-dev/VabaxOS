@@ -363,7 +363,8 @@ fi
 # Settings panels for Wi-Fi, Bluetooth and Power must open, and the
 # controls without a name are counted. GNOME programs are not ours: the
 # counts are information, with the full trees in the serial log.
-DESKTOP_ENV="$BUS WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000"
+# GNOME Settings starts only when XDG_CURRENT_DESKTOP says GNOME.
+DESKTOP_ENV="$BUS WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 XDG_CURRENT_DESKTOP=GNOME"
 app_a11y() {
     local key="$1" launch="$2" name="$3"
     send "env $DESKTOP_ENV $launch >/dev/null 2>&1 &"
@@ -405,8 +406,8 @@ fi
 # windows have Minimize and Maximize, Ctrl+Shift+Esc opens the System
 # Monitor, and the Programs window has a name on every control.
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|arcmenu'" || exit 1
-    check 'estensioni attive (menu Start, barra, icone, appunti, finestre)' "$(value extensions)" 6
+    ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|arcmenu|vabaxos-keys'" || exit 1
+    check 'estensioni attive (menu Start, barra, icone, appunti, finestre, tasti)' "$(value extensions)" 7
     ask buttons "env $BUS gsettings get org.gnome.desktop.wm.preferences button-layout" || exit 1
     check 'pulsanti delle finestre' "$(value buttons)" "'appmenu:minimize,maximize,close'"
     press ctrl-shift-esc
@@ -414,6 +415,52 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'Ctrl+Maiusc+Esc apre il Monitor di sistema' "$(value taskmanager)" yes
     send 'pkill -u user -x gnome-system-mo'
     app_a11y programs vabaxos-apps vabaxos-apps
+fi
+
+# The keys of Windows (block 8): Super+T and Super+B move the focus to the
+# taskbar and to the notification area (what Orca would read there is in
+# the log), copy, cut and paste work in a program, Alt+F4 closes a window
+# and on the desktop asks to shut down (then Escape).
+focus_after() {
+    local key="$1"
+    press "$2"
+    sleep 2
+    ask "$key" "env $BUS vabaxos-a11y-check --focused gnome-shell" || exit 1
+    press esc
+    sleep 1
+}
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask keys "echo \$(env $BUS gsettings get org.gnome.shell.keybindings toggle-quick-settings) \$(env $BUS gsettings get org.gnome.desktop.wm.keybindings switch-windows)" || exit 1
+    check 'tasti di Windows (Super+A, Alt+Tab)' "$(value keys)" "['<Super>a'] ['<Alt>Tab']"
+    focus_after taskbar meta_l-t
+    check 'Super+T porta il focus sulla barra delle applicazioni' "$(value taskbar | grep -c 'focus: push button\|focus: button')" 1
+    printf 'INFO: Super+T: %s\n' "$(value taskbar)"
+    focus_after tray meta_l-b
+    check "Super+B porta il focus sull'area di notifica" "$(value tray | grep -vc 'focus: none')" 1
+    printf 'INFO: Super+B: %s\n' "$(value tray)"
+    send "printf 'VabaxOS copia\n' > /tmp/copia.txt; env $DESKTOP_ENV gnome-text-editor --standalone /tmp/copia.txt >/dev/null 2>&1 &"
+    sleep 12
+    press ctrl-a; press ctrl-c; press ctrl-end; press ctrl-v; press ctrl-s
+    sleep 2
+    ask copied 'grep -c "VabaxOS copia" /tmp/copia.txt' || exit 1
+    check 'Ctrl+C e Ctrl+V: testo copiato e incollato' "$(value copied)" 2
+    press ctrl-a; press ctrl-x; press ctrl-s
+    sleep 2
+    ask cut 'grep -c "VabaxOS copia" /tmp/copia.txt' || exit 1
+    press ctrl-v; press ctrl-s
+    sleep 2
+    ask pasted 'grep -c "VabaxOS copia" /tmp/copia.txt' || exit 1
+    check 'Ctrl+X taglia e Ctrl+V incolla di nuovo' "$(value cut) $(value pasted)" "0 2"
+    press alt-f4
+    ask closed 'sleep 3; pgrep -u user -x gnome-text-edit >/dev/null && echo aperto || echo chiuso' || exit 1
+    check 'Alt+F4 chiude la finestra' "$(value closed)" chiuso
+    send 'pkill -u user -x gnome-text-edit'
+    press alt-f4
+    sleep 3
+    ask poweroff "env $BUS vabaxos-a11y-check --focused gnome-shell" || exit 1
+    press esc
+    printf 'INFO: Alt+F4 sul desktop: %s\n' "$(value poweroff)"
+    check 'Alt+F4 sul desktop chiede di spegnere' "$(value poweroff | grep -ci 'power off\|restart\|cancel')" 1
 fi
 
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.

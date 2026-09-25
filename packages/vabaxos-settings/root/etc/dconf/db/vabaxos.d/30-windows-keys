@@ -1,0 +1,56 @@
+# The keys of Windows 11 (block 8, Vabax's request): a person who comes
+# from Windows finds the same keys for windows, taskbar, notification area,
+# quick settings and notifications. The list for the user is in
+# docs/utente/tasti.md. Super+T, Super+B, Super+Down and Alt+F4 on the
+# desktop come from the extension vabaxos-keys@vabaxos.org.
+#
+# GNOME keys that Windows uses differently are moved: the app grid (was
+# Super+A) goes, the overview goes to Super+Tab (Task View), the
+# notification list leaves Super+V (clipboard history) and Super+M
+# (minimize all).
+
+# Windows and desktops. Alt+Tab goes through the windows one by one, as
+# in Windows, not through the programs.
+[org/gnome/desktop/wm/keybindings]
+switch-windows=['<Alt>Tab']
+switch-windows-backward=['<Shift><Alt>Tab']
+switch-applications=@as []
+switch-applications-backward=@as []
+show-desktop=['<Super>d', '<Super>m']
+panel-run-dialog=['<Alt>F2', '<Super>r']
+switch-to-workspace-left=['<Super><Control>Left', '<Super>Page_Up', '<Control><Alt>Left']
+switch-to-workspace-right=['<Super><Control>Right', '<Super>Page_Down', '<Control><Alt>Right']
+
+# Super+A quick settings (Wi-Fi, Bluetooth, volume), Super+N notifications
+# and calendar, Super+Tab all the windows, Super+Shift+S and
+# Super+Print screenshots.
+[org/gnome/shell/keybindings]
+toggle-application-view=@as []
+toggle-quick-settings=['<Super>a']
+toggle-message-tray=['<Super>n']
+focus-active-notification=@as []
+toggle-overview=['<Super>Tab']
+show-screenshot-ui=['Print', '<Super><Shift>s']
+screenshot=['<Shift>Print', '<Super>Print']
+
+# Super+E Files, Super+I Settings, Super+Ctrl+Enter turns the screen
+# reader on and off (Narrator's key), next to GNOME's Super+Alt+S.
+[org/gnome/settings-daemon/plugins/media-keys]
+home=['<Super>e']
+control-center=['<Super>i']
+screenreader=['<Alt><Super>s', '<Control><Super>Return']
+
+# Super+1 ... Super+9 open the programs of the taskbar in order.
+# Super+I is Settings, not the auto-hide of the panel.
+[org/gnome/shell/extensions/dash-to-panel]
+hot-keys=true
+hotkeys-overlay-combo='NEVER'
+intellihide-key-toggle=@as []
+
+# Super+V the clipboard history.
+[org/gnome/GPaste]
+show-history='<Super>v'
+
+# Super+Down is vabaxos-keys: restore, or minimize.
+[org/gnome/shell/extensions/tiling-assistant]
+restore-window=@as []
