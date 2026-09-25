@@ -21,15 +21,15 @@ Tutto si cambia nelle Impostazioni e nella [configurazione iniziale](configurazi
 
 ## I suoni
 
-Il tema dei suoni **VabaxOS** ha il timbro dei suoni di Ubuntu, perché ricordano un sistema vero, con melodie di VabaxOS (scelta di Vabax, 2026-09-25). Ogni nota è un colpo del suono «campanello» di Ubuntu, trasposto. Le melodie usano le due note dei bip del menu di avvio: **salgono** quando qualcosa inizia o arriva (accesso, dispositivo collegato, rete collegata), **scendono** quando qualcosa finisce o se ne va (uscita, dispositivo scollegato, rete persa). Così si capisce l'evento senza vedere lo schermo. L'avvio e lo spegnimento sono suonati al **pianoforte** (scelta di Vabax fra sei versioni): all'avvio del desktop un arpeggio che sale e un accordo di re maggiore; allo spegnimento la stessa frase che scende. Il suono di spegnimento si sente mentre il computer si spegne o si riavvia. Il suono della cattura dello schermo è quello del tema freedesktop, quello del cestino svuotato è quello di Ubuntu.
+Il tema dei suoni **VabaxOS** è un **pianoforte** (scelta di Vabax, 2026-09-25): tutti i suoni di sistema sono suonati sullo stesso pianoforte, in re maggiore, in un registro basso e morbido. Le melodie **salgono** quando qualcosa inizia o arriva (accesso, dispositivo collegato, rete collegata) e **scendono** quando qualcosa finisce o se ne va (uscita, dispositivo scollegato, rete persa): così si capisce l'evento senza vedere lo schermo. All'avvio del desktop suona un arpeggio che sale e un accordo; allo spegnimento la stessa frase che scende, mentre il computer si spegne o si riavvia. Il suono del cestino svuotato è quello di Ubuntu, quello della cattura dello schermo è quello del tema freedesktop.
 
-Ci sono anche tre temi alternativi: **Cristallo** (campane), **Morbido** (percussioni morbide) e **Aria** (suoni dolci e lunghi). Il tema si sceglie in Impostazioni, Suono, oppure da terminale:
+Ci sono anche quattro temi alternativi: **VabaxOS Campane** (il timbro dei suoni di Ubuntu con melodie di VabaxOS), **Cristallo** (campane), **Morbido** (percussioni morbide) e **Aria** (suoni dolci e lunghi). Il tema si sceglie in Impostazioni, Suono, oppure da terminale:
 
 ```bash
 gsettings set org.gnome.desktop.sound theme-name vabaxos-morbido
 ```
 
-Crediti: il timbro e il cestino sono di Mads Rosendahl (tema Yaru di Ubuntu, CC BY-SA 4.0); la cattura dello schermo è di horsthorstensen su freesound (CC BY-SA).
+Crediti: il cestino e il timbro del tema Campane sono di Mads Rosendahl (tema Yaru di Ubuntu, CC BY-SA 4.0); la cattura dello schermo è di horsthorstensen su freesound (CC BY-SA).
 
 ## Energia, Wi-Fi e Bluetooth
 

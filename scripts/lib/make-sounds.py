@@ -152,15 +152,14 @@ TITLES = {"cristallo": ("Cristallo", "bells"), "morbido": ("Morbido", "soft mall
           "aria": ("Aria", "gentle pads")}
 
 
-# The VabaxOS theme (Vabax's choice, 2026-09-25): the timbre of Ubuntu's
-# sounds with VabaxOS melodies. Every note is one strike of Yaru's
-# bell.oga (a single D5, Mads Rosendahl, CC-BY-SA-4.0), transposed: the
-# sound of a real system, and melodies of our own, in D major like Yaru,
-# on the motif of the boot beeps (root, fifth, octave: rising when
-# something starts or arrives, falling when it ends or leaves). Start-up
-# and shut-down are piano phrases (PIANO_PHRASES below). The screen capture
-# is freedesktop's (freesound user horsthorstensen, CC-BY-SA); emptying
-# the trash is Yaru's own (Vabax's choice: those two are better).
+# The VabaxOS Campane theme (the first VabaxOS theme, 2026-09-25): the
+# timbre of Ubuntu's sounds with VabaxOS melodies. Every note is one strike
+# of Yaru's bell.oga (a single D5, Mads Rosendahl, CC-BY-SA-4.0),
+# transposed, in D major like Yaru, on the motif of the boot beeps (root,
+# fifth, octave: rising when something starts or arrives, falling when it
+# ends or leaves). Both VabaxOS themes take the screen capture from
+# freedesktop (freesound user horsthorstensen, CC-BY-SA) and emptying the
+# trash from Yaru (Vabax's choice: those two are better).
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SAMPLE = os.path.join(REPO, "artwork", "sounds", "yaru-bell.oga")
 SAMPLE_NOTE = 587.3  # D5
@@ -168,7 +167,9 @@ CAPTURE = os.path.join(REPO, "artwork", "sounds", "freedesktop-screen-capture.og
 TRASH = os.path.join(REPO, "artwork", "sounds", "yaru-trash-empty.oga")
 
 VABAXOS = {
+    "desktop-login": [("D5", 0.0), ("A5", 0.14), ("D6", 0.28), ("F#6", 0.48)],
     "desktop-logout": [("F#6", 0.0), ("D6", 0.14), ("A5", 0.28), ("D5", 0.48)],
+    "system-shutdown": [("F#6", 0.0), ("D6", 0.20), ("A5", 0.40), ("F#5", 0.62), ("D5", 0.95)],
     "message-new-instant": [("A5", 0.0), ("D6", 0.10)],
     "message": [("F#5", 0.0), ("A5", 0.12)],
     "dialog-information": [("A5", 0.0), ("A5", 0.16)],
@@ -216,20 +217,42 @@ def render_vabaxos(sample, name):
     return out / peak * 10 ** (-6 / 20)
 
 
-# Start-up and shut-down on the piano (Vabax's choice among six versions,
-# 2026-09-25): an arpeggio up the D major chord, then the chord held; at
-# shut-down the same phrase going down, then a soft low chord. GNOME plays
-# desktop-login when the desktop starts, so that is the start-up phrase,
-# like the log-on sound of Windows; system-ready, at the login screen of
-# an installed system, is a short motif. Nothing in GNOME plays
-# system-shutdown: vabaxos-shutdown-sound.service plays its WAV copy when
-# the computer shuts down.
-PIANO_PHRASES = {
+# The VabaxOS theme is a piano (Vabax's choice, 2026-09-25: the piano
+# among six versions of the start-up sound, then every system sound on the
+# same piano, an octave lower than the first proposal). D major, rising
+# figures when something starts or arrives, falling when it ends or leaves.
+# GNOME plays desktop-login when the desktop starts: that is the start-up
+# phrase, like the log-on sound of Windows (an arpeggio up the chord, then
+# the chord); system-ready, at the login screen of an installed system, is
+# a short motif. Nothing in GNOME plays system-shutdown: the start-up
+# phrase going down, played by vabaxos-shutdown-sound.service from its WAV
+# copy. Emptying the trash is Yaru's, the screen capture freedesktop's.
+PIANO_OCTAVE = -1  # every note an octave lower than written
+
+# name: ([(note, start, velocity)], [chord notes], chord start, chord
+# velocity, seconds); short sounds have no chord and a released key.
+PIANO = {
     "desktop-login": ([("D4", 0.0, .7), ("A4", 0.16, .72), ("F#5", 0.32, .75), ("E5", 0.48, .7),
                        ("A5", 0.64, .8)], ["D3", "A3", "D5", "F#5", "A5", "D6"], 0.95, .75, 4.2),
     "system-shutdown": ([("A5", 0.0, .72), ("F#5", 0.18, .7), ("E5", 0.36, .66), ("D5", 0.54, .64),
                          ("A4", 0.72, .6)], ["D3", "A3", "D4", "F#4", "A4"], 1.05, .6, 4.6),
-    "system-ready": ([("D5", 0.0, .7), ("A5", 0.14, .72), ("D6", 0.30, .75)], [], 0, 0, 2.2),
+    "system-ready": ([("D5", 0.0, .7), ("A5", 0.14, .72), ("D6", 0.30, .75)], [], 0, 0, 1.9),
+    "desktop-logout": ([("D6", 0.0, .7), ("A5", 0.11, .68), ("F#5", 0.22, .66), ("D5", 0.36, .64)], [], 0, 0, 1.9),
+    "message-new-instant": ([("A5", 0.0, .8), ("D6", 0.09, .85)], [], 0, 0, 1.6),
+    "message": ([("F#5", 0.0, .6), ("A5", 0.12, .62)], [], 0, 0, 1.7),
+    "dialog-information": ([("A5", 0.0, .6), ("E6", 0.14, .6)], [], 0, 0, 1.7),
+    "dialog-warning": ([("F5", 0.0, .8), ("C5", 0.16, .8)], [], 0, 0, 1.7),
+    "dialog-error": ([("D4", 0.0, .85), ("C#5", 0.0, .8), ("G#4", 0.0, .75), ("A3", 0.22, .85)], [], 0, 0, 1.8),
+    "complete": ([("D5", 0.0, .7), ("F#5", 0.07, .72), ("A5", 0.14, .74), ("D6", 0.21, .8)], [], 0, 0, 1.8),
+    "device-added": ([("D5", 0.0, .7), ("A5", 0.1, .72), ("D6", 0.2, .75)], [], 0, 0, 1.8),
+    "device-removed": ([("D6", 0.0, .7), ("A5", 0.1, .68), ("D5", 0.2, .66)], [], 0, 0, 1.8),
+    "power-plug": ([("D4", 0.0, .75), ("D5", 0.12, .75)], [], 0, 0, 1.7),
+    "power-unplug": ([("D5", 0.0, .7), ("D4", 0.12, .7)], [], 0, 0, 1.7),
+    "battery-low": ([("D6", 0.0, .75), ("A5", 0.15, .7), ("D6", 0.45, .75), ("A5", 0.6, .7)], [], 0, 0, 2.2),
+    "audio-volume-change": ([("D6", 0.0, .6)], [], 0, 0, 1.5),
+    "bell-window-system": ([("A5", 0.0, .7)], [], 0, 0, 1.5),
+    "network-connectivity-established": ([("D5", 0.0, .65), ("F#5", 0.1, .68), ("A5", 0.2, .7)], [], 0, 0, 1.8),
+    "network-connectivity-lost": ([("A5", 0.0, .65), ("F#5", 0.1, .62), ("D5", 0.2, .6)], [], 0, 0, 1.8),
 }
 
 
@@ -255,35 +278,41 @@ def piano(freq, held, velocity, length):
     return out
 
 
-def room(x, seed):
-    """A small room: the sound convolved with a decaying noise burst."""
+def room(x, seed, size, decay, mix):
+    """A room: the sound convolved with a decaying noise burst."""
     rng = np.random.default_rng(seed)
-    t = np.arange(int(RATE * 1.6)) / RATE
-    ir = np.convolve(rng.standard_normal(len(t)) * np.exp(-t / 0.45), np.ones(6) / 6, "same")
+    t = np.arange(int(RATE * size)) / RATE
+    ir = np.convolve(rng.standard_normal(len(t)) * np.exp(-t / decay), np.ones(6) / 6, "same")
     ir[:int(RATE * 0.012)] = 0
     ir /= np.sqrt(np.sum(ir ** 2))
     n = len(x) + len(ir)
     wet = np.fft.irfft(np.fft.rfft(x, n) * np.fft.rfft(ir, n), n)
-    return np.concatenate([x, np.zeros(len(ir))]) * 0.72 + wet * 0.84
+    return np.concatenate([x, np.zeros(len(ir))]) * (1 - mix) + wet * mix * 3
 
 
 def render_piano(name):
-    notes, chord, chord_start, chord_velocity, length = PIANO_PHRASES[name]
+    notes, chord, chord_start, chord_velocity, length = PIANO[name]
+    shift = 2 ** PIANO_OCTAVE
+    long_phrase = bool(chord)
+    held = 1.0 if long_phrase else 0.35
     out = np.zeros(int(RATE * length))
     for note, start, velocity in notes:
-        tone = piano(note_freq(note), 1.0, velocity, 3.0)
+        tone = piano(note_freq(note) * shift, held, velocity, 3.0 if long_phrase else 1.5)
         i = int(RATE * start)
         out[i:i + len(tone)] += tone[:len(out) - i]
     for note in chord:
-        tone = piano(note_freq(note), 3.0, chord_velocity, 3.3) * 0.8
+        tone = piano(note_freq(note) * shift, 3.0, chord_velocity, 3.3) * 0.8
         i = int(RATE * chord_start)
         out[i:i + len(tone)] += tone[:len(out) - i]
-    out = room(out, 7)
+    if long_phrase:
+        out, floor, level = room(out, 7, 1.6, 0.45, 0.28), -50, -6
+    else:  # short sounds: a smaller room, a shorter tail, below the voice
+        out, floor, level = room(out, 7, 0.9, 0.3, 0.18), -36, -8
     peak = np.max(np.abs(out))
-    out = out[:np.max(np.nonzero(np.abs(out) > peak * 10 ** (-50 / 20))) + 1]
-    fade = int(RATE * 0.05)
+    out = out[:np.max(np.nonzero(np.abs(out) > peak * 10 ** (floor / 20))) + 1]
+    fade = int(RATE * (0.05 if long_phrase else 0.12))
     out[-fade:] *= np.linspace(1, 0, fade)
-    return out / peak * 10 ** (-6 / 20)
+    return out / peak * 10 ** (level / 20)
 
 
 def write_wav(path, samples):
@@ -295,22 +324,33 @@ def write_wav(path, samples):
 
 
 def vabaxos_theme(out):
+    """The default theme, vabaxos (piano), and vabaxos-campane (the first
+    VabaxOS theme: Yaru's bell with VabaxOS melodies)."""
     theme = os.path.join(out, "vabaxos")
     os.makedirs(os.path.join(theme, "stereo"), exist_ok=True)
     with open(os.path.join(theme, "index.theme"), "w", encoding="utf-8") as f:
         f.write("[Sound Theme]\nName=VabaxOS\n"
-                "Comment=VabaxOS system sounds, with the timbre of Ubuntu's Yaru theme\n"
+                "Comment=VabaxOS system sounds, on the piano\n"
                 "Inherits=freedesktop\nDirectories=stereo\n\n[stereo]\nOutputProfile=stereo\n")
-    sample = load(SAMPLE)
-    for name in VABAXOS:
-        write_oga(os.path.join(theme, "stereo", name + ".oga"), render_vabaxos(sample, name))
-    for name in PIANO_PHRASES:
+    for name in PIANO:
         samples = render_piano(name)
         write_oga(os.path.join(theme, "stereo", name + ".oga"), samples)
         if name == "system-shutdown":
             write_wav(os.path.join(theme, "system-shutdown.wav"), samples)
     shutil.copyfile(CAPTURE, os.path.join(theme, "stereo", "screen-capture.oga"))
     shutil.copyfile(TRASH, os.path.join(theme, "stereo", "trash-empty.oga"))
+
+    bells = os.path.join(out, "vabaxos-campane")
+    os.makedirs(os.path.join(bells, "stereo"), exist_ok=True)
+    with open(os.path.join(bells, "index.theme"), "w", encoding="utf-8") as f:
+        f.write("[Sound Theme]\nName=VabaxOS Campane\n"
+                "Comment=VabaxOS system sounds, with the timbre of Ubuntu's Yaru theme\n"
+                "Inherits=freedesktop\nDirectories=stereo\n\n[stereo]\nOutputProfile=stereo\n")
+    sample = load(SAMPLE)
+    for name in VABAXOS:
+        write_oga(os.path.join(bells, "stereo", name + ".oga"), render_vabaxos(sample, name))
+    shutil.copyfile(CAPTURE, os.path.join(bells, "stereo", "screen-capture.oga"))
+    shutil.copyfile(TRASH, os.path.join(bells, "stereo", "trash-empty.oga"))
 
 
 def main(out):

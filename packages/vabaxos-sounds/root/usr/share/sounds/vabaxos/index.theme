@@ -1,6 +1,6 @@
 [Sound Theme]
 Name=VabaxOS
-Comment=VabaxOS system sounds, with the timbre of Ubuntu's Yaru theme
+Comment=VabaxOS system sounds, on the piano
 Inherits=freedesktop
 Directories=stereo
 
