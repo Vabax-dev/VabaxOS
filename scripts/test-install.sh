@@ -200,7 +200,8 @@ press ret
 sleep 10
 login || exit 1
 ask os '. /etc/os-release; echo $PRETTY_NAME'
-ask welcome 'systemctl show -p ActiveState --value vabaxos-welcome; echo test | sudo -S test -f /var/lib/vabaxos/welcome-done 2>/dev/null && echo done'
+# One line: value() reads only the first line of an answer.
+ask welcome 'printf "%s %s" "$(systemctl show -p ActiveState --value vabaxos-welcome)" "$(echo test | sudo -S test -f /var/lib/vabaxos/welcome-done 2>/dev/null && echo done)"'
 ask packages 'dpkg-query -W -f "\${Package} " vabaxos-accessibility vabaxos-branding vabaxos-settings vabaxos-setup vabaxos-voice vabaxos-welcome 2>/dev/null | wc -w'
 ask live 'dpkg-query -W -f "\${db:Status-Abbrev}\${Package} " live-boot live-config 2>/dev/null | grep -c "^ii" || true'
 ask speech 'systemctl is-active espeakup'
