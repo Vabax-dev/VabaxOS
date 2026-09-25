@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Update VabaxOS
+Name[it]=Aggiorna VabaxOS
+Comment=Checks for updates and installs them, saying every step aloud
+Comment[it]=Cerca gli aggiornamenti e li installa, annunciando ogni passo
+Exec=vabaxos-update --now
+Icon=vabaxos-logo
+Terminal=false
+Categories=System;Settings;
+Keywords=update;upgrade;security;aggiornamenti;sicurezza;

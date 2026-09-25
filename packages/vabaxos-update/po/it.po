@@ -1,0 +1,49 @@
+# Italian translation of vabaxos-update.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-update\n"
+"PO-Revision-Date: 2026-09-25 00:00+0200\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Updates"
+msgstr "Aggiornamenti"
+
+msgid "Updating: {percent} percent."
+msgstr "Aggiornamento: {percent} per cento."
+
+msgid "Looking for updates. Please wait."
+msgstr "Cerco gli aggiornamenti. Attendi."
+
+msgid "Cannot look for updates: {error}. Check the network and try again."
+msgstr "Non riesco a cercare gli aggiornamenti: {error}. Controlla la rete e riprova."
+
+msgid "{count} security updates are ready. Open Update VabaxOS to install them."
+msgstr "Ci sono {count} aggiornamenti di sicurezza. Apri Aggiorna VabaxOS per installarli."
+
+msgid "VabaxOS is up to date."
+msgstr "VabaxOS è aggiornato."
+
+msgid "{count} updates, {security} for security; {apps} applications."
+msgstr "{count} aggiornamenti, di cui {security} di sicurezza; {apps} applicazioni."
+
+msgid "Note: in this test version updates come straight from Debian testing, not yet checked by VabaxOS."
+msgstr "Nota: in questa versione di prova gli aggiornamenti arrivano direttamente da Debian testing, non ancora controllati da VabaxOS."
+
+msgid "To install: vabaxos-update --now, or --at-restart."
+msgstr "Per installarli: vabaxos-update --now, oppure --at-restart."
+
+msgid "The update stopped: {error}."
+msgstr "L'aggiornamento si è fermato: {error}."
+
+msgid "Ready. The updates will be installed at the next start."
+msgstr "Pronto. Gli aggiornamenti verranno installati al prossimo avvio."
+
+msgid "Update finished."
+msgstr "Aggiornamento concluso."

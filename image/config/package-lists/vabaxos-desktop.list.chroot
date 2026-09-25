@@ -9,6 +9,8 @@ gnome-shell-extension-arc-menu
 fonts-atkinson-hyperlegible-next
 gnome-session-canberra
 network-manager
+# Applications from outside Debian (ADR-0008), updated by vabaxos-update.
+flatpak
 locales-all
 
 # Language and keyboard, chosen in the boot menu or in the welcome.
@@ -16,8 +18,8 @@ keyboard-configuration
 console-setup
 
 # Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility,
-# vabaxos-branding, vabaxos-settings, vabaxos-setup, vabaxos-sounds, vabaxos-voice,
-# vabaxos-welcome)
+# vabaxos-branding, vabaxos-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds,
+# vabaxos-update, vabaxos-voice, vabaxos-welcome)
 # are built from packages/ by
 # scripts/build-packages.sh and installed by live-build automatically.
 espeakup
