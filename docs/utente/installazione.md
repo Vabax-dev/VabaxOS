@@ -5,10 +5,12 @@ VabaxOS si installa con l'installer di Debian, lo stesso che molte persone ciech
 ## Con la voce
 
 1. Accendi il computer dalla chiavetta di VabaxOS e aspetta i **due bip** del menu di avvio.
-2. Se vuoi l'installer in italiano, premi **L**, poi **I**: il menu si ricarica e i due bip suonano di nuovo.
-3. Premi **I**: parte l'installer con la sintesi vocale.
+2. Premi **I**, poi la lettera della lingua: **I** per italiano, **E** per inglese. Parte l'installer con la sintesi vocale, già nella lingua scelta, con il paese e la tastiera di quella lingua: niente domande su lingua, paese e tastiera. Quindi **I, I** installa in italiano.
+3. Per un'altra lingua premi **I**, poi **A** («altre lingue»): l'installer chiede la lingua dall'elenco completo di Debian, poi il paese e la tastiera.
 4. La voce legge ogni domanda. Si risponde con le frecce e Invio; Tab passa ai pulsanti.
 5. Alla fine il sistema installato ha già la voce della console e Orca, come la versione live.
+
+Se prima hai scelto la lingua con **L** nel menu di avvio, **I** fa partire subito l'installer in quella lingua.
 
 Dal benvenuto parlato, la voce «Installa VabaxOS» spiega gli stessi passi e offre di riavviare.
 

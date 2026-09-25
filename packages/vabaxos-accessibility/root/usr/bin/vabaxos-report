@@ -1,0 +1,72 @@
+#!/bin/bash
+# Writes a plain text report of this start of VabaxOS: boot log, hardware,
+# sound and speech (ROADMAP v0.1: "the boot log is exported to a text
+# file"). The file can be read with a screen reader or sent with a bug
+# report.
+#
+#   vabaxos-report [FILE]
+#
+# Without FILE it writes vabaxos-report-DATE.txt in the home folder (or in
+# /root when run with sudo). With sudo the full system log is included.
+# At the end it prints the file name, and in the desktop it also shows a
+# notification, which Orca reads.
+set -u
+
+export TEXTDOMAIN=vabaxos-accessibility
+# shellcheck source=/dev/null
+. gettext.sh 2>/dev/null || { gettext() { printf '%s' "$1"; }; eval_gettext() { eval "printf '%s' \"$1\""; }; }
+
+file="${1:-$HOME/vabaxos-report-$(date +%Y%m%d-%H%M%S).txt}"
+
+section() { printf '\n===== %s =====\n' "$1"; }
+run() {
+    printf '\n$ %s\n' "$*"
+    "$@" 2>&1 || printf '(exit status %s)\n' "$?"
+}
+
+{
+    printf 'VabaxOS report, %s\n' "$(date --rfc-3339=seconds)"
+    section 'System'
+    run cat /etc/os-release
+    run uname -a
+    run cat /proc/cmdline
+    run uptime
+    run systemd-analyze
+    run systemd-analyze blame --no-pager
+    run systemctl --failed --no-pager
+    section 'Hardware'
+    run lscpu
+    run free -m
+    run lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS,MODEL
+    command -v lspci >/dev/null && run lspci -nnk
+    command -v lsusb >/dev/null && run lsusb
+    [ -d /sys/firmware/efi ] && printf '\nFirmware: UEFI\n' || printf '\nFirmware: BIOS\n'
+    command -v mokutil >/dev/null && run mokutil --sb-state
+    section 'Sound'
+    run cat /proc/asound/cards
+    command -v aplay >/dev/null && run aplay -l
+    command -v pactl >/dev/null && run pactl info
+    command -v pactl >/dev/null && run pactl list short sinks
+    section 'Speech'
+    run systemctl status espeakup --no-pager
+    run cat /var/lib/vabaxos/voice.conf
+    run cat /etc/speech-dispatcher/clients/zz-vabaxos-voice.conf
+    command -v orca >/dev/null && run orca --version
+    run gsettings get org.gnome.desktop.a11y.applications screen-reader-enabled
+    section 'Network'
+    command -v nmcli >/dev/null && run nmcli general
+    command -v nmcli >/dev/null && run nmcli device
+    section 'Kernel messages'
+    run dmesg
+    section 'System log of this start'
+    run journalctl -b --no-pager -o short-monotonic
+} > "$file" 2>&1
+
+printf '%s\n' "$file"
+if [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v gdbus >/dev/null; then
+    gdbus call --session --dest org.freedesktop.Notifications \
+        --object-path /org/freedesktop/Notifications \
+        --method org.freedesktop.Notifications.Notify \
+        "VabaxOS" 0 "" "$(gettext "VabaxOS report")" "$(eval_gettext "Saved in \$file")" \
+        "[]" "{}" 10000 >/dev/null 2>&1 || true
+fi

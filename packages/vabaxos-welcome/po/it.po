@@ -73,8 +73,11 @@ msgstr "spento"
 msgid "Install VabaxOS"
 msgstr "Installa VabaxOS"
 
-msgid "To install VabaxOS, restart the computer. After the two beeps of the boot menu, press I for the installer with voice."
-msgstr "Per installare VabaxOS, riavvia il computer. Dopo i due bip del menu di avvio, premi I per l'installer con la voce."
+msgid "To install VabaxOS, restart the computer. After the two beeps of the boot menu, press I for the installer with voice, then the letter of the language: I for Italian, E for English."
+msgstr "Per installare VabaxOS, riavvia il computer. Dopo i due bip del menu di avvio, premi I per l'installer con la voce, poi la lettera della lingua: I per italiano, E per inglese."
 
 msgid "Restart now"
 msgstr "Riavvia ora"
+
+msgid "Start VabaxOS"
+msgstr "Avvia VabaxOS"

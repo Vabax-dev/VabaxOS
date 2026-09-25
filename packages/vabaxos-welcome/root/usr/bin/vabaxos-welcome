@@ -81,7 +81,16 @@ def kernel_options():
 
 
 def sound_server():
-    """The PulseAudio socket of a user's PipeWire, or None."""
+    """The PulseAudio socket of a user's PipeWire, or None.
+
+    Only in the live system, where the live user's PipeWire starts at boot
+    and holds the sound card. In an installed system the login screen's
+    PipeWire may already be running when the welcome starts (systemd starts
+    its manager early), but it gets the sound card only when the login
+    screen appears: before that, speech sent to it would be silent, so the
+    welcome plays on the sound card itself (test-install.sh, 2026-09-25)."""
+    if not live_system():
+        return None
     for socket in sorted(glob.glob("/run/user/*/pulse/native")):
         if stat.S_ISSOCK(os.stat(socket).st_mode):
             return socket
@@ -395,7 +404,8 @@ def step_install(console, speaker, lang):
     """The installer starts from the boot menu: explain how, offer to restart."""
     _ = translation(lang)
     message = [(_("To install VabaxOS, restart the computer. After the two beeps of the "
-                  "boot menu, press I for the installer with voice."), lang)]
+                  "boot menu, press I for the installer with voice, then the letter of the "
+                  "language: I for Italian, E for English."), lang)]
     items = [_("Restart now"), _("Back")]
     index = choose(console, speaker, _("Install VabaxOS"), message, items, [lang] * 2)
     if index == 0:
@@ -405,13 +415,37 @@ def step_install(console, speaker, lang):
         sys.exit(0)
 
 
+def live_system():
+    """Running from the live medium, where every start is the first one."""
+    if DRY_RUN:
+        return os.environ.get("VABAXOS_WELCOME_LIVE", "1") == "1"
+    return os.path.isdir("/run/live/medium")
+
+
+DONE_FILE = "/var/lib/vabaxos/welcome-done"
+
+
+def mark_done():
+    """In an installed system the welcome runs only at the first start
+    (ADR-0016, point 7): its service has ConditionPathExists=!DONE_FILE."""
+    if live_system():
+        return
+    if DRY_RUN:
+        record(f"do touch {DONE_FILE}")
+        return
+    os.makedirs(os.path.dirname(DONE_FILE), exist_ok=True)
+    with open(DONE_FILE, "w", encoding="utf-8") as f:
+        f.write("VabaxOS welcome completed\n")
+
+
 def step_mode(console, speaker, settings):
     """Returns True to continue to the desktop; restart and shut down do not return."""
     lang = settings.lang
     _ = translation(lang)
     while True:
         actions = ["try"] + (["install"] if installer_available() else []) + ["a11y", "restart", "halt"]
-        names = {"try": _("Try VabaxOS"), "install": _("Install VabaxOS"),
+        start = _("Try VabaxOS") if live_system() else _("Start VabaxOS")
+        names = {"try": start, "install": _("Install VabaxOS"),
                  "a11y": _("Accessibility"), "restart": _("Restart"), "halt": _("Shut down")}
         items = [names[a] for a in actions]
         message = [(_("Welcome to VabaxOS. Use the arrow keys to choose the mode of configuration or use, then press Enter."), lang)]
@@ -457,6 +491,7 @@ def main():
                 chosen = None
         apply_rate(speaker.rate)
         apply_desktop(settings, speaker.rate)
+        mark_done()
         _ = translation(lang)
         speaker.say([(_("Starting the desktop. Please wait."), lang)])
         speaker.wait()

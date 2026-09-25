@@ -1,0 +1,21 @@
+# VabaxOS live system: the live user's manager ("user", UID 1000), and so
+# its PipeWire, starts at boot, so the welcome and console speech share one
+# sound server from the first second (ARCHITECTURE.md).
+#
+# Only in the live system. This file is copied to an installed system too,
+# where a user's PipeWire started at boot would hold the sound card and the
+# login screen would stay silent (test-install.sh, 2026-09-25): there the
+# condition fails, the welcome speaks through ALSA before the login screen,
+# and console speech joins the PipeWire of whoever is logged in, the login
+# screen included (espeakup-start and user@.service drop-in).
+[Unit]
+Description=VabaxOS live system: the live user's sound session at boot
+ConditionPathIsDirectory=/run/live/medium
+After=live-config.service systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# A Wants= of a unit whose condition fails is still started: start the
+# user manager from here instead.
+ExecStart=/usr/bin/systemctl start user@1000.service
