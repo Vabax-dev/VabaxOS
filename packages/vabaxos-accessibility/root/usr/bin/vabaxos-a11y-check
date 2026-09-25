@@ -53,6 +53,26 @@ def labelled_by_text(node, depth=3):
     return False
 
 
+def describe(node):
+    """Role and states of a node, and the names around it, to find it."""
+    parent = node.get_parent()
+    names = []
+    if parent is not None:
+        for index in range(parent.get_child_count()):
+            sibling = parent.get_child_at_index(index)
+            if sibling is not None and sibling is not node:
+                name = (sibling.get_name() or "").strip()
+                if not name:
+                    texts = [sibling.get_child_at_index(i).get_name() for i in range(min(sibling.get_child_count(), 3))
+                             if sibling.get_child_at_index(i) is not None]
+                    name = " ".join(t for t in texts if t)
+                if name:
+                    names.append(name)
+    states = [s.value_nick for s in node.get_state_set().get_states()]
+    parent_role = parent.get_role_name() if parent is not None else "-"
+    return f"in {parent_role}, near: {', '.join(names[:4]) or '-'}; states: {', '.join(states)}"
+
+
 def walk(node, depth, report, listing):
     try:
         role = node.get_role()
@@ -65,7 +85,7 @@ def walk(node, depth, report, listing):
     if listing:
         print(f"{'  ' * depth}{node.get_role_name()}: {name}")
     if role in CONTROLS and showing and not name and not labelled_by_text(node):
-        report.append(f"{node.get_role_name()} without a name (depth {depth})")
+        report.append(f"{node.get_role_name()} without a name (depth {depth}), {describe(node)}")
     for index in range(node.get_child_count()):
         child = node.get_child_at_index(index)
         if child is not None:

@@ -21,6 +21,8 @@ arcmenu-hotkey=['Super_L']
 arcmenu-hotkey-overlay-key-enabled=true
 power-options=[(0, true), (1, true), (2, true), (3, true), (4, true), (5, false), (6, false), (7, false)]
 update-notifier-enabled=false
+# No user picture: it says nothing to a screen reader user.
+show-user-avatar=false
 menu-button-appearance='Icon_Text'
 menu-button-text='Start'
 power-display-style='Menu'

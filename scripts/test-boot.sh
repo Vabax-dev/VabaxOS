@@ -333,7 +333,8 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     printf 'INFO: voce del desktop scelta: %s (%s)\n' "$(value voicemodule)" "$(value voicereason)"
 fi
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
-    send "sudo vabaxos-voice-select --engine kokoro >/dev/null; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true"
+    # sudo gets no terminal input (use_pty would swallow the next typed line).
+    send "sudo vabaxos-voice-select --engine kokoro </dev/null >/dev/null; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true"
     ask orcaback 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
     check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"
     # The module always runs; with Kokoro in use it holds the model (about
