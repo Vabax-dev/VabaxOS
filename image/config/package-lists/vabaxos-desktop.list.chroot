@@ -4,6 +4,10 @@
 gnome-core
 # Start menu with the VabaxOS logo (ADR-0018), set up by vabaxos-settings.
 gnome-shell-extension-arc-menu
+# One look for the whole system: Atkinson Hyperlegible Next, a font made
+# for low vision (vabaxos-branding); log in and log out sounds.
+fonts-atkinson-hyperlegible-next
+gnome-session-canberra
 network-manager
 locales-all
 
@@ -12,7 +16,8 @@ keyboard-configuration
 console-setup
 
 # Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility,
-# vabaxos-branding, vabaxos-settings, vabaxos-setup, vabaxos-voice, vabaxos-welcome)
+# vabaxos-branding, vabaxos-settings, vabaxos-setup, vabaxos-sounds, vabaxos-voice,
+# vabaxos-welcome)
 # are built from packages/ by
 # scripts/build-packages.sh and installed by live-build automatically.
 espeakup

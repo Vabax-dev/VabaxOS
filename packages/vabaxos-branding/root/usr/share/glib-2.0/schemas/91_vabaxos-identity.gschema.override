@@ -1,0 +1,17 @@
+# One look for VabaxOS (block 5): the same font everywhere, the logo's
+# purple as accent colour, the logo on the login screen. Users can still
+# change everything.
+
+# Atkinson Hyperlegible Next was designed for readers with low vision
+# (Braille Institute): letters that are easy to tell apart, like I, l, 1.
+# Adwaita Mono stays for fixed-width text.
+[org.gnome.desktop.interface]
+font-name='Atkinson Hyperlegible Next 11'
+document-font-name='Atkinson Hyperlegible Next 11'
+monospace-font-name='Adwaita Mono 11'
+accent-color='purple'
+# The battery level in the top bar, where Orca reads it.
+show-battery-percentage=true
+
+[org.gnome.login-screen]
+logo='/usr/share/pixmaps/vabaxos-logo.svg'

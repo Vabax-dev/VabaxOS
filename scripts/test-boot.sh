@@ -359,6 +359,45 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'menu Start: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
 fi
 
+# Desktop programs (block 5, ROADMAP v0.1): Files, Terminal and the
+# Settings panels for Wi-Fi, Bluetooth and Power must open, and the
+# controls without a name are counted. GNOME programs are not ours: the
+# counts are information, with the full trees in the serial log.
+DESKTOP_ENV="$BUS WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000"
+app_a11y() {
+    local key="$1" launch="$2" name="$3"
+    send "env $DESKTOP_ENV $launch >/dev/null 2>&1 &"
+    ask "$key" "env $BUS vabaxos-a11y-check --wait 40 $name > /tmp/$key.txt 2>&1; tail -1 /tmp/$key.txt" || exit 1
+    send "sed 's/^/A11Y-$key: /' /tmp/$key.txt | grep 'NO NAME' ; pkill -f '$launch' ; sleep 2"
+    printf 'INFO: %s\n' "$(value "$key")"
+}
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    app_a11y files nautilus nautilus
+    app_a11y terminal ptyxis ptyxis
+    # GNOME Settings is on the accessibility bus as org.gnome.Settings.
+    app_a11y wifi 'gnome-control-center wifi' settings
+    app_a11y bluetooth 'gnome-control-center bluetooth' settings
+    app_a11y power 'gnome-control-center power' settings
+    ask status "env $BUS vabaxos-status battery" || exit 1
+    printf 'INFO: vabaxos-status: %s\n' "$(value status)"
+    ask soundtheme "env $BUS gsettings get org.gnome.desktop.sound theme-name" || exit 1
+    check 'tema dei suoni' "$(value soundtheme)" "'vabaxos'"
+    ask font "env $BUS gsettings get org.gnome.desktop.interface font-name" || exit 1
+    check 'font del desktop' "$(value font)" "'Atkinson Hyperlegible Next 11'"
+fi
+
+# Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    send 'sudo systemctl suspend </dev/null'
+    sleep 15
+    monitor system_wakeup
+    sleep 10
+    ask resumed 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "returned from sleep"' || exit 1
+    ask sleepstate 'cat /sys/power/state; journalctl -b --no-pager -o cat -u systemd-suspend.service | tail -1' || exit 1
+    printf 'INFO: sospensione riuscita %s volte; stati: %s\n' "$(value resumed)" "$(value sleepstate)"
+    check 'Orca udibile dopo la sospensione' "$(orca_speaks orca-resume)" "$WANT_SOUND"
+fi
+
 if [[ "$(value state)" != running ]]; then
     ask failed 'systemctl --failed --no-legend --plain | cut -d" " -f1 | paste -sd,' || exit 1
     printf 'INFO: unità fallite: %s\n' "$(value failed)"
@@ -366,6 +405,10 @@ fi
 
 # During shutdown systemd logs to the kernel log, which reaches the serial
 # console: the log then tells which service slows the shutdown down, if any.
+# The shutdown sound (vabaxos-shutdown-sound.service) plays after the user
+# sessions stop, in every mode: the recording runs until the VM is off.
+SHUTDOWN_WAV="${LOG%.log}-shutdown.wav"
+monitor "wavcapture $SHUTDOWN_WAV snd0"
 send 'sudo dmesg -n 7; sudo systemd-analyze log-target kmsg; sudo systemd-analyze log-level info; sudo poweroff'
 SHUTDOWN_START=$SECONDS
 for _ in $(seq 120); do
@@ -381,6 +424,11 @@ elif (( SHUTDOWN_SECONDS > 30 )); then
     FAILED=$((FAILED + 1))
 else
     printf 'OK: spegnimento in %d secondi.\n' "$SHUTDOWN_SECONDS"
+fi
+if python3 "$REPO/scripts/lib/wav-timeline.py" "$SHUTDOWN_WAV" 2>/dev/null | grep -q 'voce\|tono'; then
+    check 'suono di spegnimento udibile' yes yes
+else
+    check 'suono di spegnimento udibile' no yes
 fi
 SLOW="$(tr -d '\r' < "$LOG" | sed -n 's/.*systemd\[1\]: \([^:]*\): State .stop-sigterm. timed out.*/\1/p' | sort -u | paste -sd,)"
 [[ -z "$SLOW" ]] || printf 'INFO: servizi lenti a fermarsi: %s\n' "$SLOW"

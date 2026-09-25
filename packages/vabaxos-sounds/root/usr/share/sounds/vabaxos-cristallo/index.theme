@@ -1,0 +1,8 @@
+[Sound Theme]
+Name=VabaxOS Cristallo
+Comment=VabaxOS system sounds, bells
+Inherits=freedesktop
+Directories=stereo
+
+[stereo]
+OutputProfile=stereo
