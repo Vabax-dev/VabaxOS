@@ -50,6 +50,12 @@ Nella ISO live c'è **un solo server audio**: il PipeWire dell'utente live, che 
 
 Programmi che partono come amministratore, come il benvenuto ed espeakup, raggiungono PipeWire attraverso il suo punto di accesso PulseAudio. Se PipeWire non c'è, il benvenuto suona direttamente sulla scheda. WirePlumber tiene sempre sveglia l'uscita audio, così la voce non perde le prime sillabe.
 
+Nel **sistema installato** il PipeWire del primo utente non parte all'avvio: lo avvia `vabaxos-live-audio.service`, che funziona solo nella live. Altrimenti occuperebbe la scheda audio prima della schermata di accesso, che resterebbe muta. Quindi:
+
+- al primo avvio il benvenuto parla direttamente sulla scheda, prima della schermata di accesso;
+- la schermata di accesso ha il suo PipeWire, e Orca parla attraverso di lui;
+- la voce della console si aggancia al PipeWire di chi è collegato in quel momento, schermata di accesso compresa, e passa a quello dell'utente dopo l'accesso: un drop-in di `user@.service` riavvia espeakup.
+
 ## Componenti di VabaxOS
 
 | Componente | Cosa fa | Stato |
