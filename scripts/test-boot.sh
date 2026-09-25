@@ -495,20 +495,22 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     focus_after tray meta_l-b
     check "Super+B porta il focus sull'area di notifica" "$(value tray | grep -vc 'focus: none\|Main stage')" 1
     printf 'INFO: Super+B: %s\n' "$(value tray)"
+    # The text is counted, not the lines: Text Editor pastes on the same
+    # line (its last newline is not part of the text).
     send "printf 'VabaxOS copia\n' > /tmp/copia.txt; env $DESKTOP_ENV gnome-text-editor --standalone /tmp/copia.txt >/dev/null 2>&1 &"
     ask editor "env $BUS vabaxos-a11y-check --wait 40 --focused gnome-text-editor" || exit 1
     sleep 3
     printf 'INFO: editor di testo: %s\n' "$(value editor)"
     press ctrl-a; press ctrl-c; press ctrl-end; press ctrl-v; press ctrl-s
     sleep 2
-    ask copied 'grep -c "VabaxOS copia" /tmp/copia.txt' || exit 1
+    ask copied 'grep -o "VabaxOS copia" /tmp/copia.txt | wc -l' || exit 1
     check 'Ctrl+C e Ctrl+V: testo copiato e incollato' "$(value copied)" 2
     press ctrl-a; press ctrl-x; press ctrl-s
     sleep 2
-    ask cut 'grep -c "VabaxOS copia" /tmp/copia.txt' || exit 1
+    ask cut 'grep -o "VabaxOS copia" /tmp/copia.txt | wc -l' || exit 1
     press ctrl-v; press ctrl-s
     sleep 2
-    ask pasted 'grep -c "VabaxOS copia" /tmp/copia.txt' || exit 1
+    ask pasted 'grep -o "VabaxOS copia" /tmp/copia.txt | wc -l' || exit 1
     check 'Ctrl+X taglia e Ctrl+V incolla di nuovo' "$(value cut) $(value pasted)" "0 1"
     press alt-f4
     ask closed 'sleep 3; pgrep -u user -x gnome-text-edit >/dev/null && echo aperto || echo chiuso' || exit 1
