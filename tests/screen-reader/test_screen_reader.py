@@ -107,6 +107,26 @@ def check(application):
                                   store.OrcaService.setter_name("braille", "verbosity-level"),
                                   store.OrcaService.setter_name("voice", "rate", "voices/default")), flush=True)
     print("SANITIZE:%s" % store.sanitize("Studio 2!"), flush=True)
+
+    # Keys page (block 10): every Orca command, schemes, a key already used.
+    from vabaxos_screen_reader import keymaps, orca_commands
+    keys = window.keys
+    print("KEYROWS:%d/%d" % (len(keys.rows), len(orca_commands.COMMANDS)), flush=True)
+    keys.apply_scheme("jaws")
+    print("SCHEME:%s,%s" % (keys.current_scheme(), keys.entries() == keymaps.entries("jaws")), flush=True)
+    key_row = Adw.EntryRow(); key_row.set_text("T")
+    presses = Adw.ComboRow(); presses.set_model(Gtk.StringList.new(["1", "2", "3"])); presses.set_selected(0)
+    orca_key = Adw.SwitchRow(active=True)
+    keys.change_done(None, "save", "sayAllHandler", "say all", [(orca_key, keymaps.O)], key_row, presses)
+    refused = keys.entries()["sayAllHandler"] == keymaps.entries("jaws")["sayAllHandler"]
+    key_row.set_text("F9")
+    keys.change_done(None, "save", "sayAllHandler", "say all", [(orca_key, keymaps.O)], key_row, presses)
+    saved = keys.entries()["sayAllHandler"]
+    keys.change_done(None, "none", "sayAllHandler", "say all", [], key_row, presses)
+    unbound = keys.entries()["sayAllHandler"]
+    print("CHANGE:%s,%s,%s,%s" % (refused, saved, unbound, keys.current_scheme()), flush=True)
+    keys.search.set_text("clipboard")
+    print("SEARCH:%d" % sum(1 for r, _n, _t in keys.rows if r.get_visible()), flush=True)
     application.quit()
 
 app = Adw.Application(application_id="org.vabaxos.ScreenReaderTest")
@@ -190,6 +210,14 @@ class ScreenReaderTest(unittest.TestCase):
 
     def test_live_setters(self):
         self.assertEqual(self.out.get("SETTER"), "KeyEchoEnabled,SpeechIsEnabled,None,Rate", self.err)
+
+    def test_keys_page(self):
+        self.assertEqual(self.out.get("KEYROWS"), "218/218", self.err)
+        self.assertEqual(self.out.get("SCHEME"), "1,True", self.err)
+        # T with the screen reader key is the title in JAWS: refused; F9 saved;
+        # then no key; a changed scheme is "personalized".
+        self.assertEqual(self.out.get("CHANGE"), "True,[['F9', '461', '256', '1']],[],3", self.err)
+        self.assertGreaterEqual(int(self.out.get("SEARCH", "0")), 1, self.err)
 
     def test_names_as_orca(self):
         self.assertEqual(self.out.get("SANITIZE"), "studio-2", self.err)

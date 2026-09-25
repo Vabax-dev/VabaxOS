@@ -88,6 +88,8 @@ jobs:
         run: python3 tests/apps/test_apps.py
       - name: Screen reader settings tests (hidden Broadway display, Orca's schema in memory)
         run: python3 tests/screen-reader/test_screen_reader.py
+      - name: Orca key schemes tests (NVDA, JAWS, no conflicts, the guide in sync)
+        run: python3 tests/screen-reader/test_keys.py
       - name: Update tests (fake PackageKit)
         run: python3 tests/update/test_update.py
       - name: Voice tests (Kokoro module, audio to a file)

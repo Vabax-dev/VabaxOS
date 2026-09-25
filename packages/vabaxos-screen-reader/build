@@ -1,0 +1,8 @@
+#!/bin/sh
+# Called by scripts/build-packages.sh with the package tree: the dconf
+# defaults for Orca's keys (the NVDA scheme, block 10), written from the
+# same tables the settings window uses.
+set -e
+mkdir -p "$1/etc/dconf/db/vabaxos.d"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$1/usr/lib/python3/dist-packages" python3 -m vabaxos_screen_reader.keymaps --dconf \
+    > "$1/etc/dconf/db/vabaxos.d/40-orca-keys"

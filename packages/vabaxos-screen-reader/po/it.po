@@ -764,3 +764,93 @@ msgstr "Editor di testo"
 
 msgid "VabaxOS document reader"
 msgstr "Lettore di documenti di VabaxOS"
+
+msgid "Alt"
+msgstr "Alt"
+
+msgid "Change"
+msgstr "Cambia"
+
+msgid "Change the key: {name}"
+msgstr "Cambia il tasto: {name}"
+
+msgid "Ctrl"
+msgstr "Ctrl"
+
+msgid "How many times"
+msgstr "Quante volte"
+
+msgid "JAWS"
+msgstr "JAWS"
+
+msgid "Key not recognized: write a letter, a digit, F1 to F12, or a key name."
+msgstr "Tasto non riconosciuto: scrivi una lettera, un numero, da F1 a F12, o il nome di un tasto."
+
+msgid "Key scheme"
+msgstr "Schema dei tasti"
+
+msgid "Key: a letter, a digit, F1 to F12, or a name such as Up Arrow"
+msgstr "Tasto: una lettera, un numero, da F1 a F12, o un nome come Freccia su"
+
+msgid "Keys like"
+msgstr "Tasti come"
+
+msgid "NVDA (the default)"
+msgstr "NVDA (predefinito)"
+
+msgid "NVDA and JAWS schemes use the keys of those screen readers; Orca uses its own. Insert+1 then F2 lists every key."
+msgstr "Gli schemi NVDA e JAWS usano i tasti di quei lettori di schermo; Orca usa i suoi. Ins+1 e poi F2 elenca tutti i tasti."
+
+msgid "New key for: {name}"
+msgstr "Nuovo tasto per: {name}"
+
+msgid "No key"
+msgstr "Nessun tasto"
+
+msgid "Now: {key}. Choose the keys to hold, the key to press and how many times."
+msgstr "Ora: {key}. Scegli i tasti da tenere premuti, il tasto da premere e quante volte."
+
+msgid "Once"
+msgstr "Una volta"
+
+msgid "Orca's own key"
+msgstr "Tasto originale di Orca"
+
+msgid "Orca's own keys"
+msgstr "Tasti originali di Orca"
+
+msgid "Personalized"
+msgstr "Personalizzato"
+
+msgid "Save"
+msgstr "Salva"
+
+msgid "Search a command"
+msgstr "Cerca un comando"
+
+msgid "Shift"
+msgstr "Maiusc"
+
+msgid "The keys are now: {scheme}."
+msgstr "Ora i tasti sono: {scheme}."
+
+msgid "The keys of the screen reader"
+msgstr "I tasti del lettore di schermo"
+
+msgid "Three times"
+msgstr "Tre volte"
+
+msgid "Twice"
+msgstr "Due volte"
+
+msgid "{key} is already used for: {other}. Choose another key, or change that command first."
+msgstr "{key} è già usato per: {other}. Scegli un altro tasto, o cambia prima quel comando."
+
+msgid "{name}: Orca's own key again."
+msgstr "{name}: di nuovo il tasto originale di Orca."
+
+msgid "{name}: no key."
+msgstr "{name}: nessun tasto."
+
+msgid "{name}: {key}."
+msgstr "{name}: {key}."

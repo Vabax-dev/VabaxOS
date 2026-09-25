@@ -29,7 +29,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
 
-from vabaxos_screen_reader import pages, store  # noqa: E402
+from vabaxos_screen_reader import keys_page, pages, store  # noqa: E402
 
 APP_ID = "org.vabaxos.ScreenReader"
 DOMAIN = "vabaxos-screen-reader"
@@ -125,8 +125,11 @@ class SettingRows:
                 row.handler_unblock(row.handler)
 
         def changed(*args):
+            old = self.window.store.get(group, key, sub)
             write(*args)
             self.program_note(row, group, key, sub)
+            if (group, key) == ("keybindings", "keyboard-layout") and getattr(self.window, "keys", None):
+                self.window.keys.layout_changed(old)
 
         update()
         row.handler = row.connect(signal, changed)
@@ -153,6 +156,9 @@ class ScreenReaderWindow(Adw.ApplicationWindow):
         for ident, title, icon, description, groups in pages.PAGES:
             self.page_list.append(self.page_row(ident, _(title), icon))
             self.stack.add_named(self.settings_page(_(title), _(description), groups), ident)
+        self.keys = keys_page.KeysPage(self)
+        self.page_list.append(self.page_row("keys", _("Keys"), "preferences-desktop-keyboard-shortcuts-symbolic"))
+        self.stack.add_named(self.keys.page, "keys")
         self.page_list.connect("row-selected", self.page_selected)
 
         sidebar = Adw.ToolbarView()
@@ -286,6 +292,8 @@ class ScreenReaderWindow(Adw.ApplicationWindow):
             app = self.store.app
             self.store = store.Store(self.profiles[index][1], app)
             self.rows.refresh()
+            if getattr(self, "keys", None):
+                self.keys.refresh()
 
     def program_chosen(self, *_a):
         if getattr(self, "_filling", False):
@@ -294,6 +302,8 @@ class ScreenReaderWindow(Adw.ApplicationWindow):
         if 0 <= index < len(self.programs):
             self.store.app = self.programs[index][0] or None
             self.rows.refresh()
+            if getattr(self, "keys", None):
+                self.keys.refresh()
             self.say(_("Now the pages change the settings of {name}.").format(name=self.programs[index][1])
                      if self.store.app else _("Now the pages change the settings of all programs."))
 
