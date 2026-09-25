@@ -322,23 +322,23 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'tasti del mouse: GNOME Shell' "$(value mousekeys)" stabile
 fi
 
-# Desktop voice chosen at boot (ADR-0019): the service must succeed and
-# write the default module. In the test VM (4 GB, 2 processors) the choice
-# is usually eSpeak NG; then Kokoro is forced and Orca must still speak.
+# Desktop voice (ADR-0019, ADR-0022): the service must succeed and write
+# eSpeak NG as the default module. Then Kokoro is chosen the way a user
+# does in vabaxos-setup (Orca's synthesizer): the module must load the
+# model in advance and Orca must still speak.
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select' || exit 1
     ask voicemodule 'sed -n "s/^DefaultModule //p" /etc/speech-dispatcher/clients/zz-vabaxos-voice.conf' || exit 1
     ask voicereason 'grep "^#" /var/lib/vabaxos/voice.conf | tr -d "#"' || exit 1
     check "scelta della voce all'avvio" "$(value voiceselect)" success
-    printf 'INFO: voce del desktop scelta: %s (%s)\n' "$(value voicemodule)" "$(value voicereason)"
+    check 'voce predefinita del desktop (eSpeak NG)' "$(value voicemodule)" espeak-ng
+    printf 'INFO: voce del desktop: %s (%s)\n' "$(value voicemodule)" "$(value voicereason)"
 fi
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
-    # Wait for the end of the sudo command before typing more: with use_pty,
-    # sudo reads from the terminal and would swallow a line typed ahead.
-    ask forcekokoro "sudo vabaxos-voice-select --engine kokoro >/dev/null 2>&1; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
+    ask forcekokoro "env $BUS gsettings set org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer kokoro; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
     ask orcaback 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
-    # The module loads the model in the background where Kokoro is the
-    # voice (about 570 MB): wait for it, up to 2 minutes on slow machines
+    # The module loads the model in the background when Orca uses Kokoro
+    # (about 570 MB): wait for it, up to 2 minutes on slow machines
     # such as the CI runners, then Orca must speak with it.
     ask kokoro 'for i in $(seq 120); do r=$(ps -o rss= -C sd_kokoro | sort -n | tail -1); [ "${r:-0}" -gt 300000 ] && break; sleep 1; done; [ "${r:-0}" -gt 300000 ] && echo yes || echo "no (${r:-0} kB)"' || exit 1
     check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"

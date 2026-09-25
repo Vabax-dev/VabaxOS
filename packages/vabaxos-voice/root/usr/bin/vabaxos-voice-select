@@ -1,15 +1,15 @@
 #!/usr/bin/python3
-"""Chooses the desktop voice for this computer (ADR-0019).
+"""Chooses the desktop voice for this computer (ADR-0019, ADR-0022).
 
     vabaxos-voice-select [--engine auto|kokoro|espeak] [--dry-run]
 
-Kokoro, the natural voice, needs a fast computer: a screen reader cannot
-wait. At every boot (it takes a few seconds, before the desktop) this
-program measures how long Kokoro needs for short phrases Orca says often.
-If the computer is fast enough and has enough memory, Kokoro becomes the
-voice of Speech Dispatcher, with the fastest voice of each language (Vabax's
-choice, 2026-09-24). Otherwise eSpeak NG stays, as before. The text console
-always uses eSpeak NG (Speakup).
+eSpeak NG is the default voice of Speech Dispatcher (ADR-0022, Vabax's
+choice, 2026-09-25): users choose Kokoro, the natural voice, for themselves
+in the first setup (Orca's synthesizer). With engine=auto this program
+measures at every boot how long Kokoro needs for short phrases Orca says
+often, and if the computer is fast enough and has enough memory, Kokoro
+becomes the default, with the fastest voice of each language. The text
+console always uses eSpeak NG (Speakup).
 
 The engine can be forced with the boot option vabaxos.voice.engine=kokoro or
 =espeak, or with engine= in /etc/vabaxos/voice.conf. That file can also set
@@ -28,8 +28,8 @@ import time
 CONFIG = "/etc/vabaxos/voice.conf"
 STATE = "/var/lib/vabaxos/voice.conf"
 SPEECHD = "/etc/speech-dispatcher/clients/zz-vabaxos-voice.conf"
-# Provisional: to be set with Vabax by listening to Orca (ADR-0019).
-DEFAULTS = {"engine": "auto", "max_delay_ms": "800", "min_memory_mb": "7000"}
+# max_delay_ms and min_memory_mb count only with engine=auto.
+DEFAULTS = {"engine": "espeak", "max_delay_ms": "800", "min_memory_mb": "7000"}
 TEST_PHRASES = {"it": ["Impostazioni", "pulsante", "Casella di controllo"],
                 "en": ["Settings", "button", "Check box"]}
 
@@ -104,8 +104,8 @@ def main(argv):
     reason = ""
     chosen = {}
     if engine_choice not in ("auto", "kokoro", "espeak"):
-        print(f"unknown engine {engine_choice!r}, using auto", file=sys.stderr)
-        engine_choice = "auto"
+        print(f"unknown engine {engine_choice!r}, using espeak", file=sys.stderr)
+        engine_choice = "espeak"
     use_kokoro = engine_choice == "kokoro"
     model = os.path.join(os.environ.get("VABAXOS_KOKORO_DIR", "/usr/share/vabaxos/kokoro"), "kokoro-v1.0.onnx")
     if engine_choice != "espeak" and not os.path.exists(model):

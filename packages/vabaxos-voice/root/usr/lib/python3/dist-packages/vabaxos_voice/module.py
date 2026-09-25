@@ -36,6 +36,7 @@ from .player import make_player
 
 CONFIG = "/etc/speech-dispatcher/modules/kokoro.conf"
 STATE = os.environ.get("VABAXOS_VOICE_STATE", "/var/lib/vabaxos/voice.conf")
+ORCA_SPEECH_PATH = "/org/gnome/orca/default/speech/"
 PHRASES = os.path.join(engine.DATA_DIR, "phrases-{lang}.txt")
 
 _MARK = re.compile(r"<mark\s+name=\"([^\"]*)\"\s*/>")
@@ -118,6 +119,17 @@ def gain_for(volume):
     return (volume + 100) / 100.0
 
 
+def orca_uses_kokoro():
+    """The user chose Kokoro for Orca (ADR-0022: eSpeak NG is the default,
+    Kokoro the user's choice in vabaxos-setup)."""
+    try:
+        result = subprocess.run(["gsettings", "get", "org.gnome.Orca.Speech:" + ORCA_SPEECH_PATH,
+                                 "synthesizer"], capture_output=True, text=True, timeout=3)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return "kokoro" in result.stdout
+
+
 class Module:
     def __init__(self, out=sys.stdout, config=CONFIG, state=STATE):
         self.out = out
@@ -150,11 +162,11 @@ class Module:
     def init(self):
         """Quick: Speech Dispatcher starts every module it finds, also on
         computers where eSpeak NG was chosen. The model (570 MB) is loaded
-        only where Kokoro is this computer's voice, in the background, or
-        at the first message for Kokoro."""
+        only where Kokoro is this computer's voice or the user chose it for
+        Orca, in the background, or at the first message for Kokoro."""
         self.cache = PhraseCache()
         self.player = make_player(engine.SAMPLE_RATE)
-        if self.engine == "kokoro":
+        if self.engine == "kokoro" or orca_uses_kokoro():
             threading.Thread(target=self.warm_up, daemon=True).start()
         return "Kokoro ready"
 

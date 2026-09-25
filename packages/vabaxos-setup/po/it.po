@@ -262,8 +262,8 @@ msgstr "Chiudi"
 msgid "Kind of voice"
 msgstr "Tipo di voce"
 
-msgid "The natural voice sounds human but needs a fast computer; Automatic lets VabaxOS choose at every start"
-msgstr "La voce naturale sembra umana ma richiede un computer veloce; con Automatico sceglie VabaxOS a ogni avvio"
+msgid "eSpeak NG answers at once on every computer; the natural voice sounds human but needs a fast computer"
+msgstr "eSpeak NG risponde subito su ogni computer; la voce naturale sembra umana ma richiede un computer veloce"
 
 msgid "Automatic"
 msgstr "Automatico"
@@ -271,14 +271,14 @@ msgstr "Automatico"
 msgid "Natural voice (Kokoro)"
 msgstr "Voce naturale (Kokoro)"
 
-msgid "eSpeak NG, the fastest"
-msgstr "eSpeak NG, la più veloce"
+msgid "eSpeak NG, the default"
+msgstr "eSpeak NG, predefinita"
 
 msgid "Natural voice"
 msgstr "Voce naturale"
 
-msgid "Automatic uses the fastest one on this computer"
-msgstr "Con Automatico si usa la più veloce su questo computer"
+msgid "Automatic: Nicola in Italian, Heart in English"
+msgstr "Automatico: Nicola in italiano, Heart in inglese"
 
 msgid "Nicola, male, Italian"
 msgstr "Nicola, maschile, italiano"

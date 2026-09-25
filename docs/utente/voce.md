@@ -1,6 +1,6 @@
 # La voce del desktop
 
-VabaxOS ha due voci per il desktop, cioè per Orca e per ogni programma che parla ([ADR-0019](../decisions/0019-voce-naturale-kokoro.md)):
+VabaxOS ha due voci per il desktop, cioè per Orca e per ogni programma che parla ([ADR-0019](../decisions/0019-voce-naturale-kokoro.md), [ADR-0022](../decisions/0022-espeak-predefinito.md)):
 
 - **la voce naturale, Kokoro:** sembra una persona che parla. Per l'italiano ci sono Nicola, voce maschile, e Sara, voce femminile;
 - **eSpeak NG:** robotica, ma leggerissima e immediata.
@@ -9,18 +9,16 @@ La console di testo, quella che parla prima del desktop e nella modalità di rec
 
 ## Chi sceglie
 
-A ogni avvio, prima del desktop, VabaxOS misura per qualche secondo il computer:
+Il desktop parla con **eSpeak NG**, su ogni computer: risponde subito, anche sui computer lenti (scelta di Vabax, [ADR-0022](../decisions/0022-espeak-predefinito.md)).
 
-- se il computer è abbastanza veloce e ha almeno 7 GB di memoria, il desktop parla con Kokoro;
-- per ogni lingua si usa la voce che su quel computer risponde prima;
-- altrimenti resta eSpeak NG.
+Kokoro si sceglie a mano nella [configurazione iniziale](configurazione.md), al passo Voce:
 
-Si può scegliere a mano nella [configurazione iniziale](configurazione.md), al passo Voce:
+- **Tipo di voce:** eSpeak NG, predefinita, oppure Voce naturale (Kokoro);
+- **Voce naturale:** Automatico (Nicola in italiano), Nicola, Sara, o una voce inglese.
 
-- **Tipo di voce:** Automatico, Voce naturale (Kokoro) oppure eSpeak NG;
-- **Voce naturale:** Automatico, Nicola, Sara, o una voce inglese.
+La scelta vale dal prossimo avvio del lettore di schermo: Super+Alt+S due volte. Da allora, a ogni accesso VabaxOS prepara Kokoro in anticipo, così la prima frase non aspetta. Kokoro va bene sui computer recenti con almeno 8 GB di memoria.
 
-La scelta vale dal prossimo avvio del lettore di schermo: Super+Alt+S due volte.
+Il [lettore di documenti](lettore.md) usa sempre Kokoro.
 
 ## Cosa aspettarsi
 
@@ -32,7 +30,7 @@ La scelta vale dal prossimo avvio del lettore di schermo: Super+Alt+S due volte.
 
 ## Per chi amministra il computer
 
-- `/etc/vabaxos/voice.conf`: `engine=auto`, `kokoro` oppure `espeak`; il ritardo massimo accettato (`max_delay_ms`) e la memoria minima (`min_memory_mb`).
-- Opzione di avvio `vabaxos.voice.engine=kokoro` oppure `=espeak`, per imporre la scelta.
+- `/etc/vabaxos/voice.conf`: `engine=espeak` (predefinito), `kokoro` per tutti gli utenti, oppure `auto`, che misura il computer a ogni avvio e usa Kokoro se è abbastanza veloce; con `auto` contano il ritardo massimo accettato (`max_delay_ms`) e la memoria minima (`min_memory_mb`).
+- Opzione di avvio `vabaxos.voice.engine=kokoro`, `=espeak` oppure `=auto`, per imporre la scelta.
 - `/var/lib/vabaxos/voice.conf`: la scelta fatta all'avvio e le misure.
-- `sudo vabaxos-voice-select`: ripete la misura.
+- `sudo vabaxos-voice-select --engine auto`: misura il computer.

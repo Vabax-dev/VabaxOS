@@ -182,12 +182,12 @@ def voice_page(rows):
         ]),
         group(_("Voice"), _("Changes apply to the next sentences."), [
             rows.choice(_("Kind of voice"),
-                        _("The natural voice sounds human but needs a fast computer; "
-                          "Automatic lets VabaxOS choose at every start"),
+                        _("eSpeak NG answers at once on every computer; the natural voice "
+                          "sounds human but needs a fast computer"),
                         "org.gnome.Orca.Speech", "synthesizer",
-                        [(_("Automatic"), ""), (_("Natural voice (Kokoro)"), "kokoro"),
-                         (_("eSpeak NG, the fastest"), "espeak-ng")], path=ORCA_SPEECH_PATH),
-            rows.choice(_("Natural voice"), _("Automatic uses the fastest one on this computer"),
+                        [(_("eSpeak NG, the default"), ""), (_("Natural voice (Kokoro)"), "kokoro")],
+                        path=ORCA_SPEECH_PATH),
+            rows.choice(_("Natural voice"), _("Automatic: Nicola in Italian, Heart in English"),
                         voice, "family-name",
                         [(_("Automatic"), ""), (_("Nicola, male, Italian"), "im_nicola"),
                          (_("Sara, female, Italian"), "if_sara"), (_("Heart, female, English"), "af_heart"),

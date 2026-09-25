@@ -34,3 +34,8 @@ console-setup
 espeakup
 espeak-ng
 speech-dispatcher-espeak-ng
+
+# Virtual machines: VMware (Vabax tries VabaxOS in VMware Workstation):
+# screen size that follows the window, shared clipboard, clean shutdown.
+# Its services start only inside VMware.
+open-vm-tools-desktop

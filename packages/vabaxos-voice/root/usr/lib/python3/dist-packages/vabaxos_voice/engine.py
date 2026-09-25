@@ -22,7 +22,9 @@ MAX_PHONEMES = 510
 # The voices for each language; the first one is the default until the
 # speed test (vabaxos-voice-select) picks the faster one.
 VOICES = {
-    "it": ["if_sara", "im_nicola"],
+    # The first voice is the default one (ADR-0022: no measurement at boot);
+    # Nicola is the one Vabax liked most.
+    "it": ["im_nicola", "if_sara"],
     "en": ["af_heart", "am_michael", "bf_emma", "bm_george"],
 }
 ESPEAK_LANGUAGE = {"it": "it", "en": "en-us"}
