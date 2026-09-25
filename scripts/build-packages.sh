@@ -9,6 +9,8 @@
 #   fetch             large files downloaded at build time, one per line:
 #                     URL SHA256 PATH (optional; kept in cache/downloads)
 #   copyright         licence of the contents (optional, default GPL-3.0+)
+#   build             a program run with the package tree, to make files
+#                     (optional; REPO is set, for example the HTML help)
 #   po/*.po           translations of the domain <name> (optional)
 # No root needed: files belong to root:root inside the package.
 set -euo pipefail
@@ -41,6 +43,9 @@ for dir in "$REPO"/packages/*/; do
     mkdir -p "$tree/DEBIAN"
     cp -a "$dir/root/." "$tree/"
     find "$tree" -name __pycache__ -prune -exec rm -rf {} +
+    if [[ -x "$dir/build" ]]; then
+        REPO="$REPO" "$dir/build" "$tree"
+    fi
     compress=(-Zxz)
     if [[ -f "$dir/fetch" ]]; then
         # Models and similar files are too big for Git: downloaded once,

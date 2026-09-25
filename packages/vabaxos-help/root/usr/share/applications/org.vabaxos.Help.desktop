@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS help
+Name[it]=Aiuto di VabaxOS
+Comment=The VabaxOS guides: voice, desktop, Start menu, reader, installation
+Comment[it]=Le guide di VabaxOS: voce, desktop, menu Start, lettore, installazione
+Exec=xdg-open /usr/share/doc/vabaxos-help/html/index.html
+Icon=help-browser
+Terminal=false
+Categories=Documentation;Accessibility;
+Keywords=help;guide;manual;aiuto;guida;manuale;

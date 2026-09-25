@@ -1,0 +1,10 @@
+Package: vabaxos-help
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: doc
+Priority: optional
+Recommends: firefox-esr | www-browser
+Description: VabaxOS help, the user guides in the system
+ The VabaxOS user guides as accessible web pages, readable offline: boot
+ menu, welcome, voice, first setup, desktop, Start menu, reader,
+ installation and updates. "VabaxOS help" in the Start menu opens them.

@@ -99,6 +99,32 @@ class DocumentTest(unittest.TestCase):
         epub.write_epub(self.path("a.epub"), book)
         self.assertEqual(read_paragraphs(self.path("a.epub")), ["Capitolo uno", "C'era una volta."])
 
+    def scan(self, name):
+        """A picture of an Italian sentence, as a photo or a scanned PDF."""
+        from PIL import Image, ImageDraw, ImageFont
+        image = Image.new("RGB", (1400, 300), "white")
+        draw = ImageDraw.Draw(image)
+        draw.text((40, 100), "Buongiorno, questa lettera arriva dal Comune.", fill="black",
+                  font=ImageFont.load_default(size=56))
+        image.save(self.path(name))
+        return self.path(name)
+
+    @unittest.skipUnless(shutil.which("tesseract") and have("PIL"), "tesseract or python3-pil missing")
+    def test_image_is_recognized(self):
+        from vabaxos_reader.document import NeedsOCR
+        path = self.scan("lettera.png")
+        with self.assertRaises(NeedsOCR):
+            read_paragraphs(path)
+        text = " ".join(read_paragraphs(path, ocr=True))
+        self.assertIn("lettera arriva dal Comune", text)
+
+    @unittest.skipUnless(shutil.which("tesseract") and shutil.which("pdftoppm") and have("PIL"),
+                         "tesseract, pdftoppm or python3-pil missing")
+    def test_scanned_pdf_is_recognized(self):
+        path = self.scan("lettera.pdf")
+        text = " ".join(read_paragraphs(path, ocr=True))
+        self.assertIn("Buongiorno", text)
+
     def test_position_and_bookmarks(self):
         state = ReadingState(self.path("state.json"))
         state.set_position("/doc.txt", 5)

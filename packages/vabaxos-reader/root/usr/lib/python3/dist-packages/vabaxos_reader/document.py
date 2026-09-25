@@ -2,7 +2,9 @@
 paragraphs and sentences, and the reading position of each file.
 
 Formats: plain text and Markdown, PDF (pdftotext of poppler-utils), Word
-(.docx, python3-docx), EPUB (python3-ebooklib), HTML. Only Debian packages.
+(.docx, python3-docx), EPUB (python3-ebooklib), HTML, and images and
+scanned PDFs through text recognition (tesseract, Italian and English).
+Only Debian packages.
 """
 
 import hashlib
@@ -11,8 +13,32 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 
-SUPPORTED = (".txt", ".md", ".pdf", ".docx", ".epub", ".html", ".htm")
+IMAGES = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp")
+SUPPORTED = (".txt", ".md", ".pdf", ".docx", ".epub", ".html", ".htm") + IMAGES
+OCR_LANGUAGES = "ita+eng"
+
+
+class NeedsOCR(ValueError):
+    """The document is made of images: its text must be recognized first,
+    which takes a few seconds a page (read_paragraphs(path, ocr=True))."""
+
+
+def ocr_image(path):
+    result = subprocess.run(["tesseract", path, "-", "-l", OCR_LANGUAGES], capture_output=True, check=False)
+    if result.returncode != 0:
+        raise ValueError("the text could not be recognized")
+    return result.stdout.decode("utf-8", "replace")
+
+
+def ocr_pdf(path):
+    """Each page as an image at 300 dpi, then tesseract."""
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["pdftoppm", "-r", "300", "-png", path, os.path.join(tmp, "page")],
+                       capture_output=True, check=True)
+        pages = sorted(n for n in os.listdir(tmp) if n.endswith(".png"))
+        return "\n\n".join(ocr_image(os.path.join(tmp, name)) for name in pages)
 
 
 class _HTMLText(html.parser.HTMLParser):
@@ -78,9 +104,14 @@ def text_paragraphs(text):
     return paragraphs
 
 
-def read_paragraphs(path):
-    """The paragraphs of a document, or raises ValueError with a message."""
+def read_paragraphs(path, ocr=False):
+    """The paragraphs of a document, or raises ValueError with a message.
+    Images and scanned PDFs raise NeedsOCR unless ocr is true."""
     ext = os.path.splitext(path)[1].lower()
+    if ext in IMAGES:
+        if not ocr:
+            raise NeedsOCR("the text of the image must be recognized")
+        return text_paragraphs(ocr_image(path))
     if ext in (".txt", ".md", ""):
         with open(path, "rb") as f:
             data = f.read()
@@ -95,7 +126,9 @@ def read_paragraphs(path):
             raise ValueError("the PDF cannot be read")
         paragraphs = text_paragraphs(result.stdout.decode("utf-8", "replace"))
         if not paragraphs:
-            raise ValueError("the PDF has no text: it may be scanned images")
+            if not ocr:
+                raise NeedsOCR("the PDF has no text: it may be scanned images")
+            paragraphs = text_paragraphs(ocr_pdf(path))
         return paragraphs
     if ext == ".docx":
         import docx
@@ -165,8 +198,8 @@ class Document:
         self.text = "".join(text)
 
     @classmethod
-    def open(cls, path):
-        return cls(read_paragraphs(path), path)
+    def open(cls, path, ocr=False):
+        return cls(read_paragraphs(path, ocr), path)
 
     def sentence_at(self, offset):
         for index, (_, start, end, _) in enumerate(self.sentences):

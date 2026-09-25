@@ -116,3 +116,6 @@ msgstr "Non è stato possibile salvare l'audio: {error}"
 
 msgid "Audio saved: {name}."
 msgstr "Audio salvato: {name}."
+
+msgid "{name} is made of images: recognizing its text, a few seconds a page."
+msgstr "{name} è fatto di immagini: riconosco il testo, qualche secondo per pagina."
