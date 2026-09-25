@@ -14,7 +14,7 @@ Oppure, dopo i due bip, premi una lettera:
 
 - **V**: VabaxOS con voce («with voice»).
 - **N**: VabaxOS senza voce («without voice»), per chi non ha bisogno della sintesi vocale.
-- **I**: installa VabaxOS con la voce («install with voice»). Parte l'installer di Debian con la sintesi vocale: vedi [l'installazione](installazione.md).
+- **I**: installa VabaxOS con la voce («install with voice»). Poi la lingua: **I** italiano, **E** inglese, **A** altre lingue. Parte l'installer di Debian con la sintesi vocale, già nella lingua scelta: vedi [l'installazione](installazione.md). Se la lingua è già stata scelta con L, I parte subito.
 - **O**: altre modalità di installazione («other install options»): grafica ad alto contrasto con lo zoom (K), grafica (G), testuale (T).
 - **R**: modalità di recupero con voce («recovery mode»). Parte solo la console testuale, senza desktop grafico e senza benvenuto. Serve quando il desktop non funziona.
 - **L**: lingua («language»). Apre l'elenco delle lingue:

@@ -404,7 +404,8 @@ def step_install(console, speaker, lang):
     """The installer starts from the boot menu: explain how, offer to restart."""
     _ = translation(lang)
     message = [(_("To install VabaxOS, restart the computer. After the two beeps of the "
-                  "boot menu, press I for the installer with voice."), lang)]
+                  "boot menu, press I for the installer with voice, then the letter of the "
+                  "language: I for Italian, E for English."), lang)]
     items = [_("Restart now"), _("Back")]
     index = choose(console, speaker, _("Install VabaxOS"), message, items, [lang] * 2)
     if index == 0:
