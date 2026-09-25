@@ -207,6 +207,10 @@ ask gdm 'systemctl is-active gdm'
 ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select'
 ask user 'id -un'
 printf 'INFO: sistema %s\n' "$(value os)"
+# Diagnosis in the serial log: the welcome, the sound servers and Orca of
+# each user, and the login screen.
+send 'echo test | sudo -S journalctl -b --no-pager -o short-monotonic -u vabaxos-welcome -u vabaxos-live-audio | tail -20; ps -eo user:12,pid,comm | grep -E "pipewire|wireplumber|orca|espeakup|speech-disp|gdm-"; journalctl -b --no-pager -o cat _COMM=orca | tail -5; ls -la /run/user'
+sleep 5
 check 'pacchetti VabaxOS installati' "$(value packages)" 6
 check 'pacchetti della live rimossi' "$(value live)" 0
 check 'voce della console (espeakup)' "$(value speech)" active
