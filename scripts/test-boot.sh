@@ -381,7 +381,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     ask status "env $BUS vabaxos-status battery" || exit 1
     printf 'INFO: vabaxos-status: %s\n' "$(value status)"
     ask soundtheme "env $BUS gsettings get org.gnome.desktop.sound theme-name" || exit 1
-    check 'tema dei suoni' "$(value soundtheme)" "'vabaxos-cristallo'"
+    check 'tema dei suoni' "$(value soundtheme)" "'vabaxos'"
     ask font "env $BUS gsettings get org.gnome.desktop.interface font-name" || exit 1
     check 'font del desktop' "$(value font)" "'Atkinson Hyperlegible Next 11'"
 fi

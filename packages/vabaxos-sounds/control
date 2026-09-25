@@ -6,7 +6,8 @@ Priority: optional
 Depends: sound-theme-freedesktop, gsettings-desktop-schemas
 Recommends: gnome-session-canberra
 Description: VabaxOS system sounds
- Three sound themes made for VabaxOS: Cristallo (bells), Morbido (soft
+ The VabaxOS sound theme, with the timbre of Ubuntu's sounds and melodies
+ of its own, and three more: Cristallo (bells), Morbido (soft
  mallets) and Aria (gentle pads). They share the motif of the boot menu
  beeps: rising when something starts or arrives, falling when it ends or
  leaves, so events can be told apart without seeing the screen. Sounds

@@ -1,0 +1,22 @@
+VabaxOS: vabaxos-sounds
+Copyright 2026 Vabax and VabaxOS contributors
+License: CC-BY-SA-4.0, see https://creativecommons.org/licenses/by-sa/4.0/
+
+Files: usr/share/sounds/vabaxos/stereo/*
+Copyright: 2026 Vabax and VabaxOS contributors
+           2018 Mads Rosendahl (the timbre: one strike of bell.oga of Ubuntu's
+           Yaru sound theme, transposed; https://github.com/ubuntu/yaru)
+License: CC-BY-SA-4.0
+
+Files: usr/share/sounds/vabaxos/stereo/screen-capture.oga
+Copyright: freesound user horsthorstensen
+           (https://freesound.org/s/72714/, from the freedesktop sound theme)
+License: CC-BY-SA-3.0
+
+Files: usr/share/sounds/vabaxos-cristallo/* usr/share/sounds/vabaxos-morbido/*
+       usr/share/sounds/vabaxos-aria/*
+Copyright: 2026 Vabax and VabaxOS contributors
+License: CC-BY-SA-4.0
+
+Files: everything else
+License: GPL-3.0-or-later, see /usr/share/common-licenses/GPL-3

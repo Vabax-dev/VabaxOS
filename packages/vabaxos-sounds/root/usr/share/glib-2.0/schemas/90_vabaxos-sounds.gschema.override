@@ -1,5 +1,5 @@
-# VabaxOS system sounds (DOC-01 §33). Cristallo until Vabax chooses the
-# default theme by listening (2026-09-25); the others stay available.
+# VabaxOS system sounds (DOC-01 §33): the VabaxOS theme, with the timbre
+# of Ubuntu's sounds (Vabax's choice, 2026-09-25); the others stay available.
 [org.gnome.desktop.sound]
-theme-name='vabaxos-cristallo'
+theme-name='vabaxos'
 event-sounds=true
