@@ -1,0 +1,13 @@
+Package: vabaxos-screen-reader
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-atspi-2.0, dconf-cli, orca (>= 50)
+Description: VabaxOS screen reader settings, with profiles and per-program settings
+ Every setting of Orca in one window readable with Orca itself: voice,
+ reading, typing echo, documents and web, tables, sounds and progress bars,
+ braille, mouse, time and date, keyboard. Profiles (also ready-made:
+ Beginner, Fast, Study), settings for one program, export and import to a
+ file. Most changes reach the running screen reader at once, through its
+ D-Bus service.

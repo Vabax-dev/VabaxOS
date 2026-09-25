@@ -1,0 +1,766 @@
+# Italian translation of vabaxos-screen-reader.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: it\n"
+
+msgid "Set for this program"
+msgstr "Impostato per questo programma"
+
+msgid "Screen reader settings"
+msgstr "Impostazioni del lettore di schermo"
+
+msgid "Pages"
+msgstr "Pagine"
+
+msgid "Profile and program"
+msgstr "Profilo e programma"
+
+msgid "Export settings to a file"
+msgstr "Esporta le impostazioni su un file"
+
+msgid "Import settings from a file"
+msgstr "Importa le impostazioni da un file"
+
+msgid "Apply now"
+msgstr "Applica subito"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Choose what the other pages change"
+msgstr "Scegli che cosa cambiano le altre pagine"
+
+msgid "What you are changing"
+msgstr "Che cosa stai cambiando"
+
+msgid "Profiles are sets of settings you can switch with a key; a program can have its own settings."
+msgstr "I profili sono gruppi di impostazioni che si cambiano con un tasto; un programma può avere impostazioni sue."
+
+msgid "Profile"
+msgstr "Profilo"
+
+msgid "Settings for"
+msgstr "Impostazioni per"
+
+msgid "All programs, or one program only"
+msgstr "Tutti i programmi, o un solo programma"
+
+msgid "Profiles"
+msgstr "Profili"
+
+msgid "Use this profile now"
+msgstr "Usa subito questo profilo"
+
+msgid "New profile, a copy of this one: write its name, then press Enter"
+msgstr "Nuovo profilo, copia di questo: scrivi il nome, poi premi Invio"
+
+msgid "Add the ready-made profile: {name}"
+msgstr "Aggiungi il profilo pronto: {name}"
+
+msgid "Delete this profile"
+msgstr "Elimina questo profilo"
+
+msgid "Remove this program's own settings"
+msgstr "Togli le impostazioni proprie di questo programma"
+
+msgid "Default"
+msgstr "Predefinito"
+
+msgid "All programs"
+msgstr "Tutti i programmi"
+
+msgid "Now the pages change the settings of {name}."
+msgstr "Ora le pagine cambiano le impostazioni di {name}."
+
+msgid "Now the pages change the settings of all programs."
+msgstr "Ora le pagine cambiano le impostazioni di tutti i programmi."
+
+msgid "The screen reader now uses the profile {name}."
+msgstr "Il lettore di schermo ora usa il profilo {name}."
+
+msgid "The screen reader is not running: the profile will be used when you choose it there."
+msgstr "Il lettore di schermo non è attivo: il profilo si userà quando lo sceglierai lì."
+
+msgid "Write the name of the new profile first."
+msgstr "Prima scrivi il nome del nuovo profilo."
+
+msgid "Profile {name} created."
+msgstr "Profilo {name} creato."
+
+msgid "Profile {name} added."
+msgstr "Profilo {name} aggiunto."
+
+msgid "The default profile cannot be deleted."
+msgstr "Il profilo predefinito non si può eliminare."
+
+msgid "Delete the profile {name}?"
+msgstr "Eliminare il profilo {name}?"
+
+msgid "Its settings are lost."
+msgstr "Le sue impostazioni andranno perse."
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Delete"
+msgstr "Elimina"
+
+msgid "Profile {name} deleted."
+msgstr "Profilo {name} eliminato."
+
+msgid "Choose a program first, in Settings for."
+msgstr "Prima scegli un programma, in Impostazioni per."
+
+msgid "This program now uses the settings of the profile."
+msgstr "Ora questo programma usa le impostazioni del profilo."
+
+msgid "Settings applied."
+msgstr "Impostazioni applicate."
+
+msgid "Export settings"
+msgstr "Esporta le impostazioni"
+
+msgid "Settings exported to {name}."
+msgstr "Impostazioni esportate in {name}."
+
+msgid "The settings were not exported."
+msgstr "Le impostazioni non sono state esportate."
+
+msgid "Import settings"
+msgstr "Importa le impostazioni"
+
+msgid "Settings imported."
+msgstr "Impostazioni importate."
+
+msgid "This file does not contain screen reader settings."
+msgstr "Questo file non contiene impostazioni del lettore di schermo."
+
+msgid "Every program"
+msgstr "Tutti i programmi"
+
+msgid "Only the program in use"
+msgstr "Solo il programma in uso"
+
+msgid "Only the window in use"
+msgstr "Solo la finestra in uso"
+
+msgid "Voice"
+msgstr "Voce"
+
+msgid "How the screen reader sounds"
+msgstr "Come suona il lettore di schermo"
+
+msgid "Kind of voice"
+msgstr "Tipo di voce"
+
+msgid "eSpeak NG answers at once; the natural voice sounds human but needs a fast computer"
+msgstr "eSpeak NG risponde subito; la voce naturale sembra umana ma richiede un computer veloce"
+
+msgid "eSpeak NG, the default"
+msgstr "eSpeak NG, predefinita"
+
+msgid "Natural voice (Kokoro)"
+msgstr "Voce naturale (Kokoro)"
+
+msgid "Speed"
+msgstr "Velocità"
+
+msgid "From 0, slowest, to 100, fastest"
+msgstr "Da 0, la più lenta, a 100, la più veloce"
+
+msgid "Pitch"
+msgstr "Tono"
+
+msgid "From 0, lowest, to 10, highest"
+msgstr "Da 0, il più basso, a 10, il più alto"
+
+msgid "Volume"
+msgstr "Volume"
+
+msgid "From 0, silent, to 10, loudest"
+msgstr "Da 0, muto, a 10, il più forte"
+
+msgid "Pitch of capital letters"
+msgstr "Tono delle lettere maiuscole"
+
+msgid "A higher pitch tells capital letters apart, as in NVDA"
+msgstr "Un tono più alto distingue le maiuscole, come in NVDA"
+
+msgid "Speaking"
+msgstr "Parlato"
+
+msgid "Speech"
+msgstr "Voce attiva"
+
+msgid "Turn off to use only braille"
+msgstr "Spegnila per usare solo il Braille"
+
+msgid "Pauses between phrases"
+msgstr "Pause fra le frasi"
+
+msgid "A short pause between one piece of information and the next"
+msgstr "Una breve pausa fra un'informazione e l'altra"
+
+msgid "Change language by itself"
+msgstr "Cambia lingua da sola"
+
+msgid "Read each text with the voice of its language"
+msgstr "Legge ogni testo con la voce della sua lingua"
+
+msgid "Pronunciation dictionary"
+msgstr "Dizionario di pronuncia"
+
+msgid "Say words the way you taught the screen reader"
+msgstr "Pronuncia le parole come le hai insegnate al lettore di schermo"
+
+msgid "Reading"
+msgstr "Lettura"
+
+msgid "How much the screen reader says"
+msgstr "Quanto dice il lettore di schermo"
+
+msgid "Amount of speech"
+msgstr "Quantità di parole"
+
+msgid "Detail"
+msgstr "Dettaglio"
+
+msgid "Brief says less about each control"
+msgstr "Breve dice meno su ogni comando"
+
+msgid "Brief"
+msgstr "Breve"
+
+msgid "Detailed"
+msgstr "Dettagliato"
+
+msgid "Punctuation"
+msgstr "Punteggiatura"
+
+msgid "Which punctuation marks are read"
+msgstr "Quali segni di punteggiatura vengono letti"
+
+msgid "None"
+msgstr "Nessuna"
+
+msgid "Some"
+msgstr "Alcuna"
+
+msgid "Most"
+msgstr "Quasi tutta"
+
+msgid "All"
+msgstr "Tutta"
+
+msgid "Capital letters"
+msgstr "Lettere maiuscole"
+
+msgid "How a capital letter is told apart when moving letter by letter"
+msgstr "Come si distingue una maiuscola quando ci si sposta lettera per lettera"
+
+msgid "Nothing"
+msgstr "Niente"
+
+msgid "Say “capital”"
+msgstr "Dice «maiuscola»"
+
+msgid "A sound"
+msgstr "Un suono"
+
+msgid "Detailed messages"
+msgstr "Messaggi dettagliati"
+
+msgid "Longer messages when a setting changes"
+msgstr "Messaggi più lunghi quando cambia un'impostazione"
+
+msgid "Usage hints"
+msgstr "Suggerimenti d'uso"
+
+msgid "How to use a control, after its name"
+msgstr "Come si usa un comando, dopo il suo nome"
+
+msgid "What is read"
+msgstr "Che cosa viene letto"
+
+msgid "Descriptions"
+msgstr "Descrizioni"
+
+msgid "The description of a control, if it has one"
+msgstr "La descrizione di un comando, se ce l'ha"
+
+msgid "Position in lists"
+msgstr "Posizione negli elenchi"
+
+msgid "For example: 3 of 10"
+msgstr "Per esempio: 3 di 10"
+
+msgid "Access keys"
+msgstr "Tasti di accesso"
+
+msgid "The Alt letter that activates a control"
+msgstr "La lettera con Alt che attiva un comando"
+
+msgid "Numbers as digits"
+msgstr "Numeri cifra per cifra"
+
+msgid "1234 as one two three four"
+msgstr "1234 come uno due tre quattro"
+
+msgid "Color names"
+msgstr "Nomi dei colori"
+
+msgid "Names instead of codes"
+msgstr "Nomi invece dei codici"
+
+msgid "Blank lines"
+msgstr "Righe vuote"
+
+msgid "Say “blank” on empty lines"
+msgstr "Dice «vuota» sulle righe vuote"
+
+msgid "Spelling mistakes"
+msgstr "Errori di ortografia"
+
+msgid "Say when a word is misspelled"
+msgstr "Dice quando una parola è scritta male"
+
+msgid "Indentation"
+msgstr "Rientro"
+
+msgid "Spaces at the start of a line, useful for code"
+msgstr "Gli spazi a inizio riga, utili per il codice"
+
+msgid "Only the text on the screen"
+msgstr "Solo il testo sullo schermo"
+
+msgid "Do not say roles, states and other information"
+msgstr "Non dire tipi di comando, stati e altre informazioni"
+
+msgid "Repeated characters"
+msgstr "Caratteri ripetuti"
+
+msgid "From how many identical characters the screen reader counts them"
+msgstr "Da quanti caratteri uguali il lettore di schermo li conta"
+
+msgid "Typing"
+msgstr "Scrittura"
+
+msgid "What is said while you type"
+msgstr "Che cosa si sente mentre scrivi"
+
+msgid "Echo"
+msgstr "Eco"
+
+msgid "Keys"
+msgstr "Tasti"
+
+msgid "Say each key you press"
+msgstr "Dice ogni tasto che premi"
+
+msgid "Characters"
+msgstr "Caratteri"
+
+msgid "Say each character written"
+msgstr "Dice ogni carattere scritto"
+
+msgid "Words"
+msgstr "Parole"
+
+msgid "Say each word when it is complete"
+msgstr "Dice ogni parola quando è finita"
+
+msgid "Sentences"
+msgstr "Frasi"
+
+msgid "Say each sentence when it is complete"
+msgstr "Dice ogni frase quando è finita"
+
+msgid "Which keys"
+msgstr "Quali tasti"
+
+msgid "Letters"
+msgstr "Lettere"
+
+msgid "Numbers"
+msgstr "Numeri"
+
+msgid "Space"
+msgstr "Spazio"
+
+msgid "Modifiers"
+msgstr "Modificatori"
+
+msgid "Shift, Ctrl, Alt, Super"
+msgstr "Maiusc, Ctrl, Alt, Super"
+
+msgid "Function keys"
+msgstr "Tasti funzione"
+
+msgid "F1 to F12"
+msgstr "Da F1 a F12"
+
+msgid "Action keys"
+msgstr "Tasti di azione"
+
+msgid "Enter, Tab, Backspace, Delete, Escape"
+msgstr "Invio, Tab, Backspace, Canc, Esc"
+
+msgid "Movement keys"
+msgstr "Tasti di movimento"
+
+msgid "Arrows, Home, End, Page Up, Page Down"
+msgstr "Frecce, Inizio, Fine, Pagina su, Pagina giù"
+
+msgid "Accent keys"
+msgstr "Tasti degli accenti"
+
+msgid "Documents and web"
+msgstr "Documenti e web"
+
+msgid "Web pages, documents and e-mail"
+msgstr "Pagine web, documenti e posta"
+
+msgid "Opening a page"
+msgstr "Quando si apre una pagina"
+
+msgid "Read the page when it opens"
+msgstr "Leggi la pagina quando si apre"
+
+msgid "Summary of the page"
+msgstr "Riassunto della pagina"
+
+msgid "How many headings, links and forms, when it opens"
+msgstr "Quanti titoli, collegamenti e moduli, quando si apre"
+
+msgid "Browse and focus mode"
+msgstr "Modalità navigazione e modalità focus"
+
+msgid "Focus mode with Tab"
+msgstr "Modalità focus con Tab"
+
+msgid "Tab to a form field starts focus mode, to type"
+msgstr "Tab su un campo di un modulo attiva la modalità focus, per scrivere"
+
+msgid "Web applications in focus mode"
+msgstr "Applicazioni web in modalità focus"
+
+msgid "Pages that behave like programs stay in focus mode"
+msgstr "Le pagine che funzionano come programmi restano in modalità focus"
+
+msgid "Browse with the arrows"
+msgstr "Navigazione con le frecce"
+
+msgid "The arrows move through the text of the page"
+msgstr "Le frecce si spostano nel testo della pagina"
+
+msgid "Lines as on the screen"
+msgstr "Righe come sullo schermo"
+
+msgid "A line is what is on one line of the screen"
+msgstr "Una riga è quello che sta su una riga dello schermo"
+
+msgid "Quick keys"
+msgstr "Tasti rapidi"
+
+msgid "H headings, K links, T tables and more, in browse mode"
+msgstr "H titoli, K collegamenti, T tabelle e altri, in modalità navigazione"
+
+msgid "Quick keys start again"
+msgstr "I tasti rapidi ricominciano"
+
+msgid "After the last heading, go back to the first"
+msgstr "Dopo l'ultimo titolo tornano al primo"
+
+msgid "Table navigation"
+msgstr "Navigazione nelle tabelle"
+
+msgid "Skip empty cells"
+msgstr "Salta le celle vuote"
+
+msgid "Read all"
+msgstr "Leggi tutto"
+
+msgid "Read all by"
+msgstr "Leggi tutto per"
+
+msgid "Sentence"
+msgstr "Frase"
+
+msgid "Line"
+msgstr "Riga"
+
+msgid "Rewind and fast forward"
+msgstr "Indietro e avanti"
+
+msgid "Left and right arrows while reading all"
+msgstr "Frecce sinistra e destra durante la lettura continua"
+
+msgid "Quick keys while reading all"
+msgstr "Tasti rapidi durante la lettura continua"
+
+msgid "Say the structure"
+msgstr "Annuncia la struttura"
+
+msgid "Landmarks"
+msgstr "Punti di riferimento"
+
+msgid "Main, navigation, search..."
+msgstr "Principale, navigazione, ricerca..."
+
+msgid "Lists"
+msgstr "Elenchi"
+
+msgid "Tables"
+msgstr "Tabelle"
+
+msgid "Forms"
+msgstr "Moduli"
+
+msgid "Quotations"
+msgstr "Citazioni"
+
+msgid "Groups"
+msgstr "Gruppi"
+
+msgid "Live updates"
+msgstr "Aggiornamenti in tempo reale"
+
+msgid "Messages the page shows by itself, such as chats"
+msgstr "I messaggi che la pagina mostra da sola, come le chat"
+
+msgid "Tables and spreadsheets"
+msgstr "Tabelle e fogli di calcolo"
+
+msgid "Whole row in program lists"
+msgstr "Riga intera negli elenchi dei programmi"
+
+msgid "Whole row in document tables"
+msgstr "Riga intera nelle tabelle dei documenti"
+
+msgid "Whole row in spreadsheets"
+msgstr "Riga intera nei fogli di calcolo"
+
+msgid "Column and row headers"
+msgstr "Intestazioni di colonne e righe"
+
+msgid "Cell position in tables"
+msgstr "Posizione della cella nelle tabelle"
+
+msgid "Cell name in spreadsheets"
+msgstr "Nome della cella nei fogli di calcolo"
+
+msgid "For example: B4"
+msgstr "Per esempio: B4"
+
+msgid "Merged cells"
+msgstr "Celle unite"
+
+msgid "Selected range"
+msgstr "Intervallo selezionato"
+
+msgid "Sounds and progress"
+msgstr "Suoni e avanzamento"
+
+msgid "Sounds and progress bars"
+msgstr "Suoni e barre di avanzamento"
+
+msgid "Sounds"
+msgstr "Suoni"
+
+msgid "Screen reader sounds"
+msgstr "Suoni del lettore di schermo"
+
+msgid "Sound volume"
+msgstr "Volume dei suoni"
+
+msgid "From 0 to 1"
+msgstr "Da 0 a 1"
+
+msgid "Progress bars"
+msgstr "Barre di avanzamento"
+
+msgid "Say the progress"
+msgstr "Dici l'avanzamento"
+
+msgid "For example: 40 percent"
+msgstr "Per esempio: 40 per cento"
+
+msgid "Every how many seconds"
+msgstr "Ogni quanti secondi"
+
+msgid "Beep the progress"
+msgstr "Bip dell'avanzamento"
+
+msgid "A tone that rises with the progress, as in NVDA"
+msgstr "Un tono che sale con l'avanzamento, come in NVDA"
+
+msgid "Beep every how many seconds"
+msgstr "Bip ogni quanti secondi"
+
+msgid "Progress bars of"
+msgstr "Barre di avanzamento di"
+
+msgid "Braille"
+msgstr "Braille"
+
+msgid "Braille displays"
+msgstr "Barre Braille"
+
+msgid "Show text on a braille display"
+msgstr "Mostra il testo su una barra Braille"
+
+msgid "Kind of control"
+msgstr "Tipo di comando"
+
+msgid "Short"
+msgstr "Breve"
+
+msgid "Full"
+msgstr "Completo"
+
+msgid "Contracted braille"
+msgstr "Braille contratto"
+
+msgid "Computer braille at the cursor"
+msgstr "Braille informatico al cursore"
+
+msgid "Word wrap"
+msgstr "A capo per parole"
+
+msgid "Do not cut words at the end of the display"
+msgstr "Non tagliare le parole alla fine della barra"
+
+msgid "End of line mark"
+msgstr "Segno di fine riga"
+
+msgid "Where the control is"
+msgstr "Dove si trova il comando"
+
+msgid "The window and group around it"
+msgstr "La finestra e il gruppo intorno"
+
+msgid "Messages"
+msgstr "Messaggi"
+
+msgid "Messages on the display"
+msgstr "Messaggi sulla barra"
+
+msgid "How long, in milliseconds"
+msgstr "Per quanto tempo, in millisecondi"
+
+msgid "Messages stay until a key is pressed"
+msgstr "I messaggi restano finché non si preme un tasto"
+
+msgid "Mouse"
+msgstr "Mouse"
+
+msgid "What is under the mouse pointer"
+msgstr "Che cosa c'è sotto il puntatore del mouse"
+
+msgid "Read under the pointer"
+msgstr "Leggi sotto il puntatore"
+
+msgid "Tooltips"
+msgstr "Suggerimenti a comparsa"
+
+msgid "Time and date"
+msgstr "Ora e data"
+
+msgid "How time and date are said"
+msgstr "Come si dicono ora e data"
+
+msgid "Time"
+msgstr "Ora"
+
+msgid "As the language of the computer"
+msgstr "Come la lingua del computer"
+
+msgid "Hours and minutes"
+msgstr "Ore e minuti"
+
+msgid "12 hours, with AM or PM"
+msgstr "12 ore, con AM o PM"
+
+msgid "Date"
+msgstr "Data"
+
+msgid "Day, month and year in words"
+msgstr "Giorno, mese e anno in lettere"
+
+msgid "Day and month in words"
+msgstr "Giorno e mese in lettere"
+
+msgid "Keyboard"
+msgstr "Tastiera"
+
+msgid "The screen reader key"
+msgstr "Il tasto del lettore di schermo"
+
+msgid "Screen reader key"
+msgstr "Tasto del lettore di schermo"
+
+msgid "Laptop uses Caps Lock as the screen reader key and the letters for reviewing"
+msgstr "Portatile usa Bloc Maiusc come tasto del lettore di schermo e le lettere per la revisione"
+
+msgid "Desktop, with number pad"
+msgstr "Fissa, con il tastierino numerico"
+
+msgid "Laptop"
+msgstr "Portatile"
+
+msgid "The key held with the screen reader commands"
+msgstr "Il tasto da tenere premuto con i comandi del lettore di schermo"
+
+msgid "Insert"
+msgstr "Ins"
+
+msgid "Insert or Caps Lock, as in NVDA"
+msgstr "Ins o Bloc Maiusc, come in NVDA"
+
+msgid "Caps Lock"
+msgstr "Bloc Maiusc"
+
+msgid "Beginner"
+msgstr "Principiante"
+
+msgid "Slower, with hints and every detail"
+msgstr "Più lento, con suggerimenti e ogni dettaglio"
+
+msgid "Fast"
+msgstr "Veloce"
+
+msgid "Quick and brief, for expert users"
+msgstr "Rapido e breve, per chi è esperto"
+
+msgid "Study"
+msgstr "Studio"
+
+msgid "For long texts: every punctuation mark, reading by sentence"
+msgstr "Per i testi lunghi: tutta la punteggiatura, lettura per frasi"
+
+msgid "Terminal"
+msgstr "Terminale"
+
+msgid "LibreOffice"
+msgstr "LibreOffice"
+
+msgid "Firefox"
+msgstr "Firefox"
+
+msgid "Thunderbird"
+msgstr "Thunderbird"
+
+msgid "Files"
+msgstr "File"
+
+msgid "Text Editor"
+msgstr "Editor di testo"
+
+msgid "VabaxOS document reader"
+msgstr "Lettore di documenti di VabaxOS"

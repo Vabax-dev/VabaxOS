@@ -173,12 +173,27 @@ def view_page(rows):
     ]
 
 
+def all_settings_row():
+    """Opens vabaxos-screen-reader, with every setting of Orca (block 9)."""
+    row = Adw.ButtonRow(title=_("All the screen reader settings"))
+    row.set_tooltip_text(_("Reading, typing echo, braille, profiles and settings for each program"))
+
+    def activated(_row):
+        try:
+            GLib.spawn_async(["vabaxos-screen-reader"], flags=GLib.SpawnFlags.SEARCH_PATH)
+        except GLib.Error:
+            pass
+    row.connect("activated", activated)
+    return row
+
+
 def voice_page(rows):
     voice = "org.gnome.Orca.Voice"
     return [
         group(_("Screen reader"), _("Super+Alt+S turns the screen reader on and off at any time."), [
             rows.switch(_("Screen reader"), _("Orca reads the screen aloud"),
                         "org.gnome.desktop.a11y.applications", "screen-reader-enabled"),
+            all_settings_row(),
         ]),
         group(_("Voice"), _("Changes apply to the next sentences."), [
             rows.choice(_("Kind of voice"),
