@@ -6,13 +6,14 @@
 # 1. Installs VabaxOS on a new virtual disk, automatically, with speech on
 #    (speakup.synth=soft) and the test answers of
 #    image/config/includes.binary/preseed/vabaxos-test.cfg. The installer
-#    shows its progress on the serial console and powers off at the end.
+#    works on the VM screen (not the serial console) and powers off at the
+#    end; 6 processors, because unpacking the system takes long.
 # 2. Starts the installed system from the disk and checks it on the
 #    serial console, logged in as the test user: VabaxOS packages, live
 #    packages removed, console speech heard, welcome at the first start
 #    only, speech with no network card.
 #
-# The disk lives in a temporary folder; --keep keeps it (out/test-install.qcow2).
+# The disk lives in a temporary folder in out/; --keep keeps it (out/test-install.qcow2).
 # Logs go to out/logs/test-install-*.log. Exit status: 0 if every check
 # passed, 1 otherwise.
 # Commands in single quotes run in the shell of the VM, not here:
@@ -21,7 +22,7 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$REPO/out"
-TIMEOUT=3600
+TIMEOUT=7200
 KEEP=false
 ISO=""
 while [[ $# -gt 0 ]]; do
@@ -43,7 +44,9 @@ fi
 
 mkdir -p "$OUT/logs"
 STAMP="$(date +%Y-%m-%d-%H%M%S)"
-WORK="$(mktemp -d)"
+# The virtual disk grows to several GB: in out/, on the real disk, not in
+# /tmp, which is often a small tmpfs in memory (WSL).
+WORK="$(mktemp -d "$OUT/test-install-work.XXXXXX")"
 DISK="$WORK/disk.qcow2"
 FAILED=0
 QEMU_WRAPPER=""
@@ -164,7 +167,7 @@ LOG="$OUT/logs/test-install-$STAMP-installer.log"
 APPEND="auto=true priority=critical preseed/file=/cdrom/preseed/vabaxos-test.cfg"
 APPEND+=" locale=en_US.UTF-8 keyboard-configuration/xkb-keymap=us speakup.synth=soft vga=788"
 APPEND+=" --- console=ttyS0,115200n8"
-start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" "$ISO" -- \
+start_vm "$LOG" --silent-audio --memory 4096 --cpus 6 --disk "$DISK" "$ISO" -- \
     -kernel "$WORK/vmlinuz" -initrd "$WORK/initrd.gz" -append "$APPEND"
 printf 'INFO: installazione in corso (log: %s)\n' "$LOG"
 while kill -0 "$QEMU_WRAPPER" 2>/dev/null; do
