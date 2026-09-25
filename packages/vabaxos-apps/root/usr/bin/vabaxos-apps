@@ -1,0 +1,211 @@
+#!/usr/bin/python3
+"""VabaxOS Programs: the installed applications, which start at login, and
+how to remove them (block 8, like Apps in the Windows 11 Settings).
+
+    vabaxos-apps
+
+Every application has a row: its name and description, an "Start at
+login" switch (a copy of its launcher in ~/.config/autostart) and a
+Remove button (Flatpak applications with flatpak, the others through
+PackageKit, which asks the administrator password in a GNOME window that
+Orca reads). The pieces VabaxOS needs to speak and work cannot be removed
+here. "Windows programs" installs Bottles from Flathub on request.
+"""
+
+import gettext
+import os
+import subprocess
+import sys
+import threading
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
+
+gettext.textdomain("vabaxos-apps")
+_ = gettext.gettext
+
+# Removing these would leave the computer without voice, desktop or updates.
+PROTECTED = ("orca", "gnome-shell", "gnome-control-center", "gnome-session", "nautilus", "gdm3",
+             "speech-dispatcher", "espeak-ng", "espeakup", "brltty", "packagekit", "gnome-software",
+             "network-manager", "vabaxos-")
+BOTTLES = "com.usebottles.bottles"
+FLATHUB = "https://dl.flathub.org/repo/flathub.flatpakrepo"
+
+
+def autostart_dir():
+    base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+    return os.path.join(base, "autostart")
+
+
+def starts_at_login(app):
+    path = os.path.join(autostart_dir(), app.get_id())
+    if not os.path.exists(path):
+        return False
+    keyfile = GLib.KeyFile()
+    try:
+        keyfile.load_from_file(path, GLib.KeyFileFlags.NONE)
+        return not keyfile.has_key("Desktop Entry", "Hidden") or \
+            not keyfile.get_boolean("Desktop Entry", "Hidden")
+    except GLib.Error:
+        return False
+
+
+def set_start_at_login(app, enabled):
+    path = os.path.join(autostart_dir(), app.get_id())
+    if enabled:
+        os.makedirs(autostart_dir(), exist_ok=True)
+        with open(app.get_filename(), encoding="utf-8") as source, open(path, "w", encoding="utf-8") as target:
+            target.write(source.read())
+    elif os.path.exists(path):
+        os.remove(path)
+
+
+def package_of(app):
+    """('flatpak', id) or ('deb', package), or None if unknown."""
+    filename = app.get_filename() or ""
+    if "/flatpak/" in filename:
+        return ("flatpak", app.get_id().removesuffix(".desktop"))
+    result = subprocess.run(["dpkg-query", "-S", os.path.realpath(filename)], capture_output=True, text=True)
+    if result.returncode == 0 and ":" in result.stdout:
+        return ("deb", result.stdout.split(":", 1)[0].split(",")[0].strip())
+    return None
+
+
+def protected(package):
+    return package is not None and package[0] == "deb" and package[1].startswith(PROTECTED)
+
+
+class AppsWindow(Adw.ApplicationWindow):
+
+    def __init__(self, application):
+        super().__init__(application=application, title=_("VabaxOS programs"))
+        self.set_default_size(760, 720)
+        self.toasts = Adw.ToastOverlay()
+        view = Adw.ToolbarView()
+        view.add_top_bar(Adw.HeaderBar())
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin_top=12,
+                      margin_bottom=12, margin_start=12, margin_end=12)
+        self.search = Gtk.SearchEntry(placeholder_text=_("Search programs"))
+        self.search.update_property([Gtk.AccessibleProperty.LABEL], [_("Search programs")])
+        self.search.connect("search-changed", lambda *_a: self.filter())
+        box.append(self.search)
+
+        windows = Adw.PreferencesGroup(title=_("Windows programs"),
+                                       description=_("Bottles runs many Windows programs (.exe). "
+                                                     "It is downloaded from Flathub, about 300 MB."))
+        row = Adw.ActionRow(title=_("Install Bottles"))
+        self.bottles_button = Gtk.Button(label=_("Install"), valign=Gtk.Align.CENTER)
+        self.bottles_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Install Bottles")])
+        self.bottles_button.connect("clicked", lambda *_a: self.install_bottles())
+        row.add_suffix(self.bottles_button)
+        windows.add(row)
+        box.append(windows)
+
+        self.group = Adw.PreferencesGroup(title=_("Installed programs"),
+                                          description=_("Start at login, or remove a program."))
+        self.rows = []
+        apps = [a for a in Gio.AppInfo.get_all() if a.should_show() and isinstance(a, Gio.DesktopAppInfo)]
+        for app in sorted(apps, key=lambda a: a.get_display_name().lower()):
+            self.add_row(app)
+        box.append(self.group)
+        scroll = Gtk.ScrolledWindow(vexpand=True)
+        scroll.set_child(box)
+        view.set_content(scroll)
+        self.toasts.set_child(view)
+        self.set_content(self.toasts)
+
+    def add_row(self, app):
+        name = app.get_display_name()
+        row = Adw.ActionRow(title=name, subtitle=app.get_description() or "")
+        start = Gtk.Switch(active=starts_at_login(app), valign=Gtk.Align.CENTER)
+        start.update_property([Gtk.AccessibleProperty.LABEL], [_("Start {name} at login").format(name=name)])
+        start.connect("notify::active", self.start_changed, app)
+        remove = Gtk.Button(label=_("Remove"), valign=Gtk.Align.CENTER)
+        remove.update_property([Gtk.AccessibleProperty.LABEL], [_("Remove {name}").format(name=name)])
+        remove.connect("clicked", self.remove_clicked, app, row)
+        row.add_suffix(start)
+        row.add_suffix(remove)
+        self.group.add(row)
+        self.rows.append((row, name.lower()))
+
+    def filter(self):
+        text = self.search.get_text().lower()
+        for row, name in self.rows:
+            row.set_visible(text in name)
+
+    def say(self, text):
+        self.toasts.add_toast(Adw.Toast.new(text))
+
+    def start_changed(self, switch, _pspec, app):
+        try:
+            set_start_at_login(app, switch.get_active())
+        except OSError as error:
+            self.say(_("Cannot change it: {error}").format(error=error))
+            return
+        name = app.get_display_name()
+        self.say((_("{name} will start at login.") if switch.get_active()
+                  else _("{name} will not start at login.")).format(name=name))
+
+    def remove_clicked(self, _button, app, row):
+        name = app.get_display_name()
+        package = package_of(app)
+        if package is None:
+            self.say(_("VabaxOS does not know how {name} was installed.").format(name=name))
+            return
+        if protected(package):
+            self.say(_("{name} is part of VabaxOS and cannot be removed here.").format(name=name))
+            return
+        dialog = Adw.AlertDialog(heading=_("Remove {name}?").format(name=name),
+                                 body=_("Its files in your home folder stay."))
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("remove", _("Remove"))
+        dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.connect("response", self.remove_confirmed, name, package, row)
+        dialog.present(self)
+
+    def remove_confirmed(self, _dialog, response, name, package, row):
+        if response != "remove":
+            return
+        self.say(_("Removing {name}.").format(name=name))
+        kind, ident = package
+        command = (["flatpak", "uninstall", "-y", "--noninteractive", ident] if kind == "flatpak"
+                   else ["pkcon", "remove", "--noninteractive", ident])
+        threading.Thread(target=self.run, args=(command, name, row), daemon=True).start()
+
+    def run(self, command, name, row):
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode == 0:
+            GLib.idle_add(self.group.remove, row)
+            GLib.idle_add(self.say, _("{name} removed.").format(name=name))
+        else:
+            GLib.idle_add(self.say, _("{name} was not removed.").format(name=name))
+
+    def install_bottles(self):
+        self.bottles_button.set_sensitive(False)
+        self.say(_("Installing Bottles from Flathub. It takes a few minutes; you can keep working."))
+        threading.Thread(target=self._install_bottles, daemon=True).start()
+
+    def _install_bottles(self):
+        steps = [["flatpak", "remote-add", "--user", "--if-not-exists", "flathub", FLATHUB],
+                 ["flatpak", "install", "--user", "-y", "--noninteractive", "flathub", BOTTLES]]
+        for step in steps:
+            if subprocess.run(step, capture_output=True).returncode != 0:
+                GLib.idle_add(self.say, _("Bottles was not installed. Check the network and try again."))
+                GLib.idle_add(self.bottles_button.set_sensitive, True)
+                return
+        GLib.idle_add(self.say, _("Bottles is installed: it is in the Start menu."))
+
+
+class AppsApplication(Adw.Application):
+
+    def __init__(self):
+        super().__init__(application_id="org.vabaxos.Apps")
+        self.connect("activate", lambda app: (app.get_active_window() or AppsWindow(app)).present())
+
+
+if __name__ == "__main__":
+    sys.exit(AppsApplication().run(sys.argv))

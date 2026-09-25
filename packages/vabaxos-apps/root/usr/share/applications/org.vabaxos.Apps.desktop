@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS programs
+Name[it]=Programmi di VabaxOS
+Comment=Choose the programs that start at login, remove programs, install Windows programs
+Comment[it]=Scegli i programmi che partono all'accesso, disinstalla programmi, installa programmi di Windows
+Exec=vabaxos-apps
+Icon=vabaxos-logo
+Terminal=false
+Categories=System;Settings;
+Keywords=apps;programs;uninstall;startup;autostart;windows;exe;programmi;disinstalla;avvio;
