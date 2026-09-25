@@ -138,6 +138,9 @@ class StartWindow(Adw.ApplicationWindow):
         expander.set_list_row(row)
         expander.get_child().set_label(entry.name)
         list_item.set_accessible_label(spoken(entry))
+        # The focus goes to the expander (a button inside the row): it says
+        # the same, with the count of a category (checked in the VM).
+        expander.update_property([Gtk.AccessibleProperty.LABEL], [spoken(entry)])
         list_item.set_accessible_description("" if entry.is_category else entry.kind)
 
     def update_results(self):
