@@ -140,12 +140,17 @@ class StartTest(unittest.TestCase):
                 f.write(DESKTOP.format(name=name, keywords=keywords, categories=categories))
         home = os.path.join(cls.tmp.name, "home")
         os.makedirs(os.path.join(home, "Documents"))
+        # The display's socket is in XDG_RUNTIME_DIR, or else under HOME,
+        # which the program gets a different one of: the same for both.
+        runtime = os.path.join(cls.tmp.name, "run")
+        os.makedirs(runtime, mode=0o700)
         display = free_display()
         cls.broadway = subprocess.Popen(["gtk4-broadwayd", f":{display}"], stdout=subprocess.DEVNULL,
-                                        stderr=subprocess.DEVNULL)
+                                        stderr=subprocess.DEVNULL, env=dict(os.environ, XDG_RUNTIME_DIR=runtime))
         time.sleep(1)
         env = dict(os.environ, GDK_BACKEND="broadway", BROADWAY_DISPLAY=f":{display}",
                    GSETTINGS_BACKEND="memory", NO_AT_BRIDGE="1", LANGUAGE="C", LANG="C.UTF-8", HOME=home,
+                   XDG_RUNTIME_DIR=runtime,
                    XDG_DATA_DIRS=os.path.join(cls.tmp.name, "data"), XDG_DATA_HOME=os.path.join(home, ".local"),
                    XDG_CONFIG_HOME=os.path.join(home, ".config"), PYTHONDONTWRITEBYTECODE="1")
         result = subprocess.run([sys.executable, "-c", CHILD, PROGRAM, LIBRARY], env=env, capture_output=True,
