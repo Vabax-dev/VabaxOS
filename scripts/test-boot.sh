@@ -400,6 +400,22 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     printf 'INFO: pagine dell'"'"'aiuto: %s\n' "$(value help)"
 fi
 
+# A familiar interface (block 8): the extensions are active (the Start menu
+# check above also covers the taskbar, since it reads all of GNOME Shell),
+# windows have Minimize and Maximize, Ctrl+Shift+Esc opens the System
+# Monitor, and the Programs window has a name on every control.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|arcmenu'" || exit 1
+    check 'estensioni attive (menu Start, barra, icone, appunti, finestre)' "$(value extensions)" 6
+    ask buttons "env $BUS gsettings get org.gnome.desktop.wm.preferences button-layout" || exit 1
+    check 'pulsanti delle finestre' "$(value buttons)" "'appmenu:minimize,maximize,close'"
+    press ctrl-shift-esc
+    ask taskmanager 'for i in $(seq 20); do pgrep -u user -x gnome-system-mo >/dev/null && break; sleep 1; done; pgrep -u user -x gnome-system-mo >/dev/null && echo yes || echo no' || exit 1
+    check 'Ctrl+Maiusc+Esc apre il Monitor di sistema' "$(value taskmanager)" yes
+    send 'pkill -u user -x gnome-system-mo'
+    app_a11y programs vabaxos-apps vabaxos-apps
+fi
+
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send 'sudo systemctl suspend </dev/null'
