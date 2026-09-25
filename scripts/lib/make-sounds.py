@@ -158,7 +158,7 @@ TITLES = {"cristallo": ("Cristallo", "bells"), "morbido": ("Morbido", "soft mall
 # sound of a real system, and melodies of our own, in D major like Yaru,
 # on the motif of the boot beeps (root, fifth, octave: rising when
 # something starts or arrives, falling when it ends or leaves). Start-up
-# and shut-down are longer phrases over a soft chord. The screen capture
+# and shut-down are piano phrases (PIANO_PHRASES below). The screen capture
 # is freedesktop's (freesound user horsthorstensen, CC-BY-SA); emptying
 # the trash is Yaru's own (Vabax's choice: those two are better).
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -168,12 +168,7 @@ CAPTURE = os.path.join(REPO, "artwork", "sounds", "freedesktop-screen-capture.og
 TRASH = os.path.join(REPO, "artwork", "sounds", "yaru-trash-empty.oga")
 
 VABAXOS = {
-    "system-ready": [("D5", 0.0), ("A5", 0.16), ("F#5", 0.32), ("A5", 0.48), ("D6", 0.70),
-                     ("E6", 1.00), ("F#6", 1.22), ("A6", 1.50), ("F#6", 1.95), ("D6", 2.25)],
-    "desktop-login": [("D5", 0.0), ("A5", 0.14), ("D6", 0.28), ("F#6", 0.48)],
     "desktop-logout": [("F#6", 0.0), ("D6", 0.14), ("A5", 0.28), ("D5", 0.48)],
-    "system-shutdown": [("A6", 0.0), ("F#6", 0.20), ("E6", 0.40), ("D6", 0.62), ("A5", 0.95),
-                        ("F#5", 1.20), ("E5", 1.45), ("D5", 1.80)],
     "message-new-instant": [("A5", 0.0), ("D6", 0.10)],
     "message": [("F#5", 0.0), ("A5", 0.12)],
     "dialog-information": [("A5", 0.0), ("A5", 0.16)],
@@ -189,11 +184,6 @@ VABAXOS = {
     "bell-window-system": [("A5", 0.0)],
     "network-connectivity-established": [("D5", 0.0), ("F#5", 0.10), ("A5", 0.20)],
     "network-connectivity-lost": [("A5", 0.0), ("F#5", 0.10), ("D5", 0.20)],
-}
-# A soft chord under the long phrases: (notes, start, length).
-VABAXOS_PADS = {
-    "system-ready": (["D4", "A4", "F#5"], 0.6, 3.0),
-    "system-shutdown": (["D4", "A4", "D5"], 0.3, 2.8),
 }
 
 
@@ -218,21 +208,90 @@ def render_vabaxos(sample, name):
     notes = VABAXOS[name]
     tones = [(strike(sample, note_freq(n)), start) for n, start in notes]
     total = max(start + len(t) / RATE for t, start in tones)
-    pad = VABAXOS_PADS.get(name)
-    if pad:
-        total = max(total, pad[1] + pad[2])
     out = np.zeros(int(RATE * total) + 1)
     for tone, start in tones:
         i = int(RATE * start)
         out[i:i + len(tone)] += tone
-    if pad:
-        chord, start, length = pad
-        i = int(RATE * start)
-        for n in chord:
-            tone = air(note_freq(n), length, 0.18)
-            out[i:i + len(tone)] += tone[:len(out) - i]
     peak = np.max(np.abs(out)) or 1.0
     return out / peak * 10 ** (-6 / 20)
+
+
+# Start-up and shut-down on the piano (Vabax's choice among six versions,
+# 2026-09-25): an arpeggio up the D major chord, then the chord held; at
+# shut-down the same phrase going down, then a soft low chord. GNOME plays
+# desktop-login when the desktop starts, so that is the start-up phrase,
+# like the log-on sound of Windows; system-ready, at the login screen of
+# an installed system, is a short motif. Nothing in GNOME plays
+# system-shutdown: vabaxos-shutdown-sound.service plays its WAV copy when
+# the computer shuts down.
+PIANO_PHRASES = {
+    "desktop-login": ([("D4", 0.0, .7), ("A4", 0.16, .72), ("F#5", 0.32, .75), ("E5", 0.48, .7),
+                       ("A5", 0.64, .8)], ["D3", "A3", "D5", "F#5", "A5", "D6"], 0.95, .75, 4.2),
+    "system-shutdown": ([("A5", 0.0, .72), ("F#5", 0.18, .7), ("E5", 0.36, .66), ("D5", 0.54, .64),
+                         ("A4", 0.72, .6)], ["D3", "A3", "D4", "F#4", "A4"], 1.05, .6, 4.6),
+    "system-ready": ([("D5", 0.0, .7), ("A5", 0.14, .72), ("D6", 0.30, .75)], [], 0, 0, 2.2),
+}
+
+
+def piano(freq, held, velocity, length):
+    """A piano note: partials a little sharp as on real strings, three
+    strings slightly detuned, a fast then a slow decay (shorter for higher
+    notes and partials), the damper when the key is released."""
+    t = np.arange(int(RATE * length)) / RATE
+    out = np.zeros_like(t)
+    scale = (440 / freq) ** 0.5
+    for k in range(1, 18):
+        fk = k * freq * np.sqrt(1 + 0.00025 * k * k)
+        if fk > 12000:
+            break
+        amp = abs(np.sin(np.pi * k / 7.3)) / k ** 1.05 * velocity ** (0.6 + 0.1 * k)
+        env = (0.55 * np.exp(-t / (0.35 * scale / (1 + 0.2 * k)))
+               + 0.45 * np.exp(-t / (3.2 * scale / (1 + 0.3 * k))))
+        for cents in (-1.2, 0.0, 0.9):
+            out += amp / 3 * env * np.sin(2 * np.pi * fk * 2 ** (cents / 1200) * t + k)
+    out *= np.minimum(1, t / 0.003)
+    released = t > held
+    out[released] *= np.exp(-(t[released] - held) / 0.25)
+    return out
+
+
+def room(x, seed):
+    """A small room: the sound convolved with a decaying noise burst."""
+    rng = np.random.default_rng(seed)
+    t = np.arange(int(RATE * 1.6)) / RATE
+    ir = np.convolve(rng.standard_normal(len(t)) * np.exp(-t / 0.45), np.ones(6) / 6, "same")
+    ir[:int(RATE * 0.012)] = 0
+    ir /= np.sqrt(np.sum(ir ** 2))
+    n = len(x) + len(ir)
+    wet = np.fft.irfft(np.fft.rfft(x, n) * np.fft.rfft(ir, n), n)
+    return np.concatenate([x, np.zeros(len(ir))]) * 0.72 + wet * 0.84
+
+
+def render_piano(name):
+    notes, chord, chord_start, chord_velocity, length = PIANO_PHRASES[name]
+    out = np.zeros(int(RATE * length))
+    for note, start, velocity in notes:
+        tone = piano(note_freq(note), 1.0, velocity, 3.0)
+        i = int(RATE * start)
+        out[i:i + len(tone)] += tone[:len(out) - i]
+    for note in chord:
+        tone = piano(note_freq(note), 3.0, chord_velocity, 3.3) * 0.8
+        i = int(RATE * chord_start)
+        out[i:i + len(tone)] += tone[:len(out) - i]
+    out = room(out, 7)
+    peak = np.max(np.abs(out))
+    out = out[:np.max(np.nonzero(np.abs(out) > peak * 10 ** (-50 / 20))) + 1]
+    fade = int(RATE * 0.05)
+    out[-fade:] *= np.linspace(1, 0, fade)
+    return out / peak * 10 ** (-6 / 20)
+
+
+def write_wav(path, samples):
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(RATE)
+        w.writeframes((samples * 32767).astype(np.int16).tobytes())
 
 
 def vabaxos_theme(out):
@@ -245,6 +304,11 @@ def vabaxos_theme(out):
     sample = load(SAMPLE)
     for name in VABAXOS:
         write_oga(os.path.join(theme, "stereo", name + ".oga"), render_vabaxos(sample, name))
+    for name in PIANO_PHRASES:
+        samples = render_piano(name)
+        write_oga(os.path.join(theme, "stereo", name + ".oga"), samples)
+        if name == "system-shutdown":
+            write_wav(os.path.join(theme, "system-shutdown.wav"), samples)
     shutil.copyfile(CAPTURE, os.path.join(theme, "stereo", "screen-capture.oga"))
     shutil.copyfile(TRASH, os.path.join(theme, "stereo", "trash-empty.oga"))
 

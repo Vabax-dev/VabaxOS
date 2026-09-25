@@ -405,6 +405,10 @@ fi
 
 # During shutdown systemd logs to the kernel log, which reaches the serial
 # console: the log then tells which service slows the shutdown down, if any.
+# The shutdown sound (vabaxos-shutdown-sound.service) plays after the user
+# sessions stop, in every mode: the recording runs until the VM is off.
+SHUTDOWN_WAV="${LOG%.log}-shutdown.wav"
+monitor "wavcapture $SHUTDOWN_WAV snd0"
 send 'sudo dmesg -n 7; sudo systemd-analyze log-target kmsg; sudo systemd-analyze log-level info; sudo poweroff'
 SHUTDOWN_START=$SECONDS
 for _ in $(seq 120); do
@@ -420,6 +424,11 @@ elif (( SHUTDOWN_SECONDS > 30 )); then
     FAILED=$((FAILED + 1))
 else
     printf 'OK: spegnimento in %d secondi.\n' "$SHUTDOWN_SECONDS"
+fi
+if python3 "$REPO/scripts/lib/wav-timeline.py" "$SHUTDOWN_WAV" 2>/dev/null | grep -q 'voce\|tono'; then
+    check 'suono di spegnimento udibile' yes yes
+else
+    check 'suono di spegnimento udibile' no yes
 fi
 SLOW="$(tr -d '\r' < "$LOG" | sed -n 's/.*systemd\[1\]: \([^:]*\): State .stop-sigterm. timed out.*/\1/p' | sort -u | paste -sd,)"
 [[ -z "$SLOW" ]] || printf 'INFO: servizi lenti a fermarsi: %s\n' "$SLOW"

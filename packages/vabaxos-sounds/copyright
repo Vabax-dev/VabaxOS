@@ -8,6 +8,13 @@ Copyright: 2026 Vabax and VabaxOS contributors
            Yaru sound theme, transposed; https://github.com/ubuntu/yaru)
 License: CC-BY-SA-4.0
 
+Files: usr/share/sounds/vabaxos/stereo/desktop-login.oga
+       usr/share/sounds/vabaxos/stereo/system-ready.oga
+       usr/share/sounds/vabaxos/stereo/system-shutdown.oga
+       usr/share/sounds/vabaxos/system-shutdown.wav
+Copyright: 2026 Vabax and VabaxOS contributors (piano, generated)
+License: CC-BY-SA-4.0
+
 Files: usr/share/sounds/vabaxos/stereo/trash-empty.oga
 Copyright: 2018 Mads Rosendahl (trash-empty.oga of Ubuntu's Yaru sound theme)
 License: CC-BY-SA-4.0
