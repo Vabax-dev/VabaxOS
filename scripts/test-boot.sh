@@ -513,7 +513,9 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     press alt-f4
     ask closed 'sleep 3; pgrep -u user -x gnome-text-edit >/dev/null && echo aperto || echo chiuso' || exit 1
     check 'Alt+F4 chiude la finestra' "$(value closed)" chiuso
-    send 'pkill -u user -x gnome-text-edit'
+    # Close every window first (the first setup opens by itself at login):
+    # with a window left, Alt+F4 closes it, as in Windows.
+    send 'pkill -u user -x gnome-text-edit; pkill -u user -f vabaxos-setup; sleep 3'
     press alt-f4
     sleep 3
     ask poweroff "env $BUS vabaxos-a11y-check --focused gnome-shell" || exit 1
