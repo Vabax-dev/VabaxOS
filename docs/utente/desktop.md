@@ -21,7 +21,7 @@ Tutto si cambia nelle Impostazioni e nella [configurazione iniziale](configurazi
 
 ## I suoni
 
-Il tema dei suoni **VabaxOS** ha il timbro dei suoni di Ubuntu, perché ricordano un sistema vero, con melodie di VabaxOS (scelta di Vabax, 2026-09-25). Ogni nota è un colpo del suono «campanello» di Ubuntu, trasposto. Le melodie usano le due note dei bip del menu di avvio: **salgono** quando qualcosa inizia o arriva (accesso, dispositivo collegato, rete collegata), **scendono** quando qualcosa finisce o se ne va (uscita, dispositivo scollegato, rete persa). Così si capisce l'evento senza vedere lo schermo. Avvio e spegnimento sono frasi più lunghe e melodiche. Il suono della cattura dello schermo è quello del tema freedesktop.
+Il tema dei suoni **VabaxOS** ha il timbro dei suoni di Ubuntu, perché ricordano un sistema vero, con melodie di VabaxOS (scelta di Vabax, 2026-09-25). Ogni nota è un colpo del suono «campanello» di Ubuntu, trasposto. Le melodie usano le due note dei bip del menu di avvio: **salgono** quando qualcosa inizia o arriva (accesso, dispositivo collegato, rete collegata), **scendono** quando qualcosa finisce o se ne va (uscita, dispositivo scollegato, rete persa). Così si capisce l'evento senza vedere lo schermo. Avvio e spegnimento sono frasi più lunghe e melodiche. Il suono della cattura dello schermo è quello del tema freedesktop, quello del cestino svuotato è quello di Ubuntu.
 
 Ci sono anche tre temi alternativi: **Cristallo** (campane), **Morbido** (percussioni morbide) e **Aria** (suoni dolci e lunghi). Il tema si sceglie in Impostazioni, Suono, oppure da terminale:
 
@@ -29,7 +29,7 @@ Ci sono anche tre temi alternativi: **Cristallo** (campane), **Morbido** (percus
 gsettings set org.gnome.desktop.sound theme-name vabaxos-morbido
 ```
 
-Crediti: il timbro è di Mads Rosendahl (tema Yaru di Ubuntu, CC BY-SA 4.0); la cattura dello schermo è di horsthorstensen su freesound (CC BY-SA).
+Crediti: il timbro e il cestino sono di Mads Rosendahl (tema Yaru di Ubuntu, CC BY-SA 4.0); la cattura dello schermo è di horsthorstensen su freesound (CC BY-SA).
 
 ## Energia, Wi-Fi e Bluetooth
 

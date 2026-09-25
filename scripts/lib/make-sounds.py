@@ -159,11 +159,13 @@ TITLES = {"cristallo": ("Cristallo", "bells"), "morbido": ("Morbido", "soft mall
 # on the motif of the boot beeps (root, fifth, octave: rising when
 # something starts or arrives, falling when it ends or leaves). Start-up
 # and shut-down are longer phrases over a soft chord. The screen capture
-# is freedesktop's (freesound user horsthorstensen, CC-BY-SA).
+# is freedesktop's (freesound user horsthorstensen, CC-BY-SA); emptying
+# the trash is Yaru's own (Vabax's choice: those two are better).
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SAMPLE = os.path.join(REPO, "artwork", "sounds", "yaru-bell.oga")
 SAMPLE_NOTE = 587.3  # D5
 CAPTURE = os.path.join(REPO, "artwork", "sounds", "freedesktop-screen-capture.oga")
+TRASH = os.path.join(REPO, "artwork", "sounds", "yaru-trash-empty.oga")
 
 VABAXOS = {
     "system-ready": [("D5", 0.0), ("A5", 0.16), ("F#5", 0.32), ("A5", 0.48), ("D6", 0.70),
@@ -185,7 +187,6 @@ VABAXOS = {
     "battery-low": [("D6", 0.0), ("A5", 0.15), ("D6", 0.45), ("A5", 0.60)],
     "audio-volume-change": [("D6", 0.0)],
     "bell-window-system": [("A5", 0.0)],
-    "trash-empty": [("F#5", 0.0), ("D5", 0.07), ("A4", 0.14)],
     "network-connectivity-established": [("D5", 0.0), ("F#5", 0.10), ("A5", 0.20)],
     "network-connectivity-lost": [("A5", 0.0), ("F#5", 0.10), ("D5", 0.20)],
 }
@@ -245,6 +246,7 @@ def vabaxos_theme(out):
     for name in VABAXOS:
         write_oga(os.path.join(theme, "stereo", name + ".oga"), render_vabaxos(sample, name))
     shutil.copyfile(CAPTURE, os.path.join(theme, "stereo", "screen-capture.oga"))
+    shutil.copyfile(TRASH, os.path.join(theme, "stereo", "trash-empty.oga"))
 
 
 def main(out):

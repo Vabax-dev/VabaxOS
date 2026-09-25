@@ -8,6 +8,10 @@ Copyright: 2026 Vabax and VabaxOS contributors
            Yaru sound theme, transposed; https://github.com/ubuntu/yaru)
 License: CC-BY-SA-4.0
 
+Files: usr/share/sounds/vabaxos/stereo/trash-empty.oga
+Copyright: 2018 Mads Rosendahl (trash-empty.oga of Ubuntu's Yaru sound theme)
+License: CC-BY-SA-4.0
+
 Files: usr/share/sounds/vabaxos/stereo/screen-capture.oga
 Copyright: freesound user horsthorstensen
            (https://freesound.org/s/72714/, from the freedesktop sound theme)
