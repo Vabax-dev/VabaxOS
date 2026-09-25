@@ -19,5 +19,9 @@
       <default><![CDATA[['<Super>s']]]></default>
       <summary>Open the Start menu, to search (the same as Super alone)</summary>
     </key>
+    <key name="where-am-i" type="as">
+      <default><![CDATA[['<Super><Alt>d']]]></default>
+      <summary>Say the program, window, desktop and open windows</summary>
+    </key>
   </schema>
 </schemalist>

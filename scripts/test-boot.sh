@@ -566,6 +566,62 @@ if [[ "$WANT_ORCA" == yes ]]; then
     check 'Ins+F12: Orca dice l'"'"'ora' "$(record orca-f12 5)" "$WANT_SOUND"
 fi
 
+# Navigation and Tab (block 11). Tab is pressed many times in a program
+# while vabaxos-a11y-check listens to where the focus goes, as Orca hears
+# it: the stops go to the serial log (TAB-key), the summary is checked for
+# the VabaxOS programs (no stop without a name, the focus never leaves the
+# program, Tab moves) and shown for the others.
+tab_walk() {
+    local key="$1" launch="$2" name="$3" presses="${4:-20}" seconds
+    seconds=$((presses + 12))
+    send "env $DESKTOP_ENV $launch >/dev/null 2>&1 &"
+    ask "${key}open" "env $BUS vabaxos-a11y-check --wait 40 --focused $name" || exit 1
+    send "env $BUS vabaxos-a11y-check --watch-focus $seconds $name > /tmp/tab-$key.txt 2>&1 &"
+    sleep 4
+    for _ in $(seq "$presses"); do
+        press tab
+        sleep 0.5
+    done
+    ask "$key" "sleep $((seconds - presses)); tail -1 /tmp/tab-$key.txt" || exit 1
+    send "sed 's/^/TAB-$key: /' /tmp/tab-$key.txt; pkill -f '$launch'; sleep 2"
+}
+# The numbers of a summary "stops=.. unique=.. controls=.. unnamed=.. outside=..".
+tab_value() { value "$1" | sed -n "s/.* $2=\([0-9]*\).*/\1/p"; }
+if [[ "$WANT_ORCA" == yes ]]; then
+    send 'pkill -u user -f vabaxos-setup; sleep 2'
+    for program in "apps|vabaxos-apps|vabaxos-apps" "screenreader|vabaxos-screen-reader|vabaxos-screen-reader"; do
+        IFS='|' read -r key launch name <<< "$program"
+        tab_walk "tab$key" "$launch" "$name"
+        printf 'INFO: Tab in %s: %s\n' "$name" "$(value "tab$key")"
+        check "Tab in $name: fermate senza nome" "$(tab_value "tab$key" unnamed)" 0
+        check "Tab in $name: il focus resta nel programma" "$(tab_value "tab$key" outside)" 0
+        check "Tab in $name: il focus si sposta" "$( (( $(tab_value "tab$key" unique) > 3 )) && echo yes || echo no)" yes
+    done
+    for program in "files|nautilus|nautilus" "settings|gnome-control-center|settings" \
+                   "editor|gnome-text-editor|gnome-text-editor" "writer|libreoffice --writer|soffice"; do
+        IFS='|' read -r key launch name <<< "$program"
+        tab_walk "tab$key" "$launch" "$name"
+        printf 'INFO: Tab in %s: %s\n' "$name" "$(value "tab$key")"
+    done
+fi
+
+# A new window takes the focus even when a program already has it and the
+# new one has no activation token (started from here): no "is ready".
+# Super+Alt+D says where the focus is.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    send "printf 'VabaxOS\\n' > /tmp/nuova.txt; env $DESKTOP_ENV gnome-text-editor --standalone /tmp/nuova.txt >/dev/null 2>&1 &"
+    ask firstwindow "env $BUS vabaxos-a11y-check --wait 40 --focused gnome-text-editor" || exit 1
+    send "env $DESKTOP_ENV vabaxos-apps >/dev/null 2>&1 &"
+    ask newwindow "sleep 8; env $BUS vabaxos-a11y-check --wait 30 --focused vabaxos-apps" || exit 1
+    check 'la finestra nuova prende il focus' "$(value newwindow | grep -c 'focus: none')" 0
+    printf 'INFO: finestra nuova: %s\n' "$(value newwindow)"
+    if [[ "$WANT_ORCA" == yes ]]; then
+        press meta_l-alt-d
+        check 'Super+Alt+D: dove sono (Orca)' "$(record where-am-i 5)" "$WANT_SOUND"
+    fi
+    send 'pkill -u user -x vabaxos-apps; pkill -u user -x gnome-text-edit; sleep 2'
+fi
+
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send 'sudo systemctl suspend </dev/null'

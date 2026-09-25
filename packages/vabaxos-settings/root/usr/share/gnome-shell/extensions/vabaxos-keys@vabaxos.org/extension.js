@@ -11,15 +11,24 @@
 //   Super+S     the Start menu, to search: the same as Super alone
 //   Super+Down  a maximized or tiled window goes back to its size,
 //               any other window is minimized
+//   Super+Alt+D where am I: program, window, desktop, open windows (said
+//               by Orca through its D-Bus service, or a notification)
 //   Alt+F4      closes the window; on the desktop or the taskbar asks to
 //               shut down, as in Windows (the desktop takes the focus when
 //               the last window closes)
+//
+// A new window takes the focus even when it was started without a GNOME
+// "activation token" (from a terminal, a script, a program that opens a
+// second window): instead of the "is ready" notification, which a blind
+// user cannot find (block 11). Only in its first seconds: a window that
+// asks for attention later (a new e-mail) does not steal the focus.
 //
 // The focus moves with the keyboard focus of GNOME Shell, as Ctrl+Alt+Tab
 // does, so Orca reads it; then the arrows move, Enter opens and Escape goes
 // back to the window.
 
 import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
@@ -29,7 +38,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore'];
+const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i'];
+const NEW_WINDOW_MS = 8000;
 
 export default class VabaxOSKeys extends Extension {
     enable() {
@@ -40,6 +50,7 @@ export default class VabaxOSKeys extends Extension {
             // What Super alone does: ArcMenu listens to this signal.
             'open-start-menu': () => global.display.emit('overlay-key'),
             'minimize-or-restore': () => this._minimizeOrRestore(),
+            'where-am-i': () => this._whereAmI(),
         };
         for (const key of KEYS) {
             Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE,
@@ -47,6 +58,11 @@ export default class VabaxOSKeys extends Extension {
         }
         Main.wm.setCustomKeybindingHandler('close', Shell.ActionMode.NORMAL,
             (display, window) => this._close(window));
+        this._createdId = global.display.connect('window-created', (display, window) => {
+            window._vabaxosCreated = GLib.get_monotonic_time() / 1000;
+        });
+        this._attentionIds = ['window-demands-attention', 'window-marked-urgent'].map(signal =>
+            global.display.connect(signal, (display, window) => this._newWindowAttention(window)));
         // When GNOME Shell has the keyboard (the taskbar after Super+T),
         // Alt+F4 reaches its stage: ask to shut down, as Windows does.
         this._stageKeyId = global.stage.connect('key-press-event',
@@ -71,6 +87,8 @@ export default class VabaxOSKeys extends Extension {
         Meta.keybindings_set_custom_handler('close', null);
         global.stage.disconnect(this._stageKeyId);
         global.display.disconnect(this._focusId);
+        global.display.disconnect(this._createdId);
+        this._attentionIds.forEach(id => global.display.disconnect(id));
         if (this._focusIdle) {
             GLib.source_remove(this._focusIdle);
             this._focusIdle = 0;
@@ -142,6 +160,50 @@ export default class VabaxOSKeys extends Extension {
         } else if (window.can_minimize()) {
             window.minimize();
         }
+    }
+
+    _newWindowAttention(window) {
+        const created = window._vabaxosCreated;
+        if (created === undefined || GLib.get_monotonic_time() / 1000 - created > NEW_WINDOW_MS)
+            return;
+        if (Main.modalCount > 0 || this._isDesktop(window))
+            return;
+        Main.activateWindow(window);
+    }
+
+    _whereAmI() {
+        const _ = this.gettext.bind(this);
+        const window = global.display.focus_window;
+        const parts = [];
+        if (window && !this._isDesktop(window)) {
+            const app = Shell.WindowTracker.get_default().get_window_app(window);
+            const title = window.get_title() || '';
+            const name = app ? app.get_name() : '';
+            parts.push(name && !title.includes(name) ? `${name}: ${title}` : title);
+        } else {
+            parts.push(_('Desktop'));
+        }
+        const manager = global.workspace_manager;
+        if (manager.get_n_workspaces() > 1) {
+            parts.push(_('desktop %d of %d').format(manager.get_active_workspace_index() + 1,
+                manager.get_n_workspaces()));
+        }
+        const windows = global.display.get_tab_list(Meta.TabList.NORMAL, null).filter(w => !this._isDesktop(w));
+        parts.push(windows.length === 1 ? _('1 window open') : _('%d windows open').format(windows.length));
+        this._speak(parts.filter(p => p).join('. '));
+    }
+
+    // Orca says it at once; without Orca, a notification.
+    _speak(text) {
+        Gio.DBus.session.call('org.gnome.Orca.Service', '/org/gnome/Orca/Service', 'org.gnome.Orca.Service',
+            'PresentMessage', new GLib.Variant('(s)', [text]), null, Gio.DBusCallFlags.NONE, 2000, null,
+            (connection, result) => {
+                try {
+                    connection.call_finish(result);
+                } catch {
+                    Main.notify(this.gettext('Where am I'), text);
+                }
+            });
     }
 
     _focusDesktop() {
