@@ -189,17 +189,18 @@ printf 'OK: installazione conclusa in %d secondi.\n' "$INSTALL_TIME"
 LOG="$OUT/logs/test-install-$STAMP-first-start.log"
 start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" --from-disk
 printf 'INFO: primo avvio del sistema installato (log: %s)\n' "$LOG"
+# The welcome speaks about 8 seconds after the firmware, before the serial
+# login prompt, then waits: record from the start, then answer it as a
+# user would (language, then Start VabaxOS).
+check 'benvenuto al primo avvio udibile' "$(record welcome 40)" yes
 wait_for 'login: *$' 'richiesta di accesso sulla console seriale' 600 || exit 1
-# The welcome speaks on the first console and waits for keys, like in the
-# live system: first answer it, as a user would (language, then start).
-check 'benvenuto al primo avvio udibile' "$(record welcome 12)" yes
 press ret
 sleep 6
 press ret
 sleep 10
 login || exit 1
 ask os '. /etc/os-release; echo $PRETTY_NAME'
-ask welcome 'systemctl show -p ActiveState --value vabaxos-welcome; test -f /var/lib/vabaxos/welcome-done && echo done'
+ask welcome 'systemctl show -p ActiveState --value vabaxos-welcome; echo test | sudo -S test -f /var/lib/vabaxos/welcome-done 2>/dev/null && echo done'
 ask packages 'dpkg-query -W -f "\${Package} " vabaxos-accessibility vabaxos-branding vabaxos-settings vabaxos-setup vabaxos-voice vabaxos-welcome 2>/dev/null | wc -w'
 ask live 'dpkg-query -W -f "\${db:Status-Abbrev}\${Package} " live-boot live-config 2>/dev/null | grep -c "^ii" || true'
 ask speech 'systemctl is-active espeakup'
