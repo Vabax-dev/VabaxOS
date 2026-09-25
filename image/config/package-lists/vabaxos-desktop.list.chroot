@@ -4,6 +4,15 @@
 gnome-core
 # Start menu with the VabaxOS logo (ADR-0018), set up by vabaxos-settings.
 gnome-shell-extension-arc-menu
+# A familiar interface (block 8): taskbar at the bottom with the open and
+# pinned programs, tray icons, desktop icons, clipboard history (Ctrl+Alt+H),
+# windows side by side and in quarters like Snap in Windows 11.
+gnome-shell-extension-dash-to-panel
+gnome-shell-extension-appindicator
+gnome-shell-extension-desktop-icons-ng
+gnome-shell-extension-gpaste
+gnome-shell-extension-tiling-assistant
+gnome-system-monitor
 # One look for the whole system: Atkinson Hyperlegible Next, a font made
 # for low vision (vabaxos-branding); log in and log out sounds.
 fonts-atkinson-hyperlegible-next
@@ -17,7 +26,7 @@ locales-all
 keyboard-configuration
 console-setup
 
-# Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility,
+# Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility, vabaxos-apps,
 # vabaxos-branding, vabaxos-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds,
 # vabaxos-update, vabaxos-voice, vabaxos-welcome)
 # are built from packages/ by

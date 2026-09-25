@@ -10,8 +10,10 @@
 # power buttons have no name either.
 # A dconf system database instead of a GSettings override, because the
 # Debian package 69.2-1 installs its schema only inside the extension.
+# All the extensions VabaxOS turns on (one list: blocks 3 and 8). Each one
+# must pass vabaxos-a11y-check in test-boot.sh, like ArcMenu.
 [org/gnome/shell]
-enabled-extensions=['arcmenu@arcmenu.com']
+enabled-extensions=['arcmenu@arcmenu.com', 'dash-to-panel@jderose9.github.com', 'ubuntu-appindicators@ubuntu.com', 'ding@rastersoft.com', 'GPaste@gnome-shell-extensions.gnome.org', 'tiling-assistant@leleat-on-github']
 
 [org/gnome/shell/extensions/arcmenu]
 menu-layout='redmond'
