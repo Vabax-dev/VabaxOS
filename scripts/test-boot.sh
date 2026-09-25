@@ -337,10 +337,11 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # sudo reads from the terminal and would swallow a line typed ahead.
     ask forcekokoro "sudo vabaxos-voice-select --engine kokoro >/dev/null 2>&1; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
     ask orcaback 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
+    # The module loads the model in the background where Kokoro is the
+    # voice (about 570 MB): wait for it, up to 2 minutes on slow machines
+    # such as the CI runners, then Orca must speak with it.
+    ask kokoro 'for i in $(seq 120); do r=$(ps -o rss= -C sd_kokoro | sort -n | tail -1); [ "${r:-0}" -gt 300000 ] && break; sleep 1; done; [ "${r:-0}" -gt 300000 ] && echo yes || echo "no (${r:-0} kB)"' || exit 1
     check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"
-    # The module always runs; with Kokoro in use it holds the model (about
-    # 570 MB), so its memory tells that the natural voice really spoke.
-    ask kokoro 'r=$(ps -o rss= -C sd_kokoro | sort -n | tail -1); [ "${r:-0}" -gt 300000 ] && echo yes || echo "no (${r:-0} kB)"' || exit 1
     check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
 fi
 
