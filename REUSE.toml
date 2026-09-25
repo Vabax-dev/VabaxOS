@@ -57,3 +57,10 @@ path = "packages/vabaxos-sounds/root/usr/share/sounds/**"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Vabax and VabaxOS contributors"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+# GRUB fonts made from Atkinson Hyperlegible Next (OFL, no Reserved Font Name).
+[[annotations]]
+path = "image/config/bootloaders/grub-pc/live-theme/*.pf2"
+precedence = "override"
+SPDX-FileCopyrightText = "2020-2024 The Atkinson Hyperlegible Next Project Authors"
+SPDX-License-Identifier = "OFL-1.1"
