@@ -386,6 +386,20 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'font del desktop' "$(value font)" "'Atkinson Hyperlegible Next 11'"
 fi
 
+# The complete system (block 7): office and e-mail open and their
+# unnamed controls are counted; Braille, text recognition and the help
+# are ready.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    app_a11y writer 'libreoffice --writer' soffice
+    app_a11y mail thunderbird thunderbird
+    ask braille 'test -s /etc/brlapi.key && command -v brltty >/dev/null && python3 -c "import brlapi" && echo pronto' || exit 1
+    check 'Braille (brltty, BrlAPI)' "$(value braille)" pronto
+    ask ocr 'tesseract --list-langs 2>/dev/null | grep -c "^ita$"' || exit 1
+    check 'riconoscimento del testo in italiano' "$(value ocr)" 1
+    ask help 'ls /usr/share/doc/vabaxos-help/html/*.html | wc -l' || exit 1
+    printf 'INFO: pagine dell'"'"'aiuto: %s\n' "$(value help)"
+fi
+
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send 'sudo systemctl suspend </dev/null'
