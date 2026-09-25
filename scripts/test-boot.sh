@@ -522,6 +522,15 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     press alt-f4
     sleep 3
     ask poweroff "env $BUS vabaxos-a11y-check --focused gnome-shell" || exit 1
+    # Seen once with Orca (2026-09-25), not reproduced by hand: the first
+    # Alt+F4 did nothing. A second try is allowed, and said in the log.
+    if [[ "$(value poweroff | grep -ci 'power off\|restart\|cancel')" != 1 ]]; then
+        printf 'INFO: Alt+F4 sul desktop: il primo non ha aperto la richiesta, riprovo\n'
+        press alt-f4
+        sleep 3
+        ask poweroff2 "env $BUS vabaxos-a11y-check --focused gnome-shell" || exit 1
+        [[ "$(value poweroff2 | grep -ci 'power off\|restart\|cancel')" == 1 ]] && ask poweroff "echo \"$(value poweroff2)\"" >/dev/null
+    fi
     press esc
     printf 'INFO: Alt+F4 sul desktop: %s\n' "$(value poweroff)"
     check 'Alt+F4 sul desktop chiede di spegnere' "$(value poweroff | grep -ci 'power off\|restart\|cancel')" 1

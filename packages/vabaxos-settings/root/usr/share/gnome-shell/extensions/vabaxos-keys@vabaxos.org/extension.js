@@ -111,8 +111,10 @@ export default class VabaxOSKeys extends Extension {
     }
 
     _isDesktop(window) {
-        // Desktop Icons NG marks its window with customJS_ding.
-        return window.get_window_type() === Meta.WindowType.DESKTOP || Boolean(window.customJS_ding);
+        // Desktop Icons NG marks its windows with customJS_ding, and titles
+        // its desktop window "Desktop Icons <n>" (its emulateX11WindowType.js).
+        return window.get_window_type() === Meta.WindowType.DESKTOP || Boolean(window.customJS_ding) ||
+            (window.get_title() ?? '').startsWith('Desktop Icons ');
     }
 
     _unmaximize(window) {
@@ -146,7 +148,9 @@ export default class VabaxOSKeys extends Extension {
         if (global.display.focus_window || Main.modalCount > 0)
             return;
         // Not global.get_window_actors(): Desktop Icons NG hides its window there.
-        const desktop = global.display.list_all_windows().find(w => this._isDesktop(w));
+        const windows = global.display.list_all_windows();
+        const desktop = windows.find(w => (w.get_title() ?? '').startsWith('Desktop Icons ')) ??
+            windows.find(w => this._isDesktop(w));
         desktop?.activate(global.get_current_time());
     }
 
