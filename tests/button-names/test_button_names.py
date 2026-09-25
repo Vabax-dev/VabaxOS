@@ -170,7 +170,8 @@ class Shell:
 
 def test_buttons(tree):
     """Names of the helper's buttons, found after the "Mine" button."""
-    buttons = re.findall(r"^\s*push button: (.*)$", tree, re.M)
+    # AT-SPI 2.52 calls the role "push button", AT-SPI 2.61 (forky) "button".
+    buttons = re.findall(r"^\s*(?:push )?button: (.*)$", tree, re.M)
     start = buttons.index("Mine") - 3
     return buttons[start:start + 7]
 
@@ -187,7 +188,7 @@ class ButtonNamesTest(unittest.TestCase):
             tree = shell.a11y()
             self.assertEqual(test_buttons(tree), ENGLISH, tree)
             # The notification banner: GNOME Shell's Expand and Close.
-            self.assertRegex(tree, r"notification: .*\n(.*\n){0,12}\s*push button: Expand\n(.*\n)?\s*push button: Close")
+            self.assertRegex(tree, r"notification: .*\n(.*\n){0,12}\s*(push )?button: Expand\n(.*\n)?\s*(push )?button: Close")
             self.assertEqual(unnamed(tree), 0, tree)
             # Turned off, the extension leaves every button as it found it.
             shell.call("org.gnome.Shell.Extensions.DisableExtension", UUID)

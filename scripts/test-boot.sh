@@ -369,7 +369,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     sleep 3
     send "env $BUS vabaxos-a11y-check --list gnome-shell > /tmp/shell-a11y.txt 2>&1; sed 's/^/A11Y: /' /tmp/shell-a11y.txt"
     ask shella11y "tail -1 /tmp/shell-a11y.txt" || exit 1
-    ask bannernames "grep -A12 'notification:' /tmp/shell-a11y.txt | grep -c -E 'push button: (Close|Chiudi)\$'" || exit 1
+    ask bannernames "grep -A12 'notification:' /tmp/shell-a11y.txt | grep -c -E 'button: (Close|Chiudi)\$'" || exit 1
     press esc
     send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
     check 'menu Start: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
