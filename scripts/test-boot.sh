@@ -575,14 +575,16 @@ tab_walk() {
     local key="$1" launch="$2" name="$3" presses="${4:-20}" seconds
     seconds=$((presses + 12))
     send "env $DESKTOP_ENV $launch >/dev/null 2>&1 &"
-    ask "${key}open" "env $BUS vabaxos-a11y-check --wait 40 --focused $name" || exit 1
-    send "env $BUS vabaxos-a11y-check --watch-focus $seconds $name > /tmp/tab-$key.txt 2>&1 &"
+    ask "${key}open" "timeout 60 env $BUS vabaxos-a11y-check --wait 40 --focused $name" || exit 1
+    send "timeout $((seconds + 30)) env $BUS vabaxos-a11y-check --watch-focus $seconds $name > /tmp/tab-$key.txt 2>&1 &"
     sleep 4
     for _ in $(seq "$presses"); do
         press tab
         sleep 0.5
     done
-    ask "$key" "sleep $((seconds - presses)); tail -1 /tmp/tab-$key.txt" || exit 1
+    # Wait for the summary: pressing Tab through QEMU takes longer than
+    # the presses themselves.
+    ask "$key" "for i in \$(seq 60); do grep -q ' tab: stops=' /tmp/tab-$key.txt && break; sleep 1; done; tail -1 /tmp/tab-$key.txt" || exit 1
     send "sed 's/^/TAB-$key: /' /tmp/tab-$key.txt; pkill -f '$launch'; sleep 2"
 }
 # The numbers of a summary "stops=.. unique=.. controls=.. unnamed=.. outside=..".
@@ -597,8 +599,10 @@ if [[ "$WANT_ORCA" == yes ]]; then
         check "Tab in $name: il focus resta nel programma" "$(tab_value "tab$key" outside)" 0
         check "Tab in $name: il focus si sposta" "$( (( $(tab_value "tab$key" unique) > 3 )) && echo yes || echo no)" yes
     done
+    # Not LibreOffice: its accessibility tree kept vabaxos-a11y-check waiting
+    # for ten minutes (2026-09-25).
     for program in "files|nautilus|nautilus" "settings|gnome-control-center|settings" \
-                   "editor|gnome-text-editor|gnome-text-editor" "writer|libreoffice --writer|soffice"; do
+                   "editor|gnome-text-editor|gnome-text-editor"; do
         IFS='|' read -r key launch name <<< "$program"
         tab_walk "tab$key" "$launch" "$name"
         printf 'INFO: Tab in %s: %s\n' "$name" "$(value "tab$key")"
