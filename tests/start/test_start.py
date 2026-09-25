@@ -47,9 +47,24 @@ print("ACCENT:" + "|".join(e.name for e in menu.search(cats, "citta")), flush=Tr
 print("POWER:" + "|".join(e.name for e in menu.search(cats, "power off")), flush=True)
 
 def check(application):
-    window = start.StartWindow(application)
-    window.show_menu()
+    try:
+        window = start.StartWindow(application)
+        window.show_menu()
+    except Exception:  # noqa: BLE001 - shown in the test failure
+        import traceback
+        traceback.print_exc()
+        application.quit()
+        return
     def steps():
+        try:
+            run_steps()
+        except Exception:  # noqa: BLE001 - shown in the test failure
+            import traceback
+            traceback.print_exc()
+        application.quit()
+        return False
+
+    def run_steps():
         model = window.tree_model
         names = lambda: [model.get_item(i).get_item().entry.name for i in range(model.get_n_items())]
         print("TOP:" + "|".join(names()), flush=True)
@@ -77,9 +92,9 @@ def check(application):
         cleared = window.search.get_text() == ""
         window.window_key(None, Gdk.KEY_Escape, 0, 0)       # closes the menu
         print("ESCAPE:%s,%s" % (cleared, window.get_visible()), flush=True)
-        application.quit()
-        return False
     GLib.timeout_add(500, steps)
+    GLib.timeout_add_seconds(40, lambda: (print("TIMEOUT: the steps did not finish", flush=True),
+                                          application.quit()))
 
 app = Adw.Application(application_id="org.vabaxos.StartTest")
 app.connect("activate", check)
