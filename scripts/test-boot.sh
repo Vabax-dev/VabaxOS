@@ -575,7 +575,9 @@ tab_walk() {
     local key="$1" launch="$2" name="$3" presses="${4:-20}" seconds
     seconds=$((presses + 12))
     send "env $DESKTOP_ENV $launch >/dev/null 2>&1 &"
-    ask "${key}open" "timeout 60 env $BUS vabaxos-a11y-check --wait 40 --focused $name" || exit 1
+    # "open$key", not "${key}open": ask waits for the line VABAX-DONE-<key>,
+    # and VABAX-DONE-tabappsopen would already answer for tabapps.
+    ask "open$key" "timeout 60 env $BUS vabaxos-a11y-check --wait 40 --focused $name" || exit 1
     send "timeout $((seconds + 30)) env $BUS vabaxos-a11y-check --watch-focus $seconds $name > /tmp/tab-$key.txt 2>&1 &"
     sleep 4
     for _ in $(seq "$presses"); do
