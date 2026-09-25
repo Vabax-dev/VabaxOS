@@ -340,7 +340,10 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     # to see whether the desktop is stuck (CI, 2026-09-25: GNOME Shell did
     # not answer on the session bus from the start in one run of eight).
     if [[ "$ORCA_HEARD" != "$WANT_SOUND" ]]; then
-        send 'sudo -n journalctl -b --no-pager -o short-monotonic _COMM=gnome-shell _COMM=orca | tail -80 | sed "s/^/JOURNAL: /"'
+        # Also: busy or waiting? The threads of GNOME Shell and their CPU use
+        # over 3 seconds, where its main thread waits in the kernel, and the
+        # whole journal. One line: typing after sudo would reach sudo.
+        send 'sudo -n journalctl -b --no-pager -o short-monotonic _COMM=gnome-shell _COMM=orca | tail -80 | sed "s/^/JOURNAL: /"; p=$(pgrep -u user -x gnome-shell); top -b -H -n 2 -d 3 -p "$p" | tail -20 | sed "s/^/SHELLTOP: /"; sudo -n cat /proc/"$p"/stack | sed "s/^/SHELLSTACK: /"; sudo -n journalctl -b --no-pager -o short-monotonic --since=-3min | grep -v -e speech-disp -e sd_espeak -e sd_kokoro -e sudo | tail -120 | sed "s/^/JOURNALALL: /"'
         ask diagnosis 'echo done' || exit 1
     fi
     ask vt 'loginctl show-session $(loginctl list-sessions --no-legend | awk "\$3==\"user\" && \$4==\"seat0\" {print \$1}" | head -1) -p VTNr --value' || exit 1

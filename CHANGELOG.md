@@ -47,3 +47,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Menu Start di VabaxOS (`vabaxos-start`, blocco 12, proposta ADR-0025): Super apre il menu con il focus nella ricerca (risultati mentre si scrive: programmi, impostazioni, cartelle, file, comandi), Tab va alle categorie ad albero (Preferiti, Programmi divisi come in Windows, Strumenti di VabaxOS, Impostazioni, Cartelle, File recenti, Spegni o esci): Freccia destra apre, Freccia sinistra torna, le lettere saltano. ArcMenu resta sulla barra per il mouse.
 - Installazione dal benvenuto (ADR-0023): «Installa ora» riparte subito nell'installer con la voce (`vabaxos-install`, kexec), nella lingua e alla velocità scelte; le impostazioni di accessibilità passano al sistema installato; l'installer non chiede più nome del computer, dominio, password di root, altri dischi, paese del mirror, mirror e proxy. `test-install.sh` nella CI.
 - Estensione `button-names@vabaxos.org` (ADR-0022): dà un nome ai pulsanti di GNOME Shell con la sola icona, come Chiudi ed Espandi nelle notifiche, che GNOME 50 lascia senza nome; prova con GNOME Shell senza schermo nella CI.
+
+### Corretto
+
+- Sistema installato: la voce della console parla anche passando dalla schermata di accesso a una console di testo (Ctrl+Alt+F3): la schermata di accesso tiene la scheda audio (`vabaxos-greeter-audio.service`).

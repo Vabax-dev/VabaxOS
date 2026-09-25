@@ -208,6 +208,7 @@ ask packages 'dpkg-query -W -f "\${Package} " vabaxos-accessibility vabaxos-bran
 ask live 'dpkg-query -W -f "\${db:Status-Abbrev}\${Package} " live-boot live-config 2>/dev/null | grep -c "^ii" || true'
 ask speech 'systemctl is-active espeakup'
 ask gdm 'systemctl is-active gdm'
+ask greeteraudio 'id -nG Debian-gdm | grep -qw audio && echo yes || echo no'
 ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select'
 ask user 'id -un'
 # The installer saved the choices for the welcome, which applied them.
@@ -223,6 +224,7 @@ check 'pacchetti VabaxOS installati' "$(value packages)" 6
 check 'pacchetti della live rimossi' "$(value live)" 0
 check 'voce della console (espeakup)' "$(value speech)" active
 check 'schermata di accesso (GDM)' "$(value gdm)" active
+check 'la schermata di accesso tiene la scheda audio' "$(value greeteraudio)" yes
 check "scelta della voce all'avvio" "$(value voiceselect)" success
 check 'benvenuto concluso e segnato' "$(value welcome | tr -s ' ')" "inactive done"
 check "scelte dell'installazione salvate" "$(value choices)" "vabaxos.a11y=high-contrast,large-text vabaxos.rate=5 vabaxos.lang=en"
@@ -231,6 +233,11 @@ check 'testo grande dal benvenuto prima di installare' "$(value textsize)" 1.5
 # Orca at the login screen speaks when the focus moves: Tab, then listen.
 press tab
 check 'schermata di accesso udibile' "$(record greeter 8)" yes
+# The serial login has its own PipeWire, which espeakup uses: it gets the
+# card only once the login screen's PipeWire lets it go, 5 seconds after
+# Orca stops speaking (WirePlumber's suspend timeout). A person at the
+# computer has one PipeWire only (CI, 2026-09-25: silent one time in two).
+sleep 6
 press ctrl-alt-f3
 check 'voce della console udibile' "$(record console 10)" yes
 send 'echo test | sudo -S poweroff'

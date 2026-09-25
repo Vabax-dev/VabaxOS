@@ -2,4 +2,5 @@
 set -e
 if [ "$1" = configure ]; then
     deb-systemd-helper enable vabaxos-voice-off.service >/dev/null || true
+    deb-systemd-helper enable vabaxos-greeter-audio.service >/dev/null || true
 fi
