@@ -536,6 +536,21 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'Alt+F4 sul desktop chiede di spegnere' "$(value poweroff | grep -ci 'power off\|restart\|cancel')" 1
 fi
 
+# Screen reader settings (block 9): every control of the window has a name,
+# and a change reaches the running Orca at once through its D-Bus service
+# (the speed read back from Orca itself).
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    app_a11y screenreader vabaxos-screen-reader vabaxos-screen-reader
+fi
+if [[ "$WANT_ORCA" == yes ]]; then
+    ask orcaset "env $BUS vabaxos-screen-reader --set voices/default rate 63" || exit 1
+    check 'impostazione di Orca applicata subito' "$(value orcaset)" 'saved, applied at once'
+    ask orcarate "env $BUS vabaxos-screen-reader --status | sed -n 's/^rate: //p'" || exit 1
+    check 'velocità letta da Orca (D-Bus)' "$(value orcarate)" 63
+    ask orcadconf "env $BUS gsettings get org.gnome.Orca.Voice:/org/gnome/orca/default/voices/default/ rate" || exit 1
+    check 'velocità salvata nelle impostazioni' "$(value orcadconf)" 63
+fi
+
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send 'sudo systemctl suspend </dev/null'

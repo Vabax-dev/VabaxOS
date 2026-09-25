@@ -79,3 +79,10 @@ path = ["artwork/sounds/freedesktop-screen-capture.oga", "packages/vabaxos-sound
 precedence = "override"
 SPDX-FileCopyrightText = "freesound user horsthorstensen"
 SPDX-License-Identifier = "CC-BY-SA-3.0"
+
+# Orca 50.2's settings schema, copied for the tests of vabaxos-screen-reader.
+[[annotations]]
+path = "tests/screen-reader/org.gnome.Orca.gschema.xml"
+precedence = "override"
+SPDX-FileCopyrightText = "2005-2026 The Orca Team"
+SPDX-License-Identifier = "LGPL-2.1-or-later"

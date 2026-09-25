@@ -291,3 +291,9 @@ msgstr "Heart, femminile, inglese"
 
 msgid "Michael, male, English"
 msgstr "Michael, maschile, inglese"
+
+msgid "All the screen reader settings"
+msgstr "Tutte le impostazioni del lettore di schermo"
+
+msgid "Reading, typing echo, braille, profiles and settings for each program"
+msgstr "Lettura, eco dei tasti, Braille, profili e impostazioni per ogni programma"

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Screen reader settings
+Name[it]=Impostazioni del lettore di schermo
+Comment=Voice, reading, typing echo, braille and keys of the screen reader, with profiles
+Comment[it]=Voce, lettura, eco dei tasti, Braille e tasti del lettore di schermo, con i profili
+Exec=vabaxos-screen-reader
+Icon=preferences-desktop-accessibility
+Terminal=false
+Categories=Settings;Accessibility;
+Keywords=orca;screen reader;voice;speech;braille;profile;lettore di schermo;voce;sintesi;profilo;nvda;

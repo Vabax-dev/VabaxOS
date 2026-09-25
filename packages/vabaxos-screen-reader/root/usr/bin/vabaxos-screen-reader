@@ -1,0 +1,492 @@
+#!/usr/bin/python3
+"""VabaxOS screen reader settings: every setting of Orca in one window,
+with profiles and settings for each program (block 9, Vabax's request).
+
+    vabaxos-screen-reader
+    vabaxos-screen-reader --status                  profile, and whether Orca answers
+    vabaxos-screen-reader --set GROUP KEY VALUE      change one setting, e.g.
+        --set speech punctuation-level all   or   --set voices/default rate 60
+
+On the left the list of pages (Voice, Reading, Typing, Documents and web,
+Tables, Sounds and progress, Braille, Mouse, Time and date, Keyboard); on
+the right the settings of the page. At the top: the profile to change, and
+"All programs" or one program, whose settings then win over the profile's.
+Every change is saved at once; most of them also reach the running screen
+reader at once, the others when this window closes (Orca reloads its
+settings). Profiles, ready-made profiles, export and import to a file are
+in the menu of the header bar and in the Profile page.
+
+Orca 50 keeps its settings in dconf (vabaxos_screen_reader.store).
+"""
+
+import gettext
+import os
+import sys
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
+
+from vabaxos_screen_reader import pages, store  # noqa: E402
+
+APP_ID = "org.vabaxos.ScreenReader"
+DOMAIN = "vabaxos-screen-reader"
+gettext.bindtextdomain(DOMAIN, os.environ.get("VABAXOS_SR_LOCALE_DIR", "/usr/share/locale"))
+gettext.textdomain(DOMAIN)
+_ = gettext.gettext
+
+ALL_PROGRAMS = ""
+
+
+def group_of(group):
+    """(dconf group, sub-folder) of a row's group."""
+    return group if isinstance(group, tuple) else (group, None)
+
+
+class SettingRows:
+    """Builds rows bound to the store; rebinds them when the profile or
+    the program changes."""
+
+    def __init__(self, window):
+        self.window = window
+        self.bound = []  # (row, refresh function)
+
+    def refresh(self):
+        for _row, update in self.bound:
+            update()
+
+    def program_note(self, row, group, key, sub):
+        """In a program, a row set there says so in its subtitle."""
+        base = row.base_subtitle
+        if self.window.store.app and self.window.store.is_program_value(group, key, sub):
+            note = _("Set for this program")
+            row.set_subtitle(f"{base}. {note}" if base else note)
+        else:
+            row.set_subtitle(base)
+
+    def make(self, spec):
+        kind, grp, key, title, subtitle, extra = spec
+        group, sub = group_of(grp)
+        subtitle = _(subtitle) if subtitle else ""
+        if kind == "switch":
+            row = Adw.SwitchRow(title=_(title), subtitle=subtitle)
+            signal = "notify::active"
+
+            def read():
+                row.set_active(bool(self.window.store.get(group, key, sub)))
+
+            def write(*_a):
+                self.window.store.set(group, key, row.get_active(), sub)
+        elif kind == "number":
+            lower, upper, step, digits = extra
+            row = Adw.SpinRow.new_with_range(lower, upper, step)
+            row.set_title(_(title))
+            row.set_subtitle(subtitle)
+            row.set_digits(digits)
+            signal = "notify::value"
+
+            def read():
+                value = self.window.store.get(group, key, sub)
+                row.set_value(float(value) if value is not None else lower)
+
+            def write(*_a):
+                value = row.get_value()
+                self.window.store.set(group, key, int(round(value)) if digits == 0 else float(value), sub)
+        else:  # choice
+            options = extra
+            row = Adw.ComboRow(title=_(title), subtitle=subtitle)
+            row.set_model(Gtk.StringList.new([_(label) for label, _v in options]))
+            signal = "notify::selected"
+
+            def read():
+                value = self.window.store.get(group, key, sub)
+                values = [v for _l, v in options]
+                row.set_selected(values.index(value) if value in values else Gtk.INVALID_LIST_POSITION)
+
+            def write(*_a):
+                index = row.get_selected()
+                if 0 <= index < len(options):
+                    self.window.store.set(group, key, options[index][1], sub)
+        row.base_subtitle = subtitle
+        row.setting = (group, key, sub)
+        row.handler = None
+
+        def update():
+            if row.handler is not None:
+                row.handler_block(row.handler)
+            available = self.window.store.settings(group, sub) is not None
+            row.set_sensitive(available)
+            if available:
+                read()
+            self.program_note(row, group, key, sub)
+            if row.handler is not None:
+                row.handler_unblock(row.handler)
+
+        def changed(*args):
+            write(*args)
+            self.program_note(row, group, key, sub)
+
+        update()
+        row.handler = row.connect(signal, changed)
+        self.bound.append((row, update))
+        return row
+
+
+class ScreenReaderWindow(Adw.ApplicationWindow):
+
+    def __init__(self, application):
+        super().__init__(application=application, title=_("Screen reader settings"))
+        self.set_default_size(980, 760)
+        self.store = store.Store()
+        self.rows = SettingRows(self)
+        self.toasts = Adw.ToastOverlay()
+
+        # The pages: a list on the left, their settings on the right.
+        self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.NONE)
+        self.page_list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.SINGLE)
+        self.page_list.add_css_class("navigation-sidebar")
+        self.page_list.update_property([Gtk.AccessibleProperty.LABEL], [_("Pages")])
+        self.page_list.append(self.page_row("profile", _("Profile and program"), "avatar-default-symbolic"))
+        self.stack.add_named(self.profile_page(), "profile")
+        for ident, title, icon, description, groups in pages.PAGES:
+            self.page_list.append(self.page_row(ident, _(title), icon))
+            self.stack.add_named(self.settings_page(_(title), _(description), groups), ident)
+        self.page_list.connect("row-selected", self.page_selected)
+
+        sidebar = Adw.ToolbarView()
+        sidebar.add_top_bar(Adw.HeaderBar(show_title=False))
+        scroll = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
+        scroll.set_child(self.page_list)
+        sidebar.set_content(scroll)
+
+        content = Adw.ToolbarView()
+        header = Adw.HeaderBar()
+        header.set_title_widget(Adw.WindowTitle(title=_("Screen reader settings")))
+        menu = Gio.Menu()
+        menu.append(_("Export settings to a file"), "win.export")
+        menu.append(_("Import settings from a file"), "win.import")
+        menu.append(_("Apply now"), "win.apply")
+        menu_button = Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu)
+        menu_button.set_tooltip_text(_("Menu"))
+        menu_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Menu")])
+        header.pack_end(menu_button)
+        content.add_top_bar(header)
+        content.set_content(self.stack)
+
+        split = Adw.NavigationSplitView()
+        split.set_sidebar(Adw.NavigationPage(title=_("Pages"), child=sidebar))
+        split.set_content(Adw.NavigationPage(title=_("Settings"), child=content))
+        self.toasts.set_child(split)
+        self.set_content(self.toasts)
+
+        for name, callback in (("export", self.export), ("import", self.import_), ("apply", self.apply_now)):
+            action = Gio.SimpleAction.new(name, None)
+            action.connect("activate", lambda *_a, cb=callback: cb())
+            self.add_action(action)
+        # Ctrl+S applies now; F6 moves between the page list and the page.
+        application.set_accels_for_action("win.apply", ["<Control>s"])
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self.key_pressed)
+        self.add_controller(keys)
+        self.connect("close-request", self.closing)
+        self.page_list.select_row(self.page_list.get_row_at_index(0))
+
+    # -- pages -----------------------------------------------------------
+
+    @staticmethod
+    def page_row(ident, title, icon):
+        box = Gtk.Box(spacing=12, margin_top=8, margin_bottom=8, margin_start=6, margin_end=6)
+        box.append(Gtk.Image(icon_name=icon, accessible_role=Gtk.AccessibleRole.PRESENTATION))
+        box.append(Gtk.Label(label=title, xalign=0))
+        row = Gtk.ListBoxRow(child=box)
+        row.ident = ident
+        row.update_property([Gtk.AccessibleProperty.LABEL], [title])
+        return row
+
+    def settings_page(self, title, description, groups):
+        page = Adw.PreferencesPage(title=title, description=description)
+        for group_title, specs in groups:
+            group = Adw.PreferencesGroup(title=_(group_title))
+            for spec in specs:
+                group.add(self.rows.make(spec))
+            page.add(group)
+        return page
+
+    def profile_page(self):
+        page = Adw.PreferencesPage(title=_("Profile and program"),
+                                   description=_("Choose what the other pages change"))
+        which = Adw.PreferencesGroup(title=_("What you are changing"),
+                                     description=_("Profiles are sets of settings you can switch "
+                                                   "with a key; a program can have its own settings."))
+        self.profile_row = Adw.ComboRow(title=_("Profile"))
+        self.profile_row.connect("notify::selected", self.profile_chosen)
+        which.add(self.profile_row)
+        self.program_row = Adw.ComboRow(title=_("Settings for"),
+                                        subtitle=_("All programs, or one program only"))
+        self.program_row.connect("notify::selected", self.program_chosen)
+        which.add(self.program_row)
+        page.add(which)
+
+        actions = Adw.PreferencesGroup(title=_("Profiles"))
+        use = Adw.ButtonRow(title=_("Use this profile now"))
+        use.connect("activated", lambda *_a: self.use_profile())
+        actions.add(use)
+        new = Adw.EntryRow(title=_("New profile, a copy of this one: write its name, then press Enter"))
+        new.set_show_apply_button(True)
+        new.connect("apply", self.new_profile)
+        new.connect("entry-activated", self.new_profile)
+        actions.add(new)
+        for ident, title, description, overrides in pages.PRESETS:
+            row = Adw.ButtonRow(title=_("Add the ready-made profile: {name}").format(name=_(title)))
+            row.set_tooltip_text(_(description))
+            row.connect("activated", self.add_preset, _(title), overrides)
+            actions.add(row)
+        delete = Adw.ButtonRow(title=_("Delete this profile"))
+        delete.add_css_class("destructive-action")
+        delete.connect("activated", lambda *_a: self.delete_profile())
+        actions.add(delete)
+        reset = Adw.ButtonRow(title=_("Remove this program's own settings"))
+        reset.connect("activated", lambda *_a: self.reset_program())
+        actions.add(reset)
+        page.add(actions)
+        self.fill_profiles()
+        self.fill_programs()
+        return page
+
+    def fill_profiles(self, select=None):
+        self.profiles = store.list_profiles()
+        names = [_("Default") if internal == store.DEFAULT_PROFILE else display
+                 for display, internal in self.profiles]
+        self._filling = True
+        self.profile_row.set_model(Gtk.StringList.new(names))
+        internals = [i for _d, i in self.profiles]
+        target = select or self.store.profile
+        self.profile_row.set_selected(internals.index(target) if target in internals else 0)
+        self._filling = False
+        self.profile_chosen()
+
+    def fill_programs(self):
+        self.programs = [(ALL_PROGRAMS, _("All programs"))]
+        known = {name for name, _l in pages.PROGRAMS}
+        self.programs += [(name, _(label)) for name, label in pages.PROGRAMS]
+        self.programs += [(name, name) for name in running_programs() if name not in known]
+        self._filling = True
+        self.program_row.set_model(Gtk.StringList.new([label for _n, label in self.programs]))
+        self.program_row.set_selected(0)
+        self._filling = False
+
+    def profile_chosen(self, *_a):
+        if getattr(self, "_filling", False):
+            return
+        index = self.profile_row.get_selected()
+        if 0 <= index < len(self.profiles):
+            self.store.reload_orca_if_needed()
+            app = self.store.app
+            self.store = store.Store(self.profiles[index][1], app)
+            self.rows.refresh()
+
+    def program_chosen(self, *_a):
+        if getattr(self, "_filling", False):
+            return
+        index = self.program_row.get_selected()
+        if 0 <= index < len(self.programs):
+            self.store.app = self.programs[index][0] or None
+            self.rows.refresh()
+            self.say(_("Now the pages change the settings of {name}.").format(name=self.programs[index][1])
+                     if self.store.app else _("Now the pages change the settings of all programs."))
+
+    # -- actions ------------------------------------------------------------
+
+    def say(self, text):
+        """A short message, which the screen reader reads: a toast, as in
+        vabaxos-setup (Gtk.Accessible.announce() crashed with GTK 4.18)."""
+        toast = Adw.Toast.new(text)
+        toast.set_timeout(4)
+        self.toasts.add_toast(toast)
+
+    def use_profile(self):
+        name = self.profile_row.get_selected_item().get_string()
+        if self.store.orca.set_profile(self.store.profile):
+            self.store.orca.reload()
+            self.say(_("The screen reader now uses the profile {name}.").format(name=name))
+        else:
+            self.say(_("The screen reader is not running: the profile will be used when you choose it there."))
+
+    def new_profile(self, entry):
+        name = entry.get_text().strip()
+        if not name:
+            self.say(_("Write the name of the new profile first."))
+            return
+        internal = store.create_profile(name, source=self.store.profile)
+        entry.set_text("")
+        self.fill_profiles(select=internal)
+        self.say(_("Profile {name} created.").format(name=name))
+
+    def add_preset(self, _row, title, overrides):
+        internal = store.create_profile(title, source=self.store.profile, overrides=overrides)
+        self.fill_profiles(select=internal)
+        self.say(_("Profile {name} added.").format(name=title))
+
+    def delete_profile(self):
+        if self.store.profile == store.DEFAULT_PROFILE:
+            self.say(_("The default profile cannot be deleted."))
+            return
+        name = self.profile_row.get_selected_item().get_string()
+        dialog = Adw.AlertDialog(heading=_("Delete the profile {name}?").format(name=name),
+                                 body=_("Its settings are lost."))
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("delete", _("Delete"))
+        dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.connect("response", self.delete_confirmed, name)
+        dialog.present(self)
+
+    def delete_confirmed(self, _dialog, response, name):
+        if response == "delete" and store.delete_profile(self.store.profile):
+            self.store = store.Store(store.DEFAULT_PROFILE, self.store.app)
+            self.fill_profiles(select=store.DEFAULT_PROFILE)
+            self.say(_("Profile {name} deleted.").format(name=name))
+
+    def reset_program(self):
+        if not self.store.app:
+            self.say(_("Choose a program first, in Settings for."))
+            return
+        for _row, _update in self.rows.bound:
+            group, key, sub = _row.setting
+            self.store.reset_program_value(group, key, sub)
+        self.rows.refresh()
+        self.say(_("This program now uses the settings of the profile."))
+
+    def apply_now(self):
+        self.store.pending_reload = True
+        self.store.reload_orca_if_needed()
+        self.say(_("Settings applied."))
+
+    def export(self):
+        dialog = Gtk.FileDialog(title=_("Export settings"), initial_name="vabaxos-lettore-di-schermo.conf")
+        dialog.save(self, None, self.export_done)
+
+    def export_done(self, dialog, result):
+        try:
+            file = dialog.save_finish(result)
+        except GLib.Error:
+            return
+        if file and store.export_settings(file.get_path()):
+            self.say(_("Settings exported to {name}.").format(name=file.get_basename()))
+        else:
+            self.say(_("The settings were not exported."))
+
+    def import_(self):
+        dialog = Gtk.FileDialog(title=_("Import settings"))
+        dialog.open(self, None, self.import_done)
+
+    def import_done(self, dialog, result):
+        try:
+            file = dialog.open_finish(result)
+        except GLib.Error:
+            return
+        if file and store.import_settings(file.get_path()):
+            self.store.pending_reload = True
+            self.store.reload_orca_if_needed()
+            self.fill_profiles()
+            self.say(_("Settings imported."))
+        else:
+            self.say(_("This file does not contain screen reader settings."))
+
+    # -- keys ---------------------------------------------------------------
+
+    def page_selected(self, _box, row):
+        if row is not None:
+            self.stack.set_visible_child_name(row.ident)
+
+    def key_pressed(self, _controller, keyval, _keycode, _state):
+        if keyval == Gdk_F6:
+            focus = self.get_focus()
+            if focus is not None and focus.is_ancestor(self.page_list):
+                page = self.stack.get_visible_child()
+                page.child_focus(Gtk.DirectionType.TAB_FORWARD)
+            else:
+                selected = self.page_list.get_selected_row()
+                (selected or self.page_list.get_row_at_index(0)).grab_focus()
+            return True
+        return False
+
+    def closing(self, *_a):
+        self.store.reload_orca_if_needed()
+        return False
+
+
+def running_programs():
+    """Names of the programs on the accessibility bus, as Orca sees them."""
+    try:
+        gi.require_version("Atspi", "2.0")
+        from gi.repository import Atspi
+        desktop = Atspi.get_desktop(0)
+        names = {desktop.get_child_at_index(i).get_name() for i in range(desktop.get_child_count())
+                 if desktop.get_child_at_index(i) is not None}
+    except (ValueError, ImportError, GLib.Error):
+        return []
+    skip = {"", "gnome-shell", "orca", "vabaxos-screen-reader", "xdg-desktop-portal-gtk", "mutter-x11-frames"}
+    return sorted(name for name in names if name and name.lower() not in skip)
+
+
+Gdk_F6 = 0xffc3
+
+
+class ScreenReaderApplication(Adw.Application):
+
+    def __init__(self):
+        super().__init__(application_id=APP_ID)
+        self.connect("activate", lambda app: (app.get_active_window() or ScreenReaderWindow(app)).present())
+
+
+def parse_value(current, text):
+    """VALUE as the type of the setting's current value."""
+    if isinstance(current, bool):
+        return text.lower() in ("1", "true", "yes", "on", "si", "s\u00ec")
+    if isinstance(current, int):
+        return int(text)
+    if isinstance(current, float):
+        return float(text)
+    if isinstance(current, list):
+        return [part.strip() for part in text.split(",") if part.strip()]
+    return text
+
+
+def command_line(args):
+    """--status and --set, without a window; the exit status says if it worked."""
+    settings = store.Store()
+    if args[0] == "--status":
+        rate_path = settings.orca.setters().get("Rate", [None])[0]
+        rate = None
+        if rate_path:
+            reply = settings.orca._call(rate_path, "org.gnome.Orca.Module", "ExecuteRuntimeGetter",
+                                        GLib.Variant("(s)", ("Rate",)), "(v)")
+            rate = reply[0] if reply else None
+        print(f"orca-service: {'yes' if rate_path else 'no'}")
+        print(f"rate: {rate}")
+        print("profiles: " + ", ".join(internal for _d, internal in store.list_profiles()))
+        return 0 if rate_path else 1
+    if args[0] == "--set" and len(args) == 4:
+        group, key, text = args[1:]
+        sub = None
+        if group.startswith("voices/"):
+            group, sub = "voice", group
+        if group not in store.SCHEMAS or settings.settings(group, sub) is None:
+            print(f"unknown group {args[1]}", file=sys.stderr)
+            return 2
+        value = parse_value(settings.get(group, key, sub), text)
+        settings.set(group, key, value, sub)
+        print("saved, " + ("applied after reload" if settings.pending_reload else "applied at once"))
+        settings.reload_orca_if_needed()
+        return 0
+    print(__doc__)
+    return 2
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1].startswith("--"):
+        sys.exit(command_line(sys.argv[1:]))
+    sys.exit(ScreenReaderApplication().run(sys.argv))
