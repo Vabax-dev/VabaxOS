@@ -275,9 +275,16 @@ check 'nome e logo VabaxOS' "$(value logo)" vabaxos-logo
 # read whatever window has the focus). Then the third text console, where
 # Speakup must read the login prompt, and back to the desktop (or the first
 # console), where Orca must read a new notification.
+# The test notification is closed after listening: GNOME Shell keeps a
+# banner on screen while the user is idle, and the accessibility checks
+# that follow would find its buttons (the expand and close buttons of
+# GNOME Shell 50 have no name) instead of the Start menu alone.
+NOTIFY="env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications"
 orca_speaks() {
-    send "env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications.Notify VabaxOS 0 '' 'Test $1' 'VabaxOS test' '[]' '{}' 5000 >/dev/null"
+    # gdbus prints "(uint32 ID,)".
+    send "n=\$($NOTIFY.Notify VabaxOS 0 '' 'Test $1' 'VabaxOS test' '[]' '{}' 5000 | awk '{print \$2+0}')"
     record "$1" 8
+    send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
 }
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Orca speaks through speech-dispatcher, which starts with Orca.
