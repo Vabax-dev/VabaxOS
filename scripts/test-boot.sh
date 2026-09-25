@@ -387,7 +387,7 @@ fi
 
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
-    send 'sudo systemctl suspend'
+    send 'sudo systemctl suspend </dev/null'
     sleep 15
     monitor system_wakeup
     sleep 10
