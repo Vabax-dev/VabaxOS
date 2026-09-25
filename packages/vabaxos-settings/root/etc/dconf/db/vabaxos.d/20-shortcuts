@@ -3,7 +3,7 @@
 # the GNOME accessibility shortcuts Super+Alt+S (screen reader) and
 # Super+Alt+8 (zoom).
 [org/gnome/settings-daemon/plugins/media-keys]
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-screen-reader/']
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status]
 name='VabaxOS: computer status'
@@ -22,3 +22,10 @@ binding='<Control><Shift>Escape'
 name='VabaxOS: accessibility settings'
 command='gnome-control-center universal-access'
 binding='<Super>u'
+
+# Super+Alt+O opens the screen reader settings (O for Orca), next to
+# Super+Alt+S, which turns the screen reader on and off (block 10).
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-screen-reader]
+name='VabaxOS: screen reader settings'
+command='vabaxos-screen-reader'
+binding='<Super><Alt>o'

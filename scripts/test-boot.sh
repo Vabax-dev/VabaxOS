@@ -551,6 +551,21 @@ if [[ "$WANT_ORCA" == yes ]]; then
     check 'velocità salvata nelle impostazioni' "$(value orcadconf)" 63
 fi
 
+# Orca's keys (block 10): the NVDA scheme is the default, with Insert and
+# Caps Lock as the screen reader key, and Orca answers to it: Insert+F12
+# says the time (recorded).
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask orcakeys "env $BUS gsettings get org.gnome.Orca.Keybindings:/org/gnome/orca/default/keybindings/ entries | grep -o \"'sayAllHandler': \[\['Down', '461', '256', '1'\]\]\" | wc -l" || exit 1
+    check 'tasti di Orca come NVDA (Ins+Freccia giù legge tutto)' "$(value orcakeys)" 1
+    ask orcamod "env $BUS gsettings get org.gnome.Orca.Keybindings:/org/gnome/orca/default/keybindings/ desktop-modifier-keys" || exit 1
+    check 'tasto del lettore di schermo (Ins o Bloc Maiusc)' "$(value orcamod)" "['Insert', 'KP_Insert', 'Caps_Lock']"
+fi
+if [[ "$WANT_ORCA" == yes ]]; then
+    sleep 3
+    press insert-f12
+    check 'Ins+F12: Orca dice l'"'"'ora' "$(record orca-f12 5)" "$WANT_SOUND"
+fi
+
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send 'sudo systemctl suspend </dev/null'

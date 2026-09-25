@@ -16,7 +16,7 @@ import os
 import re
 import sys
 
-ORDER = ["menu-di-avvio", "benvenuto", "voce", "lettore-di-schermo", "configurazione", "desktop", "tasti", "menu-start",
+ORDER = ["menu-di-avvio", "benvenuto", "voce", "lettore-di-schermo", "configurazione", "desktop", "tasti", "tasti-orca", "menu-start",
          "lettore", "installazione", "aggiornamenti"]
 REPO_URL = "https://github.com/Vabax-dev/VabaxOS/blob/main/"
 STYLE = """body { font-family: "Atkinson Hyperlegible Next", sans-serif; font-size: 1.15rem;
@@ -95,6 +95,8 @@ def convert(markdown, pages):
         elif line.startswith(">"):
             close_para(); close_lists()
             out.append("<blockquote><p>" + inline(line.lstrip("> "), pages) + "</p></blockquote>")
+        elif line.startswith("<!--") and line.rstrip().endswith("-->"):
+            pass  # comments of the guides (markers for generated parts)
         elif not line.strip():
             close_para()
             if not (i + 1 < len(lines) and re.match(r"^\s*([-*]|\d+\.) ", lines[i + 1])):
