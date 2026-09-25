@@ -3,7 +3,8 @@
 
     vabaxos-reader [FILE]
 
-Opens text, Markdown, PDF, Word (.docx), EPUB and HTML files and reads them
+Opens text, Markdown, PDF, Word (.docx), EPUB and HTML files, and images
+and scanned PDFs through text recognition, and reads them
 with Kokoro (ADR-0019), sentence by sentence, from where the cursor is. The
 text stays in a normal text area, so Orca can also review it word by word.
 The reader remembers where each document was left, keeps bookmarks, and
@@ -32,7 +33,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
 
-from vabaxos_reader.document import SUPPORTED, Document, ReadingState  # noqa: E402
+from vabaxos_reader.document import SUPPORTED, Document, NeedsOCR, ReadingState  # noqa: E402
 
 gettext.textdomain("vabaxos-reader")
 _ = gettext.gettext
@@ -269,14 +270,32 @@ class ReaderWindow(Adw.ApplicationWindow):
 
     def open_path(self, path):
         self.stop_reading()
+        name = os.path.basename(path)
         try:
             document = Document.open(path)
-        except Exception as error:  # noqa: BLE001 - tell the user in words
-            self.say(_("Cannot open {name}: {error}").format(name=os.path.basename(path), error=error))
+        except NeedsOCR:
+            # Images and scanned PDFs: recognize the text in the background.
+            self.say(_("{name} is made of images: recognizing its text, a few seconds a page.").format(name=name))
+            threading.Thread(target=self._recognize, args=(path,), daemon=True).start()
             return
+        except Exception as error:  # noqa: BLE001 - tell the user in words
+            self.say(_("Cannot open {name}: {error}").format(name=name, error=error))
+            return
+        self.show_document(document)
+
+    def _recognize(self, path):
+        try:
+            document = Document.open(path, ocr=True)
+        except Exception as error:  # noqa: BLE001
+            GLib.idle_add(self.say, _("Cannot open {name}: {error}").format(name=os.path.basename(path), error=error))
+            return
+        GLib.idle_add(self.show_document, document)
+
+    def show_document(self, document):
+        path = document.path
         if not document.sentences:
             self.say(_("{name} has no text to read.").format(name=os.path.basename(path)))
-            return
+            return False
         self.document = document
         self.buffer.set_text(document.text)
         self.index = min(self.state.position(path), len(document.sentences) - 1)
@@ -286,6 +305,7 @@ class ReaderWindow(Adw.ApplicationWindow):
         self.say(_("{name} opened, {count} sentences. Ctrl+Space reads {where}.").format(
             name=os.path.basename(path), count=len(document.sentences), where=where))
         self.view.grab_focus()
+        return False
 
     # -- reading ------------------------------------------------------------
 
