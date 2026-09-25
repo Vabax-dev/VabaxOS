@@ -11,14 +11,16 @@
 //   Super+S     the Start menu, to search: the same as Super alone
 //   Super+Down  a maximized or tiled window goes back to its size,
 //               any other window is minimized
-//   Alt+F4      closes the window; on the desktop or the taskbar, with no
-//               window, asks to shut down, as in Windows
+//   Alt+F4      closes the window; on the desktop or the taskbar asks to
+//               shut down, as in Windows (the desktop takes the focus when
+//               the last window closes)
 //
 // The focus moves with the keyboard focus of GNOME Shell, as Ctrl+Alt+Tab
 // does, so Orca reads it; then the arrows move, Enter opens and Escape goes
 // back to the window.
 
 import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
@@ -45,10 +47,22 @@ export default class VabaxOSKeys extends Extension {
         }
         Main.wm.setCustomKeybindingHandler('close', Shell.ActionMode.NORMAL,
             (display, window) => this._close(window));
-        // With no window at all, Mutter skips its window keys and the key
-        // reaches GNOME Shell's stage instead.
+        // When GNOME Shell has the keyboard (the taskbar after Super+T),
+        // Alt+F4 reaches its stage: ask to shut down, as Windows does.
         this._stageKeyId = global.stage.connect('key-press-event',
             (actor, event) => this._onStageKey(event));
+        // With no window focused, keys go nowhere. As in Windows, the
+        // desktop takes the focus when the last window closes: Orca reads
+        // its icons, and Alt+F4 there asks to shut down.
+        this._focusId = global.display.connect('notify::focus-window', () => {
+            if (!global.display.focus_window && !this._focusIdle) {
+                this._focusIdle = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                    this._focusIdle = 0;
+                    this._focusDesktop();
+                    return GLib.SOURCE_REMOVE;
+                });
+            }
+        });
     }
 
     disable() {
@@ -56,6 +70,11 @@ export default class VabaxOSKeys extends Extension {
             Main.wm.removeKeybinding(key);
         Meta.keybindings_set_custom_handler('close', null);
         global.stage.disconnect(this._stageKeyId);
+        global.display.disconnect(this._focusId);
+        if (this._focusIdle) {
+            GLib.source_remove(this._focusIdle);
+            this._focusIdle = 0;
+        }
         this._settings = null;
     }
 
@@ -121,6 +140,14 @@ export default class VabaxOSKeys extends Extension {
         } else if (window.can_minimize()) {
             window.minimize();
         }
+    }
+
+    _focusDesktop() {
+        if (global.display.focus_window || Main.modalCount > 0)
+            return;
+        // Not global.get_window_actors(): Desktop Icons NG hides its window there.
+        const desktop = global.display.list_all_windows().find(w => this._isDesktop(w));
+        desktop?.activate(global.get_current_time());
     }
 
     _onStageKey(event) {
