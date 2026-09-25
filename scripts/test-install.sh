@@ -81,15 +81,20 @@ check() {
 }
 
 # Starts QEMU with the serial console on a TCP port (QEMU waits for it) and
-# the monitor on another. Arguments: log file, then run-qemu.sh options.
+# the monitor on another. Arguments: log file, run-qemu.sh options, then
+# optionally -- and more QEMU options.
 start_vm() {
     LOG="$1"
     shift
+    local options=() extra=()
+    while [[ $# -gt 0 && "$1" != -- ]]; do options+=("$1"); shift; done
+    [[ "${1:-}" == -- ]] && shift
+    extra=("$@")
     : > "$LOG"
     PORT="$(free_port)"
     MONITOR_PORT="$(free_port)"
-    "$REPO/scripts/run-qemu.sh" --headless --serial-tcp "$PORT" "$@" -- -no-reboot \
-        -monitor "tcp:127.0.0.1:$MONITOR_PORT,server=on,wait=off" > "$LOG.qemu" 2>&1 &
+    "$REPO/scripts/run-qemu.sh" --headless --serial-tcp "$PORT" "${options[@]}" -- -no-reboot \
+        -monitor "tcp:127.0.0.1:$MONITOR_PORT,server=on,wait=off" "${extra[@]}" > "$LOG.qemu" 2>&1 &
     QEMU_WRAPPER=$!
     SERIAL=""
     for _ in $(seq 50); do
@@ -159,7 +164,7 @@ LOG="$OUT/logs/test-install-$STAMP-installer.log"
 APPEND="auto=true priority=critical preseed/file=/cdrom/preseed/vabaxos-test.cfg"
 APPEND+=" locale=en_US.UTF-8 keyboard-configuration/xkb-keymap=us speakup.synth=soft vga=788"
 APPEND+=" --- console=ttyS0,115200n8"
-start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" "$ISO" \
+start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" "$ISO" -- \
     -kernel "$WORK/vmlinuz" -initrd "$WORK/initrd.gz" -append "$APPEND"
 printf 'INFO: installazione in corso (log: %s)\n' "$LOG"
 while kill -0 "$QEMU_WRAPPER" 2>/dev/null; do
