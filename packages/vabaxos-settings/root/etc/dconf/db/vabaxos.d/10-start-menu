@@ -1,6 +1,9 @@
 # VabaxOS Start menu (ADR-0018): ArcMenu, "Redmond" layout (like the
 # Windows 7 Start menu), with the VabaxOS logo as its button. Super opens
-# it, Super+S too (then type to search, like Windows); the GNOME overview
+# it, Super+S too (then type to search, like Windows; Super+S comes from
+# vabaxos-keys: another key in arcmenu-hotkey makes ArcMenu bind Super
+# alone as a plain key, which then opens the menu with every Super key);
+# the GNOME overview
 # is on Super+Tab (30-windows-keys). Defaults: users can change them.
 #
 # Accessibility (checked with vabaxos-a11y-check in test-boot.sh): the
@@ -21,7 +24,7 @@ enabled-extensions=['arcmenu@arcmenu.com', 'dash-to-panel@jderose9.github.com', 
 menu-layout='redmond'
 menu-button-icon='/usr/share/icons/hicolor/scalable/apps/vabaxos-logo.svg'
 position-in-panel='Left'
-arcmenu-hotkey=['Super_L', '<Super>s']
+arcmenu-hotkey=['Super_L']
 arcmenu-hotkey-overlay-key-enabled=true
 power-options=[(0, true), (1, true), (2, true), (3, true), (4, true), (5, false), (6, false), (7, false)]
 update-notifier-enabled=false

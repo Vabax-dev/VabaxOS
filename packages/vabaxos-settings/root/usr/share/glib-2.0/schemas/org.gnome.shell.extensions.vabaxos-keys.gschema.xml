@@ -15,5 +15,9 @@
       <default><![CDATA[['<Super>Down']]]></default>
       <summary>Restore a maximized or tiled window, otherwise minimize it</summary>
     </key>
+    <key name="open-start-menu" type="as">
+      <default><![CDATA[['<Super>s']]]></default>
+      <summary>Open the Start menu, to search (the same as Super alone)</summary>
+    </key>
   </schema>
 </schemalist>

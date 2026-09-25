@@ -8,14 +8,17 @@
 //   Super+T     the taskbar: the first program, again for the next one
 //   Super+B     the notification area: program icons, clock, network,
 //               volume, battery; again for the next one
+//   Super+S     the Start menu, to search: the same as Super alone
 //   Super+Down  a maximized or tiled window goes back to its size,
 //               any other window is minimized
-//   Alt+F4      closes the window; on the desktop, asks to shut down
+//   Alt+F4      closes the window; on the desktop or the taskbar, with no
+//               window, asks to shut down, as in Windows
 //
 // The focus moves with the keyboard focus of GNOME Shell, as Ctrl+Alt+Tab
 // does, so Orca reads it; then the arrows move, Enter opens and Escape goes
 // back to the window.
 
+import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
@@ -24,7 +27,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const KEYS = ['focus-taskbar', 'focus-tray', 'minimize-or-restore'];
+const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore'];
 
 export default class VabaxOSKeys extends Extension {
     enable() {
@@ -32,6 +35,8 @@ export default class VabaxOSKeys extends Extension {
         const handlers = {
             'focus-taskbar': () => this._focusTaskbar(),
             'focus-tray': () => this._focusTray(),
+            // What Super alone does: ArcMenu listens to this signal.
+            'open-start-menu': () => global.display.emit('overlay-key'),
             'minimize-or-restore': () => this._minimizeOrRestore(),
         };
         for (const key of KEYS) {
@@ -40,12 +45,17 @@ export default class VabaxOSKeys extends Extension {
         }
         Main.wm.setCustomKeybindingHandler('close', Shell.ActionMode.NORMAL,
             (display, window) => this._close(window));
+        // With no window at all, Mutter skips its window keys and the key
+        // reaches GNOME Shell's stage instead.
+        this._stageKeyId = global.stage.connect('key-press-event',
+            (actor, event) => this._onStageKey(event));
     }
 
     disable() {
         for (const key of KEYS)
             Main.wm.removeKeybinding(key);
         Meta.keybindings_set_custom_handler('close', null);
+        global.stage.disconnect(this._stageKeyId);
         this._settings = null;
     }
 
@@ -111,6 +121,16 @@ export default class VabaxOSKeys extends Extension {
         } else if (window.can_minimize()) {
             window.minimize();
         }
+    }
+
+    _onStageKey(event) {
+        const altF4 = event.get_key_symbol() === Clutter.KEY_F4 &&
+            (event.get_state() & Clutter.ModifierType.MOD1_MASK) !== 0;
+        const window = global.display.focus_window;
+        if (!altF4 || (window && !this._isDesktop(window)) || Main.modalCount > 0)
+            return Clutter.EVENT_PROPAGATE;
+        Util.spawn(['gnome-session-quit', '--power-off']);
+        return Clutter.EVENT_STOP;
     }
 
     _close(window) {

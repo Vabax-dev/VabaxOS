@@ -130,16 +130,17 @@ def text_of(node, depth=3):
 
 
 def focused(node):
-    """The shown node that has the keyboard focus, or None."""
+    """The deepest shown node that has the keyboard focus, or None: the
+    window around the focused control is focused too."""
     try:
-        states = node.get_state_set()
-        if states.contains(Atspi.StateType.FOCUSED) and states.contains(Atspi.StateType.SHOWING):
-            return node
         for index in range(node.get_child_count()):
             child = node.get_child_at_index(index)
             found = focused(child) if child is not None else None
             if found is not None:
                 return found
+        states = node.get_state_set()
+        if states.contains(Atspi.StateType.FOCUSED) and states.contains(Atspi.StateType.SHOWING):
+            return node
     except gi.repository.GLib.Error:
         pass
     return None

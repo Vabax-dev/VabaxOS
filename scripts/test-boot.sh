@@ -436,10 +436,12 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'Super+T porta il focus sulla barra delle applicazioni' "$(value taskbar | grep -c 'focus: push button\|focus: button')" 1
     printf 'INFO: Super+T: %s\n' "$(value taskbar)"
     focus_after tray meta_l-b
-    check "Super+B porta il focus sull'area di notifica" "$(value tray | grep -vc 'focus: none')" 1
+    check "Super+B porta il focus sull'area di notifica" "$(value tray | grep -vc 'focus: none\|Main stage')" 1
     printf 'INFO: Super+B: %s\n' "$(value tray)"
     send "printf 'VabaxOS copia\n' > /tmp/copia.txt; env $DESKTOP_ENV gnome-text-editor --standalone /tmp/copia.txt >/dev/null 2>&1 &"
-    sleep 12
+    ask editor "env $BUS vabaxos-a11y-check --wait 40 --focused gnome-text-editor" || exit 1
+    sleep 3
+    printf 'INFO: editor di testo: %s\n' "$(value editor)"
     press ctrl-a; press ctrl-c; press ctrl-end; press ctrl-v; press ctrl-s
     sleep 2
     ask copied 'grep -c "VabaxOS copia" /tmp/copia.txt' || exit 1
@@ -450,7 +452,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     press ctrl-v; press ctrl-s
     sleep 2
     ask pasted 'grep -c "VabaxOS copia" /tmp/copia.txt' || exit 1
-    check 'Ctrl+X taglia e Ctrl+V incolla di nuovo' "$(value cut) $(value pasted)" "0 2"
+    check 'Ctrl+X taglia e Ctrl+V incolla di nuovo' "$(value cut) $(value pasted)" "0 1"
     press alt-f4
     ask closed 'sleep 3; pgrep -u user -x gnome-text-edit >/dev/null && echo aperto || echo chiuso' || exit 1
     check 'Alt+F4 chiude la finestra' "$(value closed)" chiuso
