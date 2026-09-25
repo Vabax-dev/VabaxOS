@@ -62,7 +62,7 @@ Aggiornato al 2026-09-24.
   - Blocco 6: `vabaxos-reader` (documenti letti con Kokoro), `vabaxos-update` (aggiornamenti a voce), ADR-0020 **Proposta** (aggiornamenti e sicurezza), Flatpak.
 - Ascolti pronti sul Desktop di Vabax, cartella `OS/VabaxOS-ascolto` (con LEGGIMI): 5 temi sonori (3 nostri, Yaru, freedesktop), Orca con Kokoro nella VM. Copie in `cache/ascolto` (non in Git).
 - Da decidere con Vabax: tema sonoro predefinito; ADR-0020; soglia di ritardo di Kokoro (oggi 800 ms, provvisoria) ascoltando Orca; se segnalare a Debian e ad ArcMenu i difetti trovati (schema in `usr/share/glib-2/`, pulsanti a sola icona senza nome accessibile).
-- Lezioni della notte: `sudo` con use_pty legge dal terminale, quindi nella console seriale non si scrive mai in anticipo dopo un `sudo` (usare `ask`); speech-dispatcher avvia tutti i moduli, quindi un modulo pesante deve partire leggero; onnxruntime non deve essere in calcolo quando il processo esce; `pgrep -f` trova anche sé stesso nei cicli di attesa.
+- Lezioni della notte: `sudo` con use_pty legge dal terminale, quindi nella console seriale non si scrive mai in anticipo dopo un `sudo` (usare `ask`); speech-dispatcher avvia tutti i moduli, quindi un modulo pesante deve partire leggero; onnxruntime non deve essere in calcolo quando il processo esce; `pgrep -f` e `pkill -f` trovano anche il comando stesso (mai nella stessa riga); `/tmp` in WSL è un tmpfs di 5 GB: dischi virtuali e file grandi vanno in `out/`.
 - Prossimo: ascolto di Vabax dei blocchi 3-6 e merge in ordine; prova su PC fisico; repository APT VabaxOS (v0.2).
 
 Piano della notte del 2026-09-24, deciso con Vabax (lavoro autonomo fino al blocco 6; niente merge su `main` prima del suo ascolto, che fa domani per tutti i blocchi):
