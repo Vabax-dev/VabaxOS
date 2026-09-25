@@ -7,6 +7,11 @@ then the mode: try VabaxOS, install VabaxOS (when the installer is on the
 medium), accessibility (voice, keyboard, large text, high contrast, zoom,
 sticky keys: they also apply to the desktop), restart, shut down.
 
+Install VabaxOS restarts straight into the installer with voice (ADR-0023,
+vabaxos-install), with the language, keyboard, voice speed and
+accessibility chosen here. The installer saves them in the installed
+system (CHOICES_FILE), and at its first start the welcome begins from them.
+
 Keys: up and down arrows move and read the item, Enter confirms, Esc goes
 back, F1 repeats the message. It never chooses by itself: after 30 seconds
 without keys it repeats the message once, then waits.
@@ -50,6 +55,9 @@ SPEAKUP_RATES = [2, 3, 4, 5, 6, 7, 8]
 ORCA_RATES = [30, 40, 50, 60, 70, 80, 90]
 
 DRY_RUN = os.environ.get("VABAXOS_WELCOME_DRY_RUN")
+# Choices made before installing, saved by the installer: boot options, one
+# per line (image/config/includes.installer/preseed.cfg).
+CHOICES_FILE = os.environ.get("VABAXOS_WELCOME_CHOICES", "/var/lib/vabaxos/installer-choices")
 
 # Key names returned by read_key().
 UP, DOWN, ENTER, ESC, F1, TIMEOUT = "up", "down", "enter", "esc", "f1", "timeout"
@@ -71,13 +79,27 @@ def run(*command):
 
 def kernel_options():
     if DRY_RUN:
-        return dict(w.split("=", 1) for w in os.environ.get("VABAXOS_WELCOME_OPTIONS", "").split())
+        options = dict(w.split("=", 1) for w in os.environ.get("VABAXOS_WELCOME_OPTIONS", "").split())
+    else:
+        try:
+            with open("/proc/cmdline", encoding="utf-8") as f:
+                words = f.read().split()
+        except OSError:
+            words = []
+        options = dict(w.split("=", 1) if "=" in w else (w, "") for w in words)
+    # The installer's saved choices count as boot options, after the real
+    # ones; the accessibility lists add up.
     try:
-        with open("/proc/cmdline", encoding="utf-8") as f:
-            words = f.read().split()
+        with open(CHOICES_FILE, encoding="utf-8") as f:
+            saved = [w.split("=", 1) for w in f.read().split() if "=" in w]
     except OSError:
-        words = []
-    return dict(w.split("=", 1) if "=" in w else (w, "") for w in words)
+        saved = []
+    for key, value in saved:
+        if key == "vabaxos.a11y" and options.get(key):
+            options[key] += "," + value
+        else:
+            options.setdefault(key, value)
+    return options
 
 
 def sound_server():
@@ -286,15 +308,25 @@ def step_language(console, speaker):
 
 
 class Settings:
-    """What the person chose in the welcome, for the console and the desktop."""
+    """What the person chose in the welcome, for the console and the desktop.
 
-    def __init__(self, lang):
+    They start from vabaxos.a11y, a list of the names in A11Y, when a boot
+    option or the installer's saved choices give it."""
+
+    A11Y = ("high-contrast", "large-text", "zoom", "sticky-keys")
+
+    def __init__(self, lang, a11y=""):
         self.lang = lang
         self.layout = next(kb for c, _, kb, _ in LANGUAGES if c == lang)
-        self.large_text = False
-        self.high_contrast = False
-        self.zoom = False
-        self.sticky_keys = False
+        names = set(a11y.split(","))
+        self.high_contrast = "high-contrast" in names
+        self.large_text = "large-text" in names
+        self.zoom = "zoom" in names
+        self.sticky_keys = "sticky-keys" in names
+
+    def a11y(self):
+        on = (self.high_contrast, self.large_text, self.zoom, self.sticky_keys)
+        return [name for name, value in zip(self.A11Y, on) if value]
 
 
 def apply_console_font(large):
@@ -400,12 +432,46 @@ def installer_available():
     return os.path.exists("/run/live/medium/install")
 
 
-def step_install(console, speaker, lang):
-    """The installer starts from the boot menu: explain how, offer to restart."""
+def installer_words(settings, rate):
+    """The installer's boot options for the choices made here."""
+    locale = next(loc for c, loc, _, _ in LANGUAGES if c == settings.lang)
+    words = [f"locale={locale}", f"keyboard-configuration/xkb-keymap={settings.layout}",
+             f"speakup_soft.rate={SPEAKUP_RATES[rate]}", f"vabaxos.rate={rate}"]
+    if settings.a11y():
+        words.append("vabaxos.a11y=" + ",".join(settings.a11y()))
+    if settings.high_contrast:
+        words.append("theme=dark")  # the graphical installer's high contrast
+    return words
+
+
+def start_installer(settings, speaker):
+    """Restarts into the installer (vabaxos-install); False if it could not."""
+    command = ["vabaxos-install"] + ([] if speaker.enabled else ["--graphical"])
+    command += installer_words(settings, speaker.rate)
+    if DRY_RUN:
+        record("do " + " ".join(command))
+        return os.environ.get("VABAXOS_WELCOME_KEXEC", "ok") == "ok"
+    return subprocess.run(command, check=False).returncode == 0
+
+
+def step_install(console, speaker, settings):
+    """Restarts into the installer with the choices made here; if that is
+    not possible, explains the boot menu and offers to restart."""
+    lang = settings.lang
     _ = translation(lang)
-    message = [(_("To install VabaxOS, restart the computer. After the two beeps of the "
-                  "boot menu, press I for the installer with voice, then the letter of the "
-                  "language: I for Italian, E for English."), lang)]
+    message = [(_("The computer restarts into the installer, in your language and at the same "
+                  "voice speed. Your accessibility settings are kept in the installed system. "
+                  "Work not saved in this session is lost."), lang)]
+    items = [_("Install now"), _("Back")]
+    if choose(console, speaker, _("Install VabaxOS"), message, items, [lang] * 2) != 0:
+        return
+    speaker.say([(_("Restarting into the installer."), lang)])
+    speaker.wait()
+    if start_installer(settings, speaker):
+        sys.exit(0)
+    message = [(_("The installer could not start from here. To install VabaxOS, restart the "
+                  "computer. After the two beeps of the boot menu, press I for the installer "
+                  "with voice, then the letter of the language: I for Italian, E for English."), lang)]
     items = [_("Restart now"), _("Back")]
     index = choose(console, speaker, _("Install VabaxOS"), message, items, [lang] * 2)
     if index == 0:
@@ -457,7 +523,7 @@ def step_mode(console, speaker, settings):
         if action == "try":
             return True
         if action == "install":
-            step_install(console, speaker, lang)
+            step_install(console, speaker, settings)
         elif action == "a11y":
             step_accessibility(console, speaker, settings)
         elif action == "restart":
@@ -475,6 +541,8 @@ def step_mode(console, speaker, settings):
 def main():
     options = kernel_options()
     speaker = Speaker(options.get("vabaxos.voice", "on") != "off")
+    if options.get("vabaxos.rate", "").isdigit():
+        speaker.rate = min(int(options["vabaxos.rate"]), len(RATES) - 1)
     chosen = options.get("vabaxos.lang")
     if chosen not in [code for code, _, _, _ in LANGUAGES]:
         chosen = None
@@ -483,7 +551,7 @@ def main():
         while True:
             lang = chosen or step_language(console, speaker)
             apply_language(lang)
-            settings = Settings(lang)
+            settings = Settings(lang, options.get("vabaxos.a11y", ""))
             if step_mode(console, speaker, settings):
                 break
             if chosen:

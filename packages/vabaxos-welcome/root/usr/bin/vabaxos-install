@@ -1,0 +1,91 @@
+#!/usr/bin/python3
+"""Restarts the computer straight into the VabaxOS installer (ADR-0023).
+
+    vabaxos-install [--dry-run] [--graphical] [WORD ...]
+
+Runs as root, in the live system. It loads the Debian Installer's kernel
+and initrd from the live medium with the kexec_file_load system call and
+asks systemd to start them (systemctl kexec): no firmware, no boot menu to
+find with the keyboard. The installer is the one of the boot menu entry
+"Install VabaxOS with voice" (I); with --graphical, the one without speech.
+
+Each WORD goes on the installer's command line, before "---", so it is not
+copied into the installed system's boot options. The welcome passes the
+choices made there: language and keyboard (locale=..., keyboard-
+configuration/xkb-keymap=...), the speech speed (speakup_soft.rate=...)
+and the accessibility settings for the installed system (vabaxos.a11y=...,
+vabaxos.rate=...), which the installer saves for the welcome at the first
+start (image/config/includes.installer/preseed.cfg).
+
+With Secure Boot the kernel accepts only a signed installer kernel: the one
+on the medium is Debian's own, signed like the live system's.
+
+Exit status: 0, the restart into the installer has started; 1, the kernel
+refused to load the installer (restart and press I in the boot menu);
+2, there is no installer on this medium.
+With --dry-run nothing is loaded: it prints the command line and checks
+only that the installer is there.
+"""
+
+import ctypes
+import os
+import subprocess
+import sys
+
+MEDIUM = os.environ.get("VABAXOS_INSTALL_MEDIUM", "/run/live/medium")
+# The graphical installer's kernel and initrd, as in the boot menu entry I:
+# only that initrd has espeakup, the sound drivers and the voices.
+KERNEL = "install/gtk/vmlinuz"
+INITRD = "install/gtk/initrd.gz"
+SPEECH = ["speakup.synth=soft", "vga=788"]
+GRAPHICAL = ["vga=788"]
+SYS_KEXEC_FILE_LOAD = 320  # x86-64
+
+
+def command_line(words, graphical):
+    return " ".join((GRAPHICAL if graphical else SPEECH) + list(words) + ["---", "quiet"])
+
+
+def kexec_file_load(kernel, initrd, cmdline):
+    """Loads the kernel to start at the next "systemctl kexec"; 0 or an errno."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.syscall.restype = ctypes.c_long
+    data = cmdline.encode() + b"\0"
+    kernel_fd = os.open(kernel, os.O_RDONLY)
+    initrd_fd = os.open(initrd, os.O_RDONLY)
+    try:
+        result = libc.syscall(ctypes.c_long(SYS_KEXEC_FILE_LOAD), ctypes.c_int(kernel_fd),
+                              ctypes.c_int(initrd_fd), ctypes.c_ulong(len(data)),
+                              ctypes.c_char_p(data), ctypes.c_ulong(0))
+        return 0 if result == 0 else ctypes.get_errno()
+    finally:
+        os.close(kernel_fd)
+        os.close(initrd_fd)
+
+
+def main(argv):
+    args = argv[1:]
+    dry_run = "--dry-run" in args
+    graphical = "--graphical" in args
+    words = [a for a in args if not a.startswith("--")]
+    kernel = os.path.join(MEDIUM, KERNEL)
+    initrd = os.path.join(MEDIUM, INITRD)
+    if not (os.path.exists(kernel) and os.path.exists(initrd)):
+        print(f"vabaxos-install: no installer in {MEDIUM}", file=sys.stderr)
+        return 2
+    cmdline = command_line(words, graphical)
+    if dry_run:
+        print(cmdline)
+        return 0
+    error = kexec_file_load(kernel, initrd, cmdline)
+    if error:
+        print(f"vabaxos-install: the kernel did not load the installer: {os.strerror(error)}",
+              file=sys.stderr)
+        return 1
+    # An orderly shutdown of the live system, then the installer starts.
+    subprocess.run(["systemctl", "kexec"], check=False)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

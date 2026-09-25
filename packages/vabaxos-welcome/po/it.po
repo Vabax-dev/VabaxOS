@@ -73,8 +73,17 @@ msgstr "spento"
 msgid "Install VabaxOS"
 msgstr "Installa VabaxOS"
 
-msgid "To install VabaxOS, restart the computer. After the two beeps of the boot menu, press I for the installer with voice, then the letter of the language: I for Italian, E for English."
-msgstr "Per installare VabaxOS, riavvia il computer. Dopo i due bip del menu di avvio, premi I per l'installer con la voce, poi la lettera della lingua: I per italiano, E per inglese."
+msgid "The computer restarts into the installer, in your language and at the same voice speed. Your accessibility settings are kept in the installed system. Work not saved in this session is lost."
+msgstr "Il computer si riavvia nell'installer, nella tua lingua e con la stessa velocità della voce. Le impostazioni di accessibilità restano nel sistema installato. Il lavoro non salvato in questa sessione va perso."
+
+msgid "Install now"
+msgstr "Installa ora"
+
+msgid "Restarting into the installer."
+msgstr "Riavvio nell'installer."
+
+msgid "The installer could not start from here. To install VabaxOS, restart the computer. After the two beeps of the boot menu, press I for the installer with voice, then the letter of the language: I for Italian, E for English."
+msgstr "Da qui l'installer non è partito. Per installare VabaxOS, riavvia il computer. Dopo i due bip del menu di avvio, premi I per l'installer con la voce, poi la lettera della lingua: I per italiano, E per inglese."
 
 msgid "Restart now"
 msgstr "Riavvia ora"
