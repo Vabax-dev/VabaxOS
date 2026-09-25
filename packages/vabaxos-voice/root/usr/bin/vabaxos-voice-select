@@ -1,0 +1,140 @@
+#!/usr/bin/python3
+"""Chooses the desktop voice for this computer (ADR-0019).
+
+    vabaxos-voice-select [--engine auto|kokoro|espeak] [--dry-run]
+
+Kokoro, the natural voice, needs a fast computer: a screen reader cannot
+wait. At every boot (it takes a few seconds, before the desktop) this
+program measures how long Kokoro needs for short phrases Orca says often.
+If the computer is fast enough and has enough memory, Kokoro becomes the
+voice of Speech Dispatcher, with the fastest voice of each language (Vabax's
+choice, 2026-09-24). Otherwise eSpeak NG stays, as before. The text console
+always uses eSpeak NG (Speakup).
+
+The engine can be forced with the boot option vabaxos.voice.engine=kokoro or
+=espeak, or with engine= in /etc/vabaxos/voice.conf. That file can also set
+max_delay_ms (the longest acceptable delay for a new short phrase) and
+min_memory_mb.
+
+Writes /var/lib/vabaxos/voice.conf (read by sd_kokoro) and
+/etc/speech-dispatcher/clients/zz-vabaxos-voice.conf (DefaultModule).
+"""
+
+import os
+import statistics
+import sys
+import time
+
+CONFIG = "/etc/vabaxos/voice.conf"
+STATE = "/var/lib/vabaxos/voice.conf"
+SPEECHD = "/etc/speech-dispatcher/clients/zz-vabaxos-voice.conf"
+# Provisional: to be set with Vabax by listening to Orca (ADR-0019).
+DEFAULTS = {"engine": "auto", "max_delay_ms": "800", "min_memory_mb": "7000"}
+TEST_PHRASES = {"it": ["Impostazioni", "pulsante", "Casella di controllo"],
+                "en": ["Settings", "button", "Check box"]}
+
+
+def read_settings():
+    settings = dict(DEFAULTS)
+    try:
+        with open(CONFIG, encoding="utf-8") as f:
+            for line in f:
+                line = line.split("#", 1)[0].strip()
+                if "=" in line:
+                    key, value = (p.strip() for p in line.split("=", 1))
+                    settings[key] = value
+    except OSError:
+        pass
+    try:
+        with open("/proc/cmdline", encoding="utf-8") as f:
+            for word in f.read().split():
+                if word.startswith("vabaxos.voice.engine="):
+                    settings["engine"] = word.split("=", 1)[1]
+    except OSError:
+        pass
+    return settings
+
+
+def memory_mb():
+    with open("/proc/meminfo", encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("MemTotal:"):
+                return int(line.split()[1]) // 1024
+    return 0
+
+
+def measure():
+    """Median delay in ms of each voice on the test phrases."""
+    from vabaxos_voice import engine
+    kokoro = engine.Kokoro()
+    kokoro.synthesize("pronto", engine.VOICES["it"][0], "it")
+    results = {}
+    for lang, voices in engine.VOICES.items():
+        for voice in voices:
+            times = []
+            for phrase in TEST_PHRASES.get(lang, TEST_PHRASES["en"]):
+                best = None
+                for _ in range(2):
+                    start = time.monotonic()
+                    kokoro.synthesize(phrase, voice, lang)
+                    took = time.monotonic() - start
+                    best = took if best is None else min(best, took)
+                times.append(best)
+            results[(lang, voice)] = statistics.median(times) * 1000
+    return results
+
+
+def write(path, text, dry_run):
+    if dry_run:
+        print(f"--- {path}\n{text}", end="")
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def main(argv):
+    settings = read_settings()
+    dry_run = "--dry-run" in argv
+    if "--engine" in argv:
+        settings["engine"] = argv[argv.index("--engine") + 1]
+    engine_choice = settings["engine"]
+    reason = ""
+    chosen = {}
+    if engine_choice not in ("auto", "kokoro", "espeak"):
+        print(f"unknown engine {engine_choice!r}, using auto", file=sys.stderr)
+        engine_choice = "auto"
+    use_kokoro = engine_choice == "kokoro"
+    model = os.path.join(os.environ.get("VABAXOS_KOKORO_DIR", "/usr/share/vabaxos/kokoro"), "kokoro-v1.0.onnx")
+    if engine_choice != "espeak" and not os.path.exists(model):
+        use_kokoro, reason = False, "the Kokoro model is not installed"
+    elif engine_choice == "auto":
+        if memory_mb() < int(settings["min_memory_mb"]):
+            reason = f"{memory_mb()} MB of memory, less than {settings['min_memory_mb']}"
+        else:
+            results = measure()
+            for (lang, voice), ms in sorted(results.items(), key=lambda item: item[1]):
+                chosen.setdefault(lang, (voice, ms))
+            slowest = max(ms for _, ms in chosen.values())
+            use_kokoro = slowest <= int(settings["max_delay_ms"])
+            reason = ", ".join(f"{lang} {voice} {ms:.0f} ms" for lang, (voice, ms) in sorted(chosen.items()))
+            reason += f" (limit {settings['max_delay_ms']} ms)"
+    elif engine_choice == "kokoro":
+        reason = "forced"
+    else:
+        reason = "forced"
+    module = "kokoro" if use_kokoro else "espeak-ng"
+    lines = [f"engine={'kokoro' if use_kokoro else 'espeak'}"]
+    lines += [f"{lang}={voice}" for lang, (voice, _) in sorted(chosen.items())]
+    lines.append(f"# {reason}")
+    write(STATE, "\n".join(lines) + "\n", dry_run)
+    write(SPEECHD, "# Written at boot by vabaxos-voice-select (ADR-0019).\n"
+                   f"DefaultModule {module}\n", dry_run)
+    print(f"vabaxos-voice-select: {module} ({reason})")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

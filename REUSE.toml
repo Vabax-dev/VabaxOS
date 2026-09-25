@@ -43,3 +43,10 @@ path = ["artwork/logo-*", "image/config/bootloaders/splash.svg", "packages/vabax
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Vabax"
 SPDX-License-Identifier = "LicenseRef-VabaxOS-Trademark"
+
+# Vocabulary of the Kokoro model (hexgrad/Kokoro-82M), ADR-0019.
+[[annotations]]
+path = "packages/vabaxos-voice/root/usr/share/vabaxos/kokoro/vocab.json"
+precedence = "override"
+SPDX-FileCopyrightText = "2024-2025 hexgrad"
+SPDX-License-Identifier = "Apache-2.0"

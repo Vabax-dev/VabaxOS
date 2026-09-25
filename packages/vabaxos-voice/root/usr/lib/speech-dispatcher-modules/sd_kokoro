@@ -1,0 +1,7 @@
+#!/usr/bin/python3
+"""Speech Dispatcher output module: Kokoro, natural voices (ADR-0019)."""
+import sys
+
+from vabaxos_voice.module import main
+
+sys.exit(main())

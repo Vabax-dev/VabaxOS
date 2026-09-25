@@ -1,0 +1,264 @@
+# Frasi che Orca e GNOME dicono spesso: vabaxos-voice le prepara in anticipo,
+# così partono subito (ADR-0019). Una per riga.
+pulsante
+pulsante di commutazione
+casella di controllo
+selezionata
+non selezionata
+pulsante di opzione
+interruttore
+attivo
+disattivo
+premuto
+non premuto
+menu
+voce di menu
+sottomenu
+barra dei menu
+menu a comparsa
+casella combinata
+campo di testo
+campo password
+testo
+etichetta
+collegamento
+visitato
+intestazione
+intestazione livello 1
+intestazione livello 2
+intestazione livello 3
+elenco
+elemento dell'elenco
+tabella
+riga
+colonna
+cella
+albero
+elemento dell'albero
+espanso
+compresso
+scheda
+pagina
+finestra
+finestra di dialogo
+avviso
+notifica
+barra degli strumenti
+barra di stato
+pannello
+cursore
+barra di avanzamento
+pulsante di selezione
+immagine
+icona
+documento
+modificabile
+sola lettura
+non disponibile
+obbligatorio
+vuoto
+riga vuota
+spazio
+invio
+tab
+maiuscolo
+minuscolo
+maiuscole attive
+maiuscole disattivate
+bloc num attivo
+bloc num disattivato
+inizio
+fine
+pagina su
+pagina giù
+elimina
+cancella
+annulla
+ripeti
+copia
+taglia
+incolla
+seleziona tutto
+selezionato
+deselezionato
+Sì
+No
+OK
+Annulla
+Chiudi
+Apri
+Salva
+Salva con nome
+Indietro
+Avanti
+Fine
+Aiuto
+Impostazioni
+Preferenze
+Cerca
+File
+Modifica
+Visualizza
+Strumenti
+Finestra
+Nuovo
+Esci
+Riavvia
+Spegni
+Sospendi
+Blocca
+Disconnetti
+Informazioni
+Attività
+Applicazioni
+Tutti i programmi
+Preferiti
+Recenti
+Documenti
+Scaricati
+Immagini
+Musica
+Video
+Cartella personale
+Scrivania
+Cestino
+Terminale
+Firefox
+File manager
+Lettore di schermo attivo
+Lettore di schermo disattivato
+Wi-Fi
+Bluetooth
+Volume
+Batteria
+Rete
+connesso
+disconnesso
+Menu Start
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+k
+l
+m
+n
+o
+p
+q
+r
+s
+t
+u
+v
+w
+x
+y
+z

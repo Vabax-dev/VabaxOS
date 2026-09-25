@@ -2,6 +2,8 @@
 # GDM, PipeWire and the basic applications; NetworkManager, Firefox ESR
 # and all locales come as recommended packages.
 gnome-core
+# Start menu with the VabaxOS logo (ADR-0018), set up by vabaxos-settings.
+gnome-shell-extension-arc-menu
 network-manager
 locales-all
 
@@ -10,7 +12,8 @@ keyboard-configuration
 console-setup
 
 # Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility,
-# vabaxos-branding, vabaxos-settings, vabaxos-setup, vabaxos-welcome) are built from packages/ by
+# vabaxos-branding, vabaxos-settings, vabaxos-setup, vabaxos-voice, vabaxos-welcome)
+# are built from packages/ by
 # scripts/build-packages.sh and installed by live-build automatically.
 espeakup
 espeak-ng

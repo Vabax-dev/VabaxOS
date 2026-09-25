@@ -1,0 +1,14 @@
+[Unit]
+Description=Choose the VabaxOS desktop voice (Kokoro or eSpeak NG)
+Documentation=file:///usr/share/doc/vabaxos-voice/copyright
+After=local-fs.target
+Before=display-manager.service
+ConditionPathExists=/usr/share/vabaxos/kokoro/kokoro-v1.0.onnx
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/vabaxos-voice-select
+TimeoutStartSec=90
+
+[Install]
+WantedBy=multi-user.target

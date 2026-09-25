@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+if [ "$1" = remove ] || [ "$1" = purge ]; then
+    rm -f /etc/speech-dispatcher/clients/zz-vabaxos-voice.conf
+fi
+if [ "$1" = purge ]; then
+    rm -f /var/lib/vabaxos/voice.conf
+    deb-systemd-helper purge vabaxos-voice-select.service >/dev/null || true
+fi

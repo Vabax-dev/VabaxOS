@@ -322,6 +322,43 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'tasti del mouse: GNOME Shell' "$(value mousekeys)" stabile
 fi
 
+# Desktop voice chosen at boot (ADR-0019): the service must succeed and
+# write the default module. In the test VM (4 GB, 2 processors) the choice
+# is usually eSpeak NG; then Kokoro is forced and Orca must still speak.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select' || exit 1
+    ask voicemodule 'sed -n "s/^DefaultModule //p" /etc/speech-dispatcher/clients/zz-vabaxos-voice.conf' || exit 1
+    ask voicereason 'grep "^#" /var/lib/vabaxos/voice.conf | tr -d "#"' || exit 1
+    check "scelta della voce all'avvio" "$(value voiceselect)" success
+    printf 'INFO: voce del desktop scelta: %s (%s)\n' "$(value voicemodule)" "$(value voicereason)"
+fi
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    # Wait for the end of the sudo command before typing more: with use_pty,
+    # sudo reads from the terminal and would swallow a line typed ahead.
+    ask forcekokoro "sudo vabaxos-voice-select --engine kokoro >/dev/null 2>&1; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
+    ask orcaback 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
+    # The module loads the model in the background where Kokoro is the
+    # voice (about 570 MB): wait for it, up to 2 minutes on slow machines
+    # such as the CI runners, then Orca must speak with it.
+    ask kokoro 'for i in $(seq 120); do r=$(ps -o rss= -C sd_kokoro | sort -n | tail -1); [ "${r:-0}" -gt 300000 ] && break; sleep 1; done; [ "${r:-0}" -gt 300000 ] && echo yes || echo "no (${r:-0} kB)"' || exit 1
+    check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"
+    check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
+fi
+
+# Start menu (ADR-0018): ArcMenu active; Super opens it and every control
+# must have a name for Orca. The full accessibility tree of GNOME Shell
+# goes to the serial log, to see what the screen reader finds.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask arcmenu "env $BUS gnome-extensions list --enabled --active | grep -c arcmenu@arcmenu.com" || exit 1
+    check 'menu Start (ArcMenu) attivo' "$(value arcmenu)" 1
+    press meta_l
+    sleep 3
+    send "env $BUS vabaxos-a11y-check --list gnome-shell > /tmp/shell-a11y.txt 2>&1; sed 's/^/A11Y: /' /tmp/shell-a11y.txt"
+    ask shella11y "tail -1 /tmp/shell-a11y.txt" || exit 1
+    press esc
+    check 'menu Start: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
+fi
+
 if [[ "$(value state)" != running ]]; then
     ask failed 'systemctl --failed --no-legend --plain | cut -d" " -f1 | paste -sd,' || exit 1
     printf 'INFO: unità fallite: %s\n' "$(value failed)"
