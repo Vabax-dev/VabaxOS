@@ -374,9 +374,10 @@ app_a11y() {
 if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y files nautilus nautilus
     app_a11y terminal ptyxis ptyxis
-    app_a11y wifi 'gnome-control-center wifi' control-center
-    app_a11y bluetooth 'gnome-control-center bluetooth' control-center
-    app_a11y power 'gnome-control-center power' control-center
+    # GNOME Settings is on the accessibility bus as org.gnome.Settings.
+    app_a11y wifi 'gnome-control-center wifi' settings
+    app_a11y bluetooth 'gnome-control-center bluetooth' settings
+    app_a11y power 'gnome-control-center power' settings
     ask status "env $BUS vabaxos-status battery" || exit 1
     printf 'INFO: vabaxos-status: %s\n' "$(value status)"
     ask soundtheme "env $BUS gsettings get org.gnome.desktop.sound theme-name" || exit 1
@@ -391,8 +392,9 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     sleep 15
     monitor system_wakeup
     sleep 10
-    ask resumed 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "System returned from sleep"' || exit 1
-    printf 'INFO: ripresa dalla sospensione: %s\n' "$(value resumed)"
+    ask resumed 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "returned from sleep"' || exit 1
+    ask sleepstate 'cat /sys/power/state; journalctl -b --no-pager -o cat -u systemd-suspend.service | tail -1' || exit 1
+    printf 'INFO: sospensione riuscita %s volte; stati: %s\n' "$(value resumed)" "$(value sleepstate)"
     check 'Orca udibile dopo la sospensione' "$(orca_speaks orca-resume)" "$WANT_SOUND"
 fi
 
