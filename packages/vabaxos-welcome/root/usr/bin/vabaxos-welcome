@@ -81,7 +81,16 @@ def kernel_options():
 
 
 def sound_server():
-    """The PulseAudio socket of a user's PipeWire, or None."""
+    """The PulseAudio socket of a user's PipeWire, or None.
+
+    Only in the live system, where the live user's PipeWire starts at boot
+    and holds the sound card. In an installed system the login screen's
+    PipeWire may already be running when the welcome starts (systemd starts
+    its manager early), but it gets the sound card only when the login
+    screen appears: before that, speech sent to it would be silent, so the
+    welcome plays on the sound card itself (test-install.sh, 2026-09-25)."""
+    if not live_system():
+        return None
     for socket in sorted(glob.glob("/run/user/*/pulse/native")):
         if stat.S_ISSOCK(os.stat(socket).st_mode):
             return socket

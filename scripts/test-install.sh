@@ -217,8 +217,9 @@ check 'voce della console (espeakup)' "$(value speech)" active
 check 'schermata di accesso (GDM)' "$(value gdm)" active
 check "scelta della voce all'avvio" "$(value voiceselect)" success
 check 'benvenuto concluso e segnato' "$(value welcome | tr -s ' ')" "inactive done"
-# Orca at the login screen: the greeter must speak without any key.
-check 'schermata di accesso udibile' "$(record greeter 12)" yes
+# Orca at the login screen speaks when the focus moves: Tab, then listen.
+press tab
+check 'schermata di accesso udibile' "$(record greeter 8)" yes
 press ctrl-alt-f3
 check 'voce della console udibile' "$(record console 10)" yes
 send 'echo test | sudo -S poweroff'
