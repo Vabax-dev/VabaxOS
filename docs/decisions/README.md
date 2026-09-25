@@ -44,4 +44,5 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0020](0020-aggiornamenti-e-sicurezza.md) | Aggiornamenti e sicurezza | Proposta |
 | [0021](0021-firewall-e-cifratura.md) | Firewall e cifratura del disco | Proposta |
 | [0022](0022-nomi-dei-pulsanti-di-gnome-shell.md) | Nomi dei pulsanti di GNOME Shell, corretti da VabaxOS | Accettata |
+| [0023](0023-installare-dal-benvenuto.md) | Installare dal benvenuto, con le scelte di accessibilità | Accettata |
 | [0024](0024-espeak-predefinito.md) | eSpeak NG voce predefinita, Kokoro a scelta dell'utente | Accettata |
