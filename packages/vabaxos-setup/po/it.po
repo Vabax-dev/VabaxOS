@@ -1,0 +1,260 @@
+# Italian translation of vabaxos-setup.
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-setup\n"
+"PO-Revision-Date: 2026-09-24 00:00+0200\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "See the screen better"
+msgstr "Vedere meglio lo schermo"
+
+msgid "Every change takes effect at once. You can change it again later."
+msgstr "Ogni modifica vale subito. Potrai cambiarla di nuovo più tardi."
+
+msgid "High contrast"
+msgstr "Alto contrasto"
+
+msgid "Strong colours and clear borders"
+msgstr "Colori forti e bordi netti"
+
+msgid "Text size"
+msgstr "Dimensione del testo"
+
+msgid "1 is normal, 2 is twice as big"
+msgstr "1 è normale, 2 è grande il doppio"
+
+msgid "Large mouse pointer"
+msgstr "Puntatore del mouse grande"
+
+msgid "A pointer twice as big"
+msgstr "Un puntatore grande il doppio"
+
+msgid "Reduce motion"
+msgstr "Riduci le animazioni"
+
+msgid "Fewer animations on the screen"
+msgstr "Meno movimento sullo schermo"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Super+Alt+8 turns the zoom on and off at any time."
+msgstr "Super+Alt+8 accende e spegne lo zoom in qualsiasi momento."
+
+msgid "Enlarge the screen around the mouse pointer and the focus"
+msgstr "Ingrandisce lo schermo intorno al puntatore e all'elemento attivo"
+
+msgid "Zoom level"
+msgstr "Livello di zoom"
+
+msgid "How much the zoom enlarges"
+msgstr "Quanto ingrandisce lo zoom"
+
+msgid "Screen reader"
+msgstr "Lettore di schermo"
+
+msgid "Super+Alt+S turns the screen reader on and off at any time."
+msgstr "Super+Alt+S accende e spegne il lettore di schermo in qualsiasi momento."
+
+msgid "Orca reads the screen aloud"
+msgstr "Orca legge lo schermo ad alta voce"
+
+msgid "Voice"
+msgstr "Voce"
+
+msgid "Changes apply to the next sentences."
+msgstr "Le modifiche valgono dalle frasi successive."
+
+msgid "Speed"
+msgstr "Velocità"
+
+msgid "From 0, slowest, to 100, fastest"
+msgstr "Da 0, la più lenta, a 100, la più veloce"
+
+msgid "Pitch"
+msgstr "Tono"
+
+msgid "From 0, lowest, to 10, highest"
+msgstr "Da 0, il più basso, a 10, il più alto"
+
+msgid "Volume"
+msgstr "Volume"
+
+msgid "From 0, silent, to 10, loudest"
+msgstr "Da 0, muto, a 10, il più forte"
+
+msgid "Keyboard layout"
+msgstr "Disposizione della tastiera"
+
+msgid "The language of the keys"
+msgstr "La lingua dei tasti"
+
+msgid "Keyboard"
+msgstr "Tastiera"
+
+msgid "Typing"
+msgstr "Scrittura"
+
+msgid "For people who find it hard to press keys together or accurately."
+msgstr "Per chi fa fatica a premere più tasti insieme o con precisione."
+
+msgid "Sticky keys"
+msgstr "Tasti permanenti"
+
+msgid "Press Ctrl, Alt or Shift, then the other key, one at a time"
+msgstr "Premi Ctrl, Alt o Maiuscole, poi l'altro tasto, uno alla volta"
+
+msgid "Slow keys"
+msgstr "Tasti lenti"
+
+msgid "A key counts only if held down for a moment"
+msgstr "Un tasto vale solo se tenuto premuto per un momento"
+
+msgid "Bounce keys"
+msgstr "Tasti di rimbalzo"
+
+msgid "Ignore a key pressed again too quickly"
+msgstr "Ignora un tasto premuto di nuovo troppo in fretta"
+
+msgid "Screen keyboard"
+msgstr "Tastiera sullo schermo"
+
+msgid "A keyboard on the screen, to use with the mouse or touch"
+msgstr "Una tastiera sullo schermo, da usare con il mouse o il tocco"
+
+msgid "Pointing"
+msgstr "Puntamento"
+
+msgid "Hover click"
+msgstr "Clic automatico"
+
+msgid "Click by holding the mouse pointer still"
+msgstr "Fa clic tenendo fermo il puntatore del mouse"
+
+msgid "Switches"
+msgstr "Interruttori (switch)"
+
+msgid "A switch that works as a key, such as Space or Enter, can move through the desktop with the keyboard. Automatic scanning is not available in GNOME yet."
+msgstr "Un interruttore che funziona come un tasto, per esempio Spazio o Invio, può muoversi nel desktop con la tastiera. La scansione automatica non c'è ancora in GNOME."
+
+msgid "Network"
+msgstr "Rete"
+
+msgid "Internet is needed only for updates and new programs."
+msgstr "Internet serve solo per gli aggiornamenti e i nuovi programmi."
+
+msgid "Search again"
+msgstr "Cerca di nuovo"
+
+msgid "Network not available"
+msgstr "Rete non disponibile"
+
+msgid "NetworkManager is not running."
+msgstr "NetworkManager non è in funzione."
+
+msgid "Connected by cable"
+msgstr "Collegato con il cavo"
+
+msgid "The computer is connected to the network."
+msgstr "Il computer è collegato alla rete."
+
+msgid "No network device"
+msgstr "Nessun dispositivo di rete"
+
+msgid "No cable and no Wi-Fi were found."
+msgstr "Non ci sono né cavo né Wi-Fi."
+
+msgid "Cable not connected"
+msgstr "Cavo non collegato"
+
+msgid "Connect a network cable, or use Wi-Fi."
+msgstr "Collega un cavo di rete, oppure usa il Wi-Fi."
+
+msgid "signal {percent}%"
+msgstr "segnale {percent}%"
+
+msgid "protected"
+msgstr "protetta"
+
+msgid "open"
+msgstr "aperta"
+
+msgid "connected"
+msgstr "collegata"
+
+msgid "Connect"
+msgstr "Collega"
+
+msgid "Connect to {name}"
+msgstr "Collega a {name}"
+
+msgid "No Wi-Fi network found"
+msgstr "Nessuna rete Wi-Fi trovata"
+
+msgid "Use the Search again button in a moment."
+msgstr "Tra un momento usa il pulsante Cerca di nuovo."
+
+msgid "Password for {name}"
+msgstr "Password per {name}"
+
+msgid "Type the Wi-Fi password, then press Enter."
+msgstr "Scrivi la password del Wi-Fi, poi premi Invio."
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Connecting to {name}"
+msgstr "Collegamento a {name}"
+
+msgid "Connected to {name}"
+msgstr "Collegato a {name}"
+
+msgid "Could not connect to {name}. Check the password."
+msgstr "Collegamento a {name} non riuscito. Controlla la password."
+
+msgid "VabaxOS setup"
+msgstr "Configurazione di VabaxOS"
+
+msgid "Welcome"
+msgstr "Benvenuto"
+
+msgid "A few settings to use VabaxOS comfortably. Use Tab to move, Space to change a setting, and the Next button to go on. Everything can be changed again later."
+msgstr "Poche impostazioni per usare VabaxOS comodamente. Usa Tab per spostarti, Spazio per cambiare un'impostazione e il pulsante Avanti per proseguire. Tutto si può cambiare di nuovo più tardi."
+
+msgid "All set"
+msgstr "Tutto pronto"
+
+msgid "You can open this setup again at any time: search for “VabaxOS setup” among the applications."
+msgstr "Puoi riaprire questa configurazione quando vuoi: cerca «Configurazione di VabaxOS» tra le applicazioni."
+
+msgid "View"
+msgstr "Vista"
+
+msgid "Keyboard and movement"
+msgstr "Tastiera e movimento"
+
+msgid "Finish"
+msgstr "Fine"
+
+msgid "Back"
+msgstr "Indietro"
+
+msgid "Next"
+msgstr "Avanti"
+
+msgid "{title}, step {number} of {total}"
+msgstr "{title}, passo {number} di {total}"
+
+msgid "VabaxOS setup: {step}"
+msgstr "Configurazione di VabaxOS: {step}"
+
+msgid "Close"
+msgstr "Chiudi"

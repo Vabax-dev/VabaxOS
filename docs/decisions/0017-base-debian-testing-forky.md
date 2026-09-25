@@ -23,6 +23,10 @@ Nel blocco 1 della v0.1 abbiamo incontrato diversi difetti nella catena della vo
 - La ISO si costruisce ancora su **Debian 13 (ADR-0002, ADR-0013)**, ma con **live-build 1:20250814** preso da forky. Questa versione contiene «Prepare for forky» e più supporto a espeakup nell'installer. Il pacchetto si installa sulla postazione dopo averne verificato firma e impronta (`docs/sviluppo/postazione-windows.md`).
 - Quando forky diventerà stable, VabaxOS passerà a forky stable e questo ADR sarà sostituito.
 
+## Aggiornamenti
+
+- 2026-09-24: con l'installer (blocco 2) live-build 1:20250814 non basta più: chiede `libfuse2`, che forky non ha più. Si usa live-build dal suo repository Git a un commit fisso (531cdb98 del 2026-09-13), che contiene la correzione e altre migliorie all'installer (installazione offline con voce e Braille). `scripts/install-live-build.sh` ne fa un pacchetto e lo installa.
+
 ## Alternative considerate
 
 - **Trixie con i backports** (Orca 50, AT-SPI, PipeWire 1.4.9, kernel 7.1): base stabile con aggiornamenti di sicurezza, ma Orca 50 girerebbe su GNOME 48, una combinazione che Debian non prova insieme, e GNOME resterebbe vecchio.

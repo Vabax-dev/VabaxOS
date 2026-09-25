@@ -1,0 +1,448 @@
+#!/usr/bin/python3
+"""VabaxOS first setup: view, voice, keyboard and movement, network.
+
+ADR-0010 (GTK 4 + libadwaita, Python), ADR-0014 (setup instead of the GNOME
+tour), ADR-0016 (the spoken welcome already chose language and voice speed).
+
+A guided sequence of pages with Back and Next buttons. Every setting takes
+effect at once, so a person with low vision sees the result while choosing,
+and a screen reader user hears it. On every page change the page title is
+shown in a short message, which the screen reader reads, and the focus goes
+to its first setting.
+
+    vabaxos-setup              open the setup
+    vabaxos-setup --first-run  open it only if it was never completed
+                               (used by the autostart entry)
+"""
+
+import gettext
+import os
+import sys
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
+
+try:
+    gi.require_version("NM", "1.0")
+    from gi.repository import NM  # noqa: E402
+except (ValueError, ImportError):
+    NM = None
+
+APP_ID = "org.vabaxos.Setup"
+DOMAIN = "vabaxos-setup"
+LOCALE_DIR = os.environ.get("VABAXOS_SETUP_LOCALE_DIR", "/usr/share/locale")
+gettext.bindtextdomain(DOMAIN, LOCALE_DIR)
+gettext.textdomain(DOMAIN)
+_ = gettext.gettext
+
+ORCA_VOICE_PATH = "/org/gnome/orca/default/voices/default/"
+LAYOUTS = [("it", "Italiano"), ("us", "English (US)")]
+
+
+def done_file():
+    config = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+    return os.path.join(config, "vabaxos", "setup-done")
+
+
+def open_settings(schema_id, path=None):
+    """Gio.Settings for a schema, or None when the schema is not installed."""
+    source = Gio.SettingsSchemaSource.get_default()
+    if source is None or source.lookup(schema_id, True) is None:
+        return None
+    if path:
+        return Gio.Settings.new_with_path(schema_id, path)
+    return Gio.Settings.new(schema_id)
+
+
+class Rows:
+    """Builds preference rows bound to GSettings keys.
+
+    A row whose schema or key is missing (another GNOME version) is shown
+    but not available, instead of stopping the program.
+    """
+
+    def __init__(self):
+        self._settings = {}
+
+    def settings(self, schema_id, path=None, key=None):
+        cache = (schema_id, path)
+        if cache not in self._settings:
+            self._settings[cache] = open_settings(schema_id, path)
+        settings = self._settings[cache]
+        if settings is not None and key is not None and not settings.props.settings_schema.has_key(key):
+            return None
+        return settings
+
+    def switch(self, title, subtitle, schema_id, key, path=None):
+        row = Adw.SwitchRow(title=title, subtitle=subtitle)
+        settings = self.settings(schema_id, path, key)
+        if settings is None:
+            row.set_sensitive(False)
+        else:
+            settings.bind(key, row, "active", Gio.SettingsBindFlags.DEFAULT)
+        return row
+
+    def number(self, title, subtitle, schema_id, key, lower, upper, step, digits=0, path=None):
+        """A spin row for an integer or double key."""
+        row = Adw.SpinRow.new_with_range(lower, upper, step)
+        row.set_title(title)
+        row.set_subtitle(subtitle)
+        row.set_digits(digits)
+        settings = self.settings(schema_id, path, key)
+        if settings is None:
+            row.set_sensitive(False)
+            return row
+        is_int = settings.get_value(key).get_type_string() == "i"
+        row.set_value(settings.get_int(key) if is_int else settings.get_double(key))
+
+        def changed(spin, _pspec):
+            if is_int:
+                settings.set_int(key, int(round(spin.get_value())))
+            else:
+                settings.set_double(key, spin.get_value())
+
+        row.connect("notify::value", changed)
+        return row
+
+    def mapped_switch(self, title, subtitle, schema_id, key, off_value, on_value):
+        """A switch for a key that takes one of two values (for example a size)."""
+        row = Adw.SwitchRow(title=title, subtitle=subtitle)
+        settings = self.settings(schema_id, key=key)
+        if settings is None:
+            row.set_sensitive(False)
+            return row
+        row.set_active(settings.get_value(key).unpack() == on_value)
+        variant_type = settings.get_value(key).get_type_string()
+
+        def changed(switch, _pspec):
+            value = on_value if switch.get_active() else off_value
+            settings.set_value(key, GLib.Variant(variant_type, value))
+
+        row.connect("notify::active", changed)
+        return row
+
+
+def group(title, description, rows):
+    box = Adw.PreferencesGroup(title=title, description=description)
+    for row in rows:
+        box.add(row)
+    return box
+
+
+def view_page(rows):
+    a11y = "org.gnome.desktop.a11y.interface"
+    interface = "org.gnome.desktop.interface"
+    return [
+        group(_("See the screen better"),
+              _("Every change takes effect at once. You can change it again later."), [
+                  rows.switch(_("High contrast"), _("Strong colours and clear borders"), a11y, "high-contrast"),
+                  rows.number(_("Text size"), _("1 is normal, 2 is twice as big"),
+                              interface, "text-scaling-factor", 1.0, 3.0, 0.25, digits=2),
+                  rows.mapped_switch(_("Large mouse pointer"), _("A pointer twice as big"),
+                                     interface, "cursor-size", 24, 48),
+                  rows.switch(_("Reduce motion"), _("Fewer animations on the screen"), a11y, "reduced-motion"),
+              ]),
+        group(_("Zoom"), _("Super+Alt+8 turns the zoom on and off at any time."), [
+            rows.switch(_("Zoom"), _("Enlarge the screen around the mouse pointer and the focus"),
+                        "org.gnome.desktop.a11y.applications", "screen-magnifier-enabled"),
+            rows.number(_("Zoom level"), _("How much the zoom enlarges"),
+                        "org.gnome.desktop.a11y.magnifier", "mag-factor", 1.25, 8.0, 0.25, digits=2),
+        ]),
+    ]
+
+
+def voice_page(rows):
+    voice = "org.gnome.Orca.Voice"
+    return [
+        group(_("Screen reader"), _("Super+Alt+S turns the screen reader on and off at any time."), [
+            rows.switch(_("Screen reader"), _("Orca reads the screen aloud"),
+                        "org.gnome.desktop.a11y.applications", "screen-reader-enabled"),
+        ]),
+        group(_("Voice"), _("Changes apply to the next sentences."), [
+            rows.number(_("Speed"), _("From 0, slowest, to 100, fastest"), voice, "rate", 0, 100, 5,
+                        path=ORCA_VOICE_PATH),
+            rows.number(_("Pitch"), _("From 0, lowest, to 10, highest"), voice, "pitch", 0, 10, 0.5,
+                        digits=1, path=ORCA_VOICE_PATH),
+            rows.number(_("Volume"), _("From 0, silent, to 10, loudest"), voice, "volume", 0, 10, 0.5,
+                        digits=1, path=ORCA_VOICE_PATH),
+        ]),
+    ]
+
+
+def keyboard_row():
+    """Keyboard layout, the first input source of GNOME."""
+    row = Adw.ComboRow(title=_("Keyboard layout"),
+                       subtitle=_("The language of the keys"))
+    row.set_model(Gtk.StringList.new([name for _, name in LAYOUTS]))
+    settings = open_settings("org.gnome.desktop.input-sources")
+    if settings is None:
+        row.set_sensitive(False)
+        return row
+    current = [layout for kind, layout in settings.get_value("sources").unpack() if kind == "xkb"]
+    codes = [code for code, _ in LAYOUTS]
+    if current and current[0] in codes:
+        row.set_selected(codes.index(current[0]))
+
+    def changed(combo, _pspec):
+        code = codes[combo.get_selected()]
+        settings.set_value("sources", GLib.Variant("a(ss)", [("xkb", code)]))
+
+    row.connect("notify::selected", changed)
+    return row
+
+
+def keyboard_page(rows):
+    keyboard = "org.gnome.desktop.a11y.keyboard"
+    return [
+        group(_("Keyboard"), "", [keyboard_row()]),
+        group(_("Typing"), _("For people who find it hard to press keys together or accurately."), [
+            rows.switch(_("Sticky keys"), _("Press Ctrl, Alt or Shift, then the other key, one at a time"),
+                        keyboard, "stickykeys-enable"),
+            rows.switch(_("Slow keys"), _("A key counts only if held down for a moment"),
+                        keyboard, "slowkeys-enable"),
+            rows.switch(_("Bounce keys"), _("Ignore a key pressed again too quickly"),
+                        keyboard, "bouncekeys-enable"),
+            rows.switch(_("Screen keyboard"), _("A keyboard on the screen, to use with the mouse or touch"),
+                        "org.gnome.desktop.a11y.applications", "screen-keyboard-enabled"),
+        ]),
+        group(_("Pointing"), "", [
+            rows.switch(_("Hover click"), _("Click by holding the mouse pointer still"),
+                        "org.gnome.desktop.a11y.mouse", "dwell-click-enabled"),
+            info_row(_("Switches"),
+                     _("A switch that works as a key, such as Space or Enter, can move through the "
+                       "desktop with the keyboard. Automatic scanning is not available in GNOME yet.")),
+        ]),
+    ]
+
+
+def info_row(title, text):
+    row = Adw.ActionRow(title=title, subtitle=text)
+    row.set_subtitle_lines(0)
+    return row
+
+
+class NetworkGroup:
+    """Wired status and Wi-Fi networks, through NetworkManager."""
+
+    def __init__(self, window):
+        self.window = window
+        self.box = Adw.PreferencesGroup(title=_("Network"),
+                                        description=_("Internet is needed only for updates and new programs."))
+        self.refresh_button = Gtk.Button(label=_("Search again"))
+        self.refresh_button.connect("clicked", lambda _b: self.refresh(scan=True))
+        self.box.set_header_suffix(self.refresh_button)
+        self.rows = []
+        self.client = None
+        if NM is not None:
+            try:
+                self.client = NM.Client.new(None)
+            except GLib.Error:
+                self.client = None
+        self.refresh(scan=True)
+
+    def clear(self):
+        for row in self.rows:
+            self.box.remove(row)
+        self.rows = []
+
+    def add(self, row):
+        self.box.add(row)
+        self.rows.append(row)
+
+    def refresh(self, scan=False):
+        self.clear()
+        if self.client is None:
+            self.add(info_row(_("Network not available"), _("NetworkManager is not running.")))
+            return
+        wired = [d for d in self.client.get_devices() if d.get_device_type() == NM.DeviceType.ETHERNET]
+        if any(d.get_state() == NM.DeviceState.ACTIVATED for d in wired):
+            self.add(info_row(_("Connected by cable"), _("The computer is connected to the network.")))
+        wifi = [d for d in self.client.get_devices() if d.get_device_type() == NM.DeviceType.WIFI]
+        if not wifi:
+            if not wired:
+                self.add(info_row(_("No network device"), _("No cable and no Wi-Fi were found.")))
+            elif not self.rows:
+                self.add(info_row(_("Cable not connected"), _("Connect a network cable, or use Wi-Fi.")))
+            return
+        device = wifi[0]
+        if scan:
+            device.request_scan_async(None, None, None)
+        seen = set()
+        points = sorted(device.get_access_points(), key=lambda ap: ap.get_strength(), reverse=True)
+        for ap in points:
+            ssid_bytes = ap.get_ssid()
+            if ssid_bytes is None:
+                continue
+            ssid = NM.utils_ssid_to_utf8(ssid_bytes.get_data())
+            if not ssid or ssid in seen:
+                continue
+            seen.add(ssid)
+            secured = ap.get_wpa_flags() != 0 or ap.get_rsn_flags() != 0
+            active = device.get_active_access_point()
+            connected = active is not None and active.get_path() == ap.get_path()
+            details = [_("signal {percent}%").format(percent=ap.get_strength())]
+            details.append(_("protected") if secured else _("open"))
+            if connected:
+                details.append(_("connected"))
+            row = Adw.ActionRow(title=ssid, subtitle=", ".join(details))
+            if not connected:
+                button = Gtk.Button(label=_("Connect"), valign=Gtk.Align.CENTER)
+                button.update_property([Gtk.AccessibleProperty.LABEL],
+                                       [_("Connect to {name}").format(name=ssid)])
+                button.connect("clicked", self.connect_clicked, device, ap, ssid, secured)
+                row.add_suffix(button)
+                row.set_activatable_widget(button)
+            self.add(row)
+        if not seen:
+            self.add(info_row(_("No Wi-Fi network found"), _("Use the Search again button in a moment.")))
+
+    def connect_clicked(self, _button, device, ap, ssid, secured):
+        if not secured:
+            self.activate(device, ap, ssid, None)
+            return
+        dialog = Adw.AlertDialog(heading=_("Password for {name}").format(name=ssid),
+                                 body=_("Type the Wi-Fi password, then press Enter."))
+        entry = Adw.PasswordEntryRow(title=_("Password"))
+        entry.connect("entry-activated", lambda _e: dialog.close() or self.activate(device, ap, ssid, entry.get_text()))
+        dialog.set_extra_child(entry)
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("connect", _("Connect"))
+        dialog.set_response_appearance("connect", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("connect")
+        dialog.connect("response", lambda _d, r: r == "connect" and self.activate(device, ap, ssid, entry.get_text()))
+        dialog.present(self.window)
+        entry.grab_focus()
+
+    def activate(self, device, ap, ssid, password):
+        connection = NM.SimpleConnection.new()
+        setting = NM.SettingWireless.new()
+        setting.set_property(NM.SETTING_WIRELESS_SSID, ap.get_ssid())
+        connection.add_setting(setting)
+        if password is not None:
+            security = NM.SettingWirelessSecurity.new()
+            security.set_property(NM.SETTING_WIRELESS_SECURITY_KEY_MGMT, "wpa-psk")
+            security.set_property(NM.SETTING_WIRELESS_SECURITY_PSK, password)
+            connection.add_setting(security)
+        self.window.announce_message(_("Connecting to {name}").format(name=ssid))
+
+        def done(client, result):
+            try:
+                client.add_and_activate_connection_finish(result)
+                self.window.announce_message(_("Connected to {name}").format(name=ssid))
+            except GLib.Error:
+                self.window.announce_message(_("Could not connect to {name}. Check the password.").format(name=ssid))
+            self.refresh()
+
+        self.client.add_and_activate_connection_async(connection, device, ap.get_path(), None, done)
+
+
+class SetupWindow(Adw.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title=_("VabaxOS setup"))
+        self.set_default_size(720, 640)
+        rows = Rows()
+        self.network = NetworkGroup(self)
+        intro = group(_("Welcome"), _("A few settings to use VabaxOS comfortably. Use Tab to move, "
+                                      "Space to change a setting, and the Next button to go on. "
+                                      "Everything can be changed again later."), [])
+        finish = group(_("All set"), _("You can open this setup again at any time: search for "
+                                       "“VabaxOS setup” among the applications."), [])
+        self.pages = [
+            (_("View"), [intro] + view_page(rows)),
+            (_("Voice"), voice_page(rows)),
+            (_("Keyboard and movement"), keyboard_page(rows)),
+            (_("Network"), [self.network.box]),
+            (_("Finish"), [finish]),
+        ]
+        self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.NONE)
+        for index, (title, groups) in enumerate(self.pages):
+            page = Adw.PreferencesPage(title=title)
+            for box in groups:
+                page.add(box)
+            self.stack.add_named(page, str(index))
+
+        self.back = Gtk.Button(label=_("Back"))
+        self.back.connect("clicked", lambda _b: self.show_page(self.index - 1))
+        self.next = Gtk.Button(label=_("Next"))
+        self.next.add_css_class("suggested-action")
+        self.next.connect("clicked", self.next_clicked)
+        bottom = Gtk.Box(spacing=12, margin_top=12, margin_bottom=12, margin_start=12, margin_end=12)
+        bottom.append(self.back)
+        spacer = Gtk.Box(hexpand=True)
+        bottom.append(spacer)
+        bottom.append(self.next)
+
+        header = Adw.HeaderBar()
+        self.heading = Gtk.Label(css_classes=["title"])
+        header.set_title_widget(self.heading)
+        view = Adw.ToolbarView()
+        view.add_top_bar(header)
+        view.set_content(self.stack)
+        view.add_bottom_bar(bottom)
+        # Toasts are read by screen readers (libadwaita 1.7 and later).
+        self.toasts = Adw.ToastOverlay()
+        self.toasts.set_child(view)
+        self.set_content(self.toasts)
+        self.index = 0
+        self.show_page(0)
+
+    def show_page(self, index):
+        self.index = max(0, min(index, len(self.pages) - 1))
+        title = self.pages[self.index][0]
+        self.stack.set_visible_child_name(str(self.index))
+        step = _("{title}, step {number} of {total}").format(
+            title=title, number=self.index + 1, total=len(self.pages))
+        self.heading.set_label(step)
+        self.set_title(_("VabaxOS setup: {step}").format(step=step))
+        self.back.set_sensitive(self.index > 0)
+        last = self.index == len(self.pages) - 1
+        self.next.set_label(_("Close") if last else _("Next"))
+        self.announce_message(step)
+        page = self.stack.get_visible_child()
+        GLib.idle_add(lambda: page.child_focus(Gtk.DirectionType.TAB_FORWARD) and False)
+
+    def next_clicked(self, _button):
+        if self.index == len(self.pages) - 1:
+            mark_done()
+            self.close()
+        else:
+            self.show_page(self.index + 1)
+
+    def announce_message(self, text):
+        """Shows a short message, which the screen reader reads too.
+
+        A toast rather than Gtk.Accessible.announce(): announce() crashed
+        with GTK 4.18 in our tests (2026-09-24).
+        """
+        toast = Adw.Toast.new(text)
+        toast.set_timeout(3)
+        self.toasts.add_toast(toast)
+
+
+def mark_done():
+    path = done_file()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("done\n")
+
+
+class SetupApp(Adw.Application):
+    def __init__(self):
+        super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+
+    def do_activate(self):
+        window = self.get_active_window() or SetupWindow(self)
+        window.present()
+
+
+def main(argv):
+    if "--first-run" in argv[1:] and os.path.exists(done_file()):
+        return 0
+    return SetupApp().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

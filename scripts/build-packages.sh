@@ -5,6 +5,8 @@
 #   control           the DEBIAN/control file, without Version (added here)
 #   root/             the files to install, as they will be on the system
 #   postinst, postrm  maintainer scripts (optional)
+#   triggers          dpkg triggers (optional)
+#   copyright         licence of the contents (optional, default GPL-3.0+)
 #   po/*.po           translations of the domain <name> (optional)
 # No root needed: files belong to root:root inside the package.
 set -euo pipefail
@@ -43,6 +45,9 @@ for dir in "$REPO"/packages/*/; do
             install -m 0755 "$dir/$script" "$tree/DEBIAN/$script"
         fi
     done
+    if [[ -f "$dir/triggers" ]]; then
+        install -m 0644 "$dir/triggers" "$tree/DEBIAN/triggers"
+    fi
     if compgen -G "$dir/po/*.po" >/dev/null; then
         for po in "$dir"/po/*.po; do
             lang="$(basename "$po" .po)"
@@ -57,8 +62,12 @@ for dir in "$REPO"/packages/*/; do
     fi
     # Licence of the package contents (ADR-0011).
     mkdir -p "$tree/usr/share/doc/$name"
-    printf 'VabaxOS: %s\nCopyright 2026 Vabax and VabaxOS contributors\nLicense: GPL-3.0-or-later, see /usr/share/common-licenses/GPL-3\n' \
-        "$name" > "$tree/usr/share/doc/$name/copyright"
+    if [[ -f "$dir/copyright" ]]; then
+        install -m 0644 "$dir/copyright" "$tree/usr/share/doc/$name/copyright"
+    else
+        printf 'VabaxOS: %s\nCopyright 2026 Vabax and VabaxOS contributors\nLicense: GPL-3.0-or-later, see /usr/share/common-licenses/GPL-3\n' \
+            "$name" > "$tree/usr/share/doc/$name/copyright"
+    fi
     find "$tree" -exec touch --no-dereference -d "@$SOURCE_DATE_EPOCH" {} +
     dpkg-deb --root-owner-group -Zxz --build "$tree" "$OUT/${name}_${VERSION}_all.deb" >/dev/null
     printf 'Pacchetto: %s\n' "$OUT/${name}_${VERSION}_all.deb"

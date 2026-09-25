@@ -14,6 +14,8 @@ Oppure, dopo i due bip, premi una lettera:
 
 - **V**: VabaxOS con voce («with voice»).
 - **N**: VabaxOS senza voce («without voice»), per chi non ha bisogno della sintesi vocale.
+- **I**: installa VabaxOS con la voce («install with voice»). Parte l'installer di Debian con la sintesi vocale: vedi [l'installazione](installazione.md).
+- **O**: altre modalità di installazione («other install options»): grafica ad alto contrasto con lo zoom (K), grafica (G), testuale (T).
 - **R**: modalità di recupero con voce («recovery mode»). Parte solo la console testuale, senza desktop grafico e senza benvenuto. Serve quando il desktop non funziona.
 - **L**: lingua («language»). Apre l'elenco delle lingue:
   - **E**: English;
@@ -33,8 +35,11 @@ Negli strumenti:
 
 Si possono usare anche le frecce su e giù, poi Invio. Appena premi un tasto, l'attesa di 10 secondi si ferma.
 
+## Come appare
+
+Per chi vede poco: in alto c'è il logo di VabaxOS su fondo blu scuro. Le voci sono bianche; quella scelta è gialla. In basso c'è la barra dei secondi che mancano all'avvio automatico.
+
 ## Stato
 
-- La voce «Install with speech synthesis» arriverà con l'installer (ROADMAP, lavoro 9).
 - Per ora le lingue sono inglese e italiano (DOC-01 §28).
 - Su alcuni computer i bip non si sentono, perché manca l'altoparlante interno che li produce. In quel caso basta aspettare: dopo l'attesa parte comunque VabaxOS con voce. Va verificato sui PC fisici di prova.

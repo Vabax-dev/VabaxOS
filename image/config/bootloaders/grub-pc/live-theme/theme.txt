@@ -1,0 +1,54 @@
+# VabaxOS boot menu theme: replaces live-build's live-theme/theme.txt.
+# High contrast for people with low vision: white entries and a yellow
+# selected entry on the navy background of the logo (splash.png, made by
+# live-build from image/config/bootloaders/splash.svg). The colours of
+# live-build's theme were grey on a photo.
+desktop-image: "../splash.png"
+title-text: ""
+message-font: "Unifont Regular 16"
+message-color: "#ffffff"
+terminal-font: "Unifont Regular 16"
+
++ boot_menu {
+        left = 10%
+        width = 80%
+        top = 40%
+        height = 45%
+        item_font = "Unifont Regular 16"
+        item_color = "#ffffff"
+        selected_item_font = "Unifont Regular 16"
+        selected_item_color = "#ffe14d"
+        item_height = 20
+        item_padding = 2
+        item_spacing = 6
+        icon_width = 0
+        icon_height = 0
+        item_icon_space = 0
+        scrollbar = true
+}
+
+# Seconds before the default entry starts.
++ progress_bar {
+        id = "__timeout__"
+        left = 15%
+        top = 100%-70
+        height = 20
+        width = 70%
+        font = "Unifont Regular 16"
+        text_color = "#ffffff"
+        fg_color = "#2a3a6b"
+        bg_color = "#0b1b3f"
+        border_color = "#ffffff"
+        text = "@TIMEOUT_NOTIFICATION_LONG@"
+}
+
++ label {
+        top = 100%-35
+        left = 0
+        width = 100%
+        height = 20
+        text = "@KEYMAP_SHORT@"
+        align = "center"
+        color = "#ffffff"
+        font = "Unifont Regular 16"
+}

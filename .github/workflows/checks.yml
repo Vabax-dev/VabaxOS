@@ -51,7 +51,7 @@ jobs:
         run: ./scripts/build.sh --config-only
 
   packages:
-    name: VabaxOS packages and welcome tests
+    name: VabaxOS packages and program tests
     runs-on: ubuntu-latest
     container: debian:trixie
     steps:
@@ -59,7 +59,8 @@ jobs:
       - name: Install tools
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends python3 git ca-certificates
+          apt-get install -y --no-install-recommends python3 git ca-certificates \
+            python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas
       - uses: actions/checkout@v7
       - name: Trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -67,6 +68,8 @@ jobs:
         run: ./scripts/build-packages.sh /tmp/packages
       - name: Welcome tests (no speech, no system changes)
         run: python3 tests/welcome/test_welcome.py
+      - name: Setup tests (hidden Broadway display, settings in memory)
+        run: python3 tests/setup/test_setup.py
 
   powershell:
     name: PowerShell scripts

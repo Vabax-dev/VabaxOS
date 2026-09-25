@@ -1,0 +1,13 @@
+# VabaxOS look: a calm navy background with the logo in the middle
+# (a busy picture is hard to use with low vision or zoom).
+[org.gnome.desktop.background]
+picture-uri='file:///usr/share/backgrounds/vabaxos/vabaxos-logo.svg'
+picture-uri-dark='file:///usr/share/backgrounds/vabaxos/vabaxos-logo.svg'
+picture-options='centered'
+primary-color='#0b1b3f'
+color-shading-type='solid'
+
+[org.gnome.desktop.screensaver]
+picture-uri='file:///usr/share/backgrounds/vabaxos/vabaxos-logo.svg'
+picture-options='centered'
+primary-color='#0b1b3f'

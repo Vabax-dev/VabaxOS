@@ -6,7 +6,7 @@ Questa pagina spiega come si costruisce la ISO di VabaxOS e come si prova in una
 
 ## Cosa serve
 
-- Un sistema **Debian 13** amd64: su Windows è la distribuzione Debian di WSL2, in CI il container `debian:trixie`. La ISO invece è Debian testing «forky» (ADR-0017): serve **live-build 1:20250814** di forky, che si installa con `sudo bash scripts/install-live-build.sh` (controlla l'impronta del pacchetto).
+- Un sistema **Debian 13** amd64: su Windows è la distribuzione Debian di WSL2, in CI il container `debian:trixie`. La ISO invece è Debian testing «forky» (ADR-0017): serve **live-build da Git a un commit fisso** (la versione di Debian richiede ancora `libfuse2`, che forky non ha più), che si installa con `sudo bash scripts/install-live-build.sh`.
 - I privilegi di amministratore, perché live-build lavora in un chroot. Lo script chiama `sudo /usr/bin/lb`: sulla postazione si può permettere solo quel comando senza password (vedi la [guida alla postazione](docs/sviluppo/postazione-windows.md)).
 - Circa 20 GB liberi e una connessione a Internet per scaricare i pacchetti.
 

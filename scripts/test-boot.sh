@@ -10,6 +10,8 @@
 #   voice     no key pressed: the default entry starts after the timeout
 #   novoice   presses N, "VabaxOS without voice"
 #   recovery  presses R, "Recovery mode with voice" (console only)
+#   install   presses I, "Install VabaxOS with voice": checks only that the
+#             Debian Installer speaks (no serial console there), then stops
 # --lang it chooses Italian in the boot menu first (L, then I).
 # Exit status: 0 if every check passes.
 # Commands in single quotes run in the shell of the VM, not here:
@@ -43,6 +45,7 @@ case "$ENTRY" in
     voice) HOTKEY=""; WANT_VOICE=on; WANT_RECOVERY=no; WANT_SPEECH=active; WANT_DESKTOP=yes; WANT_ORCA=yes; WANT_SOUND=yes ;;
     novoice) HOTKEY=n; WANT_VOICE=off; WANT_RECOVERY=no; WANT_SPEECH=inactive; WANT_DESKTOP=yes; WANT_ORCA=no; WANT_SOUND=no ;;
     recovery) HOTKEY=r; WANT_VOICE=on; WANT_RECOVERY=yes; WANT_SPEECH=active; WANT_DESKTOP=no; WANT_ORCA=no; WANT_SOUND=yes ;;
+    install) HOTKEY=i; WANT_SOUND=yes ;;
     *) printf 'Voce del menu sconosciuta: %s\n' "$ENTRY" >&2; exit 64 ;;
 esac
 case "$MENU_LANG" in
@@ -166,6 +169,27 @@ if [[ -n "$HOTKEY" || -n "$MENU_LANG" ]]; then
     fi
 fi
 
+# The installer has no serial console: record its speech, then stop the VM.
+if [[ "$ENTRY" == install ]]; then
+    FAILED=0
+    sleep 40
+    HEARD=no
+    for part in 1 2 3; do
+        if [[ "$(record "installer-$part" 20)" == yes ]]; then
+            HEARD=yes
+            break
+        fi
+    done
+    if [[ "$HEARD" == yes ]]; then
+        printf 'OK: l'\''installer parla (registrazione %s).\n' "$part"
+        printf 'Risultato: test di avvio superato (%s, install).\n' "$MODE"
+        exit 0
+    fi
+    printf 'FALLITO: l'\''installer non parla dopo 100 secondi.\n'
+    printf 'Risultato: 1 controlli falliti (%s, install).\n' "$MODE"
+    exit 1
+fi
+
 wait_for 'vabaxos login:' 'richiesta di accesso' || exit 1
 printf 'OK: richiesta di accesso sulla console seriale dopo %d secondi.\n' $((SECONDS - START))
 
@@ -213,6 +237,7 @@ ask firmware '[ -d /sys/firmware/efi ] && echo uefi || echo bios' || exit 1
 ask secureboot 'f=$(ls /sys/firmware/efi/efivars/SecureBoot-* 2>/dev/null); [ -n "$f" ] && od -An -t u1 "$f" | awk "{print \$NF}" || echo none' || exit 1
 ask kernel 'uname -r' || exit 1
 ask os '. /etc/os-release; echo $PRETTY_NAME' || exit 1
+ask logo '. /etc/os-release; echo $LOGO' || exit 1
 ask voice 'sed -n "s/.*vabaxos\.voice=\([a-z]*\).*/\1/p" /proc/cmdline' || exit 1
 ask recovery 'grep -q systemd.unit=multi-user.target /proc/cmdline && echo yes || echo no' || exit 1
 ask speech 'systemctl is-active espeakup' || exit 1
@@ -244,6 +269,7 @@ check 'Orca' "$(value orca)" "$WANT_ORCA"
 check lingua "$(value lang)" "$WANT_LANG"
 printf 'INFO: kernel %s\n' "$(value kernel)"
 printf 'INFO: sistema %s\n' "$(value os)"
+check 'nome e logo VabaxOS' "$(value logo)" vabaxos-logo
 
 # Sound. In the desktop, a desktop notification must be read by Orca (it is
 # read whatever window has the focus). Then the third text console, where
@@ -270,6 +296,30 @@ press "ctrl-alt-f${BACK_VT:-1}"
 if [[ "$WANT_DESKTOP" == yes ]]; then
     sleep 3
     check 'Orca udibile al ritorno dalla console' "$(orca_speaks orca-ritorno)" "$WANT_SOUND"
+fi
+
+# The first setup opens by itself a few seconds after login: every control
+# must have a name for the screen reader (vabaxos-a11y-check, AT-SPI).
+BUS='DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus'
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask setupa11y "env $BUS vabaxos-a11y-check --wait 30 vabaxos-setup | tail -1" || exit 1
+    check 'configurazione iniziale: comandi senza nome' "$(value setupa11y)" "vabaxos-setup: 0 controls without a name"
+fi
+
+# Super+Alt+S turns Orca off and on again (ROADMAP, v0.1).
+if [[ "$WANT_ORCA" == yes ]]; then
+    press meta_l-alt-s
+    ask sroff "sleep 4; env $BUS gsettings get org.gnome.desktop.a11y.applications screen-reader-enabled" || exit 1
+    press meta_l-alt-s
+    ask sron "sleep 6; env $BUS gsettings get org.gnome.desktop.a11y.applications screen-reader-enabled; pgrep -u user -x orca >/dev/null && echo orca-vivo" || exit 1
+    check 'Super+Alt+S spegne Orca' "$(value sroff)" false
+    check 'Super+Alt+S riaccende Orca' "$(value sron)" true
+fi
+
+# Mouse keys crashed GNOME Shell on Wayland in GNOME 48 (mutter #4008).
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask mousekeys "p=\$(pgrep -u user -x gnome-shell); env $BUS gsettings set org.gnome.desktop.a11y.keyboard mousekeys-enable true; sleep 6; q=\$(pgrep -u user -x gnome-shell); env $BUS gsettings set org.gnome.desktop.a11y.keyboard mousekeys-enable false; [ -n \"\$q\" ] && [ \"\$p\" = \"\$q\" ] && echo stabile || echo crash" || exit 1
+    check 'tasti del mouse: GNOME Shell' "$(value mousekeys)" stabile
 fi
 
 if [[ "$(value state)" != running ]]; then
