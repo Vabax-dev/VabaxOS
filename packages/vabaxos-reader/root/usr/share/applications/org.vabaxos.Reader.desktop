@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS reader
+Name[it]=Lettore di VabaxOS
+GenericName=Document reader
+GenericName[it]=Lettore di documenti
+Comment=Reads documents aloud with a natural voice
+Comment[it]=Legge i documenti ad alta voce con una voce naturale
+Exec=vabaxos-reader %f
+Icon=vabaxos-logo
+Terminal=false
+Categories=Office;Viewer;Accessibility;
+MimeType=text/plain;text/markdown;application/pdf;application/epub+zip;application/vnd.openxmlformats-officedocument.wordprocessingml.document;text/html;
+Keywords=read;speech;book;study;leggi;voce;libro;studio;
