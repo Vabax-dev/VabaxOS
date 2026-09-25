@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.vabaxos.Start
+Exec=/usr/bin/vabaxos-start --gapplication-service

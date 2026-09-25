@@ -8,6 +8,8 @@
 //   Super+T     the taskbar: the first program, again for the next one
 //   Super+B     the notification area: program icons, clock, network,
 //               volume, battery; again for the next one
+//   Super       the VabaxOS Start menu (vabaxos-start, block 12): search,
+//               and categories opened with the arrows; again, it closes
 //   Super+S     the Start menu, to search: the same as Super alone
 //   Super+Down  a maximized or tiled window goes back to its size,
 //               any other window is minimized
@@ -30,6 +32,7 @@
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
@@ -47,8 +50,7 @@ export default class VabaxOSKeys extends Extension {
         const handlers = {
             'focus-taskbar': () => this._focusTaskbar(),
             'focus-tray': () => this._focusTray(),
-            // What Super alone does: ArcMenu listens to this signal.
-            'open-start-menu': () => global.display.emit('overlay-key'),
+            'open-start-menu': () => this._toggleStart(),
             'minimize-or-restore': () => this._minimizeOrRestore(),
             'where-am-i': () => this._whereAmI(),
         };
@@ -56,6 +58,14 @@ export default class VabaxOSKeys extends Extension {
             Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE,
                 Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW, handlers[key]);
         }
+        // Super alone: GNOME's handler (the overview) is blocked, ours opens
+        // the Start menu, as ArcMenu does with its own.
+        this._overlayDefault = GObject.signal_handler_find(global.display, {signalId: 'overlay-key'});
+        if (this._overlayDefault)
+            GObject.signal_handler_block(global.display, this._overlayDefault);
+        this._overlayId = global.display.connect('overlay-key', () => this._toggleStart());
+        Main.wm.allowKeybinding('overlay-key', Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW |
+            Shell.ActionMode.POPUP);
         Main.wm.setCustomKeybindingHandler('close', Shell.ActionMode.NORMAL,
             (display, window) => this._close(window));
         this._createdId = global.display.connect('window-created', (display, window) => {
@@ -85,6 +95,10 @@ export default class VabaxOSKeys extends Extension {
         for (const key of KEYS)
             Main.wm.removeKeybinding(key);
         Meta.keybindings_set_custom_handler('close', null);
+        global.display.disconnect(this._overlayId);
+        if (this._overlayDefault)
+            GObject.signal_handler_unblock(global.display, this._overlayDefault);
+        Main.wm.allowKeybinding('overlay-key', Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW);
         global.stage.disconnect(this._stageKeyId);
         global.display.disconnect(this._focusId);
         global.display.disconnect(this._createdId);
@@ -160,6 +174,24 @@ export default class VabaxOSKeys extends Extension {
         } else if (window.can_minimize()) {
             window.minimize();
         }
+    }
+
+    // The Start menu: opened by GNOME Shell, which gives it the focus
+    // (an activation token); Super again, or on its window, closes it.
+    _toggleStart() {
+        const app = Shell.AppSystem.get_default().lookup_app('org.vabaxos.Start.desktop');
+        if (!app) {
+            Main.overview.toggle();
+            return;
+        }
+        const focus = global.display.focus_window;
+        if (focus && Shell.WindowTracker.get_default().get_window_app(focus) === app) {
+            focus.delete(global.get_current_time());
+            return;
+        }
+        if (Main.overview.visible)
+            Main.overview.hide();
+        app.activate();
     }
 
     _newWindowAttention(window) {

@@ -1,0 +1,320 @@
+#!/usr/bin/python3
+"""VabaxOS Start menu (block 12, Vabax's design).
+
+    vabaxos-start                open the menu, or close it if it is open
+    vabaxos-start --background   start without showing it (at login)
+
+Super opens it with the focus in the search field: the results arrive while
+you write (programs, settings, folders, files, commands) and the screen
+reader says how many there are; Down Arrow goes to them, Enter opens.
+With the field empty, Tab goes to the categories (Favorites, Programs,
+VabaxOS tools, Settings, Folders, Recent files, Power): Right Arrow expands
+a category, or goes into it; Left Arrow closes it, or goes back to the
+category that contains it; Up and Down move; a letter jumps to the next
+entry starting with it; Enter opens; Escape closes the menu and the focus
+goes back to the window of before. The menu keeps running, hidden, so it
+opens at once.
+"""
+
+import gettext
+import os
+import sys
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk  # noqa: E402
+
+from vabaxos_start import menu  # noqa: E402
+
+APP_ID = "org.vabaxos.Start"
+DOMAIN = "vabaxos-start"
+gettext.bindtextdomain(DOMAIN, os.environ.get("VABAXOS_START_LOCALE_DIR", "/usr/share/locale"))
+gettext.textdomain(DOMAIN)
+_ = gettext.gettext
+
+
+class Item(GObject.Object):
+    """An Entry for the list models."""
+
+    def __init__(self, entry):
+        super().__init__()
+        self.entry = entry
+
+
+def store_of(entries):
+    store = Gio.ListStore(item_type=Item)
+    for entry in entries:
+        store.append(Item(entry))
+    return store
+
+
+def spoken(entry):
+    """What the screen reader says for an entry."""
+    if entry.is_category:
+        count = len(entry.children)
+        return _("{name}, {count} items").format(name=entry.name, count=count) if count != 1 else \
+            _("{name}, 1 item").format(name=entry.name)
+    return entry.name
+
+
+class StartWindow(Adw.ApplicationWindow):
+
+    def __init__(self, application):
+        super().__init__(application=application, title=_("Start"))
+        self.set_default_size(560, 680)
+        self.set_hide_on_close(True)
+        self.categories = []
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, margin_top=12, margin_bottom=12,
+                      margin_start=12, margin_end=12)
+        self.search = Gtk.SearchEntry(placeholder_text=_("Search programs, settings and files"))
+        self.search.update_property([Gtk.AccessibleProperty.LABEL], [_("Search programs, settings and files")])
+        self.search.connect("search-changed", lambda *_a: self.update_results())
+        self.search.connect("activate", lambda *_a: self.open_first_result())
+        search_keys = Gtk.EventControllerKey()
+        search_keys.connect("key-pressed", self.search_key)
+        self.search.add_controller(search_keys)
+        box.append(self.search)
+
+        self.stack = Gtk.Stack(vexpand=True)
+        # The categories: a tree.
+        self.tree_model = Gtk.TreeListModel.new(store_of([]), False, False, self.children_of)
+        self.selection = Gtk.SingleSelection(model=self.tree_model, autoselect=True)
+        factory = Gtk.SignalListItemFactory()
+        factory.connect("setup", self.tree_setup)
+        factory.connect("bind", self.tree_bind)
+        self.tree = Gtk.ListView(model=self.selection, factory=factory, single_click_activate=False)
+        self.tree.update_property([Gtk.AccessibleProperty.LABEL], [_("Categories")])
+        self.tree.connect("activate", self.tree_activated)
+        tree_keys = Gtk.EventControllerKey()
+        tree_keys.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+        tree_keys.connect("key-pressed", self.tree_key)
+        self.tree.add_controller(tree_keys)
+        tree_scroll = Gtk.ScrolledWindow(child=self.tree, vexpand=True)
+        self.stack.add_named(tree_scroll, "tree")
+        # The results of the search: a list.
+        self.results = Gtk.ListBox(selection_mode=Gtk.SelectionMode.SINGLE)
+        self.results.add_css_class("boxed-list")
+        self.results.update_property([Gtk.AccessibleProperty.LABEL], [_("Results")])
+        self.results.connect("row-activated", lambda _l, row: self.open_entry(row.entry))
+        results_keys = Gtk.EventControllerKey()
+        results_keys.connect("key-pressed", self.results_key)
+        self.results.add_controller(results_keys)
+        self.stack.add_named(Gtk.ScrolledWindow(child=self.results, vexpand=True), "results")
+        self.none_label = Gtk.Label(label=_("Nothing found"), css_classes=["dim-label"])
+        self.stack.add_named(self.none_label, "none")
+        box.append(self.stack)
+
+        window_keys = Gtk.EventControllerKey()
+        window_keys.connect("key-pressed", self.window_key)
+        self.add_controller(window_keys)
+        self.set_content(box)
+        self.connect("notify::is-active", self.active_changed)
+        self.reload()
+
+    # -- content -------------------------------------------------------------
+
+    def reload(self):
+        self.categories = menu.build()
+        self.tree_model = Gtk.TreeListModel.new(store_of(self.categories), False, False, self.children_of)
+        self.selection.set_model(self.tree_model)
+
+    @staticmethod
+    def children_of(item):
+        entry = item.entry
+        return store_of(entry.children) if entry.is_category else None
+
+    def tree_setup(self, _factory, list_item):
+        expander = Gtk.TreeExpander()
+        expander.set_child(Gtk.Label(xalign=0, margin_top=6, margin_bottom=6))
+        list_item.set_child(expander)
+
+    def tree_bind(self, _factory, list_item):
+        row = list_item.get_item()
+        entry = row.get_item().entry
+        expander = list_item.get_child()
+        expander.set_list_row(row)
+        expander.get_child().set_label(entry.name)
+        list_item.set_accessible_label(spoken(entry))
+        list_item.set_accessible_description("" if entry.is_category else entry.kind)
+
+    def update_results(self):
+        text = self.search.get_text()
+        while (row := self.results.get_row_at_index(0)) is not None:
+            self.results.remove(row)
+        if not text.strip():
+            self.stack.set_visible_child_name("tree")
+            return
+        found = menu.search(self.categories, text)
+        for entry in found:
+            row = Adw.ActionRow(title=entry.name, subtitle=entry.kind, activatable=True)
+            row.entry = entry
+            self.results.append(row)
+        self.stack.set_visible_child_name("results" if found else "none")
+        count = len(found)
+        message = _("No results") if count == 0 else _("1 result") if count == 1 else \
+            _("{count} results").format(count=count)
+        self.results.update_property([Gtk.AccessibleProperty.LABEL], [_("Results: {message}").format(message=message)])
+        self.say(message)
+
+    def say(self, text):
+        """Tells the screen reader, without moving the focus."""
+        if os.environ.get("NO_AT_BRIDGE") == "1":
+            return
+        try:
+            self.announce(text, Gtk.AccessibleAnnouncementPriority.MEDIUM)
+        except (AttributeError, TypeError):
+            pass
+
+    # -- opening -------------------------------------------------------------
+
+    def open_entry(self, entry):
+        if entry is None or entry.open is None:
+            return
+        context = Gdk.Display.get_default().get_app_launch_context()
+        try:
+            entry.open(context)
+        except GLib.Error as error:
+            self.say(_("It did not open: {error}").format(error=error.message))
+            return
+        self.set_visible(False)
+
+    def open_first_result(self):
+        row = self.results.get_row_at_index(0)
+        if row is not None:
+            self.open_entry(row.entry)
+
+    def tree_activated(self, _view, position):
+        row = self.tree_model.get_item(position)
+        if row is None:
+            return
+        if row.is_expandable():
+            row.set_expanded(not row.get_expanded())
+        else:
+            self.open_entry(row.get_item().entry)
+
+    # -- keys --------------------------------------------------------------
+
+    def focus_position(self, position):
+        if 0 <= position < self.tree_model.get_n_items():
+            self.tree.scroll_to(position, Gtk.ListScrollFlags.FOCUS | Gtk.ListScrollFlags.SELECT, None)
+
+    def tree_key(self, _controller, keyval, _keycode, state):
+        position = self.selection.get_selected()
+        row = self.tree_model.get_item(position) if position != Gtk.INVALID_LIST_POSITION else None
+        if row is None:
+            return False
+        if keyval in (Gdk.KEY_Right, Gdk.KEY_KP_Right):
+            if row.is_expandable() and not row.get_expanded():
+                row.set_expanded(True)
+                self.say(spoken(row.get_item().entry))
+            elif row.is_expandable():
+                self.focus_position(position + 1)
+            return True
+        if keyval in (Gdk.KEY_Left, Gdk.KEY_KP_Left):
+            if row.is_expandable() and row.get_expanded():
+                row.set_expanded(False)
+            else:
+                parent = row.get_parent()
+                if parent is not None:
+                    self.focus_position(parent.get_position())
+            return True
+        if keyval in (Gdk.KEY_Up, Gdk.KEY_KP_Up) and position == 0:
+            self.search.grab_focus()
+            return True
+        char = chr(Gdk.keyval_to_unicode(keyval)) if Gdk.keyval_to_unicode(keyval) else ""
+        if char.isalnum() and not state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK):
+            self.jump(position, char)
+            return True
+        return False
+
+    def jump(self, position, char):
+        """To the next visible entry starting with char, as in Windows."""
+        wanted = menu.fold(char)
+        count = self.tree_model.get_n_items()
+        for step in range(1, count + 1):
+            index = (position + step) % count
+            if menu.fold(self.tree_model.get_item(index).get_item().entry.name).startswith(wanted):
+                self.focus_position(index)
+                return
+
+    def search_key(self, _controller, keyval, _keycode, _state):
+        if keyval in (Gdk.KEY_Down, Gdk.KEY_KP_Down):
+            if self.stack.get_visible_child_name() == "results":
+                first = self.results.get_row_at_index(0)
+                if first is not None:
+                    self.results.select_row(first)
+                    first.grab_focus()
+            else:
+                self.focus_position(max(self.selection.get_selected(), 0) if
+                                    self.selection.get_selected() != Gtk.INVALID_LIST_POSITION else 0)
+            return True
+        return False
+
+    def results_key(self, _controller, keyval, _keycode, _state):
+        first = self.results.get_row_at_index(0)
+        if keyval in (Gdk.KEY_Up, Gdk.KEY_KP_Up) and first is not None and first.has_focus():
+            self.search.grab_focus()
+            return True
+        return False
+
+    def window_key(self, _controller, keyval, _keycode, _state):
+        if keyval == Gdk.KEY_Escape:
+            if self.search.get_text():
+                self.search.set_text("")
+                self.search.grab_focus()
+            else:
+                self.set_visible(False)
+            return True
+        return False
+
+    # -- showing -------------------------------------------------------------
+
+    def show_menu(self):
+        self.reload()  # programs installed since last time appear at once
+        self.search.set_text("")
+        self.stack.set_visible_child_name("tree")
+        self.present()
+        self.search.grab_focus()
+
+    def active_changed(self, *_a):
+        # Like a menu: it closes when another window takes the focus.
+        if not self.is_active() and self.get_visible():
+            GLib.timeout_add(150, self.hide_if_inactive)
+
+    def hide_if_inactive(self):
+        if not self.is_active():
+            self.set_visible(False)
+        return GLib.SOURCE_REMOVE
+
+
+class StartApplication(Adw.Application):
+
+    def __init__(self):
+        super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+        self.window = None
+
+    def do_command_line(self, command_line):
+        args = command_line.get_arguments()[1:]
+        if self.window is None:
+            self.window = StartWindow(self)
+            self.hold()
+        if "--background" in args:
+            return 0
+        self.do_activate()
+        return 0
+
+    def do_activate(self):
+        if self.window is None:
+            self.window = StartWindow(self)
+            self.hold()
+        if self.window.get_visible() and self.window.is_active():
+            self.window.set_visible(False)
+        else:
+            self.window.show_menu()
+
+
+if __name__ == "__main__":
+    sys.exit(StartApplication().run(sys.argv))

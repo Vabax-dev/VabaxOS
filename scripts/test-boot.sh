@@ -636,6 +636,32 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     send 'pkill -u user -x vabaxos-apps; pkill -u user -x gnome-text-edit; sleep 2'
 fi
 
+# The VabaxOS Start menu (block 12, ADR-0025 proposed): Super opens it with
+# the focus in the search field, results arrive while writing, Tab goes to
+# the categories, Right Arrow opens one; every control has a name.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask startrunning 'for i in $(seq 30); do pgrep -u user -f "vabaxos-start" >/dev/null && break; sleep 1; done; pgrep -u user -f "vabaxos-start" >/dev/null && echo yes || echo no' || exit 1
+    check 'menu Start pronto in memoria' "$(value startrunning)" yes
+    press meta_l
+    ask startsearch "sleep 2; env $BUS vabaxos-a11y-check --wait 20 --focused vabaxos-start" || exit 1
+    check 'Super apre il menu Start nella ricerca' "$(value startsearch | grep -c 'focus: text\|focus: entry')" 1
+    for letter in f i l e; do press "$letter"; done
+    ask startresults "sleep 2; env $BUS vabaxos-a11y-check --list vabaxos-start | grep -c 'list item\|row'" || exit 1
+    printf 'INFO: risultati della ricerca «file»: %s\n' "$(value startresults)"
+    press esc
+    press tab
+    ask starttree "sleep 1; env $BUS vabaxos-a11y-check --focused vabaxos-start" || exit 1
+    printf 'INFO: Tab nel menu Start: %s\n' "$(value starttree)"
+    check 'Tab va alle categorie' "$(value starttree | grep -c 'focus: none\|focus: text')" 0
+    press right
+    ask startopen "sleep 1; env $BUS vabaxos-a11y-check --list vabaxos-start | grep -c 'Office\|Ufficio\|Internet'" || exit 1
+    printf 'INFO: dopo Freccia destra: %s voci di Programmi\n' "$(value startopen)"
+    ask startnames "env $BUS vabaxos-a11y-check vabaxos-start | tail -1" || exit 1
+    check 'menu Start: comandi senza nome' "$(value startnames)" 'vabaxos-start: 0 controls without a name'
+    press esc
+    press esc
+fi
+
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send 'sudo systemctl suspend </dev/null'
