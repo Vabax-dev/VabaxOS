@@ -98,6 +98,23 @@ jobs:
           export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
           python3 tests/reader/test_reader.py
 
+  shell-extension:
+    name: GNOME Shell extension (headless GNOME Shell)
+    runs-on: ubuntu-latest
+    # GNOME 50, as in the ISO (ADR-0017).
+    container: debian:forky
+    steps:
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3 python3-gi gir1.2-atspi-2.0 \
+            gnome-shell at-spi2-core dbus-daemon libglib2.0-bin locales
+          sed -i 's/^# *it_IT.UTF-8/it_IT.UTF-8/' /etc/locale.gen
+          locale-gen
+      - uses: actions/checkout@v7
+      - name: Button names (button-names@vabaxos.org, ADR-0022)
+        run: python3 tests/button-names/test_button_names.py
+
   powershell:
     name: PowerShell scripts
     runs-on: windows-latest
