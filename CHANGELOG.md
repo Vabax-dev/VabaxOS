@@ -28,3 +28,10 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - CI: costruzione della ISO e prove di avvio in QEMU con controllo dei suoni.
 - Logo VabaxOS in formato vettoriale; menu di avvio con il logo e colori ad alto contrasto; pacchetto `vabaxos-branding` (icona, sfondo, logo in Impostazioni > Informazioni).
 - Guide per l'utente: benvenuto, configurazione iniziale, installazione.
+- Voce naturale Kokoro per Orca (`vabaxos-voice`, ADR-0019): modulo per speech-dispatcher con cache delle frasi, frasi spezzate, silenzio tagliato, arresto immediato; velocità con Sonic; misura del computer a ogni avvio (Kokoro se è abbastanza veloce, altrimenti eSpeak NG); scelta della voce nella configurazione iniziale.
+- Menu Start con il logo (ArcMenu, ADR-0018): tasto Super, ricerca, programmi, cartelle, menu Spegni con i nomi scritti; ogni comando ha un nome per Orca.
+- Sistema installato: benvenuto solo al primo avvio; `vabaxos-report` esporta il log di avvio e i dati dell'hardware in un file di testo; prova automatica di installazione in QEMU (`scripts/test-install.sh`).
+- Suoni di sistema VabaxOS in tre stili (Cristallo, Morbido, Aria); font Atkinson Hyperlegible Next nel desktop e nel menu di avvio; colore d'accento viola; logo nella schermata di accesso.
+- `vabaxos-status` (Super+Alt+I): ora, batteria, rete, Bluetooth e volume letti da Orca.
+- Lettore di documenti con voce naturale (`vabaxos-reader`): testo, PDF, Word, EPUB, HTML; frasi, paragrafi, segnalibri, esportazione audio.
+- `vabaxos-update`: aggiornamenti annunciati a voce, subito o al riavvio, anche Flatpak; proposta ADR-0020 su aggiornamenti e sicurezza. Flatpak nella ISO.
