@@ -1,0 +1,12 @@
+Package: vabaxos-reader
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: text
+Priority: optional
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, vabaxos-voice, poppler-utils, python3-docx, python3-ebooklib
+Description: Documents read aloud with a natural voice
+ The VabaxOS reader opens text, PDF, Word, EPUB and HTML documents and
+ reads them with Kokoro, sentence by sentence, from the cursor. It moves
+ by sentence and paragraph, changes speed without losing words (Sonic),
+ remembers where each document was left, keeps bookmarks and saves the
+ reading as an audio file, for study and for long texts.

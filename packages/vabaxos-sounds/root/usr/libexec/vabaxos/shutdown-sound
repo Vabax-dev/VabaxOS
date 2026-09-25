@@ -1,0 +1,8 @@
+#!/bin/sh
+# Plays the VabaxOS shutdown sound on the sound card itself (ALSA), at the
+# end of vabaxos-shutdown-sound.service: only when the computer shuts down
+# or restarts, not when the service is stopped by hand.
+SOUND=/usr/share/sounds/vabaxos/system-shutdown.wav
+[ -r "$SOUND" ] || exit 0
+systemctl is-system-running 2>/dev/null | grep -q stopping || exit 0
+timeout 8 aplay -q -D sysdefault "$SOUND" || true

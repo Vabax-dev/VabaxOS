@@ -3,7 +3,7 @@ Copyright 2026 Vabax and VabaxOS contributors
 
 Files: usr/share/icons/hicolor/scalable/apps/vabaxos-logo.svg
        usr/share/pixmaps/vabaxos-logo.svg
-       usr/share/backgrounds/vabaxos/vabaxos-logo.svg
+       usr/share/backgrounds/vabaxos/*.svg
 Copyright: 2026 Vabax
 License: LicenseRef-VabaxOS-Trademark
  The VabaxOS name and logo are reserved. They may be redistributed only

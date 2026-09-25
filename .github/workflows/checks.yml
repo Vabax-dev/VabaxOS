@@ -30,7 +30,7 @@ jobs:
         run: |
           find scripts -name '*.sh' -print0 | xargs -0 shellcheck
           shellcheck image/auto/config
-          shellcheck packages/*/postinst packages/*/postrm packages/*/root/usr/libexec/vabaxos/*
+          shellcheck packages/*/postinst packages/*/postrm packages/*/build packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
       - name: Every workstation package exists in Debian trixie
         run: |
           grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
@@ -61,7 +61,9 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends python3 git ca-certificates curl \
             python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas \
-            python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0
+            python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0 \
+            python3-docx python3-ebooklib python3-pil poppler-utils \
+            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng
       - uses: actions/checkout@v7
       # Large files of the packages (the Kokoro model), downloaded once.
       - uses: actions/cache@v4
@@ -72,15 +74,46 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Build the packages
         run: ./scripts/build-packages.sh /tmp/packages
+      - name: Python programs compile
+        run: |
+          for f in packages/*/root/usr/bin/* packages/*/root/usr/lib/speech-dispatcher-modules/*; do
+            if head -1 "$f" | grep -q python3; then python3 -m py_compile "$f"; fi
+          done
+          python3 -m compileall -q packages/*/root/usr/lib/python3
       - name: Welcome tests (no speech, no system changes)
         run: python3 tests/welcome/test_welcome.py
       - name: Setup tests (hidden Broadway display, settings in memory)
         run: python3 tests/setup/test_setup.py
+      - name: Programs tests (hidden Broadway display, made-up programs)
+        run: python3 tests/apps/test_apps.py
+      - name: Update tests (fake PackageKit)
+        run: python3 tests/update/test_update.py
       - name: Voice tests (Kokoro module, audio to a file)
         run: |
           dpkg-deb -x /tmp/packages/vabaxos-voice_*.deb /tmp/voice
           export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
           python3 tests/voice/test_module.py
+      - name: Reader tests (documents; the window reads into a file)
+        run: |
+          export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
+          python3 tests/reader/test_reader.py
+
+  shell-extension:
+    name: GNOME Shell extension (headless GNOME Shell)
+    runs-on: ubuntu-latest
+    # GNOME 50, as in the ISO (ADR-0017).
+    container: debian:forky
+    steps:
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3 python3-gi gir1.2-atspi-2.0 \
+            gnome-shell at-spi2-core dbus-daemon libglib2.0-bin locales
+          sed -i 's/^# *it_IT.UTF-8/it_IT.UTF-8/' /etc/locale.gen
+          locale-gen
+      - uses: actions/checkout@v7
+      - name: Button names (button-names@vabaxos.org, ADR-0022)
+        run: python3 tests/button-names/test_button_names.py
 
   powershell:
     name: PowerShell scripts

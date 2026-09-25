@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!DOCTYPE wallpapers SYSTEM "gnome-wp-list.dtd">
+<!-- VabaxOS backgrounds, listed in Settings > Appearance. -->
+<wallpapers>
+  <wallpaper deleted="false">
+    <name>VabaxOS</name>
+    <filename>/usr/share/backgrounds/vabaxos/vabaxos-logo.svg</filename>
+    <options>centered</options>
+    <pcolor>#0b1b3f</pcolor>
+    <shade_type>solid</shade_type>
+  </wallpaper>
+  <wallpaper deleted="false">
+    <name>VabaxOS Aurora</name>
+    <filename>/usr/share/backgrounds/vabaxos/vabaxos-aurora.svg</filename>
+    <options>zoom</options>
+  </wallpaper>
+  <wallpaper deleted="false">
+    <name>VabaxOS high contrast</name>
+    <filename>/usr/share/backgrounds/vabaxos/vabaxos-contrast.svg</filename>
+    <options>zoom</options>
+  </wallpaper>
+  <wallpaper deleted="false">
+    <name>VabaxOS light</name>
+    <filename>/usr/share/backgrounds/vabaxos/vabaxos-light.svg</filename>
+    <options>zoom</options>
+  </wallpaper>
+</wallpapers>

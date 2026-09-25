@@ -1,0 +1,475 @@
+#!/usr/bin/python3
+"""VabaxOS reader: documents read aloud with a natural voice (block 6).
+
+    vabaxos-reader [FILE]
+
+Opens text, Markdown, PDF, Word (.docx), EPUB and HTML files, and images
+and scanned PDFs through text recognition, and reads them
+with Kokoro (ADR-0019), sentence by sentence, from where the cursor is. The
+text stays in a normal text area, so Orca can also review it word by word.
+The reader remembers where each document was left, keeps bookmarks, and
+can save the reading as an audio file for later.
+
+Keys:
+    Ctrl+O              open a document
+    Ctrl+Space          read or pause, from the cursor
+    Alt+Right, Alt+Left next or previous sentence
+    Alt+Down, Alt+Up    next or previous paragraph
+    Ctrl+Plus, Ctrl+Minus  faster or slower
+    Ctrl+B              bookmark here;  Ctrl+J  go to the next bookmark
+    Ctrl+E              save the reading as an audio file (WAV)
+"""
+
+import gettext
+import os
+import queue
+import sys
+import threading
+import wave
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
+
+from vabaxos_reader.document import SUPPORTED, Document, NeedsOCR, ReadingState  # noqa: E402
+
+gettext.textdomain("vabaxos-reader")
+_ = gettext.gettext
+
+VOICES = [("im_nicola", "it"), ("if_sara", "it"), ("af_heart", "en"), ("am_michael", "en")]
+VOICE_NAMES = {"im_nicola": "Nicola", "if_sara": "Sara", "af_heart": "Heart", "am_michael": "Michael"}
+
+
+def default_voice():
+    """The voice vabaxos-voice-select chose for Italian on this computer."""
+    try:
+        with open("/var/lib/vabaxos/voice.conf", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("it="):
+                    return line.strip().split("=", 1)[1]
+    except OSError:
+        pass
+    return "im_nicola"
+
+
+class Reader:
+    """Reads sentences in the background: the next sentence is synthesized
+    while the current one plays."""
+
+    def __init__(self, on_sentence, on_stop):
+        self.kokoro = None
+        self.player = None
+        self.on_sentence = on_sentence
+        self.on_stop = on_stop
+        self.cancel = threading.Event()
+        self.thread = None
+        self.producer = None
+        self.running = None
+        self.speed = 1.0
+
+    def load(self):
+        from vabaxos_voice import engine
+        from vabaxos_voice.player import make_player
+        self.kokoro = engine.Kokoro()
+        self.player = make_player(engine.SAMPLE_RATE)
+
+    def audio(self, text, voice, lang, options=None):
+        pcm = self.kokoro.synthesize(text, voice, lang, options)
+        return self.kokoro.sonic(pcm, self.speed)
+
+    def start(self, document, index, voice, lang):
+        self.stop()
+        self.cancel.clear()
+        self.thread = threading.Thread(target=self._run, args=(document, index, voice, lang), daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        """Stops at once, also a synthesis in progress, and waits for both
+        threads: onnxruntime must not be running when the program exits."""
+        self.cancel.set()
+        running = self.running
+        if running is not None:
+            running.terminate = True
+        for thread in (self.thread, self.producer):
+            if thread and thread is not threading.current_thread():
+                thread.join()
+        self.thread = None
+        self.producer = None
+
+    def _run(self, document, index, voice, lang):
+        ready = queue.Queue(maxsize=2)
+
+        def produce():
+            for i in range(index, len(document.sentences)):
+                if self.cancel.is_set():
+                    break
+                self.running = self.kokoro.run_options()
+                try:
+                    pcm = self.audio(document.sentences[i][3], voice, lang, self.running)
+                except Exception:  # noqa: BLE001 - terminated by stop()
+                    break
+                finally:
+                    self.running = None
+                while not self.cancel.is_set():
+                    try:
+                        ready.put((i, pcm), timeout=0.05)
+                        break
+                    except queue.Full:
+                        continue
+            while not self.cancel.is_set():
+                try:
+                    ready.put((None, None), timeout=0.05)
+                    break
+                except queue.Full:
+                    continue
+
+        self.producer = threading.Thread(target=produce, daemon=True)
+        self.producer.start()
+        finished = False
+        while not self.cancel.is_set():
+            try:
+                i, pcm = ready.get(timeout=0.05)
+            except queue.Empty:
+                continue
+            if i is None:
+                finished = True
+                break
+            GLib.idle_add(self.on_sentence, i)
+            if not self.player.play(pcm, self.cancel.is_set):
+                break
+        if not self.cancel.is_set():
+            self.player.drain(self.cancel.is_set)
+        GLib.idle_add(self.on_stop, finished)
+
+
+class ReaderWindow(Adw.ApplicationWindow):
+
+    def __init__(self, app):
+        super().__init__(application=app, title=_("VabaxOS reader"))
+        self.set_default_size(900, 700)
+        self.document = None
+        self.state = ReadingState()
+        self.index = 0
+        self.reading = False
+        self.reader = Reader(self.show_sentence, self.reading_stopped)
+
+        self.toasts = Adw.ToastOverlay()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        header = Adw.HeaderBar()
+        open_button = Gtk.Button(label=_("Open"))
+        open_button.set_tooltip_text(_("Open a document (Ctrl+O)"))
+        open_button.connect("clicked", lambda *_a: self.choose_file())
+        header.pack_start(open_button)
+        box.append(header)
+
+        self.view = Gtk.TextView(editable=False, wrap_mode=Gtk.WrapMode.WORD_CHAR,
+                                 left_margin=24, right_margin=24, top_margin=16, bottom_margin=16)
+        self.view.update_property([Gtk.AccessibleProperty.LABEL], [_("Document text")])
+        self.buffer = self.view.get_buffer()
+        self.buffer.set_text(_("Open a document with Ctrl+O. Then Ctrl+Space reads from the cursor."))
+        self.current_tag = self.buffer.create_tag("current", background="#ffe14d", foreground="#0b1b3f")
+        scroll = Gtk.ScrolledWindow(vexpand=True)
+        scroll.set_child(self.view)
+        box.append(scroll)
+
+        bar = Gtk.Box(spacing=6, margin_start=12, margin_end=12, margin_top=8, margin_bottom=8)
+        self.play_button = self.button(bar, _("Read"), _("Read or pause (Ctrl+Space)"), self.toggle)
+        self.button(bar, _("Previous sentence"), "Alt+Left", lambda: self.move_sentence(-1))
+        self.button(bar, _("Next sentence"), "Alt+Right", lambda: self.move_sentence(1))
+        self.button(bar, _("Previous paragraph"), "Alt+Up", lambda: self.move_paragraph(-1))
+        self.button(bar, _("Next paragraph"), "Alt+Down", lambda: self.move_paragraph(1))
+        self.button(bar, _("Bookmark"), "Ctrl+B", self.add_bookmark)
+        self.button(bar, _("Next bookmark"), "Ctrl+J", self.next_bookmark)
+        self.button(bar, _("Save audio"), "Ctrl+E", self.export_audio)
+        box.append(bar)
+
+        options = Gtk.Box(spacing=12, margin_start=12, margin_end=12, margin_bottom=12)
+        speed_label = Gtk.Label(label=_("Speed"))
+        self.speed = Gtk.SpinButton.new_with_range(0.5, 3.0, 0.1)
+        self.speed.set_value(1.0)
+        self.speed.update_property([Gtk.AccessibleProperty.LABEL], [_("Speed")])
+        self.speed.connect("value-changed", lambda spin: setattr(self.reader, "speed", spin.get_value()))
+        voice_label = Gtk.Label(label=_("Voice"))
+        self.voice = Gtk.DropDown.new_from_strings([VOICE_NAMES[v] for v, _l in VOICES])
+        self.voice.update_property([Gtk.AccessibleProperty.LABEL], [_("Voice")])
+        names = [v for v, _l in VOICES]
+        wanted = default_voice()
+        self.voice.set_selected(names.index(wanted) if wanted in names else 0)
+        for widget in (speed_label, self.speed, voice_label, self.voice):
+            options.append(widget)
+        box.append(options)
+
+        self.toasts.set_child(box)
+        self.set_content(self.toasts)
+        self.add_shortcuts()
+        self.connect("close-request", self.closing)
+        threading.Thread(target=self.load_voice, daemon=True).start()
+
+    # -- building ---------------------------------------------------------
+
+    def button(self, bar, label, tooltip, action):
+        button = Gtk.Button(label=label)
+        button.set_tooltip_text(tooltip)
+        button.connect("clicked", lambda *_a: action())
+        bar.append(button)
+        return button
+
+    def add_shortcuts(self):
+        controller = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+        keys = {
+            "<Control>o": self.choose_file, "<Control>space": self.toggle,
+            "<Alt>Right": lambda: self.move_sentence(1), "<Alt>Left": lambda: self.move_sentence(-1),
+            "<Alt>Down": lambda: self.move_paragraph(1), "<Alt>Up": lambda: self.move_paragraph(-1),
+            "<Control>plus": lambda: self.speed.spin(Gtk.SpinType.STEP_FORWARD, 1),
+            "<Control>equal": lambda: self.speed.spin(Gtk.SpinType.STEP_FORWARD, 1),
+            "<Control>minus": lambda: self.speed.spin(Gtk.SpinType.STEP_BACKWARD, 1),
+            "<Control>b": self.add_bookmark, "<Control>j": self.next_bookmark,
+            "<Control>e": self.export_audio,
+        }
+        for accel, action in keys.items():
+            callback = Gtk.CallbackAction.new(lambda *_a, act=action: act() or True)
+            controller.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(accel), callback))
+        self.add_controller(controller)
+
+    def say(self, text):
+        """A short message, read by Orca (a toast is announced)."""
+        self.toasts.add_toast(Adw.Toast.new(text))
+
+    # -- voice ------------------------------------------------------------
+
+    def load_voice(self):
+        try:
+            self.reader.load()
+        except Exception as error:  # noqa: BLE001 - tell the user
+            GLib.idle_add(self.say, _("The natural voice cannot start: {error}").format(error=error))
+
+    def selected_voice(self):
+        return VOICES[self.voice.get_selected()]
+
+    # -- documents ---------------------------------------------------------
+
+    def choose_file(self):
+        dialog = Gtk.FileDialog(title=_("Open a document"))
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        documents = Gtk.FileFilter(name=_("Documents"))
+        for ext in SUPPORTED:
+            documents.add_suffix(ext.lstrip("."))
+        filters.append(documents)
+        dialog.set_filters(filters)
+        dialog.open(self, None, self.file_chosen)
+
+    def file_chosen(self, dialog, result):
+        try:
+            file = dialog.open_finish(result)
+        except GLib.Error:
+            return
+        if file is not None:
+            self.open_path(file.get_path())
+
+    def open_path(self, path):
+        self.stop_reading()
+        name = os.path.basename(path)
+        try:
+            document = Document.open(path)
+        except NeedsOCR:
+            # Images and scanned PDFs: recognize the text in the background.
+            self.say(_("{name} is made of images: recognizing its text, a few seconds a page.").format(name=name))
+            threading.Thread(target=self._recognize, args=(path,), daemon=True).start()
+            return
+        except Exception as error:  # noqa: BLE001 - tell the user in words
+            self.say(_("Cannot open {name}: {error}").format(name=name, error=error))
+            return
+        self.show_document(document)
+
+    def _recognize(self, path):
+        try:
+            document = Document.open(path, ocr=True)
+        except Exception as error:  # noqa: BLE001
+            GLib.idle_add(self.say, _("Cannot open {name}: {error}").format(name=os.path.basename(path), error=error))
+            return
+        GLib.idle_add(self.show_document, document)
+
+    def show_document(self, document):
+        path = document.path
+        if not document.sentences:
+            self.say(_("{name} has no text to read.").format(name=os.path.basename(path)))
+            return False
+        self.document = document
+        self.buffer.set_text(document.text)
+        self.index = min(self.state.position(path), len(document.sentences) - 1)
+        self.set_title(_("{name} - VabaxOS reader").format(name=os.path.basename(path)))
+        self.place_cursor(self.index)
+        where = _("from the beginning") if self.index == 0 else _("from where you left it")
+        self.say(_("{name} opened, {count} sentences. Ctrl+Space reads {where}.").format(
+            name=os.path.basename(path), count=len(document.sentences), where=where))
+        self.view.grab_focus()
+        return False
+
+    # -- reading ------------------------------------------------------------
+
+    def place_cursor(self, index):
+        start = self.document.sentences[index][1]
+        self.buffer.place_cursor(self.buffer.get_iter_at_offset(start))
+        self.view.scroll_to_iter(self.buffer.get_iter_at_offset(start), 0.2, False, 0, 0)
+
+    def show_sentence(self, index):
+        self.index = index
+        _p, start, end, _t = self.document.sentences[index]
+        self.buffer.remove_tag(self.current_tag, self.buffer.get_start_iter(), self.buffer.get_end_iter())
+        self.buffer.apply_tag(self.current_tag, self.buffer.get_iter_at_offset(start), self.buffer.get_iter_at_offset(end))
+        # The text is highlighted but the cursor does not move while reading,
+        # so Orca does not speak over the natural voice.
+        self.view.scroll_to_iter(self.buffer.get_iter_at_offset(start), 0.2, False, 0, 0)
+        return False
+
+    def reading_stopped(self, finished):
+        if self.reader.thread is not None and self.reader.thread.is_alive():
+            return False  # an older reading ended while a new one runs
+        self.reading = False
+        self.play_button.set_label(_("Read"))
+        if self.document:
+            self.state.set_position(self.document.path, 0 if finished else self.index)
+            if not finished:
+                self.place_cursor(self.index)
+        if finished:
+            self.say(_("End of the document."))
+        return False
+
+    def toggle(self):
+        if self.reading:
+            self.stop_reading()
+            return
+        if not self.document:
+            self.choose_file()
+            return
+        if self.reader.kokoro is None:
+            self.say(_("The natural voice is still loading. Try again in a moment."))
+            return
+        cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert()).get_offset()
+        self.index = self.document.sentence_at(cursor)
+        voice, lang = self.selected_voice()
+        self.reading = True
+        self.play_button.set_label(_("Pause"))
+        self.reader.speed = self.speed.get_value()
+        self.reader.start(self.document, self.index, voice, lang)
+
+    def stop_reading(self):
+        if self.reading:
+            self.reader.stop()
+            self.reading = False
+            self.play_button.set_label(_("Read"))
+            if self.document:
+                self.state.set_position(self.document.path, self.index)
+
+    def move_sentence(self, step):
+        if not self.document:
+            return
+        was_reading = self.reading
+        self.stop_reading()
+        self.index = max(0, min(self.index + step, len(self.document.sentences) - 1))
+        self.jump(was_reading)
+
+    def move_paragraph(self, step):
+        if not self.document:
+            return
+        was_reading = self.reading
+        self.stop_reading()
+        self.index = self.document.next_paragraph(self.index, step)
+        self.jump(was_reading)
+
+    def jump(self, read):
+        self.place_cursor(self.index)
+        if read:
+            self.toggle()
+        else:
+            self.show_sentence(self.index)
+            self.say(self.document.sentences[self.index][3])
+
+    # -- bookmarks and audio ------------------------------------------------
+
+    def add_bookmark(self):
+        if not self.document:
+            return
+        text = self.document.sentences[self.index][3]
+        label = " ".join(text.split()[:8])
+        self.state.add_bookmark(self.document.path, self.index, label)
+        self.say(_("Bookmark added: {text}").format(text=label))
+
+    def next_bookmark(self):
+        if not self.document:
+            return
+        marks = self.state.bookmarks(self.document.path)
+        if not marks:
+            self.say(_("No bookmarks in this document. Ctrl+B adds one."))
+            return
+        after = [m for m in marks if m["index"] > self.index] or marks
+        self.stop_reading()
+        self.index = after[0]["index"]
+        self.place_cursor(self.index)
+        self.show_sentence(self.index)
+        self.say(_("Bookmark: {text}").format(text=after[0]["label"]))
+
+    def export_audio(self):
+        if not self.document or self.reader.kokoro is None:
+            return
+        base = os.path.splitext(self.document.path)[0]
+        target = base + ".wav"
+        voice, lang = self.selected_voice()
+        self.say(_("Saving the audio to {name}. It takes a while; you can keep reading.").format(
+            name=os.path.basename(target)))
+        threading.Thread(target=self._export, args=(target, voice, lang), daemon=True).start()
+
+    def _export(self, target, voice, lang):
+        from vabaxos_voice import engine
+        total = len(self.document.sentences)
+        pause = b"\0\0" * int(engine.SAMPLE_RATE * 0.35)
+        try:
+            with wave.open(target, "wb") as out:
+                out.setnchannels(1)
+                out.setsampwidth(2)
+                out.setframerate(engine.SAMPLE_RATE)
+                for i, (_p, _s, _e, text) in enumerate(self.document.sentences):
+                    out.writeframes(self.reader.audio(text, voice, lang).tobytes() + pause)
+                    if total >= 20 and i in (total // 4, total // 2, 3 * total // 4):
+                        GLib.idle_add(self.say, _("Saving the audio: {percent} percent.").format(
+                            percent=round(100 * i / total)))
+        except Exception as error:  # noqa: BLE001
+            GLib.idle_add(self.say, _("The audio could not be saved: {error}").format(error=error))
+            return
+        GLib.idle_add(self.say, _("Audio saved: {name}.").format(name=os.path.basename(target)))
+
+    def closing(self, *_args):
+        self.stop_reading()
+        self.reader.stop()
+        return False
+
+
+class ReaderApp(Adw.Application):
+
+    def __init__(self):
+        super().__init__(application_id="org.vabaxos.Reader", flags=Gio.ApplicationFlags.HANDLES_OPEN)
+        self.connect("activate", self.on_activate)
+        self.connect("open", self.on_open)
+
+    def window(self):
+        window = self.get_active_window() or ReaderWindow(self)
+        window.present()
+        return window
+
+    def on_activate(self, _app):
+        self.window()
+
+    def on_open(self, _app, files, _count, _hint):
+        window = self.window()
+        if files:
+            window.open_path(files[0].get_path())
+
+
+def main(argv):
+    return ReaderApp().run(argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

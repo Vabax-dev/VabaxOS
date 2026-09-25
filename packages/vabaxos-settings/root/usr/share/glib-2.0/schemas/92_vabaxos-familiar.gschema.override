@@ -1,0 +1,4 @@
+# Block 8, a familiar interface: Minimize and Maximize next to Close on
+# every window, as in Windows (GNOME shows only Close).
+[org.gnome.desktop.wm.preferences]
+button-layout='appmenu:minimize,maximize,close'

@@ -67,11 +67,24 @@ jobs:
             apt-get update -q
             apt-get install -y -q --no-install-recommends git ca-certificates python3 qemu-system-x86 ovmf procps
             failed=0
-            for args in "" "--entry novoice" "--entry recovery" "--secure-boot" "--entry install"; do
+            for args in "" "--entry novoice" "--entry recovery" "--secure-boot" "--entry install" \
+                "--entry welcome-install" "--secure-boot --entry welcome-install"; do
               echo "=== test-boot.sh $args"
               ./scripts/test-boot.sh $args || failed=$((failed + 1))
             done
             exit $failed
+          '
+
+      # Automatic installation on a virtual disk, then two starts from it:
+      # the choices passed to the installer must reach the installed system.
+      - name: Installation test
+        if: ${{ !cancelled() }}
+        run: |
+          docker run --rm --privileged --device /dev/kvm -v "$PWD:/src" -w /src debian:trixie bash -c '
+            set -e
+            apt-get update -q
+            apt-get install -y -q --no-install-recommends git ca-certificates python3 qemu-system-x86 qemu-utils ovmf procps xorriso
+            ./scripts/test-install.sh
           '
 
       - name: Keep the ISO and the logs

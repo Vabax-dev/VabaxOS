@@ -1,14 +1,16 @@
 #!/usr/bin/python3
 """Checks a running program the way a screen reader sees it (ADR-0010).
 
-    vabaxos-a11y-check [--wait SECONDS] [--list] PROGRAM
+    vabaxos-a11y-check [--wait SECONDS] [--list | --focused] PROGRAM
 
 Walks the AT-SPI accessibility tree of PROGRAM (the application name, for
 example vabaxos-setup, or a part of it, such as nautilus) and reports every control a screen reader user can
 reach with the keyboard (shown and focusable buttons, switches, check
 boxes, text fields, spin buttons, combo boxes, list items, menu items,
 links, sliders) that has neither an accessible name nor text inside it.
-With --list it prints every node: depth, role and name.
+With --list it prints every node: depth, role and name. With --focused it
+prints only what has the keyboard focus, as Orca would announce it (role and
+name), for the tests of the keys.
 
 Exit status: 0 if every control has a name, 1 if some have none, 2 if the
 program was not found.
@@ -114,6 +116,36 @@ def walk(node, depth, report, listing):
             walk(child, depth + 1, report, listing)
 
 
+def text_of(node, depth=3):
+    """The name of a node, or the names inside it."""
+    name = (node.get_name() or "").strip()
+    if name or depth == 0:
+        return name
+    parts = []
+    for index in range(node.get_child_count()):
+        child = node.get_child_at_index(index)
+        if child is not None:
+            parts.append(text_of(child, depth - 1))
+    return " ".join(p for p in parts if p)
+
+
+def focused(node):
+    """The deepest shown node that has the keyboard focus, or None: the
+    window around the focused control is focused too."""
+    try:
+        for index in range(node.get_child_count()):
+            child = node.get_child_at_index(index)
+            found = focused(child) if child is not None else None
+            if found is not None:
+                return found
+        states = node.get_state_set()
+        if states.contains(Atspi.StateType.FOCUSED) and states.contains(Atspi.StateType.SHOWING):
+            return node
+    except gi.repository.GLib.Error:
+        pass
+    return None
+
+
 def main(argv):
     args = argv[1:]
     listing = "--list" in args
@@ -132,6 +164,13 @@ def main(argv):
     if app is None:
         print(f"{names[0]}: not found on the accessibility bus")
         return 2
+    if "--focused" in args:
+        node = focused(app)
+        if node is None:
+            print(f"{names[0]}: focus: none")
+            return 1
+        print(f"{names[0]}: focus: {node.get_role_name()}: {text_of(node)}")
+        return 0
     report = []
     walk(app, 0, report, listing)
     for line in report:

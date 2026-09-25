@@ -1,0 +1,164 @@
+# Italian translation of vabaxos-accessibility.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-accessibility\n"
+"PO-Revision-Date: 2026-09-24 00:00+0200\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "VabaxOS report"
+msgstr "Rapporto di VabaxOS"
+
+msgid "Saved in $file"
+msgstr "Salvato in $file"
+
+msgid "It is {time}, {date}."
+msgstr "Sono le {time}, {date}."
+
+msgid "No battery: the computer runs on mains power."
+msgstr "Nessuna batteria: il computer va a corrente."
+
+msgid "charging"
+msgstr "in carica"
+
+msgid "on battery"
+msgstr "a batteria"
+
+msgid "full"
+msgstr "carica completa"
+
+msgid "plugged in, not charging"
+msgstr "collegato, non in carica"
+
+msgid "Battery {level} percent, {state}."
+msgstr "Batteria al {level} per cento, {state}."
+
+msgid "Wi-Fi connected to {name}, signal {signal} percent."
+msgstr "Wi-Fi collegato a {name}, segnale al {signal} per cento."
+
+msgid "Connected by cable."
+msgstr "Collegato con il cavo."
+
+msgid "Wi-Fi not connected."
+msgstr "Wi-Fi non collegato."
+
+msgid "No network."
+msgstr "Nessuna rete."
+
+msgid "No Bluetooth."
+msgstr "Nessun Bluetooth."
+
+msgid "Bluetooth off."
+msgstr "Bluetooth spento."
+
+msgid "Bluetooth on, connected to {devices}."
+msgstr "Bluetooth acceso, collegato a {devices}."
+
+msgid "Bluetooth on, nothing connected."
+msgstr "Bluetooth acceso, nessun dispositivo collegato."
+
+msgid "Volume {level} percent, muted."
+msgstr "Volume al {level} per cento, audio disattivato."
+
+msgid "Volume {level} percent."
+msgstr "Volume al {level} per cento."
+
+msgid "Computer status"
+msgstr "Stato del computer"
+
+# Button names of GNOME Shell (button-names@vabaxos.org, ADR-0022).
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Expand"
+msgstr "Espandi"
+
+msgid "Collapse"
+msgstr "Comprimi"
+
+msgid "Play"
+msgstr "Riproduci"
+
+msgid "Pause"
+msgstr "Pausa"
+
+msgid "Stop"
+msgstr "Ferma"
+
+msgid "Previous"
+msgstr "Precedente"
+
+msgid "Next"
+msgstr "Successivo"
+
+msgid "Back"
+msgstr "Indietro"
+
+msgid "Forward"
+msgstr "Avanti"
+
+msgid "More options"
+msgstr "Altre opzioni"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Clear"
+msgstr "Cancella"
+
+msgid "Clear all"
+msgstr "Cancella tutto"
+
+msgid "Delete"
+msgstr "Elimina"
+
+msgid "Add"
+msgstr "Aggiungi"
+
+msgid "Remove"
+msgstr "Rimuovi"
+
+msgid "Minimize"
+msgstr "Riduci a icona"
+
+msgid "Maximize"
+msgstr "Ingrandisci"
+
+msgid "Restore"
+msgstr "Ripristina"
+
+msgid "Power Off"
+msgstr "Spegni"
+
+msgid "Restart"
+msgstr "Riavvia"
+
+msgid "Log Out"
+msgstr "Esci"
+
+msgid "Lock"
+msgstr "Blocca"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Take Screenshot"
+msgstr "Cattura schermata"
+
+msgid "Refresh"
+msgstr "Aggiorna"
+
+msgid "Search"
+msgstr "Cerca"
+
+msgid "Trash"
+msgstr "Cestino"
+
+msgid "Show Apps"
+msgstr "Mostra applicazioni"

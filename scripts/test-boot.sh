@@ -12,6 +12,9 @@
 #   recovery  presses R, "Recovery mode with voice" (console only)
 #   install   presses I, "Install VabaxOS with voice": checks only that the
 #             Debian Installer speaks (no serial console there), then stops
+#   welcome-install  no key pressed; in the welcome: English, Install VabaxOS,
+#             Install now (ADR-0023): the live system must restart into the
+#             installer with kexec, without the firmware, and it must speak
 # --lang it chooses Italian in the boot menu first (L, then I).
 # Exit status: 0 if every check passes.
 # Commands in single quotes run in the shell of the VM, not here:
@@ -34,7 +37,7 @@ while [[ $# -gt 0 ]]; do
         --entry) ENTRY="${2:?--entry vuole voice, novoice o recovery}"; shift ;;
         --lang) MENU_LANG="${2:?--lang vuole it}"; shift ;;
         --timeout) TIMEOUT="${2:?--timeout vuole i secondi}"; shift ;;
-        -*) printf 'Uso: %s [--secure-boot | --bios] [--entry voice|novoice|recovery] [--lang it] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
+        -*) printf 'Uso: %s [--secure-boot | --bios] [--entry voice|novoice|recovery|install|welcome-install] [--lang it] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
         *) ISO=("$1") ;;
     esac
     shift
@@ -46,6 +49,7 @@ case "$ENTRY" in
     novoice) HOTKEY=n; WANT_VOICE=off; WANT_RECOVERY=no; WANT_SPEECH=inactive; WANT_DESKTOP=yes; WANT_ORCA=no; WANT_SOUND=no ;;
     recovery) HOTKEY=r; WANT_VOICE=on; WANT_RECOVERY=yes; WANT_SPEECH=active; WANT_DESKTOP=no; WANT_ORCA=no; WANT_SOUND=yes ;;
     install) HOTKEY=i; WANT_SOUND=yes ;;
+    welcome-install) HOTKEY=""; WANT_SOUND=yes ;;
     *) printf 'Voce del menu sconosciuta: %s\n' "$ENTRY" >&2; exit 64 ;;
 esac
 case "$MENU_LANG" in
@@ -169,23 +173,24 @@ if [[ -n "$HOTKEY" || -n "$MENU_LANG" ]]; then
     fi
 fi
 
-# The installer has no serial console: record its speech, then stop the VM.
-if [[ "$ENTRY" == install ]]; then
-    FAILED=0
-    sleep 40
-    HEARD=no
+# The installer has no serial console: record its speech, up to a minute.
+installer_speaks() {
+    local part
     for part in 1 2 3; do
         if [[ "$(record "installer-$part" 20)" == yes ]]; then
-            HEARD=yes
-            break
+            printf 'OK: l'\''installer parla (registrazione %s).\n' "$part"
+            return 0
         fi
     done
-    if [[ "$HEARD" == yes ]]; then
-        printf 'OK: l'\''installer parla (registrazione %s).\n' "$part"
+    printf 'FALLITO: l'\''installer non parla dopo 100 secondi.\n'
+    return 1
+}
+if [[ "$ENTRY" == install ]]; then
+    sleep 40
+    if installer_speaks; then
         printf 'Risultato: test di avvio superato (%s, install).\n' "$MODE"
         exit 0
     fi
-    printf 'FALLITO: l'\''installer non parla dopo 100 secondi.\n'
     printf 'Risultato: 1 controlli falliti (%s, install).\n' "$MODE"
     exit 1
 fi
@@ -202,6 +207,33 @@ check() {
         FAILED=$((FAILED + 1))
     fi
 }
+
+# Install from the welcome (ADR-0023): English, Install VabaxOS, Install now.
+# The live system restarts into the installer with kexec: with UEFI, one
+# more "BdsDxe: starting" from the firmware would mean a normal restart.
+if [[ "$ENTRY" == welcome-install ]]; then
+    FIRMWARE_STARTS="$(grep -ac 'BdsDxe: starting' "$LOG")"
+    sleep 5
+    press ret
+    check 'voce del benvenuto udibile' "$(record welcome 8)" yes
+    press down
+    sleep 2
+    press ret
+    sleep 5
+    press ret
+    printf 'INFO: nel benvenuto: Install VabaxOS, poi Install now.\n'
+    sleep 40
+    if [[ "$MODE" != bios ]]; then
+        check 'riavvio senza firmware (kexec)' "$(( $(grep -ac 'BdsDxe: starting' "$LOG") - FIRMWARE_STARTS ))" 0
+    fi
+    installer_speaks || FAILED=$((FAILED + 1))
+    if [[ "$FAILED" -eq 0 ]]; then
+        printf 'Risultato: test di avvio superato (%s, welcome-install).\n' "$MODE"
+        exit 0
+    fi
+    printf 'Risultato: %d controlli falliti (%s, welcome-install).\n' "$FAILED" "$MODE"
+    exit 1
+fi
 
 # The spoken welcome waits on the first console (ADR-0016). Answer it like a
 # person, before logging in on the serial console: a login there would start
@@ -275,16 +307,31 @@ check 'nome e logo VabaxOS' "$(value logo)" vabaxos-logo
 # read whatever window has the focus). Then the third text console, where
 # Speakup must read the login prompt, and back to the desktop (or the first
 # console), where Orca must read a new notification.
+# The test notification is closed after listening: GNOME Shell keeps a
+# banner on screen while the user is idle, and the accessibility checks
+# that follow would find its buttons (the expand and close buttons of
+# GNOME Shell 50 have no name) instead of the Start menu alone.
+NOTIFY="env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications"
 orca_speaks() {
-    send "env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications.Notify VabaxOS 0 '' 'Test $1' 'VabaxOS test' '[]' '{}' 5000 >/dev/null"
+    # gdbus prints "(uint32 ID,)".
+    send "n=\$($NOTIFY.Notify VabaxOS 0 '' 'Test $1' 'VabaxOS test' '[]' '{}' 5000 | awk '{print \$2+0}')"
     record "$1" 8
+    send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
 }
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Orca speaks through speech-dispatcher, which starts with Orca.
     ask sd 'for i in $(seq 60); do pgrep -u user -x speech-dispatch >/dev/null && break; sleep 1; done; sleep 5; pgrep -u user -x speech-dispatch >/dev/null && echo yes || echo no' || exit 1
 fi
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    check 'Orca udibile nel desktop' "$(orca_speaks orca)" "$WANT_SOUND"
+    ORCA_HEARD="$(orca_speaks orca)"
+    check 'Orca udibile nel desktop' "$ORCA_HEARD" "$WANT_SOUND"
+    # Orca silent: GNOME Shell's and Orca's messages go to the serial log,
+    # to see whether the desktop is stuck (CI, 2026-09-25: GNOME Shell did
+    # not answer on the session bus from the start in one run of eight).
+    if [[ "$ORCA_HEARD" != "$WANT_SOUND" ]]; then
+        send 'sudo -n journalctl -b --no-pager -o short-monotonic _COMM=gnome-shell _COMM=orca | tail -80 | sed "s/^/JOURNAL: /"'
+        ask diagnosis 'echo done' || exit 1
+    fi
     ask vt 'loginctl show-session $(loginctl list-sessions --no-legend | awk "\$3==\"user\" && \$4==\"seat0\" {print \$1}" | head -1) -p VTNr --value' || exit 1
     BACK_VT="$(value vt)"
 else
@@ -322,23 +369,23 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'tasti del mouse: GNOME Shell' "$(value mousekeys)" stabile
 fi
 
-# Desktop voice chosen at boot (ADR-0019): the service must succeed and
-# write the default module. In the test VM (4 GB, 2 processors) the choice
-# is usually eSpeak NG; then Kokoro is forced and Orca must still speak.
+# Desktop voice (ADR-0019, ADR-0024): the service must succeed and write
+# eSpeak NG as the default module. Then Kokoro is chosen the way a user
+# does in vabaxos-setup (Orca's synthesizer): the module must load the
+# model in advance and Orca must still speak.
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select' || exit 1
     ask voicemodule 'sed -n "s/^DefaultModule //p" /etc/speech-dispatcher/clients/zz-vabaxos-voice.conf' || exit 1
     ask voicereason 'grep "^#" /var/lib/vabaxos/voice.conf | tr -d "#"' || exit 1
     check "scelta della voce all'avvio" "$(value voiceselect)" success
-    printf 'INFO: voce del desktop scelta: %s (%s)\n' "$(value voicemodule)" "$(value voicereason)"
+    check 'voce predefinita del desktop (eSpeak NG)' "$(value voicemodule)" espeak-ng
+    printf 'INFO: voce del desktop: %s (%s)\n' "$(value voicemodule)" "$(value voicereason)"
 fi
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
-    # Wait for the end of the sudo command before typing more: with use_pty,
-    # sudo reads from the terminal and would swallow a line typed ahead.
-    ask forcekokoro "sudo vabaxos-voice-select --engine kokoro >/dev/null 2>&1; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
+    ask forcekokoro "env $BUS gsettings set org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer kokoro; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
     ask orcaback 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
-    # The module loads the model in the background where Kokoro is the
-    # voice (about 570 MB): wait for it, up to 2 minutes on slow machines
+    # The module loads the model in the background when Orca uses Kokoro
+    # (about 570 MB): wait for it, up to 2 minutes on slow machines
     # such as the CI runners, then Orca must speak with it.
     ask kokoro 'for i in $(seq 120); do r=$(ps -o rss= -C sd_kokoro | sort -n | tail -1); [ "${r:-0}" -gt 300000 ] && break; sleep 1; done; [ "${r:-0}" -gt 300000 ] && echo yes || echo "no (${r:-0} kB)"' || exit 1
     check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"
@@ -348,15 +395,157 @@ fi
 # Start menu (ADR-0018): ArcMenu active; Super opens it and every control
 # must have a name for Orca. The full accessibility tree of GNOME Shell
 # goes to the serial log, to see what the screen reader finds.
+# A notification is on screen during the check (critical, so its banner
+# stays until it is closed): GNOME Shell 50 draws its Close and Expand
+# buttons with an icon only, and button-names@vabaxos.org must give them a
+# name (ADR-0022).
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ask arcmenu "env $BUS gnome-extensions list --enabled --active | grep -c arcmenu@arcmenu.com" || exit 1
     check 'menu Start (ArcMenu) attivo' "$(value arcmenu)" 1
+    ask buttonnames "env $BUS gnome-extensions list --enabled --active | grep -c button-names@vabaxos.org" || exit 1
+    check 'nomi dei pulsanti di GNOME Shell attivi' "$(value buttonnames)" 1
+    send "n=\$($NOTIFY.Notify VabaxOS 0 '' 'Test menu' 'VabaxOS test' '[]' '{\"urgency\": <byte 2>}' 0 | awk '{print \$2+0}')"
     press meta_l
     sleep 3
     send "env $BUS vabaxos-a11y-check --list gnome-shell > /tmp/shell-a11y.txt 2>&1; sed 's/^/A11Y: /' /tmp/shell-a11y.txt"
     ask shella11y "tail -1 /tmp/shell-a11y.txt" || exit 1
+    ask bannernames "grep -A12 'notification:' /tmp/shell-a11y.txt | grep -c -E 'button: (Close|Chiudi)\$'" || exit 1
     press esc
+    send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
     check 'menu Start: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
+    printf 'INFO: pulsanti Chiudi nelle notifiche: %s\n' "$(value bannernames)"
+fi
+
+# Desktop programs (block 5, ROADMAP v0.1): Files, Terminal and the
+# Settings panels for Wi-Fi, Bluetooth and Power must open, and the
+# controls without a name are counted. GNOME programs are not ours: the
+# counts are information, with the full trees in the serial log.
+# GNOME Settings starts only when XDG_CURRENT_DESKTOP says GNOME.
+DESKTOP_ENV="$BUS WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 XDG_CURRENT_DESKTOP=GNOME"
+app_a11y() {
+    local key="$1" launch="$2" name="$3"
+    send "env $DESKTOP_ENV $launch >/dev/null 2>&1 &"
+    ask "$key" "env $BUS vabaxos-a11y-check --wait 40 $name > /tmp/$key.txt 2>&1; tail -1 /tmp/$key.txt" || exit 1
+    send "sed 's/^/A11Y-$key: /' /tmp/$key.txt | grep 'NO NAME' ; pkill -f '$launch' ; sleep 2"
+    printf 'INFO: %s\n' "$(value "$key")"
+}
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    app_a11y files nautilus nautilus
+    app_a11y terminal ptyxis ptyxis
+    # GNOME Settings is on the accessibility bus as org.gnome.Settings.
+    app_a11y wifi 'gnome-control-center wifi' settings
+    app_a11y bluetooth 'gnome-control-center bluetooth' settings
+    app_a11y power 'gnome-control-center power' settings
+    ask status "env $BUS vabaxos-status battery" || exit 1
+    printf 'INFO: vabaxos-status: %s\n' "$(value status)"
+    ask soundtheme "env $BUS gsettings get org.gnome.desktop.sound theme-name" || exit 1
+    check 'tema dei suoni' "$(value soundtheme)" "'vabaxos'"
+    ask font "env $BUS gsettings get org.gnome.desktop.interface font-name" || exit 1
+    check 'font del desktop' "$(value font)" "'Atkinson Hyperlegible Next 11'"
+fi
+
+# The complete system (block 7): office and e-mail open and their
+# unnamed controls are counted; Braille, text recognition and the help
+# are ready.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    app_a11y writer 'libreoffice --writer' soffice
+    app_a11y mail thunderbird thunderbird
+    ask braille 'test -s /etc/brlapi.key && command -v brltty >/dev/null && python3 -c "import brlapi" && echo pronto' || exit 1
+    check 'Braille (brltty, BrlAPI)' "$(value braille)" pronto
+    ask ocr 'tesseract --list-langs 2>/dev/null | grep -c "^ita$"' || exit 1
+    check 'riconoscimento del testo in italiano' "$(value ocr)" 1
+    ask help 'ls /usr/share/doc/vabaxos-help/html/*.html | wc -l' || exit 1
+    printf 'INFO: pagine dell'"'"'aiuto: %s\n' "$(value help)"
+fi
+
+# A familiar interface (block 8): the extensions are active (the Start menu
+# check above also covers the taskbar, since it reads all of GNOME Shell),
+# windows have Minimize and Maximize, Ctrl+Shift+Esc opens the System
+# Monitor, and the Programs window has a name on every control.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|arcmenu|vabaxos-keys|button-names'" || exit 1
+    check 'estensioni attive (menu Start, barra, icone, appunti, finestre, tasti, nomi dei pulsanti)' "$(value extensions)" 8
+    ask buttons "env $BUS gsettings get org.gnome.desktop.wm.preferences button-layout" || exit 1
+    check 'pulsanti delle finestre' "$(value buttons)" "'appmenu:minimize,maximize,close'"
+    press ctrl-shift-esc
+    ask taskmanager 'for i in $(seq 20); do pgrep -u user -x gnome-system-mo >/dev/null && break; sleep 1; done; pgrep -u user -x gnome-system-mo >/dev/null && echo yes || echo no' || exit 1
+    check 'Ctrl+Maiusc+Esc apre il Monitor di sistema' "$(value taskmanager)" yes
+    send 'pkill -u user -x gnome-system-mo'
+    app_a11y programs vabaxos-apps vabaxos-apps
+fi
+
+# The keys of Windows (block 8): Super+T and Super+B move the focus to the
+# taskbar and to the notification area (what Orca would read there is in
+# the log), copy, cut and paste work in a program, Alt+F4 closes a window
+# and on the desktop asks to shut down (then Escape).
+focus_after() {
+    local key="$1"
+    press "$2"
+    sleep 2
+    ask "$key" "env $BUS vabaxos-a11y-check --focused gnome-shell" || exit 1
+    press esc
+    sleep 1
+}
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask keys "echo \$(env $BUS gsettings get org.gnome.shell.keybindings toggle-quick-settings) \$(env $BUS gsettings get org.gnome.desktop.wm.keybindings switch-windows)" || exit 1
+    check 'tasti di Windows (Super+A, Alt+Tab)' "$(value keys)" "['<Super>a'] ['<Alt>Tab']"
+    focus_after taskbar meta_l-t
+    check 'Super+T porta il focus sulla barra delle applicazioni' "$(value taskbar | grep -c 'focus: push button\|focus: button')" 1
+    printf 'INFO: Super+T: %s\n' "$(value taskbar)"
+    focus_after tray meta_l-b
+    check "Super+B porta il focus sull'area di notifica" "$(value tray | grep -vc 'focus: none\|Main stage')" 1
+    printf 'INFO: Super+B: %s\n' "$(value tray)"
+    # The text is counted, not the lines: Text Editor pastes on the same
+    # line (its last newline is not part of the text).
+    send "printf 'VabaxOS copia\n' > /tmp/copia.txt; env $DESKTOP_ENV gnome-text-editor --standalone /tmp/copia.txt >/dev/null 2>&1 &"
+    ask editor "env $BUS vabaxos-a11y-check --wait 40 --focused gnome-text-editor" || exit 1
+    sleep 3
+    printf 'INFO: editor di testo: %s\n' "$(value editor)"
+    press ctrl-a; press ctrl-c; press ctrl-end; press ctrl-v; press ctrl-s
+    sleep 2
+    ask copied 'grep -o "VabaxOS copia" /tmp/copia.txt | wc -l' || exit 1
+    check 'Ctrl+C e Ctrl+V: testo copiato e incollato' "$(value copied)" 2
+    press ctrl-a; press ctrl-x; press ctrl-s
+    sleep 2
+    ask cut 'grep -o "VabaxOS copia" /tmp/copia.txt | wc -l' || exit 1
+    press ctrl-v; press ctrl-s
+    sleep 2
+    ask pasted 'grep -o "VabaxOS copia" /tmp/copia.txt | wc -l' || exit 1
+    check 'Ctrl+X taglia e Ctrl+V incolla di nuovo' "$(value cut) $(value pasted)" "0 2"
+    press alt-f4
+    ask closed 'sleep 3; pgrep -u user -x gnome-text-edit >/dev/null && echo aperto || echo chiuso' || exit 1
+    check 'Alt+F4 chiude la finestra' "$(value closed)" chiuso
+    # Close every window first (the first setup opens by itself at login):
+    # with a window left, Alt+F4 closes it, as in Windows.
+    # ask, not send: Alt+F4 must wait until the windows are closed.
+    ask closedall 'pkill -u user -x gnome-text-edit; pkill -u user -f vabaxos-setup; pkill -u user -f soffice; pkill -u user -x thunderbird; sleep 3; echo done' || exit 1
+    press alt-f4
+    sleep 3
+    ask poweroff "env $BUS vabaxos-a11y-check --focused gnome-shell" || exit 1
+    # Seen once with Orca (2026-09-25), not reproduced by hand: the first
+    # Alt+F4 did nothing. A second try is allowed, and said in the log.
+    if [[ "$(value poweroff | grep -ci 'power off\|restart\|cancel')" != 1 ]]; then
+        printf 'INFO: Alt+F4 sul desktop: il primo non ha aperto la richiesta, riprovo\n'
+        press alt-f4
+        sleep 3
+        ask poweroff2 "env $BUS vabaxos-a11y-check --focused gnome-shell" || exit 1
+        [[ "$(value poweroff2 | grep -ci 'power off\|restart\|cancel')" == 1 ]] && ask poweroff "echo \"$(value poweroff2)\"" >/dev/null
+    fi
+    press esc
+    printf 'INFO: Alt+F4 sul desktop: %s\n' "$(value poweroff)"
+    check 'Alt+F4 sul desktop chiede di spegnere' "$(value poweroff | grep -ci 'power off\|restart\|cancel')" 1
+fi
+
+# Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    send 'sudo systemctl suspend </dev/null'
+    sleep 15
+    monitor system_wakeup
+    sleep 10
+    ask resumed 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "returned from sleep"' || exit 1
+    ask sleepstate 'cat /sys/power/state; journalctl -b --no-pager -o cat -u systemd-suspend.service | tail -1' || exit 1
+    printf 'INFO: sospensione riuscita %s volte; stati: %s\n' "$(value resumed)" "$(value sleepstate)"
+    check 'Orca udibile dopo la sospensione' "$(orca_speaks orca-resume)" "$WANT_SOUND"
 fi
 
 if [[ "$(value state)" != running ]]; then
@@ -366,6 +555,10 @@ fi
 
 # During shutdown systemd logs to the kernel log, which reaches the serial
 # console: the log then tells which service slows the shutdown down, if any.
+# The shutdown sound (vabaxos-shutdown-sound.service) plays after the user
+# sessions stop, in every mode: the recording runs until the VM is off.
+SHUTDOWN_WAV="${LOG%.log}-shutdown.wav"
+monitor "wavcapture $SHUTDOWN_WAV snd0"
 send 'sudo dmesg -n 7; sudo systemd-analyze log-target kmsg; sudo systemd-analyze log-level info; sudo poweroff'
 SHUTDOWN_START=$SECONDS
 for _ in $(seq 120); do
@@ -381,6 +574,11 @@ elif (( SHUTDOWN_SECONDS > 30 )); then
     FAILED=$((FAILED + 1))
 else
     printf 'OK: spegnimento in %d secondi.\n' "$SHUTDOWN_SECONDS"
+fi
+if python3 "$REPO/scripts/lib/wav-timeline.py" "$SHUTDOWN_WAV" 2>/dev/null | grep -q 'voce\|tono'; then
+    check 'suono di spegnimento udibile' yes yes
+else
+    check 'suono di spegnimento udibile' no yes
 fi
 SLOW="$(tr -d '\r' < "$LOG" | sed -n 's/.*systemd\[1\]: \([^:]*\): State .stop-sigterm. timed out.*/\1/p' | sort -u | paste -sd,)"
 [[ -z "$SLOW" ]] || printf 'INFO: servizi lenti a fermarsi: %s\n' "$SLOW"

@@ -1,0 +1,126 @@
+#!/usr/bin/python3
+"""Says the state of the computer: time, battery, network, Bluetooth, volume.
+
+    vabaxos-status [all|time|battery|network|bluetooth|volume]
+
+Bound to Super+Alt+I in the desktop (vabaxos-settings). The answer is a
+desktop notification, which Orca reads wherever the focus is, and is also
+printed, so it works in a terminal and on the text console. Orca already
+says the time (Orca+T), but not the battery: this is one key for all of
+it, like the status commands of NVDA.
+"""
+
+import datetime
+import gettext
+import glob
+import locale
+import os
+import subprocess
+import sys
+
+gettext.textdomain("vabaxos-accessibility")
+_ = gettext.gettext
+
+
+def output(*command):
+    try:
+        return subprocess.run(command, capture_output=True, text=True, timeout=5).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def read(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def time_text():
+    now = datetime.datetime.now()
+    return _("It is {time}, {date}.").format(time=now.strftime("%H:%M"), date=now.strftime("%A %d %B %Y"))
+
+
+def battery_text():
+    batteries = sorted(glob.glob("/sys/class/power_supply/BAT*"))
+    if not batteries:
+        return _("No battery: the computer runs on mains power.")
+    parts = []
+    for battery in batteries:
+        level = read(os.path.join(battery, "capacity"))
+        status = read(os.path.join(battery, "status"))
+        state = {"Charging": _("charging"), "Discharging": _("on battery"), "Full": _("full"),
+                 "Not charging": _("plugged in, not charging")}.get(status, status.lower())
+        parts.append(_("Battery {level} percent, {state}.").format(level=level or "?", state=state))
+    return " ".join(parts)
+
+
+def network_text():
+    wifi = [line.split(":") for line in output("nmcli", "-t", "-f", "ACTIVE,SSID,SIGNAL", "device", "wifi").splitlines()]
+    active = [fields for fields in wifi if fields and fields[0] == "yes"]
+    if active:
+        ssid, signal = active[0][1], active[0][2] if len(active[0]) > 2 else "?"
+        return _("Wi-Fi connected to {name}, signal {signal} percent.").format(name=ssid, signal=signal)
+    devices = [line.split(":") for line in output("nmcli", "-t", "-f", "TYPE,STATE", "device").splitlines()]
+    if any(len(d) > 1 and d[0] == "ethernet" and d[1] == "connected" for d in devices):
+        return _("Connected by cable.")
+    if any(len(d) > 1 and d[0] == "wifi" for d in devices):
+        return _("Wi-Fi not connected.")
+    return _("No network.")
+
+
+def bluetooth_text():
+    show = output("bluetoothctl", "show")
+    if not show.strip() or "No default controller" in show:
+        return _("No Bluetooth.")
+    if "Powered: yes" not in show:
+        return _("Bluetooth off.")
+    connected = [line.split(" ", 2)[2] for line in output("bluetoothctl", "devices", "Connected").splitlines()
+                 if line.startswith("Device ") and len(line.split(" ", 2)) == 3]
+    if connected:
+        return _("Bluetooth on, connected to {devices}.").format(devices=", ".join(connected))
+    return _("Bluetooth on, nothing connected.")
+
+
+def volume_text():
+    text = output("wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@")
+    if not text.startswith("Volume:"):
+        return ""
+    level = round(float(text.split()[1]) * 100)
+    if "MUTED" in text:
+        return _("Volume {level} percent, muted.").format(level=level)
+    return _("Volume {level} percent.").format(level=level)
+
+
+PARTS = {"time": time_text, "battery": battery_text, "network": network_text,
+         "bluetooth": bluetooth_text, "volume": volume_text}
+
+
+def notify(text):
+    if not os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+        return
+    output("gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications",
+           "--object-path", "/org/freedesktop/Notifications",
+           "--method", "org.freedesktop.Notifications.Notify",
+           "VabaxOS", "0", "", _("Computer status"), text, "[]", "{}", "8000")
+
+
+def main(argv):
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+    except locale.Error:
+        pass
+    wanted = argv[1:] or ["all"]
+    names = list(PARTS) if "all" in wanted else [w for w in wanted if w in PARTS]
+    if not names:
+        print(__doc__)
+        return 2
+    text = " ".join(t for t in (PARTS[name]() for name in names) if t)
+    print(text)
+    notify(text)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

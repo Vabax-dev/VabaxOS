@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily check for VabaxOS security updates
+Documentation=file:///usr/share/doc/vabaxos-update/copyright
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/vabaxos-update --daily
+Nice=10

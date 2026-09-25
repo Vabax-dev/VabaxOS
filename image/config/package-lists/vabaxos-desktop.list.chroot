@@ -4,17 +4,38 @@
 gnome-core
 # Start menu with the VabaxOS logo (ADR-0018), set up by vabaxos-settings.
 gnome-shell-extension-arc-menu
+# A familiar interface (block 8): taskbar at the bottom with the open and
+# pinned programs, tray icons, desktop icons, clipboard history (Ctrl+Alt+H),
+# windows side by side and in quarters like Snap in Windows 11.
+gnome-shell-extension-dash-to-panel
+gnome-shell-extension-appindicator
+gnome-shell-extension-desktop-icons-ng
+gnome-shell-extension-gpaste
+gnome-shell-extension-tiling-assistant
+gnome-system-monitor
+# One look for the whole system: Atkinson Hyperlegible Next, a font made
+# for low vision (vabaxos-branding); log in and log out sounds.
+fonts-atkinson-hyperlegible-next
+gnome-session-canberra
 network-manager
+# Applications from outside Debian (ADR-0008), updated by vabaxos-update.
+flatpak
 locales-all
 
 # Language and keyboard, chosen in the boot menu or in the welcome.
 keyboard-configuration
 console-setup
 
-# Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility,
-# vabaxos-branding, vabaxos-settings, vabaxos-setup, vabaxos-voice, vabaxos-welcome)
+# Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility, vabaxos-apps,
+# vabaxos-branding, vabaxos-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds,
+# vabaxos-update, vabaxos-voice, vabaxos-welcome)
 # are built from packages/ by
 # scripts/build-packages.sh and installed by live-build automatically.
 espeakup
 espeak-ng
 speech-dispatcher-espeak-ng
+
+# Virtual machines: VMware (Vabax tries VabaxOS in VMware Workstation):
+# screen size that follows the window, shared clipboard, clean shutdown.
+# Its services start only inside VMware.
+open-vm-tools-desktop

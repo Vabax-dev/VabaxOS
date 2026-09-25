@@ -1,0 +1,20 @@
+[Unit]
+Description=VabaxOS shutdown sound
+Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/utente/desktop.md
+# Nothing in GNOME plays the shutdown sound. This service does nothing when
+# it starts; when it stops, at shutdown, it plays the sound. Units stop in
+# the reverse order of their start: Before= the user sessions means it
+# stops after them, when their PipeWire has left the sound card; After=
+# sound.target means the card is still there.
+After=sound.target alsa-restore.service
+Before=systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/usr/libexec/vabaxos/shutdown-sound
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

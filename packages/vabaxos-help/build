@@ -1,0 +1,5 @@
+#!/bin/sh
+# Called by scripts/build-packages.sh with the package tree: the user
+# guides (docs/utente) as HTML pages.
+set -e
+python3 "$REPO/scripts/lib/md2html.py" "$REPO/docs/utente" "$1/usr/share/doc/vabaxos-help/html" >/dev/null

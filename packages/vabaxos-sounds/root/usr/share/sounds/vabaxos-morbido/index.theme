@@ -1,0 +1,8 @@
+[Sound Theme]
+Name=VabaxOS Morbido
+Comment=VabaxOS system sounds, soft mallets
+Inherits=freedesktop
+Directories=stereo
+
+[stereo]
+OutputProfile=stereo

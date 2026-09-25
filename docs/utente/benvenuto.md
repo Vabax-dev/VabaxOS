@@ -21,7 +21,7 @@ Nella lingua scelta si sente:
 Le scelte:
 
 - **Prova VabaxOS**: parte il desktop, con Orca che legge lo schermo. Il disco del computer non viene toccato. Poco dopo si apre la [configurazione iniziale](configurazione.md).
-- **Installa VabaxOS**: spiega come avviare l'installer (riavvia e, dopo i due bip, premi I) e offre di riavviare subito.
+- **Installa VabaxOS**: con «Installa ora» il computer riparte subito nell'installer con la voce, senza passare dal menu di avvio. L'installer parla nella lingua scelta e alla stessa velocità, e non chiede di nuovo lingua e tastiera. Le impostazioni di accessibilità scelte qui passano al sistema installato ([ADR-0023](../decisions/0023-installare-dal-benvenuto.md), proposta). Se il computer non riesce a ripartire così, il benvenuto spiega come avviare l'installer dal menu di avvio (dopo i due bip, premi I) e offre di riavviare.
 - **Accessibilità**: ogni voce dice il suo stato, per esempio «Alto contrasto: spento». Invio lo cambia.
   - voce più lenta o più veloce;
   - tastiera italiana o inglese;

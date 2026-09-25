@@ -7,4 +7,6 @@ Depends: python3, espeak-ng, alsa-utils, kmod, console-setup, init-system-helper
 Description: Welcome to VabaxOS, spoken, before the desktop
  A text menu on the first console that speaks with eSpeak NG (ADR-0016):
  language, then try VabaxOS, voice and keyboard, restart or shut down.
- It works without the graphical desktop.
+ It works without the graphical desktop. vabaxos-install restarts the
+ live system straight into the installer with voice (kexec), with the
+ language, voice speed and accessibility chosen in the welcome (ADR-0023).

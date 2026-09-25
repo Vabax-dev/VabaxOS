@@ -1,0 +1,24 @@
+# VabaxOS keyboard shortcuts. Super+Alt+I says the state of the computer
+# (time, battery, network, Bluetooth, volume) with vabaxos-status, next to
+# the GNOME accessibility shortcuts Super+Alt+S (screen reader) and
+# Super+Alt+8 (zoom).
+[org/gnome/settings-daemon/plugins/media-keys]
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/']
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status]
+name='VabaxOS: computer status'
+command='vabaxos-status'
+binding='<Super><Alt>i'
+
+# Ctrl+Shift+Esc opens the System Monitor, like the Task Manager of
+# Windows (block 8).
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager]
+name='VabaxOS: task manager'
+command='gnome-system-monitor'
+binding='<Control><Shift>Escape'
+
+# Super+U opens the accessibility settings, like Windows.
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility]
+name='VabaxOS: accessibility settings'
+command='gnome-control-center universal-access'
+binding='<Super>u'

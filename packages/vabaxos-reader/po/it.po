@@ -1,0 +1,121 @@
+# Italian translation of vabaxos-reader.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-reader\n"
+"PO-Revision-Date: 2026-09-25 00:00+0200\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "VabaxOS reader"
+msgstr "Lettore di VabaxOS"
+
+msgid "Open"
+msgstr "Apri"
+
+msgid "Open a document (Ctrl+O)"
+msgstr "Apri un documento (Ctrl+O)"
+
+msgid "Document text"
+msgstr "Testo del documento"
+
+msgid "Open a document with Ctrl+O. Then Ctrl+Space reads from the cursor."
+msgstr "Apri un documento con Ctrl+O. Poi Ctrl+Spazio legge dal cursore."
+
+msgid "Read"
+msgstr "Leggi"
+
+msgid "Read or pause (Ctrl+Space)"
+msgstr "Leggi o metti in pausa (Ctrl+Spazio)"
+
+msgid "Previous sentence"
+msgstr "Frase precedente"
+
+msgid "Next sentence"
+msgstr "Frase successiva"
+
+msgid "Previous paragraph"
+msgstr "Paragrafo precedente"
+
+msgid "Next paragraph"
+msgstr "Paragrafo successivo"
+
+msgid "Bookmark"
+msgstr "Segnalibro"
+
+msgid "Next bookmark"
+msgstr "Segnalibro successivo"
+
+msgid "Save audio"
+msgstr "Salva l'audio"
+
+msgid "Speed"
+msgstr "Velocità"
+
+msgid "Voice"
+msgstr "Voce"
+
+msgid "The natural voice cannot start: {error}"
+msgstr "La voce naturale non riesce a partire: {error}"
+
+msgid "Open a document"
+msgstr "Apri un documento"
+
+msgid "Documents"
+msgstr "Documenti"
+
+msgid "Cannot open {name}: {error}"
+msgstr "Non riesco ad aprire {name}: {error}"
+
+msgid "{name} has no text to read."
+msgstr "{name} non ha testo da leggere."
+
+msgid "{name} - VabaxOS reader"
+msgstr "{name} - Lettore di VabaxOS"
+
+msgid "from the beginning"
+msgstr "dall'inizio"
+
+msgid "from where you left it"
+msgstr "da dove eri rimasto"
+
+msgid "{name} opened, {count} sentences. Ctrl+Space reads {where}."
+msgstr "{name} aperto, {count} frasi. Ctrl+Spazio legge {where}."
+
+msgid "End of the document."
+msgstr "Fine del documento."
+
+msgid "The natural voice is still loading. Try again in a moment."
+msgstr "La voce naturale si sta ancora caricando. Riprova tra un momento."
+
+msgid "Pause"
+msgstr "Pausa"
+
+msgid "Bookmark added: {text}"
+msgstr "Segnalibro aggiunto: {text}"
+
+msgid "No bookmarks in this document. Ctrl+B adds one."
+msgstr "Nessun segnalibro in questo documento. Ctrl+B ne aggiunge uno."
+
+msgid "Bookmark: {text}"
+msgstr "Segnalibro: {text}"
+
+msgid "Saving the audio to {name}. It takes a while; you can keep reading."
+msgstr "Salvo l'audio in {name}. Ci vuole un po'; puoi continuare a leggere."
+
+msgid "Saving the audio: {percent} percent."
+msgstr "Salvataggio dell'audio: {percent} per cento."
+
+msgid "The audio could not be saved: {error}"
+msgstr "Non è stato possibile salvare l'audio: {error}"
+
+msgid "Audio saved: {name}."
+msgstr "Audio salvato: {name}."
+
+msgid "{name} is made of images: recognizing its text, a few seconds a page."
+msgstr "{name} è fatto di immagini: riconosco il testo, qualche secondo per pagina."

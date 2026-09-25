@@ -13,6 +13,10 @@
 #   --record-audio F   instead of playing it, record the sound of the VM in
 #                      the WAV file F (to check beeps and speech without ears)
 #   --memory MB        memory of the VM (default 4096)
+#   --cpus N           processors of the VM (default 2)
+#   --disk FILE        a virtual hard disk (qcow2), as /dev/vda
+#   --from-disk        start from the disk, without the ISO (installed system)
+#   --no-network       no network card (to check that nothing needs Internet)
 #   --serial-log FILE  write the first serial port to FILE
 #                      (default out/logs/qemu-serial-<date>.log)
 #   --serial-tcp PORT  first serial port on 127.0.0.1:PORT instead of a file;
@@ -37,6 +41,10 @@ FIRMWARE=uefi
 HEADLESS=false
 AUDIO=true
 MEMORY=4096
+CPUS=2
+DISK=""
+FROM_DISK=false
+NETWORK=true
 SERIAL_LOG=""
 SERIAL_TCP=""
 ISO=""
@@ -50,6 +58,10 @@ while [[ $# -gt 0 ]]; do
         --silent-audio) AUDIO=silent ;;
         --record-audio) AUDIO=record; RECORD="${2:?--record-audio vuole un file}"; shift ;;
         --memory) MEMORY="${2:?--memory vuole un numero}"; shift ;;
+        --cpus) CPUS="${2:?--cpus vuole un numero}"; shift ;;
+        --disk) DISK="${2:?--disk vuole un file}"; shift ;;
+        --from-disk) FROM_DISK=true ;;
+        --no-network) NETWORK=false ;;
         --serial-log) SERIAL_LOG="${2:?--serial-log vuole un file}"; shift ;;
         --serial-tcp) SERIAL_TCP="${2:?--serial-tcp vuole una porta}"; shift ;;
         -h | --help) usage 0 ;;
@@ -60,7 +72,7 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [[ -z "$ISO" ]]; then
+if [[ -z "$ISO" && "$FROM_DISK" == false ]]; then
     shopt -s nullglob
     ISOS=("$OUT"/*.iso)
     shopt -u nullglob
@@ -68,11 +80,25 @@ if [[ -z "$ISO" ]]; then
     [[ ${#ISOS[@]} -eq 1 ]] || die "in $OUT ci sono più ISO: indica quale avviare."
     ISO="${ISOS[0]}"
 fi
-[[ -f "$ISO" ]] || die "ISO non trovata: $ISO"
+if [[ "$FROM_DISK" == true ]]; then
+    [[ -n "$DISK" ]] || die "--from-disk vuole anche --disk FILE."
+    ISO=""
+else
+    [[ -f "$ISO" ]] || die "ISO non trovata: $ISO"
+fi
 
-ARGS=(-name VabaxOS -m "$MEMORY" -smp 2 -boot d -no-user-config)
-ARGS+=(-drive "file=$ISO,media=cdrom,readonly=on")
-ARGS+=(-nic "user,model=virtio-net-pci")
+ARGS=(-name VabaxOS -m "$MEMORY" -smp "$CPUS" -no-user-config)
+if [[ -n "$ISO" ]]; then
+    ARGS+=(-boot d -drive "file=$ISO,media=cdrom,readonly=on")
+fi
+if [[ -n "$DISK" ]]; then
+    ARGS+=(-drive "file=$DISK,if=virtio,format=qcow2")
+fi
+if [[ "$NETWORK" == true ]]; then
+    ARGS+=(-nic "user,model=virtio-net-pci")
+else
+    ARGS+=(-nic none)
+fi
 
 if [[ -r /dev/kvm && -w /dev/kvm ]]; then
     ARGS+=(-accel kvm -cpu host)
@@ -82,6 +108,9 @@ else
 fi
 
 MACHINE=q35
+# Suspend to RAM (S3) is off by default on q35: on, to test suspend and
+# resume like on a laptop.
+ARGS+=(-global ICH9-LPC.disable_s3=0)
 case "$FIRMWARE" in
     uefi | secure-boot)
         if [[ "$FIRMWARE" == secure-boot ]]; then
@@ -136,5 +165,5 @@ else
     printf 'Console seriale: %s\n' "$SERIAL_LOG"
 fi
 
-printf 'Avvio %s (%s)\n' "$(basename "$ISO")" "$FIRMWARE"
+printf 'Avvio %s (%s)\n' "$(basename "${ISO:-$DISK}")" "$FIRMWARE"
 qemu-system-x86_64 "${ARGS[@]}" "${EXTRA[@]}"

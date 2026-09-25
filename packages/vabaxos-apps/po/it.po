@@ -1,0 +1,88 @@
+# Italian translation of vabaxos-apps.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-apps\n"
+"PO-Revision-Date: 2026-09-25 00:00+0200\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "VabaxOS programs"
+msgstr "Programmi di VabaxOS"
+
+msgid "Search programs"
+msgstr "Cerca un programma"
+
+msgid "Windows programs"
+msgstr "Programmi di Windows"
+
+msgid "Bottles runs many Windows programs (.exe). It is downloaded from Flathub, about 300 MB."
+msgstr "Bottles fa funzionare molti programmi di Windows (.exe). Si scarica da Flathub, circa 300 MB."
+
+msgid "Install Bottles"
+msgstr "Installa Bottles"
+
+msgid "Install"
+msgstr "Installa"
+
+msgid "Installed programs"
+msgstr "Programmi installati"
+
+msgid "Start at login, or remove a program."
+msgstr "Avvio all'accesso, oppure disinstalla un programma."
+
+msgid "Start {name} at login"
+msgstr "Avvia {name} all'accesso"
+
+msgid "Remove"
+msgstr "Disinstalla"
+
+msgid "Remove {name}"
+msgstr "Disinstalla {name}"
+
+msgid "Cannot change it: {error}"
+msgstr "Non riesco a cambiarlo: {error}"
+
+msgid "{name} will start at login."
+msgstr "{name} partirà all'accesso."
+
+msgid "{name} will not start at login."
+msgstr "{name} non partirà all'accesso."
+
+msgid "VabaxOS does not know how {name} was installed."
+msgstr "VabaxOS non sa come è stato installato {name}."
+
+msgid "{name} is part of VabaxOS and cannot be removed here."
+msgstr "{name} fa parte di VabaxOS e qui non si può disinstallare."
+
+msgid "Remove {name}?"
+msgstr "Disinstallare {name}?"
+
+msgid "Its files in your home folder stay."
+msgstr "I suoi file nella cartella personale restano."
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Removing {name}."
+msgstr "Disinstallo {name}."
+
+msgid "{name} removed."
+msgstr "{name} disinstallato."
+
+msgid "{name} was not removed."
+msgstr "{name} non è stato disinstallato."
+
+msgid "Installing Bottles from Flathub. It takes a few minutes; you can keep working."
+msgstr "Installo Bottles da Flathub. Ci vuole qualche minuto; puoi continuare a lavorare."
+
+msgid "Bottles was not installed. Check the network and try again."
+msgstr "Bottles non è stato installato. Controlla la rete e riprova."
+
+msgid "Bottles is installed: it is in the Start menu."
+msgstr "Bottles è installato: lo trovi nel menu Start."
