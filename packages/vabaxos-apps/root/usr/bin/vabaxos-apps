@@ -173,7 +173,7 @@ class AppsWindow(Adw.ApplicationWindow):
         self.say(_("Removing {name}.").format(name=name))
         kind, ident = package
         command = (["flatpak", "uninstall", "-y", "--noninteractive", ident] if kind == "flatpak"
-                   else ["pkcon", "remove", "--noninteractive", ident])
+                   else ["pkgcli", "--yes", "remove", ident])
         threading.Thread(target=self.run, args=(command, name, row), daemon=True).start()
 
     def run(self, command, name, row):
