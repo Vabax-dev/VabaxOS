@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+if [ "$1" = configure ]; then
+    deb-systemd-helper --user enable vabaxos-update-daily.timer >/dev/null || true
+fi

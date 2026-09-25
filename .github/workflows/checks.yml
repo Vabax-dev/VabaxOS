@@ -82,6 +82,8 @@ jobs:
         run: python3 tests/welcome/test_welcome.py
       - name: Setup tests (hidden Broadway display, settings in memory)
         run: python3 tests/setup/test_setup.py
+      - name: Update tests (fake PackageKit)
+        run: python3 tests/update/test_update.py
       - name: Voice tests (Kokoro module, audio to a file)
         run: |
           dpkg-deb -x /tmp/packages/vabaxos-voice_*.deb /tmp/voice

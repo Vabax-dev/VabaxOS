@@ -1,0 +1,158 @@
+#!/usr/bin/python3
+"""Updates VabaxOS, with every step said aloud (ADR-0020, proposed).
+
+    vabaxos-update              check, and say what there is
+    vabaxos-update --now        download and install now
+    vabaxos-update --at-restart download now, install at the next start
+    vabaxos-update --daily      the daily check: speaks only for security
+
+Uses PackageKit, the same service as GNOME Software; the administrator
+password is asked by GNOME (polkit), which Orca reads. Every message is
+printed and shown as a desktop notification, which Orca reads wherever the
+focus is. Flatpak applications are updated too.
+
+Nothing is installed unless the user asks (series 0.x, ADR-0020).
+"""
+
+import gettext
+import os
+import shutil
+import subprocess
+import sys
+
+gettext.textdomain("vabaxos-update")
+_ = gettext.gettext
+
+NOTE_SOURCES = ("/etc/apt/sources.list", "/etc/apt/sources.list.d")
+
+
+def notify(text, urgent=False):
+    print(text, flush=True)
+    if not os.environ.get("DBUS_SESSION_BUS_ADDRESS") or not shutil.which("gdbus"):
+        return
+    hints = "{'urgency': <byte 2>}" if urgent else "{}"
+    subprocess.run(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications",
+                    "--object-path", "/org/freedesktop/Notifications",
+                    "--method", "org.freedesktop.Notifications.Notify",
+                    "VabaxOS", "0", "", _("Updates"), text, "[]", hints, "10000"],
+                   capture_output=True, check=False)
+
+
+def unchecked_sources():
+    """True while the installed system follows Debian testing directly,
+    before the VabaxOS repository (ADR-0020, point 1)."""
+    paths = []
+    for path in NOTE_SOURCES:
+        if os.path.isdir(path):
+            paths += [os.path.join(path, name) for name in sorted(os.listdir(path))]
+        elif os.path.exists(path):
+            paths.append(path)
+    text = ""
+    for path in paths:
+        try:
+            with open(path, encoding="utf-8") as f:
+                text += f.read()
+        except OSError:
+            pass
+    return "deb.debian.org" in text and "vabaxos" not in text
+
+
+class Updater:
+    """PackageKit through GObject introspection."""
+
+    def __init__(self, client=None):
+        if client is None:
+            import gi
+            gi.require_version("PackageKitGlib", "1.0")
+            from gi.repository import PackageKitGlib
+            self.pk = PackageKitGlib
+            client = PackageKitGlib.Client()
+        else:
+            self.pk = client.pk
+        self.client = client
+        self.last_step = -1
+
+    def progress(self, progress, kind, _data=None):
+        if kind != self.pk.ProgressType.PERCENTAGE:
+            return
+        percent = progress.props.percentage
+        step = percent // 25
+        if 0 < percent < 100 and step > self.last_step:
+            self.last_step = step
+            notify(_("Updating: {percent} percent.").format(percent=step * 25))
+
+    def updates(self):
+        self.client.refresh_cache(False, None, lambda *a: None, None)
+        results = self.client.get_updates(1 << int(self.pk.FilterEnum.NONE), None, lambda *a: None, None)
+        packages = results.get_package_array()
+        security = [p for p in packages if p.get_info() == self.pk.InfoEnum.SECURITY]
+        return packages, security
+
+    def install(self, packages, at_restart=False):
+        ids = [p.get_id() for p in packages]
+        flags = 1 << int(self.pk.TransactionFlagEnum.ONLY_TRUSTED)
+        if at_restart:
+            flags |= 1 << int(self.pk.TransactionFlagEnum.ONLY_DOWNLOAD)
+        self.last_step = -1
+        self.client.update_packages(flags, ids, None, self.progress, None)
+        if at_restart:
+            self.pk.offline_trigger(self.pk.OfflineAction.REBOOT, None)
+
+
+def flatpak_updates():
+    if not shutil.which("flatpak"):
+        return 0
+    out = subprocess.run(["flatpak", "remote-ls", "--updates", "--columns=application"],
+                         capture_output=True, text=True, check=False).stdout
+    return len([line for line in out.splitlines() if line.strip()])
+
+
+def main(argv, updater=None):
+    mode = "check"
+    for option, name in (("--now", "now"), ("--at-restart", "restart"), ("--daily", "daily")):
+        if option in argv:
+            mode = name
+    if mode != "daily":
+        notify(_("Looking for updates. Please wait."))
+    try:
+        updater = updater or Updater()
+        packages, security = updater.updates()
+    except Exception as error:  # noqa: BLE001 - tell the user in words
+        if mode != "daily":
+            notify(_("Cannot look for updates: {error}. Check the network and try again.").format(error=error))
+        return 1
+    apps = flatpak_updates()
+    if mode == "daily":
+        if security:
+            notify(_("{count} security updates are ready. Open Update VabaxOS to install them.").format(
+                count=len(security)), urgent=True)
+        return 0
+    if not packages and not apps:
+        notify(_("VabaxOS is up to date."))
+        return 0
+    text = _("{count} updates, {security} for security; {apps} applications.").format(
+        count=len(packages), security=len(security), apps=apps)
+    if unchecked_sources():
+        text += " " + _("Note: in this test version updates come straight from Debian testing, "
+                        "not yet checked by VabaxOS.")
+    if mode == "check":
+        notify(text + " " + _("To install: vabaxos-update --now, or --at-restart."))
+        return 0
+    notify(text)
+    try:
+        if packages:
+            updater.install(packages, at_restart=(mode == "restart"))
+        if apps:
+            subprocess.run(["flatpak", "update", "--noninteractive"], check=False)
+    except Exception as error:  # noqa: BLE001
+        notify(_("The update stopped: {error}.").format(error=error), urgent=True)
+        return 1
+    if mode == "restart":
+        notify(_("Ready. The updates will be installed at the next start."))
+    else:
+        notify(_("Update finished."))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
