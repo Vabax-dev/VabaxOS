@@ -1,0 +1,39 @@
+# The complete system (block 7, approved by Vabax on 2026-09-25): what people
+# use every day, chosen for how well it works with Orca.
+
+# Office, with the Italian dictionary, hyphenation and thesaurus.
+libreoffice-writer
+libreoffice-calc
+libreoffice-impress
+libreoffice-gtk3
+libreoffice-l10n-it
+libreoffice-help-it
+hunspell-it
+hyphen-it
+mythes-it
+
+# E-mail.
+thunderbird
+thunderbird-l10n-it
+
+# Braille displays: brltty starts by itself when a display is plugged in,
+# and Orca writes to it through BrlAPI.
+brltty
+python3-brlapi
+
+# Text recognition (OCR) for scanned documents and photos, in Italian and
+# English: used by the VabaxOS reader.
+tesseract-ocr
+tesseract-ocr-ita
+tesseract-ocr-eng
+ocrmypdf
+
+# Music, podcasts and audiobooks, DAISY books for blind readers, voice notes.
+rhythmbox
+daisy-player
+gnome-sound-recorder
+
+# Backups, archives (zip and others), passwords and keys.
+deja-dup
+file-roller
+seahorse
