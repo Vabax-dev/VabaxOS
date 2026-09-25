@@ -323,7 +323,15 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     ask sd 'for i in $(seq 60); do pgrep -u user -x speech-dispatch >/dev/null && break; sleep 1; done; sleep 5; pgrep -u user -x speech-dispatch >/dev/null && echo yes || echo no' || exit 1
 fi
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    check 'Orca udibile nel desktop' "$(orca_speaks orca)" "$WANT_SOUND"
+    ORCA_HEARD="$(orca_speaks orca)"
+    check 'Orca udibile nel desktop' "$ORCA_HEARD" "$WANT_SOUND"
+    # Orca silent: GNOME Shell's and Orca's messages go to the serial log,
+    # to see whether the desktop is stuck (CI, 2026-09-25: GNOME Shell did
+    # not answer on the session bus from the start in one run of eight).
+    if [[ "$ORCA_HEARD" != "$WANT_SOUND" ]]; then
+        send 'sudo -n journalctl -b --no-pager -o short-monotonic _COMM=gnome-shell _COMM=orca | tail -80 | sed "s/^/JOURNAL: /"'
+        ask diagnosis 'echo done' || exit 1
+    fi
     ask vt 'loginctl show-session $(loginctl list-sessions --no-legend | awk "\$3==\"user\" && \$4==\"seat0\" {print \$1}" | head -1) -p VTNr --value' || exit 1
     BACK_VT="$(value vt)"
 else
