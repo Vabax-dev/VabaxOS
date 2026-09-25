@@ -7,7 +7,8 @@ Come in Windows:
 - **in basso, la barra delle applicazioni**: a sinistra il simbolo di VabaxOS (il [menu Start](menu-start.md)), poi i programmi aperti e quelli fissati; a destra le icone dei programmi in esecuzione, il Wi-Fi, il volume, la batteria e l'orologio. Con Orca: Ctrl+Alt+Tab porta il cursore sulla barra;
 - **ogni finestra** ha i pulsanti Riduci a icona, Ingrandisci e Chiudi;
 - **le finestre si affiancano**: Super+Freccia sinistra o destra le mette a metà schermo, e si possono mettere anche in un quarto;
-- **le icone sul desktop**: Cartella personale e Cestino.
+- **le icone sul desktop**: Cartella personale e Cestino;
+- **le notifiche**: Super+V apre il loro elenco. Ogni notifica ha i pulsanti Espandi e Chiudi, che Orca legge con il loro nome: in GNOME erano pulsanti senza nome, e il nome lo aggiunge VabaxOS.
 
 ## Tasti utili
 

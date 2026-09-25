@@ -17,8 +17,10 @@
 # All the extensions VabaxOS turns on (one list: blocks 3 and 8; the last
 # one is VabaxOS's own, for the Windows keys). Each one
 # must pass vabaxos-a11y-check in test-boot.sh, like ArcMenu.
+# button-names@vabaxos.org (vabaxos-accessibility, ADR-0022) names GNOME
+# Shell's icon-only buttons, such as Close and Expand on notifications.
 [org/gnome/shell]
-enabled-extensions=['arcmenu@arcmenu.com', 'dash-to-panel@jderose9.github.com', 'ubuntu-appindicators@ubuntu.com', 'ding@rastersoft.com', 'GPaste@gnome-shell-extensions.gnome.org', 'tiling-assistant@leleat-on-github', 'vabaxos-keys@vabaxos.org']
+enabled-extensions=['button-names@vabaxos.org', 'arcmenu@arcmenu.com', 'dash-to-panel@jderose9.github.com', 'ubuntu-appindicators@ubuntu.com', 'ding@rastersoft.com', 'GPaste@gnome-shell-extensions.gnome.org', 'tiling-assistant@leleat-on-github', 'vabaxos-keys@vabaxos.org']
 
 [org/gnome/shell/extensions/arcmenu]
 menu-layout='redmond'

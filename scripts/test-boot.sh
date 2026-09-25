@@ -329,7 +329,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'tasti del mouse: GNOME Shell' "$(value mousekeys)" stabile
 fi
 
-# Desktop voice (ADR-0019, ADR-0022): the service must succeed and write
+# Desktop voice (ADR-0019, ADR-0024): the service must succeed and write
 # eSpeak NG as the default module. Then Kokoro is chosen the way a user
 # does in vabaxos-setup (Orca's synthesizer): the module must load the
 # model in advance and Orca must still speak.

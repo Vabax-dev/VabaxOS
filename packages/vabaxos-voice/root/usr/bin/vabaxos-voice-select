@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-"""Chooses the desktop voice for this computer (ADR-0019, ADR-0022).
+"""Chooses the desktop voice for this computer (ADR-0019, ADR-0024).
 
     vabaxos-voice-select [--engine auto|kokoro|espeak] [--dry-run]
 
-eSpeak NG is the default voice of Speech Dispatcher (ADR-0022, Vabax's
+eSpeak NG is the default voice of Speech Dispatcher (ADR-0024, Vabax's
 choice, 2026-09-25): users choose Kokoro, the natural voice, for themselves
 in the first setup (Orca's synthesizer). With engine=auto this program
 measures at every boot how long Kokoro needs for short phrases Orca says

@@ -71,3 +71,94 @@ msgstr "Volume al {level} per cento."
 
 msgid "Computer status"
 msgstr "Stato del computer"
+
+# Button names of GNOME Shell (button-names@vabaxos.org, ADR-0022).
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Expand"
+msgstr "Espandi"
+
+msgid "Collapse"
+msgstr "Comprimi"
+
+msgid "Play"
+msgstr "Riproduci"
+
+msgid "Pause"
+msgstr "Pausa"
+
+msgid "Stop"
+msgstr "Ferma"
+
+msgid "Previous"
+msgstr "Precedente"
+
+msgid "Next"
+msgstr "Successivo"
+
+msgid "Back"
+msgstr "Indietro"
+
+msgid "Forward"
+msgstr "Avanti"
+
+msgid "More options"
+msgstr "Altre opzioni"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Clear"
+msgstr "Cancella"
+
+msgid "Clear all"
+msgstr "Cancella tutto"
+
+msgid "Delete"
+msgstr "Elimina"
+
+msgid "Add"
+msgstr "Aggiungi"
+
+msgid "Remove"
+msgstr "Rimuovi"
+
+msgid "Minimize"
+msgstr "Riduci a icona"
+
+msgid "Maximize"
+msgstr "Ingrandisci"
+
+msgid "Restore"
+msgstr "Ripristina"
+
+msgid "Power Off"
+msgstr "Spegni"
+
+msgid "Restart"
+msgstr "Riavvia"
+
+msgid "Log Out"
+msgstr "Esci"
+
+msgid "Lock"
+msgstr "Blocca"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Take Screenshot"
+msgstr "Cattura schermata"
+
+msgid "Refresh"
+msgstr "Aggiorna"
+
+msgid "Search"
+msgstr "Cerca"
+
+msgid "Trash"
+msgstr "Cestino"
+
+msgid "Show Apps"
+msgstr "Mostra applicazioni"

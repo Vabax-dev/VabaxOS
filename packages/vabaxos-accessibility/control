@@ -8,3 +8,6 @@ Description: VabaxOS accessibility defaults
  Speech from the first second (ADR-0005, ADR-0014): Speakup with
  eSpeak NG reads the text console, and Orca starts in the desktop.
  The boot option vabaxos.voice=off turns both off.
+ The GNOME Shell extension button-names@vabaxos.org names the buttons
+ that show only an icon, such as Close and Expand on notifications
+ (ADR-0022).

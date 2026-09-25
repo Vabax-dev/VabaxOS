@@ -1,6 +1,6 @@
 # ADR-0019: Voce naturale Kokoro per il desktop, eSpeak NG come riserva
 
-- **Stato:** Accettata (Vabax, 2026-09-24); chi sceglie la voce è cambiato con ADR-0022
+- **Stato:** Accettata (Vabax, 2026-09-24); chi sceglie la voce è cambiato con ADR-0024
 - **Data:** 2026-09-24
 - **Responsabile:** Vabax (Project Lead, responsabile accessibilità), Principal Software Engineer
 - **Modifica:** ADR-0006 (sintesi vocale): Piper opzionale dalla v0.3 non è più il piano

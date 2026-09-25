@@ -120,7 +120,7 @@ def gain_for(volume):
 
 
 def orca_uses_kokoro():
-    """The user chose Kokoro for Orca (ADR-0022: eSpeak NG is the default,
+    """The user chose Kokoro for Orca (ADR-0024: eSpeak NG is the default,
     Kokoro the user's choice in vabaxos-setup)."""
     try:
         result = subprocess.run(["gsettings", "get", "org.gnome.Orca.Speech:" + ORCA_SPEECH_PATH,

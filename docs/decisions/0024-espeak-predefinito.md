@@ -1,4 +1,4 @@
-# ADR-0022: eSpeak NG voce predefinita, Kokoro a scelta dell'utente
+# ADR-0024: eSpeak NG voce predefinita, Kokoro a scelta dell'utente
 
 - **Stato:** Accettata (Vabax, 2026-09-25)
 - **Data:** 2026-09-25

@@ -1,6 +1,6 @@
 # La voce del desktop
 
-VabaxOS ha due voci per il desktop, cioè per Orca e per ogni programma che parla ([ADR-0019](../decisions/0019-voce-naturale-kokoro.md), [ADR-0022](../decisions/0022-espeak-predefinito.md)):
+VabaxOS ha due voci per il desktop, cioè per Orca e per ogni programma che parla ([ADR-0019](../decisions/0019-voce-naturale-kokoro.md), [ADR-0024](../decisions/0024-espeak-predefinito.md)):
 
 - **la voce naturale, Kokoro:** sembra una persona che parla. Per l'italiano ci sono Nicola, voce maschile, e Sara, voce femminile;
 - **eSpeak NG:** robotica, ma leggerissima e immediata.
@@ -9,7 +9,7 @@ La console di testo, quella che parla prima del desktop e nella modalità di rec
 
 ## Chi sceglie
 
-Il desktop parla con **eSpeak NG**, su ogni computer: risponde subito, anche sui computer lenti (scelta di Vabax, [ADR-0022](../decisions/0022-espeak-predefinito.md)).
+Il desktop parla con **eSpeak NG**, su ogni computer: risponde subito, anche sui computer lenti (scelta di Vabax, [ADR-0024](../decisions/0024-espeak-predefinito.md)).
 
 Kokoro si sceglie a mano nella [configurazione iniziale](configurazione.md), al passo Voce:
 

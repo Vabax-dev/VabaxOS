@@ -1,0 +1,9 @@
+{
+  "uuid": "button-names@vabaxos.org",
+  "name": "VabaxOS button names",
+  "description": "Gives a name to the buttons of GNOME Shell that show only an icon, such as Close and Expand on notifications, so the screen reader can say what they do (ADR-0022).",
+  "shell-version": ["50"],
+  "session-modes": ["user", "unlock-dialog"],
+  "gettext-domain": "vabaxos-accessibility",
+  "url": "https://github.com/Vabax-dev/VabaxOS"
+}
