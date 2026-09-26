@@ -619,11 +619,15 @@ if [[ "$WANT_ORCA" == yes ]]; then
         check "Tab in $name: il focus resta nel programma" "$(tab_value "tab$key" outside)" 0
         check "Tab in $name: il focus si sposta" "$( (( $(tab_value "tab$key" unique) > 3 )) && echo yes || echo no)" yes
     done
-    # Only Files among GNOME's programs: with LibreOffice and with Settings
-    # (not found on the accessibility bus) the VM stopped answering for ten
-    # minutes (2026-09-25).
-    tab_walk tabfiles nautilus nautilus
-    printf 'INFO: Tab in nautilus: %s\n' "$(value tabfiles)"
+    # Other programs: only reported. (LibreOffice seemed to stop the VM for
+    # ten minutes on 2026-09-25: it was the time limit counted from the
+    # start of the test.)
+    for program in "files|nautilus|nautilus" "editor|gnome-text-editor|gnome-text-editor" \
+                   "writer|libreoffice --writer|soffice"; do
+        IFS='|' read -r key launch name <<< "$program"
+        tab_walk "tab$key" "$launch" "$name"
+        printf 'INFO: Tab in %s: %s\n' "$name" "$(value "tab$key")"
+    done
 fi
 
 # A new window takes the focus even when a program already has it and the
