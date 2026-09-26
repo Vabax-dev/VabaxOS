@@ -55,6 +55,30 @@ Per ogni comando: il tasto nello schema NVDA (quello di VabaxOS), nello schema J
 - **Elenco delle caselle combinate:** Ins+Ctrl+C (uguale in JAWS; originale di Orca: Alt+Maiusc+C)
 - **Elenco dei campi di testo:** Ins+Ctrl+E (uguale in JAWS; originale di Orca: Alt+Maiusc+E)
 
+### Tasti rapidi nelle pagine web (modalità navigazione; con Maiusc all'indietro)
+
+- **Titolo successivo:** H (uguale in JAWS; originale di Orca: H)
+- **Titolo di livello 1 (da 1 a 6 per i livelli):** 1 (uguale in JAWS; originale di Orca: 1)
+- **Collegamento successivo:** K (uguale in JAWS; originale di Orca: K)
+- **Collegamento non visitato:** U (uguale in JAWS; originale di Orca: U)
+- **Collegamento visitato:** V (uguale in JAWS; originale di Orca: V)
+- **Campo del modulo successivo:** F (uguale in JAWS; originale di Orca: F)
+- **Campo di testo:** E (uguale in JAWS; originale di Orca: E)
+- **Pulsante:** B (uguale in JAWS; originale di Orca: B)
+- **Casella combinata:** C (uguale in JAWS; originale di Orca: C)
+- **Casella di controllo:** X (uguale in JAWS; originale di Orca: X)
+- **Pulsante di opzione:** R (uguale in JAWS; originale di Orca: R)
+- **Tabella:** T (uguale in JAWS; originale di Orca: T)
+- **Elenco:** L (uguale in JAWS; originale di Orca: L)
+- **Voce di elenco:** I (uguale in JAWS; originale di Orca: I)
+- **Punto di riferimento (intestazione, navigazione, contenuto principale):** D (JAWS M; originale di Orca: M)
+- **Riquadro:** M (JAWS nessun tasto; originale di Orca: nessun tasto)
+- **Immagine:** G (uguale in JAWS; originale di Orca: G)
+- **Paragrafo:** P (uguale in JAWS; originale di Orca: P)
+- **Citazione:** Q (uguale in JAWS; originale di Orca: Q)
+- **Separatore:** S (uguale in JAWS; originale di Orca: S)
+- **Zona che si aggiorna da sola:** J (JAWS D; originale di Orca: D)
+
 ### Modalità e impostazioni
 
 - **Modalità navigazione o modalità focus:** Ins+Spazio (JAWS Ins+Z; originale di Orca: Ins+A)

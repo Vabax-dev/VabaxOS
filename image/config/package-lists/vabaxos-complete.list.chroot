@@ -12,6 +12,11 @@ hunspell-it
 hyphen-it
 mythes-it
 
+# The web (block 14, Vabax's choice: only Firefox ESR, 2026-09-26): its
+# accessibility with Orca is the best on Linux, and ESR changes once a year.
+firefox-esr
+firefox-esr-l10n-it
+
 # E-mail.
 thunderbird
 thunderbird-l10n-it

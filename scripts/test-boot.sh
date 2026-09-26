@@ -334,8 +334,8 @@ orca_speaks() {
     send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
 }
 # Orca's state, when it has to be heard and is not, or after it restarts:
-# whether it runs, how often systemd restarted it (its unit has
-# WatchdogSec=6: Orca is killed when its main loop waits longer, for
+# whether it runs, how often systemd restarted it (its watchdog, 30
+# seconds in VabaxOS, kills Orca when its main loop waits longer, for
 # example on speech-dispatcher), the watchdog kills and the speech
 # processes. Details to the serial log (ORCA-DIAG), a summary as INFO.
 orca_state() {
@@ -707,6 +707,38 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'menu Start: comandi senza nome' "$(value startnames)" 'vabaxos-start: 0 controls without a name'
     press esc
     press esc
+fi
+
+# The web with Orca (block 14): Firefox opens the practice page of the
+# help, and the quick keys of NVDA read its content, not only the roles
+# (the GNOME 50 problem of Orca reading only labels in Firefox). What Orca
+# says is read from speech-dispatcher's log (LogLevel 5: "Incoming text"),
+# which needs a new speech-dispatcher: Orca connects again by itself.
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    SPEECHD_LOG=/run/user/1000/speech-dispatcher/log/speech-dispatcher.log
+    ask weblog "sudo -n sed -i 's/^#* *LogLevel .*/LogLevel 5/' /etc/speech-dispatcher/speechd.conf; pkill -u user -x speech-dispatch; echo ok" || exit 1
+    send "env $DESKTOP_ENV firefox-esr /usr/share/doc/vabaxos-help/html/prova-web.html >/dev/null 2>&1 &"
+    ask webopen "for i in \$(seq 90); do env $BUS vabaxos-a11y-check --focused Firefox 2>/dev/null | grep -q 'document web: Pagina di prova' && break; sleep 2; done; env $BUS vabaxos-a11y-check --focused Firefox" || exit 1
+    check 'Firefox apre la pagina di prova con il focus' "$(value webopen | grep -c 'document web: Pagina di prova per Orca')" 1
+    ask webmark "sleep 5; grep -ac '' $SPEECHD_LOG" || exit 1
+    # Ctrl+Home first: Firefox may start with the caret on a link of the
+    # navigation (CI, 2026-09-26). Then H twice: the first heading has the
+    # text of the window title, which Orca also says when the window opens;
+    # the second is only in the page.
+    for key in ctrl-home h h k d t; do
+        press "$key"
+        sleep 4
+    done
+    ask webspeech "sleep 4; tail -n +$(value webmark) $SPEECHD_LOG | grep -a 'Incoming text' | sed 's/.*Incoming text: |//; s/|\$//; s/<[^>]*>//g' | tr '\\n' '/'" || exit 1
+    printf 'INFO: Orca nella pagina di prova (Ctrl+Inizio, H, H, K, D, T): %s\n' "$(value webspeech)"
+    check 'Orca legge il titolo con H' "$(value webspeech | grep -c 'Titoli')" 1
+    check 'Orca legge il collegamento con K' "$(value webspeech | grep -c 'vai al modulo')" 1
+    check 'Orca legge la tabella con T' "$(value webspeech | grep -c 'Orari della biblioteca')" 1
+    check 'H e K non ripetono la lettera premuta' "$(value webspeech | grep -cE '(^|/)[hk]/')" 0
+    ask webnames "env $BUS vabaxos-a11y-check Firefox | tail -1" || exit 1
+    printf 'INFO: Firefox: %s\n' "$(value webnames)"
+    # ask, not send: typing ahead after sudo would reach sudo.
+    ask webclose "pkill -u user firefox; sudo -n sed -i 's/^LogLevel 5/LogLevel 3/' /etc/speech-dispatcher/speechd.conf; sleep 3; echo ok" || exit 1
 fi
 
 # Suspend and resume (ROADMAP v0.1): after waking up, Orca must speak.

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Compiles the VabaxOS dconf defaults: Orca's NVDA keys (40-orca-keys).
+# Compiles the VabaxOS dconf defaults: Orca's NVDA keys (40-orca-keys) and typing echo (41-orca-typing).
 set -e
 if [ "$1" = configure ] && command -v dconf >/dev/null; then
     dconf update

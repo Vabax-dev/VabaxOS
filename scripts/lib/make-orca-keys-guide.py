@@ -55,6 +55,29 @@ SECTIONS = [
         ("list_comboboxes", "Elenco delle caselle combinate"),
         ("list_entries", "Elenco dei campi di testo"),
     ]),
+    ("Tasti rapidi nelle pagine web (modalità navigazione; con Maiusc all'indietro)", [
+        ("next_heading", "Titolo successivo"),
+        ("next_heading_level_1", "Titolo di livello 1 (da 1 a 6 per i livelli)"),
+        ("next_link", "Collegamento successivo"),
+        ("next_unvisited_link", "Collegamento non visitato"),
+        ("next_visited_link", "Collegamento visitato"),
+        ("next_form_field", "Campo del modulo successivo"),
+        ("next_entry", "Campo di testo"),
+        ("next_button", "Pulsante"),
+        ("next_combobox", "Casella combinata"),
+        ("next_checkbox", "Casella di controllo"),
+        ("next_radio_button", "Pulsante di opzione"),
+        ("next_table", "Tabella"),
+        ("next_list", "Elenco"),
+        ("next_list_item", "Voce di elenco"),
+        ("next_landmark", "Punto di riferimento (intestazione, navigazione, contenuto principale)"),
+        ("next_iframe", "Riquadro"),
+        ("next_image", "Immagine"),
+        ("next_paragraph", "Paragrafo"),
+        ("next_blockquote", "Citazione"),
+        ("next_separator", "Separatore"),
+        ("next_live_region", "Zona che si aggiorna da sola"),
+    ]),
     ("Modalità e impostazioni", [
         ("toggle_presentation_mode", "Modalità navigazione o modalità focus"),
         ("structural_navigator_mode_cycle", "Cambia il tipo di tasti rapidi"),
@@ -104,7 +127,7 @@ def tables():
         lines.append("")
     missing = [name for name in set(nvda) | set(jaws)
                if not any(name == n for _t, commands in SECTIONS for n, _x in commands)
-               and not name.startswith("review")]
+               and not name.startswith(("review", "previous_"))]
     if missing:
         raise SystemExit(f"commands of the schemes missing from the guide: {sorted(missing)}")
     return "\n".join(lines).rstrip() + "\n"

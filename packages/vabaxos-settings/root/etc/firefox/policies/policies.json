@@ -1,0 +1,36 @@
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "DontCheckDefaultBrowser": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "UserMessaging": {
+      "WhatsNew": false,
+      "ExtensionRecommendations": false,
+      "FeatureRecommendations": false,
+      "UrlbarInterventions": false,
+      "SkipOnboarding": true,
+      "MoreFromMozilla": false,
+      "FirefoxLabs": false,
+      "Locked": false
+    },
+    "Preferences": {
+      "accessibility.force_disabled": {
+        "Value": 0,
+        "Status": "locked"
+      },
+      "browser.aboutwelcome.enabled": {
+        "Value": false,
+        "Status": "default"
+      },
+      "browser.tabs.warnOnClose": {
+        "Value": false,
+        "Status": "default"
+      },
+      "datareporting.policy.dataSubmissionPolicyBypassNotification": {
+        "Value": true,
+        "Status": "locked"
+      }
+    }
+  }
+}

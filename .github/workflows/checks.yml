@@ -92,6 +92,8 @@ jobs:
         run: python3 tests/screen-reader/test_screen_reader.py
       - name: Orca key schemes tests (NVDA, JAWS, no conflicts, the guide in sync)
         run: python3 tests/screen-reader/test_keys.py
+      - name: VabaxOS's Orca defaults written as the user's values (Orca 50 ignores system defaults)
+        run: python3 tests/screen-reader/test_orca_defaults.py
       - name: Start menu tests (hidden Broadway display, made-up programs)
         run: python3 tests/start/test_start.py
       - name: Update tests (fake PackageKit) and vabaxctl
