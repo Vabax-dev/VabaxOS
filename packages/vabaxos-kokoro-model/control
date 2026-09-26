@@ -1,0 +1,10 @@
+Package: vabaxos-kokoro-model
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: sound
+Priority: optional
+Description: Kokoro voice model for VabaxOS
+ The neural network and the voices of Kokoro-82M v1.0 (ADR-0019), used by
+ vabaxos-voice. They are in their own package, whose version is the one
+ of the model, so an update of VabaxOS downloads them again only when the
+ model changes (about 330 MB).
