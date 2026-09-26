@@ -107,6 +107,9 @@ def text_paragraphs(text):
 def read_paragraphs(path, ocr=False):
     """The paragraphs of a document, or raises ValueError with a message.
     Images and scanned PDFs raise NeedsOCR unless ocr is true."""
+    # A full path: a name such as "-x.pdf" must not look like an option to
+    # pdftotext, pdftoppm or tesseract.
+    path = os.path.abspath(path)
     ext = os.path.splitext(path)[1].lower()
     if ext in IMAGES:
         if not ocr:
