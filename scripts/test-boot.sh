@@ -347,8 +347,21 @@ orca_state() {
     printf 'INFO: Orca %s: %s\n' "$1" "$(value orcastate)"
     # Who is silent: speech-dispatcher said directly (without Orca), and
     # the sound server's outputs and streams.
-    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat -u orca | tail -15 | sed "s/^/ORCA-DIAG: /"; tail -n 25 /run/user/1000/speech-dispatcher/log/speech-dispatcher.log /run/user/1000/speech-dispatcher/log/espeak-ng.log 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
+    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat -u orca | tail -15 | sed "s/^/ORCA-DIAG: /"; grep -v "LINE here:|200-\|Failed to open file" /run/user/1000/speech-dispatcher/log/speech-dispatcher.log | tail -n 40 | sed "s/^/SPEECHD-DIAG: /"; tail -n 15 /run/user/1000/speech-dispatcher/log/espeak-ng.log 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
     printf 'INFO: speech-dispatcher da solo %s: %s\n' "$1" "$(record "spd-$2" 5)"
+    # Below speech-dispatcher (CI of block 15, 2026-09-26: even spd-say was
+    # silent, until a suspend and resume): a sound played straight on
+    # PipeWire, whether the sound card still moves (hw_ptr grows while
+    # RUNNING) and the sound server's own log.
+    send 'for i in 1 2; do grep -E "^(state|hw_ptr)" /proc/asound/card0/pcm0p/sub0/status | tr "\n" " " | sed "s/^/AUDIO-DIAG: /"; echo; sleep 1; done; pactl list sink-inputs short 2>&1 | sed "s/^/AUDIO-DIAG: /"; journalctl --user -b --no-pager -o short-monotonic -u pipewire -u wireplumber -u pipewire-pulse | tail -12 | cut -c1-220 | sed "s/^/AUDIO-DIAG: /"; pw-play /usr/share/sounds/vabaxos/stereo/complete.oga >/dev/null 2>&1 &'
+    printf 'INFO: suono diretto su PipeWire %s: %s\n' "$1" "$(record "pw-$2" 5)"
+}
+# Whether speech-dispatcher is heard at this point of the test (INFO only):
+# to find after which step the sound stops, when Orca is silent later.
+speech_probe() {
+    [[ "$WANT_ORCA" == yes ]] || return 0
+    send 'spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
+    printf 'INFO: voce udibile %s: %s\n' "$1" "$(record "probe-$2" 4)"
 }
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Orca speaks through speech-dispatcher, which starts with Orca.
@@ -461,6 +474,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'pulsante Start sulla barra' "$([[ "$(value taskbarstart)" =~ ^[1-9] ]] && echo yes || echo no)" yes
     check 'casella di ricerca sulla barra' "$([[ "$(value taskbarsearch)" =~ ^[1-9] ]] && echo yes || echo no)" yes
     printf 'INFO: pulsanti Chiudi nelle notifiche: %s\n' "$(value bannernames)"
+    speech_probe 'dopo la notifica e le estensioni' shell
 fi
 
 # Desktop programs (block 5, ROADMAP v0.1): Files, Terminal and the
@@ -484,6 +498,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y wifi 'gnome-control-center wifi' gnome-control-center
     app_a11y bluetooth 'gnome-control-center bluetooth' gnome-control-center
     app_a11y power 'gnome-control-center power' gnome-control-center
+    speech_probe 'dopo File, Terminale e Impostazioni' settings
     ask status "env $BUS vabaxos-status battery" || exit 1
     printf 'INFO: vabaxos-status: %s\n' "$(value status)"
     ask soundtheme "env $BUS gsettings get org.gnome.desktop.sound theme-name" || exit 1
@@ -504,6 +519,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'riconoscimento del testo in italiano' "$(value ocr)" 1
     ask help 'ls /usr/share/doc/vabaxos-help/html/*.html | wc -l' || exit 1
     printf 'INFO: pagine dell'"'"'aiuto: %s\n' "$(value help)"
+    speech_probe 'dopo Writer e Thunderbird' office
 fi
 
 # A familiar interface (block 8): the extensions are active (the check of
@@ -520,6 +536,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'Ctrl+Maiusc+Esc apre il Monitor di sistema' "$(value taskmanager)" yes
     send 'pkill -u user -x gnome-system-mo'
     app_a11y programs vabaxos-apps vabaxos-apps
+    speech_probe 'dopo Monitor di sistema e Programmi' programs
 fi
 
 # The keys of Windows (block 8): Super+T and Super+B move the focus to the
@@ -537,9 +554,18 @@ focus_after() {
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ask keys "echo \$(env $BUS gsettings get org.gnome.shell.keybindings toggle-quick-settings) \$(env $BUS gsettings get org.gnome.desktop.wm.keybindings switch-windows)" || exit 1
     check 'tasti di Windows (Super+A, Alt+Tab)' "$(value keys)" "['<Super>a'] ['<Alt>Tab']"
+    # The Programs window has just closed: the window under it (Writer, with
+    # its first welcome) takes the focus a moment later, and would take it
+    # back from the taskbar (seen in QEMU: 2 seconds fail, 5 are enough).
+    sleep 5
     focus_after taskbar meta_l-t
     check 'Super+T porta il focus sulla barra delle applicazioni' "$(value taskbar | grep -c 'focus: push button\|focus: button')" 1
     printf 'INFO: Super+T: %s\n' "$(value taskbar)"
+    # Desktop Icons NG kills and starts again its desktop program when its
+    # window does not appear within 3 seconds: on a slow machine (QEMU
+    # without KVM) it starts again every 3 seconds, forever.
+    ask dinglaunch 'sudo -n journalctl -b --no-pager -o cat _COMM=gnome-shell | grep -c "Launching DING process"' || exit 1
+    printf 'INFO: avvii del desktop (DING): %s\n' "$(value dinglaunch)"
     focus_after tray meta_l-b
     check "Super+B porta il focus sull'area di notifica" "$(value tray | grep -vc 'focus: none\|Main stage')" 1
     printf 'INFO: Super+B: %s\n' "$(value tray)"
@@ -582,6 +608,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     press esc
     printf 'INFO: Alt+F4 sul desktop: %s\n' "$(value poweroff)"
     check 'Alt+F4 sul desktop chiede di spegnere' "$(value poweroff | grep -ci 'power off\|restart\|cancel')" 1
+    speech_probe 'dopo i tasti di Windows e Alt+F4' keys
 fi
 
 # Screen reader settings (block 9): every control of the window has a name,
@@ -597,6 +624,7 @@ if [[ "$WANT_ORCA" == yes ]]; then
     check 'velocità letta da Orca (D-Bus)' "$(value orcarate)" 63
     ask orcadconf "env $BUS gsettings get org.gnome.Orca.Voice:/org/gnome/orca/default/voices/default/ rate" || exit 1
     check 'velocità salvata nelle impostazioni' "$(value orcadconf)" 63
+    speech_probe 'dopo le impostazioni del lettore di schermo' screenreader
 fi
 
 # Orca's keys (block 10): the NVDA scheme is the default, with Insert as
