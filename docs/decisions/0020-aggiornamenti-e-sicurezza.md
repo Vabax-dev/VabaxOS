@@ -1,6 +1,6 @@
 # ADR-0020: Aggiornamenti e sicurezza
 
-- **Stato:** Proposta
+- **Stato:** Accettata (Vabax, 2026-09-26)
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
 - **Sostituisce / Sostituita da:** —
@@ -18,7 +18,9 @@ La situazione oggi:
 - ADR-0009: ext4, niente snapshot del disco prima della v1.5, quindi niente ritorno automatico a prima di un aggiornamento.
 - GNOME Software e PackageKit sono già nella ISO; Flatpak ancora no.
 
-## Decisione proposta
+## Decisione
+
+Accettata da Vabax il 2026-09-26: date controllate di snapshot.debian.org provate ogni settimana dalla CI, nessun aggiornamento che parta senza l'utente nella serie 0.x, archivio VabaxOS su GitHub Pages di questo repository, due chiavi di firma (una per l'archivio, usata dalla CI; una per le versioni ufficiali, solo sul computer di Vabax). L'archivio e `vabaxctl` entrano nella 0.1 (blocco 13), non più nella 0.2.
 
 ### 1. Da dove arrivano gli aggiornamenti
 
