@@ -81,6 +81,19 @@ Ogni lavoro diventerà una issue su GitHub, con il modello «Lavoro».
 10. CI: costruzione della ISO e test di avvio in QEMU.
 11. Prima prova su PC fisico e scheda hardware.
 
+### Come si chiude la v0.1 (deciso con Vabax il 2026-09-26)
+
+La v0.1 comprende anche i blocchi 13 e 14, prima previsti per la v0.2. Ordine del lavoro:
+
+1. **Correzioni della notte** (PR #18): CI verde, poi unione a `main`.
+2. **Blocco 13, aggiornamenti VabaxOS** ([ADR-0020](docs/decisions/0020-aggiornamenti-e-sicurezza.md)): archivio APT firmato su GitHub Pages di questo repository; due chiavi (archivio, firmata dalla CI; versioni ufficiali, solo sul computer di Vabax); pacchetto con la chiave e le sorgenti; `vabaxos-update` anche dall'archivio; date di snapshot.debian.org provate ogni settimana dalla CI prima di pubblicarle; nessun aggiornamento automatico; `vabaxctl` (stato, voce, aggiornamenti, rapporto).
+3. **Blocco 14, Internet con Orca:** Firefox ESR e Thunderbird provati a fondo con Orca (pagine, moduli, posta, tasti come NVDA nel web), prove automatiche su pagine di esempio. Se il difetto di GNOME 50 (Orca che in Firefox legge solo le etichette) resta, la v0.1 esce lo stesso, con il difetto e il modo di aggirarlo nelle note.
+4. **Blocco 15, menu Start e sicurezza:** il menu Start di VabaxOS per tutti, ArcMenu tolto, anche con il mouse, con una casella di ricerca sulla barra quando è chiuso, come in Windows 11 ([ADR-0025](docs/decisions/0025-menu-start-vabaxos.md)); firewall ufw attivo per default ([ADR-0021](docs/decisions/0021-firewall-e-cifratura.md)); segnalazioni dei difetti trovati a GNOME, Orca, ArcMenu e Debian.
+5. **Prova di Vabax in VMware sul mini PC** con la ISO da `main` (scelta di Vabax: VMware invece della chiavetta). I criteri qui sopra che dicono «manca il PC fisico» si considerano provati con VMware per la v0.1; la prova da chiavetta resta per una versione successiva.
+6. **Uscita:** `v0.1.0-alpha.1` come pre-release su GitHub, con la ISO e `SHA256SUMS` firmato con la chiave delle versioni ufficiali, solo dopo il sì finale di Vabax. Lingue: italiano e inglese.
+
+La cifratura del disco resta per la v0.2, con voce e segnale alla richiesta della password.
+
 ## Dopo la v0.1
 
 I dettagli delle versioni successive sono in [DOC-01](docs/specs/01_VabaxOS_Roadmap_v0.1-v1.0.txt) (sezioni 7–16 e 67–86) e nel piano dei primi 12 mesi [DOC-32](docs/specs/32_Execution_Plan_First_12_Months.md). Gaming, supporto ARM e Mac, API di accessibilità Vabax e shell propria restano fuori dal primo traguardo, come già deciso in DOC-32.
