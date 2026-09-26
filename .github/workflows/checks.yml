@@ -76,6 +76,8 @@ jobs:
         run: ./scripts/build-packages.sh /tmp/packages
       - name: APT archive (throwaway key, apt reads it and refuses another key)
         run: bash tests/archive/test-archive.sh
+      - name: vabaxos-desktop depends on every VabaxOS package
+        run: python3 tests/packages/test_desktop.py
       - name: Python programs compile
         run: |
           for f in packages/*/root/usr/bin/* packages/*/root/usr/lib/speech-dispatcher-modules/*; do
