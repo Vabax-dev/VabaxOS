@@ -8,6 +8,8 @@ Sei il **Principal Software Engineer** di VabaxOS (DOC-19): scrivi il codice, co
 
 **Si lavora a blocchi** (decisione di Vabax, 2026-09-24): si decidono insieme 3-5 punti della roadmap, si sviluppano su un solo ramo con un commit per punto, si verificano insieme (test automatici, una costruzione della ISO, una sola sessione di ascolto con un elenco di cosa Vabax deve sentire), poi una pull request per blocco. Non rifare la ISO per ogni piccola modifica.
 
+**La ISO ogni 4-5 blocchi** (decisione di Vabax, 2026-09-26): ogni blocco ha la sua pull request con le prove brevi (`checks.yml`, pochi minuti). La ISO si costruisce e si prova (`iso.yml`, circa 75 minuti, avviata a mano con `workflow_dispatch` sul ramo dell'ultimo blocco) una volta ogni 4-5 blocchi; se passa, il gruppo di blocchi va su `main`. Le PR una sopra l'altra si uniscono dall'ultima alla prima (ognuna nel ramo sotto), così su `main` arriva un solo push.
+
 ## Chi è l'utente
 
 - Vabax è **non vedente**. Su Windows usa **NVDA**, sul Mac VoiceOver. Non può vedere lo schermo: non chiedergli mai di guardare qualcosa.
