@@ -687,7 +687,11 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
         [[ "$resumed" -gt 0 ]] && break
     done
     if [[ "$resumed" -eq 0 ]]; then
-        printf 'INFO: dopo la sospensione la macchina virtuale non risponde (difetto noto in QEMU, da provare su PC fisico)\n'
+        printf 'INFO: la macchina virtuale non torna dalla sospensione (difetto noto in QEMU, da provare su PC fisico)\n'
+        # If the shell still answers: where the suspend stopped.
+        if ask_within 60 suspendlog 'echo "$(systemctl show -p ActiveState --value systemd-suspend.service) | $(journalctl -b --no-pager -o short-monotonic -u systemd-suspend.service -u systemd-logind.service | tail -6 | cut -c1-150 | paste -sd"|")"'; then
+            printf 'INFO: stato della sospensione: %s\n' "$(value suspendlog)"
+        fi
         stop_vm
         if [[ "$FAILED" -eq 0 ]]; then
             printf 'Risultato: test di avvio superato (%s, %s%s), senza la prova dello spegnimento.\n' "$MODE" "$ENTRY" "${MENU_LANG:+, $MENU_LANG}"
