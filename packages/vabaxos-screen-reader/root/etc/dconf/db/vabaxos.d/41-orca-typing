@@ -1,0 +1,9 @@
+# VabaxOS: what Orca says while typing, as NVDA does by default (block 14).
+# Orca says every key pressed (key-echo), so in web pages it said the
+# letter of each quick key (H, K, D) before the heading or link. NVDA says
+# the characters written (character-echo): the same in text fields, and
+# quick keys stay silent. Both can be changed in Screen reader settings,
+# page Typing, and with Insert+2.
+[org/gnome/orca/default/typing-echo]
+key-echo=false
+character-echo=true

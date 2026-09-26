@@ -98,6 +98,15 @@ NVDA = {
     "appPreferencesSettingsHandler": ("n", O | C, 1),
     "shutdownHandler": ("q", O, 1),
     "bypass_mode_toggle": ("F2", O, 1),
+    # The quick keys of NVDA's browse mode (block 14): D landmarks, M
+    # frames. Orca has M for landmarks and D for live regions, which NVDA
+    # does not have: they go to J (Y stays the last live region).
+    "next_landmark": ("d", 0, 1),
+    "previous_landmark": ("d", S, 1),
+    "next_iframe": ("m", 0, 1),
+    "previous_iframe": ("m", S, 1),
+    "next_live_region": ("j", 0, 1),
+    "previous_live_region": ("j", S, 1),
 }
 NVDA_LAYOUT = {
     "desktop": {"toggle_sleep_mode": ("s", O | S, 1)},

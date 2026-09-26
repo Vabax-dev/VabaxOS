@@ -17,7 +17,7 @@ import re
 import sys
 
 ORDER = ["menu-di-avvio", "benvenuto", "voce", "lettore-di-schermo", "configurazione", "desktop", "tasti", "tasti-orca", "navigazione", "menu-start",
-         "lettore", "installazione", "aggiornamenti"]
+         "web", "lettore", "installazione", "aggiornamenti"]
 REPO_URL = "https://github.com/Vabax-dev/VabaxOS/blob/main/"
 STYLE = """body { font-family: "Atkinson Hyperlegible Next", sans-serif; font-size: 1.15rem;
   line-height: 1.6; max-width: 46rem; margin: 2rem auto; padding: 0 1rem;
@@ -41,6 +41,8 @@ def inline(text, pages):
             href = name + ".html"
         elif target.startswith("http"):
             href = target
+        elif "/vabaxos-help/html/" in target:
+            href = os.path.basename(target)  # a page of the help itself, such as prova-web.html
         else:
             href = REPO_URL + os.path.normpath(os.path.join("docs/utente", target))
         return f'<a href="{html.escape(href)}">{label}</a>'

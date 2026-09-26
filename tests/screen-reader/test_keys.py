@@ -52,6 +52,10 @@ class SchemesTest(unittest.TestCase):
             "toggle_presentation_mode": ("space", 256, 1), "shutdownHandler": ("q", 256, 1),
             "enterLearnModeHandler": ("1", 256, 1), "increaseSpeechRateHandler": ("Up", 260, 1),
             "list_links": ("F7", 256, 1), "list_headings": ("F6", 256, 1),
+            # Browse mode quick keys of NVDA (block 14).
+            "next_heading": ("h", 0, 1), "next_link": ("k", 0, 1), "next_form_field": ("f", 0, 1),
+            "next_table": ("t", 0, 1), "next_landmark": ("d", 0, 1), "previous_landmark": ("d", 1, 1),
+            "next_iframe": ("m", 0, 1), "next_live_region": ("j", 0, 1),
         }
         for name, key in expected.items():
             self.assertEqual(keys[name], key, name)

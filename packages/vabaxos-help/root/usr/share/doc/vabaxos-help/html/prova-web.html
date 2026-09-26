@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagina di prova per Orca</title>
+<style>
+body { font-family: "Atkinson Hyperlegible Next", sans-serif; font-size: 1.15rem; line-height: 1.6;
+  max-width: 46rem; margin: 2rem auto; padding: 0 1rem; color: #0b1b3f; background: #fffdf8; }
+a { color: #3a0fb0; }
+table { border-collapse: collapse; }
+th, td { border: 1px solid #0b1b3f; padding: .3rem .6rem; text-align: left; }
+@media (prefers-color-scheme: dark) { body { color: #f4f4f4; background: #0b1b3f; }
+  a { color: #ffe14d; } th, td { border-color: #f4f4f4; } }
+</style>
+</head>
+<body>
+<header>
+<p>VabaxOS, aiuto</p>
+</header>
+<nav aria-label="Pagine dell'aiuto">
+<ul>
+<li><a href="index.html">Indice dell'aiuto</a></li>
+<li><a href="tasti-orca.html">I tasti di Orca</a></li>
+<li><a href="web.html">Internet con Orca</a></li>
+</ul>
+</nav>
+<main>
+<h1>Pagina di prova per Orca</h1>
+<p>Questa pagina serve a esercitarsi con i tasti rapidi delle pagine web. Premi H per andare al titolo successivo, K per il collegamento successivo, F per il campo successivo, T per la tabella, D per il punto di riferimento. Con Maiusc si torna indietro. Ins+Freccia giù legge tutto.</p>
+
+<h2>Titoli</h2>
+<p>I titoli dividono la pagina in parti. Questo è un titolo di livello 2: il tasto 2 porta ai titoli di questo livello.</p>
+<h3>Un titolo di livello 3</h3>
+<p>Il tasto 3 porta qui. Ins+F6 apre l'elenco di tutti i titoli.</p>
+
+<h2>Collegamenti</h2>
+<p>Ecco due collegamenti: <a href="#modulo">vai al modulo</a> e <a href="#tabella">vai alla tabella</a>. Ins+F7 apre l'elenco dei collegamenti.</p>
+
+<h2>Elenco</h2>
+<p>L porta all'elenco, I alle sue voci.</p>
+<ul>
+<li>Prima voce: pane</li>
+<li>Seconda voce: latte</li>
+<li>Terza voce: frutta</li>
+</ul>
+
+<h2 id="modulo">Modulo</h2>
+<p>Nei campi Orca passa da solo alla modalità focus, per scrivere. Esc torna alla modalità navigazione; Ins+Spazio cambia modalità a mano. Ins+F5 apre l'elenco dei campi.</p>
+<form action="#" onsubmit="document.getElementById('esito').textContent = 'Modulo inviato. Grazie, ' + (document.getElementById('nome').value || 'amico') + '.'; return false;">
+<p><label for="nome">Nome</label> <input id="nome" name="nome" type="text" autocomplete="off"></p>
+<p><label for="citta">Città</label>
+<select id="citta" name="citta">
+<option>Roma</option>
+<option>Milano</option>
+<option>Napoli</option>
+</select></p>
+<fieldset>
+<legend>Come preferisci essere contattato?</legend>
+<p><input id="posta" name="contatto" type="radio" value="posta" checked> <label for="posta">Posta elettronica</label></p>
+<p><input id="telefono" name="contatto" type="radio" value="telefono"> <label for="telefono">Telefono</label></p>
+</fieldset>
+<p><input id="notizie" name="notizie" type="checkbox"> <label for="notizie">Ricevi le novità di VabaxOS</label></p>
+<p><button type="submit">Invia</button></p>
+</form>
+<p id="esito" role="status"></p>
+
+<h2 id="tabella">Tabella</h2>
+<p>Nella tabella, Ctrl+Alt+frecce si muovono fra le celle e Orca dice anche l'intestazione.</p>
+<table>
+<caption>Orari della biblioteca</caption>
+<thead>
+<tr><th scope="col">Giorno</th><th scope="col">Apertura</th><th scope="col">Chiusura</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">Lunedì</th><td>9:00</td><td>18:00</td></tr>
+<tr><th scope="row">Mercoledì</th><td>9:00</td><td>13:00</td></tr>
+<tr><th scope="row">Sabato</th><td>10:00</td><td>12:30</td></tr>
+</tbody>
+</table>
+</main>
+<footer>
+<p>Fine della pagina di prova. Premi Maiusc+H per tornare ai titoli precedenti.</p>
+</footer>
+</body>
+</html>

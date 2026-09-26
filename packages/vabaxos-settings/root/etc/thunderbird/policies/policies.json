@@ -1,0 +1,11 @@
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "Preferences": {
+      "accessibility.force_disabled": { "Value": 0, "Status": "locked" },
+      "mail.shell.checkDefaultClient": { "Value": false, "Status": "default" }
+    }
+  }
+}
