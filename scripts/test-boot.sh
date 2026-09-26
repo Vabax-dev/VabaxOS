@@ -330,7 +330,7 @@ if [[ "$WANT_ORCA" == yes ]]; then
     printf 'INFO: registro dettagliato di speech-dispatcher: %s\n' "$(value spddebug)"
     # Which audio output speech-dispatcher loaded (00-vabaxos-audio.conf:
     # PipeWire's own, not the PulseAudio one).
-    ask spdaudio 'grep -ho "spd_[a-z]*\.so" /proc/$(pgrep -u user -x speech-dispatch | head -1)/maps 2>/dev/null | sort -u | paste -sd,' || exit 1
+    ask spdaudio 'for p in $(pgrep -u user -x speech-dispatch; pgrep -u user "^sd_"); do grep -ho "spd_[a-z]*\.so" "/proc/$p/maps"; done 2>/dev/null | sort -u | paste -sd,' || exit 1
     printf 'INFO: uscita audio di speech-dispatcher: %s\n' "$(value spdaudio)"
 fi
 
@@ -850,7 +850,10 @@ fi
 # must not change what the checks before it hear (Vabax, 2026-09-26).
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     ask forcekokoro "env $BUS gsettings set org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer kokoro; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
-    ask orcaback 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
+    # Orca active and still active 20 seconds later: with Kokoro loading,
+    # speech-dispatcher answers late, and Orca may give up and start again
+    # by itself ("something has hung", CI 2026-09-26).
+    ask orcaback 'for t in 1 2; do for i in $(seq 180); do [ "$(systemctl --user is-active orca)" = active ] && break; sleep 1; done; sleep 20; done; [ "$(systemctl --user is-active orca)" = active ] && echo yes || echo no' || exit 1
     # The module loads the model in the background when Orca uses Kokoro
     # (about 570 MB): wait for it, up to 2 minutes on slow machines
     # such as the CI runners, then Orca must speak with it.
