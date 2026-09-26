@@ -126,6 +126,7 @@ class StartWindow(Adw.ApplicationWindow):
 
     def reload(self):
         self.categories = menu.build()
+        self.shown = None  # the results must be made again
         self.tree_model = Gtk.TreeListModel.new(store_of(self.categories), False, False, self.children_of)
         self.selection.set_model(self.tree_model)
 
@@ -161,6 +162,12 @@ class StartWindow(Adw.ApplicationWindow):
 
     def update_results(self):
         text = self.search.get_text()
+        # show_menu makes the results at once, and the search field asks
+        # for them again a moment later (search-changed): the number of
+        # results is said once.
+        if text == self.shown:
+            return
+        self.shown = text
         while (row := self.results.get_row_at_index(0)) is not None:
             self.results.remove(row)
         if not text.strip():

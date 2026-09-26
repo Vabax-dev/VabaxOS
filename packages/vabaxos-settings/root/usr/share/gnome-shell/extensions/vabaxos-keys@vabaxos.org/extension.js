@@ -267,6 +267,11 @@ export default class VabaxOSKeys extends Extension {
     _focusDesktop() {
         if (global.display.focus_window || Main.modalCount > 0)
             return;
+        // The user is in GNOME Shell (the taskbar after Super+T, the
+        // notification area): the desktop must not take the focus away.
+        const keyFocus = global.stage.get_key_focus();
+        if (keyFocus && keyFocus !== global.stage)
+            return;
         // Not global.get_window_actors(): Desktop Icons NG hides its window there.
         const windows = global.display.list_all_windows();
         const desktop = windows.find(w => (w.get_title() ?? '').startsWith('Desktop Icons ')) ??
