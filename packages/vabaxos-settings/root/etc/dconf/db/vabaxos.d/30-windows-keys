@@ -18,8 +18,12 @@ switch-applications=@as []
 switch-applications-backward=@as []
 show-desktop=['<Super>d', '<Super>m']
 panel-run-dialog=['<Alt>F2', '<Super>r']
-switch-to-workspace-left=['<Super><Control>Left', '<Super>Page_Up', '<Control><Alt>Left']
-switch-to-workspace-right=['<Super><Control>Right', '<Super>Page_Down', '<Control><Alt>Right']
+# Not Ctrl+Alt+arrows: in the screen reader they move between the cells of
+# a table, as in NVDA (block 14).
+switch-to-workspace-left=['<Super><Control>Left', '<Super>Page_Up']
+switch-to-workspace-right=['<Super><Control>Right', '<Super>Page_Down']
+switch-to-workspace-up=@as []
+switch-to-workspace-down=@as []
 
 # Super+A quick settings (Wi-Fi, Bluetooth, volume), Super+N notifications
 # and calendar, Super+Tab all the windows, Super+Shift+S and

@@ -55,6 +55,21 @@ Per ogni comando: il tasto nello schema NVDA (quello di VabaxOS), nello schema J
 - **Elenco delle caselle combinate:** Ins+Ctrl+C (uguale in JAWS; originale di Orca: Alt+Maiusc+C)
 - **Elenco dei campi di testo:** Ins+Ctrl+E (uguale in JAWS; originale di Orca: Alt+Maiusc+E)
 
+### Nelle pagine web, in modalità navigazione
+
+- **Punto di riferimento successivo:** D (JAWS M; originale di Orca: M)
+- **Punto di riferimento precedente:** Maiusc+D (JAWS Maiusc+M; originale di Orca: Maiusc+M)
+- **Regione aggiornata successiva:** M (JAWS D; originale di Orca: D)
+- **Regione aggiornata precedente:** Maiusc+M (JAWS Maiusc+D; originale di Orca: Maiusc+D)
+- **Tabella: cella sopra:** Ctrl+Alt+Freccia su (JAWS Alt+Maiusc+Freccia su; originale di Orca: Alt+Maiusc+Freccia su)
+- **Tabella: cella sotto:** Ctrl+Alt+Freccia giù (JAWS Alt+Maiusc+Freccia giù; originale di Orca: Alt+Maiusc+Freccia giù)
+- **Tabella: cella a sinistra:** Ctrl+Alt+Freccia sinistra (JAWS Alt+Maiusc+Freccia sinistra; originale di Orca: Alt+Maiusc+Freccia sinistra)
+- **Tabella: cella a destra:** Ctrl+Alt+Freccia destra (JAWS Alt+Maiusc+Freccia destra; originale di Orca: Alt+Maiusc+Freccia destra)
+- **Tabella: inizio della riga:** Ctrl+Alt+Inizio (JAWS Ins+Alt+Maiusc+Freccia sinistra; originale di Orca: Ins+Alt+Maiusc+Freccia sinistra)
+- **Tabella: fine della riga:** Ctrl+Alt+Fine (JAWS Ins+Alt+Maiusc+Freccia destra; originale di Orca: Ins+Alt+Maiusc+Freccia destra)
+- **Tabella: inizio della colonna:** Ctrl+Alt+Pagina su (JAWS Ins+Alt+Maiusc+Freccia su; originale di Orca: Ins+Alt+Maiusc+Freccia su)
+- **Tabella: fine della colonna:** Ctrl+Alt+Pagina giù (JAWS Ins+Alt+Maiusc+Freccia giù; originale di Orca: Ins+Alt+Maiusc+Freccia giù)
+
 ### Modalità e impostazioni
 
 - **Modalità navigazione o modalità focus:** Ins+Spazio (JAWS Ins+Z; originale di Orca: Ins+A)
@@ -91,6 +106,19 @@ Per ogni comando: il tasto nello schema NVDA (quello di VabaxOS), nello schema J
 - **Attiva l'oggetto:** Ins+Invio del tastierino (uguale in JAWS; originale di Orca: Ins+Ctrl+Invio)
 
 <!-- tabella dei tasti: fine -->
+
+## Le lettere nelle pagine web
+
+In una pagina web, in modalità navigazione (Ins+Spazio passa dalla modalità focus a quella di navigazione), una lettera porta all'elemento successivo di quel tipo, con Maiusc a quello precedente. Sono le lettere di NVDA:
+
+- **H** titolo, **1**-**6** titolo di quel livello;
+- **K** collegamento, **U** collegamento non visitato, **V** collegamento visitato;
+- **F** campo di un modulo, **E** campo di testo, **B** pulsante, **X** casella di controllo, **C** casella combinata, **R** pulsante di opzione;
+- **D** punto di riferimento (intestazione, navigazione, contenuto principale...);
+- **L** elenco, **I** voce di un elenco, **T** tabella, **G** immagine, **Q** citazione, **P** paragrafo, **S** separatore, **O** oggetto grande;
+- **M** regione che si aggiorna da sola (per esempio una chat).
+
+Nelle tabelle, come in NVDA, Ctrl+Alt+frecce passano da una cella all'altra, Ctrl+Alt+Inizio e Fine vanno all'inizio e alla fine della riga, Ctrl+Alt+Pagina su e Pagina giù all'inizio e alla fine della colonna. Per cambiare area di lavoro restano Super+Pagina su e Super+Pagina giù. In un campo di testo le lettere si scrivono: Orca passa alla modalità focus da solo, ed Esc torna alla navigazione.
 
 ## La revisione dello schermo
 

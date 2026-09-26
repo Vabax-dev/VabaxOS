@@ -98,6 +98,23 @@ NVDA = {
     "appPreferencesSettingsHandler": ("n", O | C, 1),
     "shutdownHandler": ("q", O, 1),
     "bypass_mode_toggle": ("F2", O, 1),
+    # In web pages D goes to the landmarks, as in NVDA (block 14); Orca's
+    # live regions move to M, which NVDA gives to frames, rare today.
+    "next_landmark": ("d", 0, 1),
+    "previous_landmark": ("d", S, 1),
+    "next_live_region": ("m", 0, 1),
+    "previous_live_region": ("m", S, 1),
+    # Tables as in NVDA: Ctrl+Alt+arrows, Home and End for the row, Page Up
+    # and Page Down for the column (GNOME's workspaces leave those keys,
+    # 30-windows-keys).
+    "table_cell_up": ("Up", C | A, 1),
+    "table_cell_down": ("Down", C | A, 1),
+    "table_cell_left": ("Left", C | A, 1),
+    "table_cell_right": ("Right", C | A, 1),
+    "table_cell_beginning_of_row": ("Home", C | A, 1),
+    "table_cell_end_of_row": ("End", C | A, 1),
+    "table_cell_top_of_column": ("Page_Up", C | A, 1),
+    "table_cell_bottom_of_column": ("Page_Down", C | A, 1),
 }
 NVDA_LAYOUT = {
     "desktop": {"toggle_sleep_mode": ("s", O | S, 1)},
