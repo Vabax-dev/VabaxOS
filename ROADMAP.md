@@ -94,6 +94,8 @@ La v0.1 comprende anche i blocchi 13 e 14, prima previsti per la v0.2. Ordine de
 
 La cifratura del disco resta per la v0.2, con voce e segnale alla richiesta della password.
 
+Stato al 2026-09-26 pomeriggio: blocchi 13, 14 e 15 sviluppati sui rami `feat/block13-updates`, `feat/block14-internet`, `feat/block15-start-firewall` (uno sopra l'altro), in attesa dell'unione di #18 e poi delle loro pull request. Per il blocco 13 servono a Vabax tre passi su GitHub (chiave dell'archivio, segreto, Pages): [docs/sviluppo/chiavi.md](docs/sviluppo/chiavi.md). Le segnalazioni pronte da inviare: [docs/sviluppo/segnalazioni.md](docs/sviluppo/segnalazioni.md).
+
 ## Dopo la v0.1
 
 I dettagli delle versioni successive sono in [DOC-01](docs/specs/01_VabaxOS_Roadmap_v0.1-v1.0.txt) (sezioni 7–16 e 67–86) e nel piano dei primi 12 mesi [DOC-32](docs/specs/32_Execution_Plan_First_12_Months.md). Gaming, supporto ARM e Mac, API di accessibilità Vabax e shell propria restano fuori dal primo traguardo, come già deciso in DOC-32.
