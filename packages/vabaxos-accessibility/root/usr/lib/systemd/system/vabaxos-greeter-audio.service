@@ -6,6 +6,10 @@
 # not open the card again, and the text console is silent. The audio
 # group gives it the card on every console, as the users made by the
 # installer already have it (test-install.sh, 2026-09-26).
+# GDM 49 and later run the login screen as a dynamic user, gdm-greeter,
+# which is not in /etc/passwd: it gets the audio group from the userdb
+# drop-in /usr/lib/userdb/gdm-greeter:audio.membership (nss-systemd).
+# Debian-gdm, for older GDM, gets it here.
 [Unit]
 Description=VabaxOS: the login screen keeps the sound card for console speech
 Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/decisions/0014-voce-dal-primo-secondo.md

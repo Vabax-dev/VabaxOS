@@ -150,6 +150,10 @@ ask() {
     wait_for "^VABAX-DONE-$key" "risposta: $key" 300
 }
 value() { clean_log | sed -n "s/^$1=//p" | tail -n 1; }
+wait_card_free() {
+    ask cardfree 'for i in $(seq 30); do o=$(sed -n "s/^owner_pid *: *//p" /proc/asound/card*/pcm*p/sub*/status | head -1); [ -z "$o" ] && break; case "$(ps -o user= -p "$o")" in gdm-greeter*|Debian-gdm) sleep 1 ;; *) break ;; esac; done; echo "${o:-none}" "$(ps -o user= -p "${o:-1}")" "$i"'
+    printf 'INFO: scheda audio prima di Ctrl+Alt+F3 (processo, utente, secondi): %s\n' "$(value cardfree)"
+}
 login() {
     wait_for 'login: *$' 'richiesta di accesso' 600 || return 1
     send vabax
@@ -210,7 +214,8 @@ ask packages 'dpkg-query -W -f "\${Package} " vabaxos-accessibility vabaxos-bran
 ask live 'dpkg-query -W -f "\${db:Status-Abbrev}\${Package} " live-boot live-config 2>/dev/null | grep -c "^ii" || true'
 ask speech 'systemctl is-active espeakup'
 ask gdm 'systemctl is-active gdm'
-ask greeteraudio 'id -nG Debian-gdm | grep -qw audio && echo yes || echo no'
+# GDM 49 and later run the login screen as a dynamic user, gdm-greeter.
+ask greeteraudio 'id -nG gdm-greeter 2>/dev/null | grep -qw audio && echo yes || echo no'
 ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select'
 ask user 'id -un'
 # The installer saved the choices for the welcome, which applied them.
@@ -239,10 +244,10 @@ check 'schermata di accesso udibile' "$(record greeter 8)" yes
 # card only once the login screen's PipeWire lets it go, 5 seconds after
 # Orca stops speaking (WirePlumber's suspend timeout). A person at the
 # computer has one PipeWire only. A fixed wait was not enough (CI,
-# 2026-09-25 and 26): wait, up to 30 seconds, until no process of the
-# login screen (Debian-gdm) has a playback device open.
-ask cardfree 'for i in $(seq 30); do o=$(sed -n "s/^owner_pid *: *//p" /proc/asound/card*/pcm*p/sub*/status | head -1); [ -z "$o" ] && break; [ "$(ps -o user= -p "$o")" != Debian-gdm ] && break; sleep 1; done; echo "${o:-none}" "$(ps -o user= -p "${o:-1}")" "$i"'
-printf 'INFO: scheda audio prima di Ctrl+Alt+F3 (processo, utente, secondi): %s\n' "$(value cardfree)"
+# 2026-09-25 and 26): wait_card_free waits, up to 30 seconds, until no
+# process of the login screen (gdm-greeter, the dynamic user of GDM 49 and
+# later, or Debian-gdm) has a playback device open.
+wait_card_free
 press ctrl-alt-f3
 check 'voce della console udibile' "$(record console 10)" yes
 send 'echo test | sudo -S poweroff'
@@ -258,6 +263,7 @@ ask welcome2 'systemctl show -p ConditionResult --value vabaxos-welcome'
 ask speech2 'systemctl is-active espeakup'
 check 'benvenuto non ripetuto' "$(value welcome2)" no
 check 'voce della console senza rete' "$(value speech2)" active
+wait_card_free
 press ctrl-alt-f3
 check 'voce della console udibile senza rete' "$(record console-offline 10)" yes
 send 'echo test | sudo -S poweroff'
