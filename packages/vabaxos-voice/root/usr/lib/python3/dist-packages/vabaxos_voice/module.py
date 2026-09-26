@@ -376,6 +376,10 @@ class Module:
                     break
             if not cancel.is_set():
                 player.drain(cancel.is_set)
+            # A new stream for every message: a stream left open between
+            # messages stayed silent after a suspend and resume (QEMU,
+            # 2026-09-26), while a new one always played.
+            player.close()
             self.last_speech = time.monotonic()
             # Let the producer finish its current part and exit.
             while producer.is_alive():
