@@ -634,11 +634,9 @@ if [[ "$WANT_ORCA" == yes ]]; then
         check "Tab in $name: il focus resta nel programma" "$(tab_value "tab$key" outside)" 0
         check "Tab in $name: il focus si sposta" "$( (( $(tab_value "tab$key" unique) > 3 )) && echo yes || echo no)" yes
     done
-    # Other programs: only reported. (LibreOffice seemed to stop the VM for
-    # ten minutes on 2026-09-25: it was the time limit counted from the
-    # start of the test.)
-    for program in "files|nautilus|nautilus" "settings|gnome-control-center wifi|gnome-control-center" \
-                   "editor|gnome-text-editor|gnome-text-editor" "writer|libreoffice --writer|soffice"; do
+    # Other programs: only reported. Not the editors (text editor, Writer):
+    # there Tab writes a tab in the text.
+    for program in "files|nautilus|nautilus" "settings|gnome-control-center wifi|gnome-control-center"; do
         IFS='|' read -r key launch name <<< "$program"
         tab_walk "tab$key" "$launch" "$name"
         printf 'INFO: Tab in %s: %s\n' "$name" "$(value "tab$key")"
@@ -700,8 +698,8 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Entering the suspend can take longer than 15 seconds (CI, 2026-09-26:
     # the wake-up came first, then the machine went to sleep for good): wake
     # it up again until the kernel logs "PM: suspend exit". A wake-up while
-    # it runs does nothing. (systemd 258 does not log "returned from sleep"
-    # in the unit's journal: that count was always 0.)
+    # it runs does nothing. The live user may not read the system journal:
+    # sudo (without it the count was always 0, 2026-09-26).
     # In QEMU the suspend sometimes stops half-way after a long test (the
     # kernel still echoes the keys, the shell does not answer; 2026-09-25,
     # not reproduced by hand): a known defect, to check on a physical PC
@@ -711,14 +709,14 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     for try in 1 2 3 4; do
         monitor system_wakeup
         sleep 10
-        ask_within 120 "resumed$try" 'journalctl -k -b --no-pager -o cat | grep -c "PM: suspend exit"' || break
+        ask_within 120 "resumed$try" 'sudo -n journalctl -k -b --no-pager -o cat | grep -c "PM: suspend exit"' || break
         resumed="$(value "resumed$try")"
         [[ "$resumed" -gt 0 ]] && break
     done
     if [[ "$resumed" -eq 0 ]]; then
         printf 'INFO: la macchina virtuale non torna dalla sospensione (difetto noto in QEMU, da provare su PC fisico)\n'
         # If the shell still answers: where the suspend stopped.
-        if ask_within 60 suspendlog 'echo "$(systemctl show -p ActiveState --value systemd-suspend.service) | $(journalctl -b --no-pager -o short-monotonic -u systemd-suspend.service -u systemd-logind.service | tail -6 | cut -c1-150 | paste -sd"|")"'; then
+        if ask_within 60 suspendlog 'echo "$(systemctl show -p ActiveState --value systemd-suspend.service) | $(sudo -n journalctl -b --no-pager -o short-monotonic -u systemd-suspend.service -u systemd-logind.service | tail -6 | cut -c1-150 | paste -sd"|")"'; then
             printf 'INFO: stato della sospensione: %s\n' "$(value suspendlog)"
         fi
         stop_vm
