@@ -52,7 +52,7 @@ DISK="$WORK/disk.qcow2"
 FAILED=0
 QEMU_WRAPPER=""
 
-# shellcheck disable=SC2317  # called by the EXIT trap
+# shellcheck disable=SC2317,SC2329  # called by the EXIT trap
 cleanup() {
     stop_vm
     if [[ "$KEEP" == true && -f "$DISK" ]]; then

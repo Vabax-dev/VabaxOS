@@ -74,7 +74,7 @@ MONITOR_PORT="$(free_port)"
     -monitor "tcp:127.0.0.1:$MONITOR_PORT,server=on,wait=off" &
 QEMU_WRAPPER=$!
 
-# shellcheck disable=SC2317  # called by the EXIT trap
+# shellcheck disable=SC2317,SC2329  # called by the EXIT trap
 stop_vm() {
     if kill -0 "$QEMU_WRAPPER" 2>/dev/null; then
         pkill -P "$QEMU_WRAPPER" qemu-system 2>/dev/null
