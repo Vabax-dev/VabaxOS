@@ -1,0 +1,10 @@
+#!/bin/sh
+# The firewall on by default (ADR-0021, accepted by Vabax on 2026-09-26),
+# in the live system and, copied by the installer, in the installed one:
+# ufw with its defaults, incoming connections blocked (except the replies,
+# DHCP and the multicast discovery of printers, in its before.rules),
+# outgoing allowed. vabaxos-status (Super+Alt+I) says "Firewall on".
+set -e
+sed -i 's/^ENABLED=no$/ENABLED=yes/' /etc/ufw/ufw.conf
+grep -qx 'ENABLED=yes' /etc/ufw/ufw.conf
+grep -qx 'DEFAULT_INPUT_POLICY="DROP"' /etc/default/ufw

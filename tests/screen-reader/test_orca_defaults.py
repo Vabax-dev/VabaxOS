@@ -41,13 +41,29 @@ from gi.repository import Gio
 from vabaxos_screen_reader import store
 echo = Gio.Settings.new_with_path("org.gnome.Orca.TypingEcho", "/org/gnome/orca/default/typing-echo/")
 echo.set_boolean("character-echo", False)          # the user's own choice
-first = store.apply_vabaxos_defaults(sys.argv[2])
-second = store.apply_vabaxos_defaults(sys.argv[2])
+state = sys.argv[3]
+first = store.apply_vabaxos_defaults(sys.argv[2], state)
+second = store.apply_vabaxos_defaults(sys.argv[2], state)
 keys = Gio.Settings.new_with_path("org.gnome.Orca.Keybindings", "/org/gnome/orca/default/keybindings/")
 print("WRITTEN:%d,%d" % (first, second))
 print("KEYECHO:%s,%s" % (echo.get_boolean("key-echo"), echo.get_user_value("key-echo") is not None))
 print("CHARECHO:%s" % echo.get_boolean("character-echo"))
 print("LANDMARK:%s" % keys.get_value("entries").unpack().get("next_landmark"))
+# The user turns key echo on again in Orca's preferences: Orca removes the
+# value (it equals Orca's default). The next start must not undo it.
+echo.reset("key-echo")
+third = store.apply_vabaxos_defaults(sys.argv[2], state)
+print("AFTERRESET:%d,%s" % (third, echo.get_boolean("key-echo")))
+# A newer VabaxOS changes a default: given again where the value is still
+# the old default of VabaxOS, not where the user chose.
+path = sys.argv[2] + "/41-orca-test"
+with open(path) as f:
+    text = f.read()
+with open(path, "w") as f:
+    f.write(text.replace("['d', '461', '0', '1']", "['x', '461', '0', '1']"))
+fourth = store.apply_vabaxos_defaults(sys.argv[2], state)
+print("NEWDEFAULT:%d,%s,%s" % (fourth, echo.get_boolean("key-echo"),
+                               keys.get_value("entries").unpack().get("next_landmark")))
 '''
 
 
@@ -67,7 +83,8 @@ class OrcaDefaultsTest(unittest.TestCase):
             f.write(KEYFILE)
         env = dict(os.environ, GSETTINGS_BACKEND="memory", GSETTINGS_SCHEMA_DIR=schemas,
                    PYTHONDONTWRITEBYTECODE="1")
-        result = subprocess.run([sys.executable, "-c", CHILD, LIBRARY, defaults], env=env,
+        state = os.path.join(cls.tmp.name, "state", "orca-defaults")
+        result = subprocess.run([sys.executable, "-c", CHILD, LIBRARY, defaults, state], env=env,
                                 capture_output=True, text=True, timeout=60)
         cls.out = dict(line.split(":", 1) for line in result.stdout.splitlines() if ":" in line)
         cls.err = result.stderr[-3000:]
@@ -86,6 +103,15 @@ class OrcaDefaultsTest(unittest.TestCase):
 
     def test_keys(self):
         self.assertEqual(self.out.get("LANDMARK"), "[['d', '461', '0', '1']]", self.err)
+
+    def test_given_once(self):
+        # Orca removed the user's value that equals its own default: kept.
+        self.assertEqual(self.out.get("AFTERRESET"), "0,True", self.err)
+
+    def test_new_default(self):
+        # The keys were still the old default of VabaxOS: replaced by the
+        # new one; key echo, the user's choice, stays.
+        self.assertEqual(self.out.get("NEWDEFAULT"), "1,True,[['x', '461', '0', '1']]", self.err)
 
 
 if __name__ == "__main__":

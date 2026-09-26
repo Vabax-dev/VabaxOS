@@ -20,3 +20,12 @@ msgstr "%d finestre aperte"
 
 msgid "Where am I"
 msgstr "Dove sono"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Search"
+msgstr "Cerca"
+
+msgid "Search programs, settings and files"
+msgstr "Cerca programmi, impostazioni e file"

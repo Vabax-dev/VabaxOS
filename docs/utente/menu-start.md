@@ -1,6 +1,6 @@
 # Il menu Start
 
-**Super** (il tasto con il logo di Windows) apre il **menu Start** di VabaxOS ([ADR-0025](../decisions/0025-menu-start-vabaxos.md), proposta). Super di nuovo, oppure **Esc**, lo chiude, e il focus torna alla finestra in cui eri. Anche **Super+S** lo apre.
+**Super** (il tasto con il logo di Windows) apre il **menu Start** di VabaxOS ([ADR-0025](../decisions/0025-menu-start-vabaxos.md), scelta di Vabax). Super di nuovo, oppure **Esc**, lo chiude, e il focus torna alla finestra in cui eri. Anche **Super+S** lo apre.
 
 ## Cercare
 
@@ -33,8 +33,15 @@ Le categorie sono un albero, come le cartelle in Windows:
 
 Orca dice di ogni categoria quanti elementi ha e se è aperta o chiusa.
 
-## Con il mouse
+## Dalla barra delle applicazioni, anche con il mouse
 
-Nella barra delle applicazioni, in basso a sinistra, il simbolo di VabaxOS apre il menu ArcMenu ([ADR-0018](../decisions/0018-menu-start.md)), con i programmi, le cartelle e i comandi di sistema.
+A sinistra nella barra delle applicazioni, come in Windows 11:
+
+- il pulsante **Start**, con il simbolo di VabaxOS: un clic apre il menu, un altro lo chiude;
+- la casella **Cerca**: un clic apre il menu nel campo di ricerca; quello che scrivi nella casella passa alla ricerca del menu, che si apre già con i risultati.
+
+Nel menu, un clic su un risultato lo apre; un clic sul nome di una categoria la apre o la chiude, un clic su un programma, un'impostazione o una cartella la apre.
+
+Con la tastiera basta Super; sulla barra, raggiunta con **Ctrl+Alt+Tab**, Orca legge i due comandi come «Start» e «Cerca programmi, impostazioni e file».
 
 La panoramica di GNOME, con tutte le finestre, è su **Super+Tab**.

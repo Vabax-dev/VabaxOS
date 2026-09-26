@@ -76,6 +76,8 @@ jobs:
         run: ./scripts/build-packages.sh /tmp/packages
       - name: APT archive (throwaway key, apt reads it and refuses another key)
         run: bash tests/archive/test-archive.sh
+      - name: vabaxos-desktop depends on every VabaxOS package
+        run: python3 tests/packages/test_desktop.py
       - name: Python programs compile
         run: |
           for f in packages/*/root/usr/bin/* packages/*/root/usr/lib/speech-dispatcher-modules/*; do
@@ -127,6 +129,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Button names (button-names@vabaxos.org, ADR-0022)
         run: python3 tests/button-names/test_button_names.py
+      - name: Start button and search box of the taskbar (vabaxos-keys, ADR-0025)
+        run: python3 tests/start/test_taskbar_start.py
 
   powershell:
     name: PowerShell scripts

@@ -39,7 +39,7 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0015](0015-versioni-e-rilasci.md) | Versioni, canali e nomi degli artefatti | Accettata |
 | [0016](0016-benvenuto-parlato.md) | Benvenuto parlato all'avvio, prima del desktop | Accettata |
 | [0017](0017-base-debian-testing-forky.md) | Base di sviluppo: Debian testing «forky» a data fissa (serie 0.x) | Accettata |
-| [0018](0018-menu-start.md) | Menu Start con il logo di VabaxOS (ArcMenu) | Accettata |
+| [0018](0018-menu-start.md) | Menu Start con il logo di VabaxOS (ArcMenu) | Sostituita da 0025 |
 | [0019](0019-voce-naturale-kokoro.md) | Voce naturale Kokoro per il desktop, eSpeak NG come riserva | Accettata |
 | [0020](0020-aggiornamenti-e-sicurezza.md) | Aggiornamenti e sicurezza | Accettata |
 | [0021](0021-firewall-e-cifratura.md) | Firewall e cifratura del disco | Accettata |

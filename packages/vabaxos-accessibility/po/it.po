@@ -162,3 +162,9 @@ msgstr "Cestino"
 
 msgid "Show Apps"
 msgstr "Mostra applicazioni"
+
+msgid "Firewall on."
+msgstr "Firewall attivo."
+
+msgid "Firewall off."
+msgstr "Firewall spento."

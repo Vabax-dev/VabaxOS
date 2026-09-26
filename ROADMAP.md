@@ -94,6 +94,27 @@ La v0.1 comprende anche i blocchi 13 e 14, prima previsti per la v0.2. Ordine de
 
 La cifratura del disco resta per la v0.2, con voce e segnale alla richiesta della password.
 
+Stato al 2026-09-26 pomeriggio: blocchi 13, 14 e 15 sviluppati sui rami `feat/block13-updates`, `feat/block14-internet`, `feat/block15-start-firewall` (uno sopra l'altro), in attesa dell'unione di #18 e poi delle loro pull request. Per il blocco 13 servono a Vabax tre passi su GitHub (chiave dell'archivio, segreto, Pages): [docs/sviluppo/chiavi.md](docs/sviluppo/chiavi.md). Le segnalazioni pronte da inviare: [docs/sviluppo/segnalazioni.md](docs/sviluppo/segnalazioni.md).
+
 ## Dopo la v0.1
+
+### v0.2 e v0.3 (deciso con Vabax il 2026-09-26)
+
+L'accessibilità al centro, e vantaggi concreti per chi sceglierebbe Debian, Ubuntu, Fedora o Arch. Due gruppi di blocchi, una ISO di prova alla fine di ciascun gruppo.
+
+**v0.2, gruppo A:**
+
+16. **Voce naturale più veloce:** Kokoro abbastanza rapido per l'uso quotidiano con Orca (frasi di Orca preparate in anticipo, frasi spezzate, misure sul mini PC).
+17. **Lettura dello schermo con l'OCR:** un tasto legge il testo della finestra anche nei programmi che Orca non legge, come l'OCR di NVDA (Tesseract, già nella ISO).
+18. **Dettatura:** si parla e il testo viene scritto dove c'è il cursore, in italiano e in inglese, senza Internet. Il modello di riconoscimento (per esempio Whisper o Vosk) e la sua licenza si scelgono con un ADR.
+19. **Sottotitoli in tempo reale** dell'audio del computer, in una finestra che Orca e la barra Braille leggono. Stesso modello della dettatura.
+20. **Sicurezza d'uso e ripristino:** una combinazione di tasti d'emergenza che rimette la voce e le impostazioni di accessibilità, la modalità di recupero che parla, il salvataggio automatico delle impostazioni.
+
+**v0.3, gruppo B:**
+
+21. **Cifratura del disco** ([ADR-0021](docs/decisions/0021-firewall-e-cifratura.md), spostata dalla v0.2 alla v0.3 da Vabax): l'installer chiede se cifrare il disco e in che modo, e a ogni avvio la richiesta della password ha voce, segnale sonoro e Braille. Fino ad allora la guida all'installazione la sconsiglia: la cifratura di Debian c'è, ma la richiesta della password è muta.
+22. **Dispositivi:** chiavette e dischi esterni annunciati a voce, stampanti e scanner da tastiera, cuffie Bluetooth associate con la guida a voce.
+
+Non ora: più lingue oltre italiano e inglese (scelta di Vabax, 2026-09-26). Idee per dopo: collegamento con il telefono, assistenza a distanza accessibile, installer tutto di VabaxOS (v0.5).
 
 I dettagli delle versioni successive sono in [DOC-01](docs/specs/01_VabaxOS_Roadmap_v0.1-v1.0.txt) (sezioni 7–16 e 67–86) e nel piano dei primi 12 mesi [DOC-32](docs/specs/32_Execution_Plan_First_12_Months.md). Gaming, supporto ARM e Mac, API di accessibilità Vabax e shell propria restano fuori dal primo traguardo, come già deciso in DOC-32.

@@ -55,6 +55,27 @@ GnuPG chiede la passphrase due volte, nel terminale. Sceglila lunga e conservala
 
 Conviene anche una copia di sicurezza del portachiavi (`~/.gnupg`) su una chiavetta che resta a casa.
 
+## Quando una chiave scade
+
+Le chiavi hanno una scadenza: 3 anni quella dell'archivio, 2 anni quella delle versioni. Una chiave scaduta non vale più:
+
+- **Chiave dell'archivio:** i sistemi installati rifiutano l'archivio firmato con una chiave scaduta, e gli aggiornamenti si fermano per tutti. La scadenza va allungata **molti mesi prima**, perché i sistemi ricevono la chiave allungata solo con un aggiornamento di `vabaxos-apt`. La CI (`scripts/build-archive.sh`) avvisa quando mancano meno di 180 giorni.
+- **Chiave delle versioni:** le versioni già uscite restano verificabili; per le nuove serve la scadenza allungata.
+
+Per allungarla di altri 3 anni (per la chiave delle versioni `2y` e il suo nome), nella finestra di Debian:
+
+```bash
+gpg --quick-set-expire "$(gpg --with-colons --list-secret-keys '=VabaxOS archive signing key' | awk -F: '$1 == "fpr" {print $10; exit}')" 3y
+```
+
+Poi si scrive di nuovo la parte pubblica in `keys/`, con un commit come al punto 4:
+
+```bash
+gpg --armor --export '=VabaxOS archive signing key' > keys/vabaxos-archive.asc
+```
+
+Per la chiave dell'archivio si aggiorna anche il segreto `VABAXOS_ARCHIVE_KEY` su GitHub (punto 2): la chiave segreta allungata si copia di nuovo negli appunti con `gpg --armor --export-secret-keys '=VabaxOS archive signing key' | clip.exe`.
+
 ## Se una chiave si perde o viene rubata
 
 - **Chiave dell'archivio:** si crea una chiave nuova, si cambia il segreto, e una versione di `vabaxos-apt` firmata ancora con la vecchia porta la chiave nuova. Se la vecchia è stata rubata, serve una ISO nuova.

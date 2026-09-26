@@ -140,7 +140,12 @@ class Store:
 DEFAULTS_DIR = "/etc/dconf/db/vabaxos.d"
 
 
-def apply_vabaxos_defaults(directory=DEFAULTS_DIR):
+def defaults_state_path():
+    state = os.environ.get("XDG_STATE_HOME") or os.path.join(os.path.expanduser("~"), ".local", "state")
+    return os.path.join(state, "vabaxos", "orca-defaults")
+
+
+def apply_vabaxos_defaults(directory=DEFAULTS_DIR, state_path=None):
     """Writes VabaxOS's Orca defaults (the Orca groups of the dconf keyfiles
     in directory, such as 40-orca-keys and 41-orca-typing) as the user's
     own values, for every key the user has not set.
@@ -149,12 +154,31 @@ def apply_vabaxos_defaults(directory=DEFAULTS_DIR):
     (get_user_value): the system dconf defaults of VabaxOS were ignored, so
     the NVDA keys and the typing echo never applied (found in QEMU,
     2026-09-26). Run before Orca starts (orca.service.d); the number of
-    values written is returned."""
+    values written is returned.
+
+    Each default is written once: Orca itself removes a value that equals
+    its own default when the user saves it in Orca's preferences (for
+    example key echo on again, or Orca's original keys), and writing
+    VabaxOS's default again at the next start would undo the user's
+    choice. The defaults already given are listed in state_path, with
+    their value: a default changed by a newer VabaxOS is given again, to
+    keys the user has not set."""
     written = 0
     try:
         names = sorted(os.listdir(directory))
     except OSError:
         return 0
+    state_path = state_path or defaults_state_path()
+    given = {}
+    try:
+        with open(state_path, encoding="utf-8") as f:
+            for line in f:
+                path, sep, value = line.rstrip("\n").partition("\t")
+                if sep:
+                    given[path] = value
+    except OSError:
+        pass
+    before = dict(given)
     for name in names:
         keyfile = GLib.KeyFile()
         try:
@@ -171,16 +195,38 @@ def apply_vabaxos_defaults(directory=DEFAULTS_DIR):
                 continue
             settings = Gio.Settings.new_with_path(schema_id, "/" + "/".join(parts) + "/")
             for key in keyfile.get_keys(group_path)[0]:
-                if settings.get_user_value(key) is not None:
+                text = keyfile.get_value(group_path, key)
+                path = "/" + "/".join(parts) + "/" + key
+                old = given.get(path)
+                if old == text:
                     continue
+                given[path] = text
+                kind = settings.get_value(key).get_type()
                 try:
-                    value = GLib.Variant.parse(settings.get_value(key).get_type(),
-                                               keyfile.get_value(group_path, key), None, None)
+                    value = GLib.Variant.parse(kind, text, None, None)
                 except GLib.Error:
                     continue
+                mine = settings.get_user_value(key)
+                if mine is not None:
+                    # Still the old default of VabaxOS, never changed by
+                    # the user: the new default replaces it.
+                    try:
+                        still_old = old is not None and mine.equal(GLib.Variant.parse(kind, old, None, None))
+                    except GLib.Error:
+                        still_old = False
+                    if not still_old:
+                        continue
                 settings.set_value(key, value)
                 written += 1
     Gio.Settings.sync()
+    if given != before:
+        try:
+            os.makedirs(os.path.dirname(state_path), exist_ok=True)
+            with open(state_path + ".new", "w", encoding="utf-8") as f:
+                f.writelines(f"{path}\t{value}\n" for path, value in sorted(given.items()))
+            os.replace(state_path + ".new", state_path)
+        except OSError:
+            pass
     return written
 
 

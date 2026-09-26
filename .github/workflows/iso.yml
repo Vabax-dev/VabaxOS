@@ -3,13 +3,13 @@ name: ISO
 # Builds the VabaxOS ISO and boots it in QEMU with the same checks as on the
 # workstation, sound included (ROADMAP v0.1, work item 10). The ISO is kept
 # for a week as an artifact: nightly builds are not releases (ADR-0015).
+#
+# It takes about 75 minutes, so it does not run by itself (Vabax's rule,
+# 2026-09-26): each block's pull request has the short checks of
+# checks.yml; this one is started by hand once every 4-5 blocks, on the
+# branch of the last block, and the blocks go to main when it passes.
 
 on:
-  push:
-    branches: [main]
-    paths: [image/**, packages/**, scripts/**, .github/workflows/iso.yml]
-  pull_request:
-    paths: [image/**, packages/**, scripts/**, .github/workflows/iso.yml]
   workflow_dispatch:
     inputs:
       snapshot:
