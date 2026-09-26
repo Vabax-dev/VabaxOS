@@ -333,6 +333,16 @@ orca_speaks() {
     record "$1" 8
     send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
 }
+# Orca's state, when it has to be heard and is not, or after it restarts:
+# whether it runs, how often systemd restarted it (its unit has
+# WatchdogSec=6: Orca is killed when its main loop waits longer, for
+# example on speech-dispatcher), the watchdog kills and the speech
+# processes. Details to the serial log (ORCA-DIAG), a summary as INFO.
+orca_state() {
+    send 'journalctl --user -b --no-pager -o short-monotonic -u orca | grep -E "Start|watchdog|Killing|Failed" | tail -12 | sed "s/^/ORCA-DIAG: /"; pgrep -u user -a -f "speech-dispatch|sd_[a-z]" | sed "s/^/ORCA-DIAG: /"'
+    ask orcastate 'echo $(systemctl --user show orca -p ActiveState -p SubState -p NRestarts --value) watchdog=$(journalctl --user -b --no-pager -o cat -u orca | grep -c "result .watchdog.")' || exit 1
+    printf 'INFO: Orca %s: %s\n' "$1" "$(value orcastate)"
+}
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Orca speaks through speech-dispatcher, which starts with Orca.
     ask sd 'for i in $(seq 60); do pgrep -u user -x speech-dispatch >/dev/null && break; sleep 1; done; sleep 5; pgrep -u user -x speech-dispatch >/dev/null && echo yes || echo no' || exit 1
@@ -416,6 +426,7 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Back to the default voice (ADR-0024) for the rest of the test: the
     # checks after this one test what a user has at first.
     ask backespeak "env $BUS gsettings reset org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; for i in \$(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; echo fatto" || exit 1
+    orca_state 'dopo il ritorno a eSpeak NG'
 fi
 
 # Start menu (ADR-0018): ArcMenu active; Super opens it and every control
@@ -590,7 +601,9 @@ fi
 if [[ "$WANT_ORCA" == yes ]]; then
     sleep 3
     press insert-f12
-    check 'Ins+F12: Orca dice l'"'"'ora' "$(record orca-f12 5)" "$WANT_SOUND"
+    HEARD="$(record orca-f12 5)"
+    check 'Ins+F12: Orca dice l'"'"'ora' "$HEARD" "$WANT_SOUND"
+    [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo Ins+F12'
     # Orca runs without DISPLAY (orca.service.d/50-vabaxos-wayland.conf):
     # no xkbcomp through Xwayland, which froze GNOME Shell at startup.
     ask orcadisplay 'tr "\\0" "\\n" < /proc/$(pgrep -u user -x orca)/environ | grep -c "^DISPLAY="' || exit 1
@@ -654,7 +667,9 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     if [[ "$WANT_ORCA" == yes ]]; then
         press meta_l-alt-d
         # Orca may start speaking after 3 seconds: record 10.
-        check 'Super+Alt+D: dove sono (Orca)' "$(record where-am-i 10)" "$WANT_SOUND"
+        HEARD="$(record where-am-i 10)"
+        check 'Super+Alt+D: dove sono (Orca)' "$HEARD" "$WANT_SOUND"
+        [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo Super+Alt+D'
     fi
     send 'pkill -u user -x vabaxos-apps; pkill -u user -x gnome-text-edit; sleep 2'
 fi
@@ -728,7 +743,9 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     fi
     ask sleepstate 'cat /sys/power/state; journalctl -b --no-pager -o cat -u systemd-suspend.service | tail -1' || exit 1
     printf 'INFO: sospensione riuscita %s volte; stati: %s\n' "$resumed" "$(value sleepstate)"
-    check 'Orca udibile dopo la sospensione' "$(orca_speaks orca-resume)" "$WANT_SOUND"
+    HEARD="$(orca_speaks orca-resume)"
+    check 'Orca udibile dopo la sospensione' "$HEARD" "$WANT_SOUND"
+    [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo la sospensione'
 fi
 
 if [[ "$(value state)" != running ]]; then
