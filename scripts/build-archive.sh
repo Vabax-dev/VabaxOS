@@ -57,6 +57,14 @@ if [[ "$SIGNED" == true ]]; then
     grep -qx "$fingerprint" <<< "$public" \
         || { printf 'ERRORE: la chiave segreta non corrisponde a keys/vabaxos-archive.asc.\n' >&2; exit 1; }
     printf 'SignWith: %s\n' "$fingerprint" >> "$TMP/conf/distributions"
+    # A key past its date stops the updates of every installed system, and
+    # they get a longer date only with an update of vabaxos-apt: warn well
+    # before (docs/sviluppo/chiavi.md, "Quando una chiave scade").
+    expires="$(gpg --batch --with-colons --show-keys "$REPO/keys/vabaxos-archive.asc" | awk -F: '$1 == "pub" {print $7; exit}')"
+    if [[ -n "$expires" ]] && (( expires - $(date +%s) < 180 * 86400 )); then
+        printf '::warning::La chiave dell'"'"'archivio scade il %s: allungala (docs/sviluppo/chiavi.md).\n' \
+            "$(date -u -d "@$expires" +%Y-%m-%d)"
+    fi
 fi
 
 rm -rf "$OUT"
