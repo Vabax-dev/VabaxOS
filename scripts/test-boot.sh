@@ -671,8 +671,9 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     sleep 15
     # Entering the suspend can take longer than 15 seconds (CI, 2026-09-26:
     # the wake-up came first, then the machine went to sleep for good): wake
-    # it up again until the journal says it came back. A wake-up while it
-    # runs does nothing.
+    # it up again until the kernel logs "PM: suspend exit". A wake-up while
+    # it runs does nothing. (systemd 258 does not log "returned from sleep"
+    # in the unit's journal: that count was always 0.)
     # In QEMU the suspend sometimes stops half-way after a long test (the
     # kernel still echoes the keys, the shell does not answer; 2026-09-25,
     # not reproduced by hand): a known defect, to check on a physical PC
@@ -682,7 +683,7 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     for try in 1 2 3 4; do
         monitor system_wakeup
         sleep 10
-        ask_within 120 "resumed$try" 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "returned from sleep"' || break
+        ask_within 120 "resumed$try" 'journalctl -k -b --no-pager -o cat | grep -c "PM: suspend exit"' || break
         resumed="$(value "resumed$try")"
         [[ "$resumed" -gt 0 ]] && break
     done
