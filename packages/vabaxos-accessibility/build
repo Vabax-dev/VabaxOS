@@ -1,0 +1,9 @@
+#!/bin/sh
+# Called by scripts/build-packages.sh with the package tree.
+# The login screen of GDM 49 and later runs as a dynamic user, gdm-greeter:
+# a systemd userdb drop-in makes it a member of the audio group, so console
+# speech works after Ctrl+Alt+F3 (vabaxos-greeter-audio.service). The file
+# name has a colon, which Git on Windows cannot check out: it is made here.
+set -e
+mkdir -p "$1/usr/lib/userdb"
+echo '{}' > "$1/usr/lib/userdb/gdm-greeter:audio.membership"

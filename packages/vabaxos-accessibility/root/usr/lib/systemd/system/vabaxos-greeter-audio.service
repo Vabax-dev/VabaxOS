@@ -1,0 +1,24 @@
+# VabaxOS: console speech at the login screen (ADR-0005, ADR-0014).
+# At the login screen espeakup speaks through the PipeWire of the login
+# screen's user, Debian-gdm (espeakup-start). logind lets a user use the
+# sound card only while that user's session is on screen: after
+# Ctrl+Alt+F3 the login screen is no longer on screen, its PipeWire may
+# not open the card again, and the text console is silent. The audio
+# group gives it the card on every console, as the users made by the
+# installer already have it (test-install.sh, 2026-09-26).
+# GDM 49 and later run the login screen as a dynamic user, gdm-greeter,
+# which is not in /etc/passwd: it gets the audio group from the userdb
+# drop-in /usr/lib/userdb/gdm-greeter:audio.membership (nss-systemd).
+# Debian-gdm, for older GDM, gets it here.
+[Unit]
+Description=VabaxOS: the login screen keeps the sound card for console speech
+Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/decisions/0014-voce-dal-primo-secondo.md
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'getent passwd Debian-gdm >/dev/null || exit 0; id -nG Debian-gdm | grep -qw audio || usermod -a -G audio Debian-gdm'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -705,8 +705,8 @@ msgstr "Il tasto del lettore di schermo"
 msgid "Screen reader key"
 msgstr "Tasto del lettore di schermo"
 
-msgid "Laptop uses Caps Lock as the screen reader key and the letters for reviewing"
-msgstr "Portatile usa Bloc Maiusc come tasto del lettore di schermo e le lettere per la revisione"
+msgid "Laptop uses Caps Lock as the screen reader key and the letters for reviewing; for now each press of Caps Lock also switches capital letters"
+msgstr "Portatile usa Bloc Maiusc come tasto del lettore di schermo e le lettere per la revisione; per ora ogni pressione di Bloc Maiusc cambia anche le maiuscole"
 
 msgid "Desktop, with number pad"
 msgstr "Fissa, con il tastierino numerico"
@@ -714,8 +714,8 @@ msgstr "Fissa, con il tastierino numerico"
 msgid "Laptop"
 msgstr "Portatile"
 
-msgid "The key held with the screen reader commands"
-msgstr "Il tasto da tenere premuto con i comandi del lettore di schermo"
+msgid "The key held with the screen reader commands. With Caps Lock, for now each press also switches capital letters on or off"
+msgstr "Il tasto da tenere premuto con i comandi del lettore di schermo. Con Bloc Maiusc, per ora ogni pressione attiva o disattiva anche le maiuscole"
 
 msgid "Insert"
 msgstr "Ins"

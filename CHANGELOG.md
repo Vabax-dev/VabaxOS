@@ -47,3 +47,10 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Menu Start di VabaxOS (`vabaxos-start`, blocco 12, proposta ADR-0025): Super apre il menu con il focus nella ricerca (risultati mentre si scrive: programmi, impostazioni, cartelle, file, comandi), Tab va alle categorie ad albero (Preferiti, Programmi divisi come in Windows, Strumenti di VabaxOS, Impostazioni, Cartelle, File recenti, Spegni o esci): Freccia destra apre, Freccia sinistra torna, le lettere saltano. ArcMenu resta sulla barra per il mouse.
 - Installazione dal benvenuto (ADR-0023): «Installa ora» riparte subito nell'installer con la voce (`vabaxos-install`, kexec), nella lingua e alla velocità scelte; le impostazioni di accessibilità passano al sistema installato; l'installer non chiede più nome del computer, dominio, password di root, altri dischi, paese del mirror, mirror e proxy. `test-install.sh` nella CI.
 - Estensione `button-names@vabaxos.org` (ADR-0022): dà un nome ai pulsanti di GNOME Shell con la sola icona, come Chiudi ed Espandi nelle notifiche, che GNOME 50 lascia senza nome; prova con GNOME Shell senza schermo nella CI.
+
+### Corretto
+
+- Il tasto del lettore di schermo predefinito è Ins, come in NVDA, non più anche Bloc Maiusc: sotto Wayland Orca 50 non lo trattiene, e ogni pressione attivava le maiuscole. Bloc Maiusc si può ancora scegliere, con il limite spiegato.
+- GNOME Shell non si blocca più all'avvio con la voce: Orca parte senza il display X11 (`orca.service.d/50-vabaxos-wayland.conf`), quindi non riscrive la mappa della tastiera attraverso Xwayland; Orca parte anche più in fretta (2 secondi invece di 19). Ins e Bloc Maiusc restano i tasti del lettore di schermo.
+- Kokoro non smette più di parlare dopo il primo messaggio: il modulo risponde sempre a Speech Dispatcher, anche quando il server audio non prende il suono.
+- Sistema installato: la voce della console parla anche passando dalla schermata di accesso a una console di testo (Ctrl+Alt+F3): la schermata di accesso tiene la scheda audio (`vabaxos-greeter-audio.service`).

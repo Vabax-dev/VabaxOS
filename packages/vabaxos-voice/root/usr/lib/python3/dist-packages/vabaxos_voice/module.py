@@ -250,18 +250,37 @@ class Module:
 
     def speak(self, text, kind="text"):
         self.stop_and_wait()
-        self.cancel.clear()
+        # Each message has its own stop signal and player: one left behind
+        # by stop_and_wait sees that it is no longer current and stays quiet.
+        self.cancel = threading.Event()
         self.busy.set()
         preparing = self.preparing
         if preparing is not None:
             preparing.terminate = True  # speech first; the phrase is redone later
-        self.job = threading.Thread(target=self.run_job, args=(text, kind), daemon=True)
+        self.job = threading.Thread(target=self.run_job, args=(text, kind, self.cancel, self.player),
+                                    daemon=True)
         self.job.start()
 
-    def stop_and_wait(self):
+    def stop_and_wait(self, limit=2.0):
+        """Stops the message being spoken. A message stuck in the sound
+        server is left behind with its player, and the next one gets a new
+        player: the module must always answer Speech Dispatcher."""
         if self.job and self.job.is_alive():
             self.cancel.set()
-            self.job.join()
+            running = self.running
+            if running is not None:
+                running.terminate = True
+            self.job.join(limit)
+            if self.job.is_alive():
+                log("a message did not stop: new player")
+                # The server waits for the end of that message: say it
+                # stopped, as the message itself would have.
+                if not getattr(self.cancel, "began", False):
+                    self.send("701 BEGIN")
+                self.send("703 STOP")
+                self.cancel = threading.Event()
+                self.player = make_player(engine.SAMPLE_RATE)
+                self.busy.clear()
 
     def stop(self):
         self.cancel.set()
@@ -281,7 +300,16 @@ class Module:
             self.cache.put(voice, lang, text, pcm)
         return pcm
 
-    def run_job(self, text, kind):
+    def run_job(self, text, kind, cancel=None, player=None):
+        cancel = cancel or self.cancel
+        player = player or self.player
+
+        def send(*lines):
+            if self.cancel is cancel:  # not left behind by stop_and_wait
+                if "701 BEGIN" in lines:
+                    cancel.began = True
+                self.send(*lines)
+
         began = False
         try:
             self.last_speech = time.monotonic()
@@ -297,10 +325,10 @@ class Module:
             if voice is not None:
                 self.load()
             if voice is None or (kind == "char" and not self.kokoro.tokens(text, lang)):
-                self.send("701 BEGIN")
+                send("701 BEGIN")
                 began = True
-                done = self.speak_espeak(" ".join(v for k, v in items if k == "text") or text, lang, kind)
-                self.send("702 END" if done else "703 STOP")
+                done = self.speak_espeak(" ".join(v for k, v in items if k == "text") or text, lang, kind, cancel)
+                send("702 END" if done else "703 STOP")
                 return
             speed = speed_for(int(self.settings.get("rate") or 0))
             pitch = pitch_for(int(self.settings.get("pitch") or 0))
@@ -309,13 +337,13 @@ class Module:
 
             def produce():
                 for item_kind, value in items:
-                    if self.cancel.is_set():
+                    if cancel.is_set():
                         break
                     if item_kind == "text":
                         try:
                             pcm = self.synth(value, lang, voice)
                         except Exception:  # noqa: BLE001 - terminated by STOP, or failed
-                            if not self.cancel.is_set():
+                            if not cancel.is_set():
                                 raise
                             break
                         pcm = self.kokoro.sonic(pcm, speed, pitch)
@@ -332,22 +360,26 @@ class Module:
                 try:
                     item_kind, value = ready.get(timeout=0.02)
                 except queue.Empty:
-                    if self.cancel.is_set():
+                    if cancel.is_set():
                         break
                     continue
-                if self.cancel.is_set():
+                if cancel.is_set():
                     break
                 if item_kind == "end":
                     break
                 if not began:
-                    self.send("701 BEGIN")
+                    send("701 BEGIN")
                     began = True
                 if item_kind == "mark":
-                    self.send(f"700-{value}", "700 INDEX MARK")
-                elif not self.player.play(value, self.cancel.is_set):
+                    send(f"700-{value}", "700 INDEX MARK")
+                elif not player.play(value, cancel.is_set):
                     break
-            if not self.cancel.is_set():
-                self.player.drain(self.cancel.is_set)
+            if not cancel.is_set():
+                player.drain(cancel.is_set)
+            # A new stream for every message: a stream left open between
+            # messages stayed silent after a suspend and resume (QEMU,
+            # 2026-09-26), while a new one always played.
+            player.close()
             self.last_speech = time.monotonic()
             # Let the producer finish its current part and exit.
             while producer.is_alive():
@@ -356,18 +388,20 @@ class Module:
                 except queue.Empty:
                     pass
             if not began:
-                self.send("701 BEGIN")
-            self.send("703 STOP" if self.cancel.is_set() else "702 END")
+                send("701 BEGIN")
+            send("703 STOP" if cancel.is_set() else "702 END")
         except Exception as error:  # noqa: BLE001 - report and stay alive
             log("speak failed:", repr(error))
             if not began:
-                self.send("701 BEGIN")
-            self.send("703 STOP")
+                send("701 BEGIN")
+            send("703 STOP")
         finally:
-            self.busy.clear()
+            if self.cancel is cancel:
+                self.busy.clear()
 
-    def speak_espeak(self, text, lang, kind):
+    def speak_espeak(self, text, lang, kind, cancel=None):
         """eSpeak NG for what Kokoro cannot say (other languages, symbols)."""
+        cancel = cancel or self.cancel
         wpm = int(175 * speed_for(int(self.settings.get("rate") or 0)))
         args = ["espeak-ng", "--stdout", "-v", lang or "en", "-s", str(wpm)]
         if kind == "char":
@@ -380,8 +414,8 @@ class Module:
             pcm = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16)
         player = make_player(rate)
         try:
-            ok = player.play(pcm, self.cancel.is_set)
-            return player.drain(self.cancel.is_set) and ok
+            ok = player.play(pcm, cancel.is_set)
+            return player.drain(cancel.is_set) and ok
         finally:
             player.close()
 

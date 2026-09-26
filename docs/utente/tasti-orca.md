@@ -4,9 +4,9 @@ Orca, il lettore di schermo di VabaxOS, usa in VabaxOS gli stessi tasti di **NVD
 
 ## Il tasto del lettore di schermo
 
-Nei tasti qui sotto **Ins** è il tasto del lettore di schermo: **Ins** oppure **Bloc Maiusc**, come in NVDA. Per scrivere in maiuscolo con Bloc Maiusc, premilo due volte di seguito.
+Nei tasti qui sotto **Ins** è il tasto del lettore di schermo: **Ins**, o **Ins** del tastierino, come in NVDA. Nella pagina Tastiera delle impostazioni del lettore di schermo si può aggiungere **Bloc Maiusc**, ma per ora con un limite: ogni volta che lo premi cambiano anche le maiuscole (Orca 50 sotto Wayland non lo trattiene ancora).
 
-Sul portatile, nella pagina Tastiera, scegli «Portatile»: alcuni tasti cambiano, perché Orca usa Bloc Maiusc e le lettere per rivedere lo schermo. La pagina Tasti mostra sempre i tasti giusti per la tua tastiera.
+Sul portatile, nella pagina Tastiera, scegli «Portatile»: alcuni tasti cambiano, perché Orca usa Bloc Maiusc e le lettere per rivedere lo schermo (con lo stesso limite di Bloc Maiusc). La pagina Tasti mostra sempre i tasti giusti per la tua tastiera.
 
 ## L'aiuto dei tasti
 

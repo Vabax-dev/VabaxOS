@@ -94,14 +94,18 @@ done
 cat <&"$SERIAL" >> "$LOG" &
 
 START=$SECONDS
-# Waits until the serial log matches a regular expression, or the time runs out.
+# Waits until the serial log matches a regular expression, or TIMEOUT
+# seconds pass. Each wait has its own time: counting from the start of the
+# test, every answer that was not there at once failed after 600 seconds
+# (the tests with the voice last about 10 minutes; 2026-09-26).
 wait_for() {
+    local end=$((SECONDS + TIMEOUT))
     while ! grep -qaE "$1" "$LOG"; do
         if ! kill -0 "$QEMU_WRAPPER" 2>/dev/null; then
             printf 'FALLITO: la macchina virtuale si è fermata prima di: %s\n' "$2"
             return 1
         fi
-        if (( SECONDS - START > TIMEOUT )); then
+        if (( SECONDS > end )); then
             printf 'FALLITO: dopo %d secondi, ancora niente: %s\n' "$TIMEOUT" "$2"
             return 1
         fi
@@ -329,6 +333,20 @@ orca_speaks() {
     record "$1" 8
     send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
 }
+# Orca's state, when it has to be heard and is not, or after it restarts:
+# whether it runs, how often systemd restarted it (its unit has
+# WatchdogSec=6: Orca is killed when its main loop waits longer, for
+# example on speech-dispatcher), the watchdog kills and the speech
+# processes. Details to the serial log (ORCA-DIAG), a summary as INFO.
+orca_state() {
+    send 'journalctl --user -b --no-pager -o short-monotonic -u orca | grep -E "Start|watchdog|Killing|Failed" | tail -12 | sed "s/^/ORCA-DIAG: /"; pgrep -u user -a -f "speech-dispatch|sd_[a-z]" | sed "s/^/ORCA-DIAG: /"'
+    ask orcastate 'echo $(systemctl --user show orca -p ActiveState -p SubState -p NRestarts --value) watchdog=$(journalctl --user -b --no-pager -o cat -u orca | grep -c "result .watchdog.")' || exit 1
+    printf 'INFO: Orca %s: %s\n' "$1" "$(value orcastate)"
+    # Who is silent: speech-dispatcher said directly (without Orca), and
+    # the sound server's outputs and streams.
+    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat -u orca | tail -15 | sed "s/^/ORCA-DIAG: /"; tail -n 25 /run/user/1000/speech-dispatcher/log/speech-dispatcher.log /run/user/1000/speech-dispatcher/log/espeak-ng.log 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
+    printf 'INFO: speech-dispatcher da solo %s: %s\n' "$1" "$(record "spd-$2" 5)"
+}
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Orca speaks through speech-dispatcher, which starts with Orca.
     ask sd 'for i in $(seq 60); do pgrep -u user -x speech-dispatch >/dev/null && break; sleep 1; done; sleep 5; pgrep -u user -x speech-dispatch >/dev/null && echo yes || echo no' || exit 1
@@ -340,8 +358,16 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     # to see whether the desktop is stuck (CI, 2026-09-25: GNOME Shell did
     # not answer on the session bus from the start in one run of eight).
     if [[ "$ORCA_HEARD" != "$WANT_SOUND" ]]; then
-        send 'sudo -n journalctl -b --no-pager -o short-monotonic _COMM=gnome-shell _COMM=orca | tail -80 | sed "s/^/JOURNAL: /"'
+        # Also: busy or waiting? The threads of GNOME Shell and their CPU use
+        # over 3 seconds, where its main thread waits in the kernel, and the
+        # whole journal. One line: typing after sudo would reach sudo.
+        send 'sudo -n journalctl -b --no-pager -o short-monotonic _COMM=gnome-shell _COMM=orca | tail -80 | sed "s/^/JOURNAL: /"; p=$(pgrep -u user -x gnome-shell); top -b -H -n 2 -d 3 -p "$p" | tail -20 | sed "s/^/SHELLTOP: /"; sudo -n cat /proc/"$p"/stack | sed "s/^/SHELLSTACK: /"; sudo -n journalctl -b --no-pager -o short-monotonic --since=-3min | grep -v -e speech-disp -e sd_espeak -e sd_kokoro -e sudo | tail -120 | sed "s/^/JOURNALALL: /"'
         ask diagnosis 'echo done' || exit 1
+        # Where each thread of GNOME Shell waits: gdb from the network, with
+        # the symbols from debuginfod.debian.net (only when Orca is silent;
+        # to find the cause of the freeze at startup, 2026-09-26).
+        send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 900 gdb -p "$(pgrep -u user -x gnome-shell)" -batch -ex "set debuginfod enabled on" -ex "set pagination off" -ex "thread apply all bt 40" -ex "call (void)gjs_dumpstack()" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/GDB: /"; journalctl --user -b --no-pager -o cat _COMM=gnome-shell | tail -40 | sed "s/^/GJS: /"; echo GDB""END'
+        TIMEOUT=1200 wait_for '^GDBEND' 'gdb' || exit 1
     fi
     ask vt 'loginctl show-session $(loginctl list-sessions --no-legend | awk "\$3==\"user\" && \$4==\"seat0\" {print \$1}" | head -1) -p VTNr --value' || exit 1
     BACK_VT="$(value vt)"
@@ -401,6 +427,10 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     ask kokoro 'for i in $(seq 120); do r=$(ps -o rss= -C sd_kokoro | sort -n | tail -1); [ "${r:-0}" -gt 300000 ] && break; sleep 1; done; [ "${r:-0}" -gt 300000 ] && echo yes || echo "no (${r:-0} kB)"' || exit 1
     check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"
     check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
+    # Back to the default voice (ADR-0024) for the rest of the test: the
+    # checks after this one test what a user has at first.
+    ask backespeak "env $BUS gsettings reset org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; for i in \$(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; echo fatto" || exit 1
+    orca_state 'dopo il ritorno a eSpeak NG' ritorno
 fi
 
 # Start menu (ADR-0018): ArcMenu active; Super opens it and every control
@@ -443,10 +473,11 @@ app_a11y() {
 if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y files nautilus nautilus
     app_a11y terminal ptyxis ptyxis
-    # GNOME Settings is on the accessibility bus as org.gnome.Settings.
-    app_a11y wifi 'gnome-control-center wifi' settings
-    app_a11y bluetooth 'gnome-control-center bluetooth' settings
-    app_a11y power 'gnome-control-center power' settings
+    # GNOME Settings is on the accessibility bus as gnome-control-center
+    # (not "settings", as on the session bus: org.gnome.Settings).
+    app_a11y wifi 'gnome-control-center wifi' gnome-control-center
+    app_a11y bluetooth 'gnome-control-center bluetooth' gnome-control-center
+    app_a11y power 'gnome-control-center power' gnome-control-center
     ask status "env $BUS vabaxos-status battery" || exit 1
     printf 'INFO: vabaxos-status: %s\n' "$(value status)"
     ask soundtheme "env $BUS gsettings get org.gnome.desktop.sound theme-name" || exit 1
@@ -562,19 +593,25 @@ if [[ "$WANT_ORCA" == yes ]]; then
     check 'velocità salvata nelle impostazioni' "$(value orcadconf)" 63
 fi
 
-# Orca's keys (block 10): the NVDA scheme is the default, with Insert and
-# Caps Lock as the screen reader key, and Orca answers to it: Insert+F12
-# says the time (recorded).
+# Orca's keys (block 10): the NVDA scheme is the default, with Insert as
+# the screen reader key (not Caps Lock: Orca 50 does not hold it back under
+# Wayland), and Orca answers to it: Insert+F12 says the time (recorded).
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ask orcakeys "env $BUS gsettings get org.gnome.Orca.Keybindings:/org/gnome/orca/default/keybindings/ entries | grep -o \"'sayAllHandler': \[\['Down', '461', '256', '1'\]\]\" | wc -l" || exit 1
     check 'tasti di Orca come NVDA (Ins+Freccia giù legge tutto)' "$(value orcakeys)" 1
     ask orcamod "env $BUS gsettings get org.gnome.Orca.Keybindings:/org/gnome/orca/default/keybindings/ desktop-modifier-keys" || exit 1
-    check 'tasto del lettore di schermo (Ins o Bloc Maiusc)' "$(value orcamod)" "['Insert', 'KP_Insert', 'Caps_Lock']"
+    check 'tasto del lettore di schermo (Ins, come in NVDA)' "$(value orcamod)" "['Insert', 'KP_Insert']"
 fi
 if [[ "$WANT_ORCA" == yes ]]; then
     sleep 3
     press insert-f12
-    check 'Ins+F12: Orca dice l'"'"'ora' "$(record orca-f12 5)" "$WANT_SOUND"
+    HEARD="$(record orca-f12 5)"
+    check 'Ins+F12: Orca dice l'"'"'ora' "$HEARD" "$WANT_SOUND"
+    [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo Ins+F12' f12
+    # Orca runs without DISPLAY (orca.service.d/50-vabaxos-wayland.conf):
+    # no xkbcomp through Xwayland, which froze GNOME Shell at startup.
+    ask orcadisplay 'tr "\\0" "\\n" < /proc/$(pgrep -u user -x orca)/environ | grep -c "^DISPLAY="' || exit 1
+    check 'Orca senza DISPLAY (niente xkbcomp)' "$(value orcadisplay)" 0
 fi
 
 # Navigation and Tab (block 11). Tab is pressed many times in a program
@@ -612,11 +649,13 @@ if [[ "$WANT_ORCA" == yes ]]; then
         check "Tab in $name: il focus resta nel programma" "$(tab_value "tab$key" outside)" 0
         check "Tab in $name: il focus si sposta" "$( (( $(tab_value "tab$key" unique) > 3 )) && echo yes || echo no)" yes
     done
-    # Only Files among GNOME's programs: with LibreOffice and with Settings
-    # (not found on the accessibility bus) the VM stopped answering for ten
-    # minutes (2026-09-25).
-    tab_walk tabfiles nautilus nautilus
-    printf 'INFO: Tab in nautilus: %s\n' "$(value tabfiles)"
+    # Other programs: only reported. Not the editors (text editor, Writer):
+    # there Tab writes a tab in the text.
+    for program in "files|nautilus|nautilus" "settings|gnome-control-center wifi|gnome-control-center"; do
+        IFS='|' read -r key launch name <<< "$program"
+        tab_walk "tab$key" "$launch" "$name"
+        printf 'INFO: Tab in %s: %s\n' "$name" "$(value "tab$key")"
+    done
 fi
 
 # A new window takes the focus even when a program already has it and the
@@ -631,7 +670,10 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     printf 'INFO: finestra nuova: %s\n' "$(value newwindow)"
     if [[ "$WANT_ORCA" == yes ]]; then
         press meta_l-alt-d
-        check 'Super+Alt+D: dove sono (Orca)' "$(record where-am-i 5)" "$WANT_SOUND"
+        # Orca may start speaking after 3 seconds: record 10.
+        HEARD="$(record where-am-i 10)"
+        check 'Super+Alt+D: dove sono (Orca)' "$HEARD" "$WANT_SOUND"
+        [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo Super+Alt+D' where
     fi
     send 'pkill -u user -x vabaxos-apps; pkill -u user -x gnome-text-edit; sleep 2'
 fi
@@ -653,9 +695,14 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     ask starttree "sleep 1; env $BUS vabaxos-a11y-check --focused vabaxos-start" || exit 1
     printf 'INFO: Tab nel menu Start: %s\n' "$(value starttree)"
     check 'Tab va alle categorie' "$(value starttree | grep -c 'focus: none\|focus: text')" 0
+    # Tab stops on the first category, Favorites: P jumps to Programs, then
+    # Right Arrow opens it and shows its groups (Office, Internet...).
+    press p
     press right
     ask startopen "sleep 1; env $BUS vabaxos-a11y-check --list vabaxos-start | grep -c 'Office\|Ufficio\|Internet'" || exit 1
-    printf 'INFO: dopo Freccia destra: %s voci di Programmi\n' "$(value startopen)"
+    groups="$(value startopen)"
+    printf 'INFO: dopo P e Freccia destra: %s gruppi di Programmi\n' "${groups:-0}"
+    check 'P e Freccia destra aprono Programmi' "$(( ${groups:-0} > 0 ))" 1
     ask startnames "env $BUS vabaxos-a11y-check vabaxos-start | tail -1" || exit 1
     check 'menu Start: comandi senza nome' "$(value startnames)" 'vabaxos-start: 0 controls without a name'
     press esc
@@ -666,14 +713,30 @@ fi
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send 'sudo systemctl suspend </dev/null'
     sleep 15
-    monitor system_wakeup
-    sleep 10
+    # Entering the suspend can take longer than 15 seconds (CI, 2026-09-26:
+    # the wake-up came first, then the machine went to sleep for good): wake
+    # it up again until the kernel logs "PM: suspend exit". A wake-up while
+    # it runs does nothing. The live user may not read the system journal:
+    # sudo (without it the count was always 0, 2026-09-26).
     # In QEMU the suspend sometimes stops half-way after a long test (the
     # kernel still echoes the keys, the shell does not answer; 2026-09-25,
     # not reproduced by hand): a known defect, to check on a physical PC
     # (ROADMAP v0.1: suspend works, or the defect is documented).
-    if ! ask_within 120 resumed 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "returned from sleep"'; then
-        printf 'INFO: dopo la sospensione la macchina virtuale non risponde (difetto noto in QEMU, da provare su PC fisico)\n'
+    # One key for each try: ask waits for the line VABAX-DONE-<key>.
+    resumed=0
+    for try in 1 2 3 4; do
+        monitor system_wakeup
+        sleep 10
+        ask_within 120 "resumed$try" 'sudo -n journalctl -k -b --no-pager -o cat | grep -c "PM: suspend exit"' || break
+        resumed="$(value "resumed$try")"
+        [[ "$resumed" -gt 0 ]] && break
+    done
+    if [[ "$resumed" -eq 0 ]]; then
+        printf 'INFO: la macchina virtuale non torna dalla sospensione (difetto noto in QEMU, da provare su PC fisico)\n'
+        # If the shell still answers: where the suspend stopped.
+        if ask_within 60 suspendlog 'echo "$(systemctl show -p ActiveState --value systemd-suspend.service) | $(sudo -n journalctl -b --no-pager -o short-monotonic -u systemd-suspend.service -u systemd-logind.service | tail -6 | cut -c1-150 | paste -sd"|")"'; then
+            printf 'INFO: stato della sospensione: %s\n' "$(value suspendlog)"
+        fi
         stop_vm
         if [[ "$FAILED" -eq 0 ]]; then
             printf 'Risultato: test di avvio superato (%s, %s%s), senza la prova dello spegnimento.\n' "$MODE" "$ENTRY" "${MENU_LANG:+, $MENU_LANG}"
@@ -683,8 +746,10 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
         exit "$FAILED"
     fi
     ask sleepstate 'cat /sys/power/state; journalctl -b --no-pager -o cat -u systemd-suspend.service | tail -1' || exit 1
-    printf 'INFO: sospensione riuscita %s volte; stati: %s\n' "$(value resumed)" "$(value sleepstate)"
-    check 'Orca udibile dopo la sospensione' "$(orca_speaks orca-resume)" "$WANT_SOUND"
+    printf 'INFO: sospensione riuscita %s volte; stati: %s\n' "$resumed" "$(value sleepstate)"
+    HEARD="$(orca_speaks orca-resume)"
+    check 'Orca udibile dopo la sospensione' "$HEARD" "$WANT_SOUND"
+    [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo la sospensione' resume
 fi
 
 if [[ "$(value state)" != running ]]; then

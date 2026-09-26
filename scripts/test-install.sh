@@ -114,14 +114,16 @@ start_vm() {
 clean_log() {
     tr -d '\r' < "$LOG" | sed -e 's/\x1b\][^\x07\x1b]*\(\x07\|\x1b\\\)//g' -e 's/\x1b\[[0-9;?=!]*[A-Za-z]//g'
 }
+# Each wait has its own time, counted from when it starts (as in test-boot.sh).
 wait_for() {
     local limit="${3:-$TIMEOUT}"
+    local end=$((SECONDS + limit))
     while ! clean_log | grep -qaE "$1"; do
         if ! kill -0 "$QEMU_WRAPPER" 2>/dev/null; then
             printf 'FALLITO: la macchina virtuale si è fermata prima di: %s\n' "$2"
             return 1
         fi
-        if (( SECONDS - START > limit )); then
+        if (( SECONDS > end )); then
             printf 'FALLITO: dopo %d secondi, ancora niente: %s\n' "$limit" "$2"
             return 1
         fi
@@ -148,6 +150,10 @@ ask() {
     wait_for "^VABAX-DONE-$key" "risposta: $key" 300
 }
 value() { clean_log | sed -n "s/^$1=//p" | tail -n 1; }
+wait_card_free() {
+    ask cardfree 'for i in $(seq 30); do o=$(sed -n "s/^owner_pid *: *//p" /proc/asound/card*/pcm*p/sub*/status | head -1); [ -z "$o" ] && break; case "$(ps -o user= -p "$o")" in gdm-greeter*|Debian-gdm) sleep 1 ;; *) break ;; esac; done; echo "${o:-none}" "$(ps -o user= -p "${o:-1}")" "$i"'
+    printf 'INFO: scheda audio prima di Ctrl+Alt+F3 (processo, utente, secondi): %s\n' "$(value cardfree)"
+}
 login() {
     wait_for 'login: *$' 'richiesta di accesso' 600 || return 1
     send vabax
@@ -199,7 +205,17 @@ printf 'INFO: primo avvio del sistema installato (log: %s)\n' "$LOG"
 check 'benvenuto al primo avvio udibile' "$(record welcome 40)" yes
 wait_for 'login: *$' 'richiesta di accesso sulla console seriale' 600 || exit 1
 press ret
-sleep 10
+# The login screen and the console speech as a person finds them, before
+# the serial login: that login starts a second PipeWire, which a person at
+# the computer does not have, and the two took the sound card from each
+# other (CI, 2026-09-25 and 26). Orca at the login screen speaks when the
+# focus moves: Tab, then listen; then Ctrl+Alt+F3, where espeakup speaks
+# through the login screen's PipeWire.
+sleep 45
+press tab
+check 'schermata di accesso udibile' "$(record greeter 8)" yes
+press ctrl-alt-f3
+check 'voce della console udibile' "$(record console 10)" yes
 login || exit 1
 ask os '. /etc/os-release; echo $PRETTY_NAME'
 # One line: value() reads only the first line of an answer.
@@ -208,6 +224,8 @@ ask packages 'dpkg-query -W -f "\${Package} " vabaxos-accessibility vabaxos-bran
 ask live 'dpkg-query -W -f "\${db:Status-Abbrev}\${Package} " live-boot live-config 2>/dev/null | grep -c "^ii" || true'
 ask speech 'systemctl is-active espeakup'
 ask gdm 'systemctl is-active gdm'
+# GDM 49 and later run the login screen as a dynamic user, gdm-greeter.
+ask greeteraudio 'id -nG gdm-greeter 2>/dev/null | grep -qw audio && echo yes || echo no'
 ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select'
 ask user 'id -un'
 # The installer saved the choices for the welcome, which applied them.
@@ -223,16 +241,14 @@ check 'pacchetti VabaxOS installati' "$(value packages)" 6
 check 'pacchetti della live rimossi' "$(value live)" 0
 check 'voce della console (espeakup)' "$(value speech)" active
 check 'schermata di accesso (GDM)' "$(value gdm)" active
+check 'la schermata di accesso tiene la scheda audio' "$(value greeteraudio)" yes
 check "scelta della voce all'avvio" "$(value voiceselect)" success
 check 'benvenuto concluso e segnato' "$(value welcome | tr -s ' ')" "inactive done"
 check "scelte dell'installazione salvate" "$(value choices)" "vabaxos.a11y=high-contrast,large-text vabaxos.rate=5 vabaxos.lang=en"
 check 'alto contrasto dal benvenuto prima di installare' "$(value contrast)" true
 check 'testo grande dal benvenuto prima di installare' "$(value textsize)" 1.5
-# Orca at the login screen speaks when the focus moves: Tab, then listen.
-press tab
-check 'schermata di accesso udibile' "$(record greeter 8)" yes
-press ctrl-alt-f3
-check 'voce della console udibile' "$(record console 10)" yes
+# Which process had the sound card at the end (diagnosis).
+wait_card_free
 send 'echo test | sudo -S poweroff'
 for _ in $(seq 120); do kill -0 "$QEMU_WRAPPER" 2>/dev/null || break; sleep 1; done
 stop_vm
@@ -241,13 +257,16 @@ stop_vm
 LOG="$OUT/logs/test-install-$STAMP-second-start.log"
 start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" --from-disk --no-network
 printf 'INFO: secondo avvio, senza rete (log: %s)\n' "$LOG"
+# Console speech before the serial login, as for the first start.
+wait_for 'login: *$' 'richiesta di accesso sulla console seriale' 600 || exit 1
+sleep 30
+press ctrl-alt-f3
+check 'voce della console udibile senza rete' "$(record console-offline 10)" yes
 login || exit 1
 ask welcome2 'systemctl show -p ConditionResult --value vabaxos-welcome'
 ask speech2 'systemctl is-active espeakup'
 check 'benvenuto non ripetuto' "$(value welcome2)" no
 check 'voce della console senza rete' "$(value speech2)" active
-press ctrl-alt-f3
-check 'voce della console udibile senza rete' "$(record console-offline 10)" yes
 send 'echo test | sudo -S poweroff'
 for _ in $(seq 120); do kill -0 "$QEMU_WRAPPER" 2>/dev/null || break; sleep 1; done
 
