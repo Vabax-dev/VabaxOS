@@ -334,8 +334,8 @@ orca_speaks() {
     send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
 }
 # Orca's state, when it has to be heard and is not, or after it restarts:
-# whether it runs, how often systemd restarted it (its unit has
-# WatchdogSec=6: Orca is killed when its main loop waits longer, for
+# whether it runs, how often systemd restarted it (its watchdog, 30
+# seconds in VabaxOS, kills Orca when its main loop waits longer, for
 # example on speech-dispatcher), the watchdog kills and the speech
 # processes. Details to the serial log (ORCA-DIAG), a summary as INFO.
 orca_state() {
