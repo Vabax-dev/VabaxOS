@@ -68,6 +68,16 @@ Accettata da Vabax il 2026-09-26: date controllate di snapshot.debian.org provat
 - snapshot.debian.org è lento e ha limiti: con molti utenti servirà un mirror nostro delle date approvate.
 - Fino alla v0.2, il sistema installato resta su `deb.debian.org` forky, e `vabaxos-update` lo dice chiaramente all'utente.
 
+## Attuazione (blocco 13, 2026-09-26)
+
+- `vabaxos-apt`: sorgenti deb822 con `Signed-By`; Debian alla data di `image/build.conf` su snapshot.debian.org (`Check-Valid-Until: no`), l'archivio VabaxOS su `https://vabax-dev.github.io/VabaxOS/apt/`. APT legge le sorgenti solo da questo pacchetto (`Dir::Etc::SourceList`), non da `/etc/apt/sources.list` scritto dall'installer e da live-build.
+- `scripts/build-archive.sh` (reprepro) e la CI `archive.yml` pubblicano l'archivio firmato con la chiave dell'archivio (segreto `VABAXOS_ARCHIVE_KEY`); `tests/archive/test-archive.sh` lo prova con una chiave usa e getta. Le chiavi: [docs/sviluppo/chiavi.md](../sviluppo/chiavi.md).
+- Versioni dei pacchetti: la versione seguente di `image/build.conf` con la data dell'ultimo commit (`0.1.0~alpha.1~git20260926104500`); una versione ufficiale usa `VABAXOS_VERSION`.
+- GitHub Pages non accetta file sopra i 100 MB: il modello Kokoro è nel pacchetto `vabaxos-kokoro-model`, a versione fissa, solo nella ISO. Un modello nuovo richiederà un'altra via (per esempio un allegato delle versioni su GitHub).
+- Sicurezza su testing: PackageKit non riconosce aggiornamenti di sicurezza senza un archivio di sicurezza. Una data spostata per sicurezza si segna in `VABAXOS_SECURITY_SNAPSHOT`; `vabaxos-apt` la porta nel campo `Vabaxos-Security-Snapshot`, e il controllo giornaliero di `vabaxos-update` avvisa quando è più recente della data installata.
+- `snapshot.yml`: ogni lunedì prova la data più recente con tutte le prove della ISO (`iso.yml`), e se passano mette la data nuova sul ramo `snapshot/<data>`, pronto per una pull request.
+- `vabaxctl`: stato, voce, aggiornamenti e rapporto da terminale.
+
 ## Riesame
 
 - Quando esce il repository VabaxOS (v0.2).
