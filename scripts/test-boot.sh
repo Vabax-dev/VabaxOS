@@ -413,6 +413,9 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     ask kokoro 'for i in $(seq 120); do r=$(ps -o rss= -C sd_kokoro | sort -n | tail -1); [ "${r:-0}" -gt 300000 ] && break; sleep 1; done; [ "${r:-0}" -gt 300000 ] && echo yes || echo "no (${r:-0} kB)"' || exit 1
     check 'Orca udibile con Kokoro' "$(orca_speaks orca-kokoro)" "$WANT_SOUND"
     check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
+    # Back to the default voice (ADR-0024) for the rest of the test: the
+    # checks after this one test what a user has at first.
+    ask backespeak "env $BUS gsettings reset org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; for i in \$(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; echo fatto" || exit 1
 fi
 
 # Start menu (ADR-0018): ArcMenu active; Super opens it and every control
