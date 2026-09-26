@@ -83,7 +83,11 @@ def main(argv):
               file=sys.stderr)
         return 1
     # An orderly shutdown of the live system, then the installer starts.
-    subprocess.run(["systemctl", "kexec"], check=False)
+    # If systemd refuses, say so: the welcome then explains the boot menu,
+    # instead of waiting for a restart that never comes.
+    if subprocess.run(["systemctl", "kexec"], check=False).returncode != 0:
+        print("vabaxos-install: systemd did not start the restart into the installer", file=sys.stderr)
+        return 1
     return 0
 
 

@@ -52,6 +52,12 @@ def read_settings():
                     settings["engine"] = word.split("=", 1)[1]
     except OSError:
         pass
+    # A number written wrong in voice.conf must not stop the choice of the
+    # voice at boot: the default counts instead.
+    for key in ("max_delay_ms", "min_memory_mb"):
+        if not str(settings[key]).isdigit():
+            print(f"{key}={settings[key]!r} is not a number, using {DEFAULTS[key]}", file=sys.stderr)
+            settings[key] = DEFAULTS[key]
     return settings
 
 
@@ -98,7 +104,7 @@ def write(path, text, dry_run):
 def main(argv):
     settings = read_settings()
     dry_run = "--dry-run" in argv
-    if "--engine" in argv:
+    if "--engine" in argv and argv.index("--engine") + 1 < len(argv):
         settings["engine"] = argv[argv.index("--engine") + 1]
     engine_choice = settings["engine"]
     reason = ""
