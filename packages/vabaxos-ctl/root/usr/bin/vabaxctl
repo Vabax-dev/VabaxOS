@@ -1,0 +1,221 @@
+#!/usr/bin/python3
+"""vabaxctl: VabaxOS from the terminal, in short answers a screen reader
+reads well (roadmap v0.2, block 13).
+
+    vabaxctl status              version, screen reader, voice, archive, updates
+    vabaxctl voice [espeak|kokoro]
+    vabaxctl screen-reader [on|off]
+    vabaxctl update [--now|--at-restart]
+    vabaxctl report
+    vabaxctl archive
+    vabaxctl help
+
+Every command has an Italian name too: stato, voce, lettore, aggiorna,
+rapporto, archivio, aiuto. Without a value, voice and screen-reader say
+what is set now.
+"""
+
+import gettext
+import os
+import shutil
+import subprocess
+import sys
+
+gettext.textdomain("vabaxos-ctl")
+_ = gettext.gettext
+
+ORCA_SPEECH = "org.gnome.Orca.Speech:/org/gnome/orca/default/speech/"
+A11Y_APPS = "org.gnome.desktop.a11y.applications"
+SOURCES = "/etc/apt/sources.list.d/vabaxos.sources"
+KEYRING = "/usr/share/keyrings/vabaxos-archive-keyring.pgp"
+OS_RELEASE = "/etc/os-release"
+
+ALIASES = {
+    "stato": "status", "voce": "voice", "lettore": "screen-reader", "aggiorna": "update",
+    "rapporto": "report", "archivio": "archive", "aiuto": "help", "--help": "help", "-h": "help",
+}
+ON = ("on", "acceso", "si", "sì", "yes", "1")
+OFF = ("off", "spento", "no", "0")
+
+
+class System:
+    """What vabaxctl reads and changes; tests replace it."""
+
+    def run(self, args):
+        try:
+            result = subprocess.run(args, capture_output=True, text=True, check=False, timeout=60)
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        return result.stdout if result.returncode == 0 else None
+
+    def gsettings_get(self, schema, key):
+        out = self.run(["gsettings", "get", schema, key])
+        return None if out is None else out.strip().strip("'")
+
+    def gsettings_set(self, schema, key, value):
+        return self.run(["gsettings", "set", schema, key, value]) is not None
+
+    def read(self, path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                return f.read()
+        except OSError:
+            return None
+
+    def exists(self, path):
+        return os.path.exists(path)
+
+    def exec(self, args):
+        if not shutil.which(args[0]):
+            return 127
+        return subprocess.run(args, check=False).returncode
+
+
+def os_version(system):
+    text = system.read(OS_RELEASE) or ""
+    fields = dict(line.split("=", 1) for line in text.splitlines() if "=" in line)
+    return fields.get("PRETTY_NAME", "VabaxOS").strip('"')
+
+
+def package_version(system):
+    out = system.run(["dpkg-query", "-W", "-f", "${Version}", "vabaxos-accessibility"])
+    return out.strip() if out else None
+
+
+def archive_state(system):
+    """(enabled, fingerprint): the VabaxOS archive (ADR-0026)."""
+    sources = system.read(SOURCES)
+    enabled = sources is not None and not any(
+        line.strip().lower() == "enabled: no" for line in sources.splitlines())
+    fingerprint = None
+    if system.exists(KEYRING):
+        out = system.run(["gpg", "--batch", "--with-colons", "--show-keys", KEYRING])
+        for line in (out or "").splitlines():
+            if line.startswith("fpr:"):
+                fingerprint = line.split(":")[9]
+                break
+    return enabled, fingerprint
+
+
+def updates_waiting(system):
+    """Upgradable packages from what APT already knows (no network, no root)."""
+    out = system.run(["apt-get", "-s", "-o", "Debug::NoLocking=1", "upgrade"])
+    if out is None:
+        return None
+    return sum(1 for line in out.splitlines() if line.startswith("Inst "))
+
+
+def spaced(fingerprint):
+    return " ".join(fingerprint[i:i + 4] for i in range(0, len(fingerprint), 4))
+
+
+def status(system, out):
+    version = package_version(system)
+    out(os_version(system) + (_(", packages {version}").format(version=version) if version else ""))
+    reader = system.gsettings_get(A11Y_APPS, "screen-reader-enabled")
+    if reader is None:
+        out(_("Screen reader: unknown here (no desktop session)."))
+    else:
+        out(_("Screen reader: on.") if reader == "true" else _("Screen reader: off."))
+    synth = system.gsettings_get(ORCA_SPEECH, "synthesizer")
+    if synth is not None:
+        out(_("Voice: natural voice, Kokoro.") if synth == "kokoro" else _("Voice: eSpeak NG."))
+    enabled, fingerprint = archive_state(system)
+    out(_("VabaxOS archive: on.") if enabled else _("VabaxOS archive: not on yet."))
+    count = updates_waiting(system)
+    if count is None:
+        out(_("Updates: unknown."))
+    elif count == 0:
+        out(_("Updates: none known. To look again: vabaxctl update."))
+    else:
+        out(gettext.ngettext("Updates: {count} ready. To install: vabaxctl update --now.",
+                             "Updates: {count} ready. To install: vabaxctl update --now.",
+                             count).format(count=count))
+    return 0
+
+
+def voice(system, out, args):
+    if not args:
+        synth = system.gsettings_get(ORCA_SPEECH, "synthesizer")
+        if synth is None:
+            out(_("Cannot read the voice here: run vabaxctl in the desktop."))
+            return 1
+        out(_("Voice: natural voice, Kokoro.") if synth == "kokoro" else _("Voice: eSpeak NG."))
+        return 0
+    choice = args[0].lower()
+    if choice in ("kokoro", "naturale", "natural"):
+        value, said = "kokoro", _("Voice: natural voice, Kokoro. It speaks from the next sentence; "
+                                   "the first one may take a few seconds.")
+    elif choice in ("espeak", "espeak-ng", "predefinita", "default"):
+        value, said = "", _("Voice: eSpeak NG.")
+    else:
+        out(_("Unknown voice: {name}. Choose espeak or kokoro.").format(name=args[0]))
+        return 2
+    if not system.gsettings_set(ORCA_SPEECH, "synthesizer", value):
+        out(_("Cannot change the voice here: run vabaxctl in the desktop."))
+        return 1
+    out(said)
+    return 0
+
+
+def screen_reader(system, out, args):
+    if not args:
+        state = system.gsettings_get(A11Y_APPS, "screen-reader-enabled")
+        if state is None:
+            out(_("Screen reader: unknown here (no desktop session)."))
+            return 1
+        out(_("Screen reader: on.") if state == "true" else _("Screen reader: off."))
+        return 0
+    choice = args[0].lower()
+    if choice not in ON + OFF:
+        out(_("Say on or off."))
+        return 2
+    on = choice in ON
+    if not system.gsettings_set(A11Y_APPS, "screen-reader-enabled", "true" if on else "false"):
+        out(_("Cannot change the screen reader here: run vabaxctl in the desktop."))
+        return 1
+    out(_("Screen reader: on.") if on else _("Screen reader: off. Super+Alt+S turns it on again."))
+    return 0
+
+
+def archive(system, out):
+    enabled, fingerprint = archive_state(system)
+    out(_("VabaxOS archive: on.") if enabled else _("VabaxOS archive: not on yet."))
+    if fingerprint:
+        out(_("Project key: {fingerprint}").format(fingerprint=spaced(fingerprint)))
+    else:
+        out(_("Project key: not installed."))
+    return 0
+
+
+def main(argv, system=None, out=print):
+    system = system or System()
+    command = ALIASES.get(argv[0], argv[0]) if argv else "status"
+    args = argv[1:]
+    if command == "status":
+        return status(system, out)
+    if command == "voice":
+        return voice(system, out, args)
+    if command == "screen-reader":
+        return screen_reader(system, out, args)
+    if command == "update":
+        return system.exec(["vabaxos-update", *args])
+    if command == "report":
+        return system.exec(["vabaxos-report", *args])
+    if command == "archive":
+        return archive(system, out)
+    if command == "help":
+        out(_("vabaxctl: VabaxOS from the terminal."))
+        out(_("  status (stato): version, screen reader, voice, archive, updates"))
+        out(_("  voice (voce) [espeak|kokoro]: the voice of the screen reader"))
+        out(_("  screen-reader (lettore) [on|off]: turns the screen reader on or off"))
+        out(_("  update (aggiorna) [--now|--at-restart]: looks for updates, or installs them"))
+        out(_("  report (rapporto): writes a report of the computer, to send for help"))
+        out(_("  archive (archivio): the VabaxOS archive and the project key"))
+        return 0
+    out(_("Unknown command: {command}. Type vabaxctl help.").format(command=argv[0]))
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

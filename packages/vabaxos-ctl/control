@@ -1,0 +1,12 @@
+Package: vabaxos-ctl
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: admin
+Priority: optional
+Depends: python3, libglib2.0-bin, apt, gpg, vabaxos-update, vabaxos-accessibility
+Description: vabaxctl, VabaxOS from the terminal
+ One command for the state of VabaxOS, in short answers a screen reader
+ reads well: version, screen reader, voice, VabaxOS archive and updates;
+ it also changes the voice and turns the screen reader on or off, and
+ starts the update and the report of the computer. Italian command
+ names too: stato, voce, lettore, aggiorna, rapporto, archivio.

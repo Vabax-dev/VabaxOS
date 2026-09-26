@@ -63,7 +63,8 @@ jobs:
             python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas libglib2.0-bin \
             python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0 \
             python3-docx python3-ebooklib python3-pil poppler-utils \
-            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng
+            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng \
+            apt-utils gpg gpgv xz-utils gettext
       - uses: actions/checkout@v7
       # Large files of the packages (the Kokoro model), downloaded once.
       - uses: actions/cache@v4
@@ -82,6 +83,10 @@ jobs:
           python3 -m compileall -q packages/*/root/usr/lib/python3
       - name: Welcome tests (no speech, no system changes)
         run: python3 tests/welcome/test_welcome.py
+      - name: vabaxctl tests (fake system)
+        run: python3 tests/ctl/test_vabaxctl.py
+      - name: APT archive tests (throwaway key, APT reads the signed archive)
+        run: bash tests/apt/test_apt_repo.sh
       - name: Setup tests (hidden Broadway display, settings in memory)
         run: python3 tests/setup/test_setup.py
       - name: Programs tests (hidden Broadway display, made-up programs)

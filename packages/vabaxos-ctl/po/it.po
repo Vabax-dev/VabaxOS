@@ -1,0 +1,100 @@
+# Italian translation of vabaxos-ctl.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-ctl\n"
+"PO-Revision-Date: 2026-09-26 00:00+0200\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid ", packages {version}"
+msgstr ", pacchetti {version}"
+
+msgid "Screen reader: unknown here (no desktop session)."
+msgstr "Lettore di schermo: non si sa da qui (manca la sessione del desktop)."
+
+msgid "Screen reader: on."
+msgstr "Lettore di schermo: acceso."
+
+msgid "Screen reader: off."
+msgstr "Lettore di schermo: spento."
+
+msgid "Voice: natural voice, Kokoro."
+msgstr "Voce: voce naturale, Kokoro."
+
+msgid "Voice: eSpeak NG."
+msgstr "Voce: eSpeak NG."
+
+msgid "VabaxOS archive: on."
+msgstr "Archivio VabaxOS: attivo."
+
+msgid "VabaxOS archive: not on yet."
+msgstr "Archivio VabaxOS: non ancora attivo."
+
+msgid "Updates: unknown."
+msgstr "Aggiornamenti: non si sa."
+
+msgid "Updates: none known. To look again: vabaxctl update."
+msgstr "Aggiornamenti: nessuno di quelli noti. Per cercare di nuovo: vabaxctl aggiorna."
+
+msgid "Updates: {count} ready. To install: vabaxctl update --now."
+msgid_plural "Updates: {count} ready. To install: vabaxctl update --now."
+msgstr[0] "Aggiornamenti: {count} pronto. Per installarlo: vabaxctl aggiorna --now."
+msgstr[1] "Aggiornamenti: {count} pronti. Per installarli: vabaxctl aggiorna --now."
+
+msgid "Cannot read the voice here: run vabaxctl in the desktop."
+msgstr "Da qui non leggo la voce: usa vabaxctl nel desktop."
+
+msgid "Voice: natural voice, Kokoro. It speaks from the next sentence; the first one may take a few seconds."
+msgstr "Voce: voce naturale, Kokoro. Parla dalla prossima frase; la prima può tardare qualche secondo."
+
+msgid "Unknown voice: {name}. Choose espeak or kokoro."
+msgstr "Voce sconosciuta: {name}. Scegli espeak oppure kokoro."
+
+msgid "Cannot change the voice here: run vabaxctl in the desktop."
+msgstr "Da qui non cambio la voce: usa vabaxctl nel desktop."
+
+msgid "Say on or off."
+msgstr "Scrivi acceso oppure spento."
+
+msgid "Cannot change the screen reader here: run vabaxctl in the desktop."
+msgstr "Da qui non cambio il lettore di schermo: usa vabaxctl nel desktop."
+
+msgid "Screen reader: off. Super+Alt+S turns it on again."
+msgstr "Lettore di schermo: spento. Super+Alt+S lo riaccende."
+
+msgid "Project key: {fingerprint}"
+msgstr "Chiave del progetto: {fingerprint}"
+
+msgid "Project key: not installed."
+msgstr "Chiave del progetto: non installata."
+
+msgid "vabaxctl: VabaxOS from the terminal."
+msgstr "vabaxctl: VabaxOS dal terminale."
+
+msgid "  status (stato): version, screen reader, voice, archive, updates"
+msgstr "  stato (status): versione, lettore di schermo, voce, archivio, aggiornamenti"
+
+msgid "  voice (voce) [espeak|kokoro]: the voice of the screen reader"
+msgstr "  voce (voice) [espeak|kokoro]: la voce del lettore di schermo"
+
+msgid "  screen-reader (lettore) [on|off]: turns the screen reader on or off"
+msgstr "  lettore (screen-reader) [acceso|spento]: accende o spegne il lettore di schermo"
+
+msgid "  update (aggiorna) [--now|--at-restart]: looks for updates, or installs them"
+msgstr "  aggiorna (update) [--now|--at-restart]: cerca gli aggiornamenti, o li installa"
+
+msgid "  report (rapporto): writes a report of the computer, to send for help"
+msgstr "  rapporto (report): scrive un rapporto del computer, da mandare per avere aiuto"
+
+msgid "  archive (archivio): the VabaxOS archive and the project key"
+msgstr "  archivio (archive): l'archivio VabaxOS e la chiave del progetto"
+
+msgid "Unknown command: {command}. Type vabaxctl help."
+msgstr "Comando sconosciuto: {command}. Scrivi vabaxctl aiuto."
