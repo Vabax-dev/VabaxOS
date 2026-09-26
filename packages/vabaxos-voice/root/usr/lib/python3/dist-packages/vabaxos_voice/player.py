@@ -4,10 +4,17 @@ PipeWire (ADR-0019).
 A small buffer (about 30 ms) is requested, as NVDA does with WASAPI, so the
 first words are heard at once, and audio is written in short pieces, so a
 STOP can cut it off within a few tens of milliseconds.
+
+The stream starts at once (no pre-buffering): a phrase shorter than the
+pre-buffer never started, and waiting for it to finish never ended, so
+the module stopped answering Speech Dispatcher (found in QEMU,
+2026-09-26). For the same reason the end of a phrase is waited for with a
+time limit, not with pa_simple_drain.
 """
 
 import ctypes
 import threading
+import time
 
 import numpy as np
 
@@ -35,6 +42,8 @@ class Player:
         self.lib.pa_simple_drain.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.pa_simple_flush.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_int)]
         self.lib.pa_simple_free.argtypes = [ctypes.c_void_p]
+        self.lib.pa_simple_get_latency.restype = ctypes.c_uint64
+        self.lib.pa_simple_get_latency.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_int)]
         self.rate = rate
         self.name = name
         self.latency = latency
@@ -47,7 +56,8 @@ class Player:
             return
         spec = _SampleSpec(PA_SAMPLE_S16LE, self.rate, 1)
         tlength = int(self.rate * self.latency) * 2
-        attr = _BufferAttr(0xFFFFFFFF, tlength, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)
+        # prebuf 0: play from the first sample, and never stop to refill.
+        attr = _BufferAttr(0xFFFFFFFF, tlength, 0, 0xFFFFFFFF, 0xFFFFFFFF)
         error = ctypes.c_int(0)
         stream = self.lib.pa_simple_new(None, self.name, PA_STREAM_PLAYBACK, None, b"speech",
                                         ctypes.byref(spec), None, ctypes.byref(attr), ctypes.byref(error))
@@ -71,16 +81,20 @@ class Player:
                     raise OSError(f"sound server write failed (error {error.value})")
         return True
 
-    def drain(self, cancelled):
-        """Waits until the sound is out, unless cancelled."""
+    def drain(self, cancelled, limit=2.0):
+        """Waits until the sound is out, unless cancelled: as long as the
+        server says is still to play, and never more than LIMIT seconds."""
         error = ctypes.c_int(0)
         with self.lock:
             if not self.stream:
                 return True
-            if cancelled():
-                self.lib.pa_simple_flush(self.stream, ctypes.byref(error))
-                return False
-            self.lib.pa_simple_drain(self.stream, ctypes.byref(error))
+            latency = self.lib.pa_simple_get_latency(self.stream, ctypes.byref(error))
+            end = time.monotonic() + min(limit, latency / 1e6 if error.value == 0 else 0.1)
+            while time.monotonic() < end:
+                if cancelled():
+                    self.lib.pa_simple_flush(self.stream, ctypes.byref(error))
+                    return False
+                time.sleep(0.01)
         return True
 
     def close(self):
