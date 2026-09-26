@@ -349,6 +349,11 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
         # whole journal. One line: typing after sudo would reach sudo.
         send 'sudo -n journalctl -b --no-pager -o short-monotonic _COMM=gnome-shell _COMM=orca | tail -80 | sed "s/^/JOURNAL: /"; p=$(pgrep -u user -x gnome-shell); top -b -H -n 2 -d 3 -p "$p" | tail -20 | sed "s/^/SHELLTOP: /"; sudo -n cat /proc/"$p"/stack | sed "s/^/SHELLSTACK: /"; sudo -n journalctl -b --no-pager -o short-monotonic --since=-3min | grep -v -e speech-disp -e sd_espeak -e sd_kokoro -e sudo | tail -120 | sed "s/^/JOURNALALL: /"'
         ask diagnosis 'echo done' || exit 1
+        # Where each thread of GNOME Shell waits: gdb from the network, with
+        # the symbols from debuginfod.debian.net (only when Orca is silent;
+        # to find the cause of the freeze at startup, 2026-09-26).
+        send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 900 gdb -p "$(pgrep -u user -x gnome-shell)" -batch -ex "set debuginfod enabled on" -ex "set pagination off" -ex "thread apply all bt 40" -ex "call (void)gjs_dumpstack()" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/GDB: /"; journalctl --user -b --no-pager -o cat _COMM=gnome-shell | tail -40 | sed "s/^/GJS: /"; echo GDB""END'
+        TIMEOUT=1200 wait_for '^GDBEND' 'gdb' || exit 1
     fi
     ask vt 'loginctl show-session $(loginctl list-sessions --no-legend | awk "\$3==\"user\" && \$4==\"seat0\" {print \$1}" | head -1) -p VTNr --value' || exit 1
     BACK_VT="$(value vt)"
