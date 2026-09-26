@@ -120,9 +120,16 @@ export default class VabaxOSKeys extends Extension {
     }
 
     // The panel of Dash to Panel on the main screen, or GNOME's top bar.
+    // Dash to Panel's panels, the main screen first, only those on screen:
+    // after Dash to Panel makes its panels again an old one may still be in
+    // its list (CI of block 15, 2026-09-26: Super+T found no program there).
+    _panels() {
+        const panels = (global.dashToPanel?.panels ?? []).filter(p => p.panel?.mapped ?? true);
+        return [...panels.filter(p => p.isPrimary), ...panels.filter(p => !p.isPrimary)];
+    }
+
     _panel() {
-        const panels = global.dashToPanel?.panels ?? [];
-        return panels.find(p => p.isPrimary) ?? panels[0] ?? null;
+        return this._panels()[0] ?? null;
     }
 
     _focused(actor) {
@@ -131,9 +138,14 @@ export default class VabaxOSKeys extends Extension {
     }
 
     _focusTaskbar() {
-        const icons = this._panel()?.taskbar?._getAppIcons?.() ?? [];
+        let icons = [];
+        for (const panel of this._panels()) {
+            icons = (panel.taskbar?._getAppIcons?.() ?? []).filter(icon => icon.mapped);
+            if (icons.length > 0)
+                break;
+        }
         if (icons.length === 0) {
-            this._focusIn(Main.panel);
+            this._focusIn(this._panel()?._leftBox ?? Main.panel);
             return;
         }
         const index = icons.findIndex(icon => this._focused(icon));
