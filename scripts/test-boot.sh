@@ -288,6 +288,7 @@ ask logo '. /etc/os-release; echo $LOGO' || exit 1
 ask voice 'sed -n "s/.*vabaxos\.voice=\([a-z]*\).*/\1/p" /proc/cmdline' || exit 1
 ask recovery 'grep -q systemd.unit=multi-user.target /proc/cmdline && echo yes || echo no' || exit 1
 ask speech 'systemctl is-active espeakup' || exit 1
+ask firewall 'echo $(systemctl is-active ufw) $(vabaxos-status firewall)' || exit 1
 ask lang '. /etc/default/locale; echo $LANG' || exit 1
 ask desktop 'for i in $(seq 90); do pgrep -u user -x gnome-shell >/dev/null && break; sleep 1; done; pgrep -u user -x gnome-shell >/dev/null && echo yes || echo no' || exit 1
 if [[ "$WANT_ORCA" == yes ]]; then
@@ -311,6 +312,8 @@ check 'stato di systemd' "$(value state)" running
 check 'voce (vabaxos.voice)' "$(value voice)" "$WANT_VOICE"
 check 'modalità di recupero' "$(value recovery)" "$WANT_RECOVERY"
 check 'voce della console (espeakup)' "$(value speech)" "$WANT_SPEECH"
+# ADR-0021: ufw on, in every mode; vabaxos-status says it.
+check 'firewall attivo' "$(value firewall | sed 's/Firewall attivo\./Firewall on./')" 'active Firewall on.'
 check 'desktop GNOME' "$(value desktop)" "$WANT_DESKTOP"
 check 'Orca' "$(value orca)" "$WANT_ORCA"
 check lingua "$(value lang)" "$WANT_LANG"
@@ -433,27 +436,30 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     orca_state 'dopo il ritorno a eSpeak NG' ritorno
 fi
 
-# Start menu (ADR-0018): ArcMenu active; Super opens it and every control
-# must have a name for Orca. The full accessibility tree of GNOME Shell
-# goes to the serial log, to see what the screen reader finds.
+# GNOME Shell for Orca: the taskbar with the Start button and the search
+# box (block 15, ADR-0025: the VabaxOS Start menu for everyone, ArcMenu
+# removed) and every control with a name. The full accessibility tree of
+# GNOME Shell goes to the serial log, to see what the screen reader finds.
 # A notification is on screen during the check (critical, so its banner
 # stays until it is closed): GNOME Shell 50 draws its Close and Expand
 # buttons with an icon only, and button-names@vabaxos.org must give them a
 # name (ADR-0022).
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    ask arcmenu "env $BUS gnome-extensions list --enabled --active | grep -c arcmenu@arcmenu.com" || exit 1
-    check 'menu Start (ArcMenu) attivo' "$(value arcmenu)" 1
+    ask arcmenu "env $BUS gnome-extensions list --enabled | grep -c arcmenu@arcmenu.com" || exit 1
+    check 'ArcMenu tolto' "$(value arcmenu)" 0
     ask buttonnames "env $BUS gnome-extensions list --enabled --active | grep -c button-names@vabaxos.org" || exit 1
     check 'nomi dei pulsanti di GNOME Shell attivi' "$(value buttonnames)" 1
     send "n=\$($NOTIFY.Notify VabaxOS 0 '' 'Test menu' 'VabaxOS test' '[]' '{\"urgency\": <byte 2>}' 0 | awk '{print \$2+0}')"
-    press meta_l
     sleep 3
     send "env $BUS vabaxos-a11y-check --list gnome-shell > /tmp/shell-a11y.txt 2>&1; sed 's/^/A11Y: /' /tmp/shell-a11y.txt"
     ask shella11y "tail -1 /tmp/shell-a11y.txt" || exit 1
     ask bannernames "grep -A12 'notification:' /tmp/shell-a11y.txt | grep -c -E 'button: (Close|Chiudi)\$'" || exit 1
-    press esc
+    ask taskbarstart "grep -c -E 'button: Start\$' /tmp/shell-a11y.txt" || exit 1
+    ask taskbarsearch "grep -c -E '(entry|text): (Search programs, settings and files|Cerca programmi, impostazioni e file)\$' /tmp/shell-a11y.txt" || exit 1
     send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
-    check 'menu Start: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
+    check 'GNOME Shell: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
+    check 'pulsante Start sulla barra' "$([[ "$(value taskbarstart)" =~ ^[1-9] ]] && echo yes || echo no)" yes
+    check 'casella di ricerca sulla barra' "$([[ "$(value taskbarsearch)" =~ ^[1-9] ]] && echo yes || echo no)" yes
     printf 'INFO: pulsanti Chiudi nelle notifiche: %s\n' "$(value bannernames)"
 fi
 
@@ -500,13 +506,13 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     printf 'INFO: pagine dell'"'"'aiuto: %s\n' "$(value help)"
 fi
 
-# A familiar interface (block 8): the extensions are active (the Start menu
-# check above also covers the taskbar, since it reads all of GNOME Shell),
+# A familiar interface (block 8): the extensions are active (the check of
+# GNOME Shell above also covers the taskbar, since it reads all of it),
 # windows have Minimize and Maximize, Ctrl+Shift+Esc opens the System
 # Monitor, and the Programs window has a name on every control.
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|arcmenu|vabaxos-keys|button-names'" || exit 1
-    check 'estensioni attive (menu Start, barra, icone, appunti, finestre, tasti, nomi dei pulsanti)' "$(value extensions)" 8
+    ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|vabaxos-keys|button-names'" || exit 1
+    check 'estensioni attive (barra, icone, appunti, finestre, tasti e menu Start, nomi dei pulsanti)' "$(value extensions)" 7
     ask buttons "env $BUS gsettings get org.gnome.desktop.wm.preferences button-layout" || exit 1
     check 'pulsanti delle finestre' "$(value buttons)" "'appmenu:minimize,maximize,close'"
     press ctrl-shift-esc
