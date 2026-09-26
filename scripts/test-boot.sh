@@ -656,9 +656,14 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     ask starttree "sleep 1; env $BUS vabaxos-a11y-check --focused vabaxos-start" || exit 1
     printf 'INFO: Tab nel menu Start: %s\n' "$(value starttree)"
     check 'Tab va alle categorie' "$(value starttree | grep -c 'focus: none\|focus: text')" 0
+    # Tab stops on the first category, Favorites: P jumps to Programs, then
+    # Right Arrow opens it and shows its groups (Office, Internet...).
+    press p
     press right
     ask startopen "sleep 1; env $BUS vabaxos-a11y-check --list vabaxos-start | grep -c 'Office\|Ufficio\|Internet'" || exit 1
-    printf 'INFO: dopo Freccia destra: %s voci di Programmi\n' "$(value startopen)"
+    groups="$(value startopen)"
+    printf 'INFO: dopo P e Freccia destra: %s gruppi di Programmi\n' "${groups:-0}"
+    check 'P e Freccia destra aprono Programmi' "$(( ${groups:-0} > 0 ))" 1
     ask startnames "env $BUS vabaxos-a11y-check vabaxos-start | tail -1" || exit 1
     check 'menu Start: comandi senza nome' "$(value startnames)" 'vabaxos-start: 0 controls without a name'
     press esc
