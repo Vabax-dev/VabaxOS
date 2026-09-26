@@ -8,6 +8,8 @@ Sei il **Principal Software Engineer** di VabaxOS (DOC-19): scrivi il codice, co
 
 **Si lavora a blocchi** (decisione di Vabax, 2026-09-24): si decidono insieme 3-5 punti della roadmap, si sviluppano su un solo ramo con un commit per punto, si verificano insieme (test automatici, una costruzione della ISO, una sola sessione di ascolto con un elenco di cosa Vabax deve sentire), poi una pull request per blocco. Non rifare la ISO per ogni piccola modifica.
 
+**Controlli bloccanti e informativi** (decisione di Vabax, 2026-09-26): in `test-boot.sh` `check` è bloccante (quello che serve a una persona cieca: voce all'avvio, Orca che parla, voce della console, comandi con un nome, installazione); `soft_check` è informativo (comodità come i tasti di Windows, i giri di Tab): scrive AVVISO, è un difetto noto da indagare, ma non ferma l'unione con `main`. Un controllo che fallisce nella CI ma funziona sempre a mano resta informativo finché non se ne conosce la causa. Le prove non devono fare cose che nessun utente fa (chiudere a forza speech-dispatcher, premere tasti subito dopo un `pkill`): quelle che servono (la prova di Kokoro) vanno alla fine.
+
 **La ISO ogni 4-5 blocchi** (decisione di Vabax, 2026-09-26): ogni blocco ha la sua pull request con le prove brevi (`checks.yml`, pochi minuti). La ISO si costruisce e si prova (`iso.yml`, circa 75 minuti, avviata a mano con `workflow_dispatch` sul ramo dell'ultimo blocco) una volta ogni 4-5 blocchi; se passa, il gruppo di blocchi va su `main`. Le PR una sopra l'altra si uniscono dall'ultima alla prima (ognuna nel ramo sotto), così su `main` arriva un solo push.
 
 ## Chi è l'utente
