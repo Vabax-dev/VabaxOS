@@ -146,10 +146,16 @@ export default class VabaxOSKeys extends Extension {
         }
         if (icons.length === 0) {
             this._focusIn(this._panel()?._leftBox ?? Main.panel);
-            return;
+        } else {
+            const index = icons.findIndex(icon => this._focused(icon));
+            icons[(index + 1) % icons.length].grab_key_focus();
         }
-        const index = icons.findIndex(icon => this._focused(icon));
-        icons[(index + 1) % icons.length].grab_key_focus();
+        // One line in the journal for each Super+T: in the CI it moved the
+        // focus nowhere, while it worked by hand (2026-09-26).
+        const focus = global.stage.get_key_focus();
+        console.log(`vabaxos-keys: Super+T: ${this._panels().length} panels, ${icons.length} icons, ` +
+            `focus ${focus?.constructor?.name ?? 'none'} ${focus?.accessible_name ?? ''}, ` +
+            `window ${global.display.focus_window?.get_wm_class() ?? 'none'}, mode ${Main.actionMode}`);
     }
 
     _focusTray() {

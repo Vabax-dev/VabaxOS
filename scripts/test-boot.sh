@@ -347,7 +347,7 @@ orca_state() {
     printf 'INFO: Orca %s: %s\n' "$1" "$(value orcastate)"
     # Who is silent: speech-dispatcher said directly (without Orca), and
     # the sound server's outputs and streams.
-    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat -u orca | tail -15 | sed "s/^/ORCA-DIAG: /"; grep -v "LINE here:|200-\|Failed to open file" /run/user/1000/speech-dispatcher/log/speech-dispatcher.log | tail -n 40 | sed "s/^/SPEECHD-DIAG: /"; tail -n 15 /run/user/1000/speech-dispatcher/log/espeak-ng.log 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
+    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat -u orca | tail -15 | sed "s/^/ORCA-DIAG: /"; grep -a -E "Incoming text|Queueing|Audio|rror|[Ss]top|[Pp]ause|END|BEGIN|Terminating|started" /run/user/1000/speech-dispatcher/log/speech-dispatcher.log | tail -n 60 | cut -c1-200 | sed "s/^/SPEECHD-DIAG: /"; tail -n 30 /run/user/1000/speech-dispatcher/log/espeak-ng.log | cut -c1-200 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
     printf 'INFO: speech-dispatcher da solo %s: %s\n' "$1" "$(record "spd-$2" 5)"
     # Below speech-dispatcher (CI of block 15, 2026-09-26: even spd-say was
     # silent, until a suspend and resume): a sound played straight on
@@ -360,8 +360,9 @@ orca_state() {
 # to find after which step the sound stops, when Orca is silent later.
 speech_probe() {
     [[ "$WANT_ORCA" == yes ]] || return 0
+    ask "probetime$2" 'date +%T' || exit 1
     send 'spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
-    printf 'INFO: voce udibile %s: %s\n' "$1" "$(record "probe-$2" 4)"
+    printf 'INFO: voce udibile %s (%s): %s\n' "$1" "$(value "probetime$2")" "$(record "probe-$2" 4)"
 }
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Orca speaks through speech-dispatcher, which starts with Orca.
@@ -445,7 +446,10 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
     # Back to the default voice (ADR-0024) for the rest of the test: the
     # checks after this one test what a user has at first.
-    ask backespeak "env $BUS gsettings reset org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; for i in \$(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; echo fatto" || exit 1
+    # speech-dispatcher's detailed log from here on (LogLevel 5, set back
+    # to 3 after the web test): if the sound stops later, SPEECHD-DIAG shows
+    # what it received and what its modules answered.
+    ask backespeak "sudo -n sed -i 's/^#* *LogLevel .*/LogLevel 5/' /etc/speech-dispatcher/speechd.conf; env $BUS gsettings reset org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; for i in \$(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; echo fatto" || exit 1
     orca_state 'dopo il ritorno a eSpeak NG' ritorno
 fi
 
@@ -561,6 +565,10 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     focus_after taskbar meta_l-t
     check 'Super+T porta il focus sulla barra delle applicazioni' "$(value taskbar | grep -c 'focus: push button\|focus: button')" 1
     printf 'INFO: Super+T: %s\n' "$(value taskbar)"
+    # What vabaxos-keys did with it (its line in the journal), and any
+    # error of GNOME Shell's JavaScript.
+    ask supertlog "sudo -n journalctl -b --no-pager -o cat _COMM=gnome-shell | grep -E 'vabaxos-keys: Super\\+T|JS ERROR' | tail -3 | paste -sd'|'" || exit 1
+    printf 'INFO: Super+T in GNOME Shell: %s\n' "$(value supertlog)"
     # Desktop Icons NG kills and starts again its desktop program when its
     # window does not appear within 3 seconds: on a slow machine (QEMU
     # without KVM) it starts again every 3 seconds, forever.
