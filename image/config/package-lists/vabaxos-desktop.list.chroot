@@ -2,8 +2,7 @@
 # GDM, PipeWire and the basic applications; NetworkManager, Firefox ESR
 # and all locales come as recommended packages.
 gnome-core
-# Start menu with the VabaxOS logo (ADR-0018), set up by vabaxos-settings.
-gnome-shell-extension-arc-menu
+# The Start menu is VabaxOS's own (vabaxos-start, ADR-0025): no ArcMenu.
 # A familiar interface (block 8): taskbar at the bottom with the open and
 # pinned programs, tray icons, desktop icons, clipboard history (Ctrl+Alt+H),
 # windows side by side and in quarters like Snap in Windows 11.

@@ -3,6 +3,8 @@
 
     vabaxos-start                open the menu, or close it if it is open
     vabaxos-start --background   start without showing it (at login)
+    vabaxos-start --search TEXT  open the menu with TEXT in the search field
+                                 (the search box of the taskbar, block 15)
 
 Super opens it with the focus in the search field: the results arrive while
 you write (programs, settings, folders, files, commands) and the screen
@@ -14,6 +16,9 @@ category that contains it; Up and Down move; a letter jumps to the next
 entry starting with it; Enter opens; Escape closes the menu and the focus
 goes back to the window of before. The menu keeps running, hidden, so it
 opens at once.
+
+With the mouse (block 15): a click on a result opens it; a click on a
+category opens or closes it, a click on an entry opens it.
 """
 
 import gettext
@@ -131,8 +136,16 @@ class StartWindow(Adw.ApplicationWindow):
 
     def tree_setup(self, _factory, list_item):
         expander = Gtk.TreeExpander()
-        expander.set_child(Gtk.Label(xalign=0, margin_top=6, margin_bottom=6))
+        label = Gtk.Label(xalign=0, margin_top=6, margin_bottom=6, hexpand=True)
+        expander.set_child(label)
         list_item.set_child(expander)
+        # One click on the name, as in the Start menu of Windows: the list
+        # itself opens only with a double click (single-click-activate would
+        # also select the row under the pointer, moving what Orca reads).
+        # The arrow of the expander opens a category by itself.
+        click = Gtk.GestureClick(button=Gdk.BUTTON_PRIMARY)
+        click.connect("released", lambda gesture, _n, _x, _y: self.row_clicked(list_item))
+        label.add_controller(click)
 
     def tree_bind(self, _factory, list_item):
         row = list_item.get_item()
@@ -191,6 +204,12 @@ class StartWindow(Adw.ApplicationWindow):
         row = self.results.get_row_at_index(0)
         if row is not None:
             self.open_entry(row.entry)
+
+    def row_clicked(self, list_item):
+        position = list_item.get_position()
+        if position != Gtk.INVALID_LIST_POSITION:
+            self.selection.set_selected(position)
+            self.tree_activated(None, position)
 
     def tree_activated(self, _view, position):
         row = self.tree_model.get_item(position)
@@ -283,12 +302,14 @@ class StartWindow(Adw.ApplicationWindow):
 
     # -- showing -------------------------------------------------------------
 
-    def show_menu(self):
+    def show_menu(self, text=""):
         self.reload()  # programs installed since last time appear at once
-        self.search.set_text("")
+        self.search.set_text(text)
         self.stack.set_visible_child_name("tree")
+        self.update_results()
         self.present()
         self.search.grab_focus()
+        self.search.set_position(-1)
 
     def active_changed(self, *_a):
         # Like a menu: it closes when another window takes the focus.
@@ -313,6 +334,10 @@ class StartApplication(Adw.Application):
             self.window = StartWindow(self)
             self.hold()
         if "--background" in args:
+            return 0
+        if "--search" in args:
+            index = args.index("--search")
+            self.window.show_menu(args[index + 1] if index + 1 < len(args) else "")
             return 0
         self.do_activate()
         return 0

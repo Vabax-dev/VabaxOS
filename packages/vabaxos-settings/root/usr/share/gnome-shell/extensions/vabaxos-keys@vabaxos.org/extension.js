@@ -28,6 +28,9 @@
 // The focus moves with the keyboard focus of GNOME Shell, as Ctrl+Alt+Tab
 // does, so Orca reads it; then the arrows move, Enter opens and Escape goes
 // back to the window.
+//
+// The Start button and the search box of the taskbar are in taskbarStart.js
+// (block 15).
 
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
@@ -40,6 +43,8 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+import {TaskbarStart} from './taskbarStart.js';
 
 const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i'];
 const NEW_WINDOW_MS = 8000;
@@ -89,9 +94,13 @@ export default class VabaxOSKeys extends Extension {
                 });
             }
         });
+        this._taskbarStart = new TaskbarStart(this.gettext.bind(this), () => this._toggleStart());
+        this._taskbarStart.enable();
     }
 
     disable() {
+        this._taskbarStart.disable();
+        this._taskbarStart = null;
         for (const key of KEYS)
             Main.wm.removeKeybinding(key);
         Meta.keybindings_set_custom_handler('close', null);
@@ -195,8 +204,13 @@ export default class VabaxOSKeys extends Extension {
     }
 
     _newWindowAttention(window) {
+        // The Start menu runs hidden from the login: when it shows (the
+        // search box of the taskbar starts it with --search), it asks for
+        // attention, and it is always the user's request.
+        const isStart = Shell.WindowTracker.get_default().get_window_app(window)?.get_id() ===
+            'org.vabaxos.Start.desktop';
         const created = window._vabaxosCreated;
-        if (created === undefined || GLib.get_monotonic_time() / 1000 - created > NEW_WINDOW_MS)
+        if (!isStart && (created === undefined || GLib.get_monotonic_time() / 1000 - created > NEW_WINDOW_MS))
             return;
         if (Main.modalCount > 0 || this._isDesktop(window))
             return;

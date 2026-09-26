@@ -92,6 +92,18 @@ def check(application):
         cleared = window.search.get_text() == "" and window.stack.get_visible_child_name() == "tree"
         window.window_key(None, Gdk.KEY_Escape, 0, 0)       # closes the menu
         print("ESCAPE:%s,%s" % (cleared, window.get_visible()), flush=True)
+        # The mouse (block 15): a click on a category's name opens it.
+        window.show_menu()
+        model = window.tree_model  # show_menu reloads the programs: a new model
+        position = names().index("Programs")
+        item = type("ListItem", (), {"get_position": lambda self: position})()
+        window.row_clicked(item)
+        print("CLICK:%s" % model.get_item(position).get_expanded(), flush=True)
+        # The search box of the taskbar: the menu opens with the text written.
+        window.show_menu("wri")
+        first = window.results.get_row_at_index(0)
+        print("TASKBAR:%s,%s,%s" % (window.search.get_text(), window.stack.get_visible_child_name(),
+                                    first.entry.name if first else ""), flush=True)
     GLib.timeout_add(500, steps)
     GLib.timeout_add_seconds(40, lambda: (print("TIMEOUT: the steps did not finish", flush=True),
                                           application.quit()))
@@ -188,6 +200,10 @@ class StartTest(unittest.TestCase):
         self.assertTrue(self.out.get("RESULTS", "").startswith("results,"), self.err)
         self.assertEqual(self.out.get("NONE"), "none", self.err)
         self.assertEqual(self.out.get("ESCAPE"), "True,False", self.err)
+
+    def test_mouse_and_taskbar_search(self):
+        self.assertEqual(self.out.get("CLICK"), "True", self.err)
+        self.assertEqual(self.out.get("TASKBAR"), "wri,results,Writer", self.err)
 
 
 if __name__ == "__main__":

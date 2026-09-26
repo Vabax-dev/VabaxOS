@@ -127,6 +127,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Button names (button-names@vabaxos.org, ADR-0022)
         run: python3 tests/button-names/test_button_names.py
+      - name: Start button and search box of the taskbar (vabaxos-keys, ADR-0025)
+        run: python3 tests/start/test_taskbar_start.py
 
   powershell:
     name: PowerShell scripts
