@@ -1,0 +1,9 @@
+# The VabaxOS archive: updates of the vabaxos-* packages (ADR-0026).
+# The key is valid only for this archive. "Enabled: no" until the archive
+# is online.
+Types: deb
+URIs: https://vabax-dev.github.io/vabaxos-apt/
+Suites: forky
+Components: main
+Signed-By: /usr/share/keyrings/vabaxos-archive-keyring.pgp
+Enabled: no

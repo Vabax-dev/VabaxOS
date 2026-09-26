@@ -1,0 +1,10 @@
+Package: vabaxos-archive-keyring
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: apt
+Description: VabaxOS archive key and APT sources
+ The public key of the VabaxOS project and the APT sources of the VabaxOS
+ archive (ADR-0026), so the vabaxos-* packages receive their updates. The
+ key is valid only for the VabaxOS archive (Signed-By).

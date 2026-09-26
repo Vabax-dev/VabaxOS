@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Puts the public key of the project (keys/vabaxos-project.asc, made by
+# scripts/keys/create-project-key.sh) in the package, in the binary form
+# APT reads. Without the key the sources stay disabled (ADR-0026).
+# VABAXOS_ARCHIVE_KEY may point to another key, for tests.
+set -euo pipefail
+TREE="$1"
+KEY="${VABAXOS_ARCHIVE_KEY:-$REPO/keys/vabaxos-project.asc}"
+[[ -f "$KEY" ]] || exit 0
+mkdir -p "$TREE/usr/share/keyrings"
+gpg --batch --quiet --dearmor < "$KEY" > "$TREE/usr/share/keyrings/vabaxos-archive-keyring.pgp"
+chmod 0644 "$TREE/usr/share/keyrings/vabaxos-archive-keyring.pgp"

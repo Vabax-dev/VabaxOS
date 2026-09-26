@@ -17,9 +17,6 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${1:?Uso: build-packages.sh CARTELLA_DI_USCITA}"
-# Until the Vabax APT repository exists (v0.2), packages go only in the ISO.
-VERSION="0.1.0~dev"
-
 mkdir -p "$OUT"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -35,6 +32,21 @@ if [[ -z "$SOURCE_DATE_EPOCH" ]]; then
     SOURCE_DATE_EPOCH="$(date -u -d "$(sed -E 's/^(....)(..)(..)T(..)(..)(..)Z$/\1-\2-\3 \4:\5:\6 UTC/' <<< "$VABAXOS_SNAPSHOT")" +%s)"
 fi
 export SOURCE_DATE_EPOCH
+
+# Versions always grow, so an update from the VabaxOS archive (ADR-0026)
+# wins over the packages of an older ISO: the next release is written in
+# packages/VERSION (Debian form, 0.1.0~alpha.1 for 0.1.0-alpha.1), and
+# every other build adds +git and the date of the commit.
+BASE="$(tr -d '[:space:]' < "$REPO/packages/VERSION")"
+if [[ -n "${VABAXOS_VERSION:-}" ]]; then
+    VERSION="${VABAXOS_VERSION//-/\~}"
+    if [[ "$VERSION" != "$BASE" ]]; then
+        printf 'ERRORE: la versione %s non è quella di packages/VERSION (%s).\n' "$VABAXOS_VERSION" "$BASE" >&2
+        exit 1
+    fi
+else
+    VERSION="$BASE+git$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y%m%d.%H%M%S)"
+fi
 
 for dir in "$REPO"/packages/*/; do
     name="$(basename "$dir")"
