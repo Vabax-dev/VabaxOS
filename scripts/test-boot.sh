@@ -455,10 +455,11 @@ app_a11y() {
 if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y files nautilus nautilus
     app_a11y terminal ptyxis ptyxis
-    # GNOME Settings is on the accessibility bus as org.gnome.Settings.
-    app_a11y wifi 'gnome-control-center wifi' settings
-    app_a11y bluetooth 'gnome-control-center bluetooth' settings
-    app_a11y power 'gnome-control-center power' settings
+    # GNOME Settings is on the accessibility bus as gnome-control-center
+    # (not "settings", as on the session bus: org.gnome.Settings).
+    app_a11y wifi 'gnome-control-center wifi' gnome-control-center
+    app_a11y bluetooth 'gnome-control-center bluetooth' gnome-control-center
+    app_a11y power 'gnome-control-center power' gnome-control-center
     ask status "env $BUS vabaxos-status battery" || exit 1
     printf 'INFO: vabaxos-status: %s\n' "$(value status)"
     ask soundtheme "env $BUS gsettings get org.gnome.desktop.sound theme-name" || exit 1
@@ -627,8 +628,8 @@ if [[ "$WANT_ORCA" == yes ]]; then
     # Other programs: only reported. (LibreOffice seemed to stop the VM for
     # ten minutes on 2026-09-25: it was the time limit counted from the
     # start of the test.)
-    for program in "files|nautilus|nautilus" "editor|gnome-text-editor|gnome-text-editor" \
-                   "writer|libreoffice --writer|soffice"; do
+    for program in "files|nautilus|nautilus" "settings|gnome-control-center wifi|gnome-control-center" \
+                   "editor|gnome-text-editor|gnome-text-editor" "writer|libreoffice --writer|soffice"; do
         IFS='|' read -r key launch name <<< "$program"
         tab_walk "tab$key" "$launch" "$name"
         printf 'INFO: Tab in %s: %s\n' "$name" "$(value "tab$key")"
