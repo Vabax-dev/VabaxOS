@@ -94,14 +94,18 @@ done
 cat <&"$SERIAL" >> "$LOG" &
 
 START=$SECONDS
-# Waits until the serial log matches a regular expression, or the time runs out.
+# Waits until the serial log matches a regular expression, or TIMEOUT
+# seconds pass. Each wait has its own time: counting from the start of the
+# test, every answer that was not there at once failed after 600 seconds
+# (the tests with the voice last about 10 minutes; 2026-09-26).
 wait_for() {
+    local end=$((SECONDS + TIMEOUT))
     while ! grep -qaE "$1" "$LOG"; do
         if ! kill -0 "$QEMU_WRAPPER" 2>/dev/null; then
             printf 'FALLITO: la macchina virtuale si è fermata prima di: %s\n' "$2"
             return 1
         fi
-        if (( SECONDS - START > TIMEOUT )); then
+        if (( SECONDS > end )); then
             printf 'FALLITO: dopo %d secondi, ancora niente: %s\n' "$TIMEOUT" "$2"
             return 1
         fi

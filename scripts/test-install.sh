@@ -114,14 +114,16 @@ start_vm() {
 clean_log() {
     tr -d '\r' < "$LOG" | sed -e 's/\x1b\][^\x07\x1b]*\(\x07\|\x1b\\\)//g' -e 's/\x1b\[[0-9;?=!]*[A-Za-z]//g'
 }
+# Each wait has its own time, counted from when it starts (as in test-boot.sh).
 wait_for() {
     local limit="${3:-$TIMEOUT}"
+    local end=$((SECONDS + limit))
     while ! clean_log | grep -qaE "$1"; do
         if ! kill -0 "$QEMU_WRAPPER" 2>/dev/null; then
             printf 'FALLITO: la macchina virtuale si è fermata prima di: %s\n' "$2"
             return 1
         fi
-        if (( SECONDS - START > limit )); then
+        if (( SECONDS > end )); then
             printf 'FALLITO: dopo %d secondi, ancora niente: %s\n' "$limit" "$2"
             return 1
         fi
