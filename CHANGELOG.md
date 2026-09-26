@@ -50,4 +50,6 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 
 ### Corretto
 
+- GNOME Shell non si blocca più all'avvio con la voce: Orca parte senza il display X11 (`orca.service.d/50-vabaxos-wayland.conf`), quindi non riscrive la mappa della tastiera attraverso Xwayland; Orca parte anche più in fretta (2 secondi invece di 19). Ins e Bloc Maiusc restano i tasti del lettore di schermo.
+- Kokoro non smette più di parlare dopo il primo messaggio: il modulo risponde sempre a Speech Dispatcher, anche quando il server audio non prende il suono.
 - Sistema installato: la voce della console parla anche passando dalla schermata di accesso a una console di testo (Ctrl+Alt+F3): la schermata di accesso tiene la scheda audio (`vabaxos-greeter-audio.service`).

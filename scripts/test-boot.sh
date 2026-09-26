@@ -588,6 +588,15 @@ if [[ "$WANT_ORCA" == yes ]]; then
     sleep 3
     press insert-f12
     check 'Ins+F12: Orca dice l'"'"'ora' "$(record orca-f12 5)" "$WANT_SOUND"
+    sleep 2
+    press caps_lock-f12
+    check 'Bloc Maiusc+F12: Orca risponde' "$(record orca-caps-f12 5)" "$WANT_SOUND"
+    # Orca runs without DISPLAY (orca.service.d/50-vabaxos-wayland.conf):
+    # no xkbcomp through Xwayland, which froze GNOME Shell at startup.
+    ask orcadisplay 'tr "\\0" "\\n" < /proc/$(pgrep -u user -x orca)/environ | grep -c "^DISPLAY="' || exit 1
+    check 'Orca senza DISPLAY (niente xkbcomp)' "$(value orcadisplay)" 0
+    ask capslock 'cat /sys/class/leds/*capslock*/brightness 2>/dev/null | sort -u | head -1'
+    check 'Bloc Maiusc come tasto di Orca non attiva le maiuscole' "$(value capslock)" 0
 fi
 
 # Navigation and Tab (block 11). Tab is pressed many times in a program
