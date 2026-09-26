@@ -41,6 +41,9 @@ def inline(text, pages):
             href = name + ".html"
         elif target.startswith("http"):
             href = target
+        elif "vabaxos-help/html/" in target:
+            # A page of the help itself (the web practice page): next to this one.
+            href = os.path.basename(target)
         else:
             href = REPO_URL + os.path.normpath(os.path.join("docs/utente", target))
         return f'<a href="{html.escape(href)}">{label}</a>'

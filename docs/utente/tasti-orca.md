@@ -118,6 +118,8 @@ In una pagina web, in modalità navigazione (Ins+Spazio passa dalla modalità fo
 - **L** elenco, **I** voce di un elenco, **T** tabella, **G** immagine, **Q** citazione, **P** paragrafo, **S** separatore, **O** oggetto grande;
 - **M** regione che si aggiorna da sola (per esempio una chat).
 
+Per esercitarti, senza Internet: [Esercizio: una pagina web con Orca](../../packages/vabaxos-help/root/usr/share/doc/vabaxos-help/html/esercizio-web.html), nell'aiuto di VabaxOS.
+
 Nelle tabelle, come in NVDA, Ctrl+Alt+frecce passano da una cella all'altra, Ctrl+Alt+Inizio e Fine vanno all'inizio e alla fine della riga, Ctrl+Alt+Pagina su e Pagina giù all'inizio e alla fine della colonna. Per cambiare area di lavoro restano Super+Pagina su e Super+Pagina giù. In un campo di testo le lettere si scrivono: Orca passa alla modalità focus da solo, ed Esc torna alla navigazione.
 
 ## La revisione dello schermo

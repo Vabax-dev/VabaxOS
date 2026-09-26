@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!-- SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors -->
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esercizio: una pagina web con Orca - Aiuto di VabaxOS</title>
+<style>
+body { font-family: "Atkinson Hyperlegible Next", sans-serif; font-size: 1.2rem; line-height: 1.6; max-width: 48rem; margin: 1rem auto; padding: 0 1rem; color: #111; background: #fff; }
+a { color: #4b0082; }
+table { border-collapse: collapse; }
+th, td { border: 1px solid #555; padding: 0.3rem 0.6rem; text-align: left; }
+:focus { outline: 3px solid #6a0dad; outline-offset: 2px; }
+@media (prefers-color-scheme: dark) { body { color: #eee; background: #111; } a { color: #d4b3ff; } }
+</style>
+</head>
+<body>
+<header>
+  <a href="#contenuto">Salta al contenuto</a>
+  <nav aria-label="Pagine dell'aiuto">
+    <ul>
+      <li><a href="index.html">Indice dell'aiuto di VabaxOS</a></li>
+      <li><a href="tasti-orca.html">I tasti di Orca</a></li>
+      <li><a href="navigazione.html">Muoversi con la tastiera</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="contenuto">
+<h1>Esercizio: una pagina web con Orca</h1>
+<p>Questa pagina serve a provare i tasti di Orca nelle pagine web, senza Internet. Ogni parte ha un tipo di elemento diverso. In modalità navigazione una lettera porta all'elemento successivo di quel tipo, con Maiusc a quello precedente. Ins+Spazio passa dalla modalità navigazione alla modalità focus e ritorno.</p>
+
+<h2>Titoli: H e i numeri</h2>
+<p>Premi H per passare da un titolo all'altro, oppure un numero da 1 a 6 per i titoli di quel livello. Questa pagina ha un titolo di livello 1, sette di livello 2 e due di livello 3.</p>
+<h3>Un titolo di livello 3</h3>
+<p>Questo paragrafo sta sotto un titolo di livello 3. P porta al paragrafo successivo.</p>
+<h3>Un altro titolo di livello 3</h3>
+<p>Ins+F6 apre l'elenco di tutti i titoli: si sceglie con le frecce e si va con Invio.</p>
+
+<h2>Collegamenti: K</h2>
+<p>K porta al collegamento successivo, Ins+F7 apre l'elenco dei collegamenti. Questi collegamenti portano ad altre parti di questa pagina:</p>
+<ul>
+  <li><a href="#modulo">Vai al modulo</a></li>
+  <li><a href="#tabella">Vai alla tabella</a></li>
+  <li><a href="#notizie">Vai alle notizie che si aggiornano</a></li>
+</ul>
+
+<h2 id="modulo">Un modulo: F, E, B, X, R, C</h2>
+<form onsubmit="event.preventDefault(); document.getElementById('esito').textContent = 'Modulo inviato. Grazie, ' + (document.getElementById('nome').value || 'anonimo') + '.';">
+  <p><label for="nome">Nome</label>
+  <input id="nome" name="nome" type="text" autocomplete="off"></p>
+  <p><label for="posta">Indirizzo di posta</label>
+  <input id="posta" name="posta" type="email" autocomplete="off"></p>
+  <fieldset>
+    <legend>Voce preferita</legend>
+    <p><input id="voce-espeak" name="voce" type="radio" value="espeak" checked> <label for="voce-espeak">eSpeak NG</label></p>
+    <p><input id="voce-kokoro" name="voce" type="radio" value="kokoro"> <label for="voce-kokoro">Kokoro</label></p>
+  </fieldset>
+  <p><label for="citta">Città</label>
+  <select id="citta" name="citta">
+    <option>Roma</option>
+    <option>Milano</option>
+    <option>Napoli</option>
+  </select></p>
+  <p><input id="notizie-posta" name="notizie" type="checkbox"> <label for="notizie-posta">Ricevi le notizie di VabaxOS</label></p>
+  <p><button type="submit">Invia il modulo</button></p>
+  <p id="esito" role="status"></p>
+</form>
+<p>Nei campi di testo le lettere si scrivono: Orca passa da solo alla modalità focus, Esc torna alla modalità navigazione.</p>
+
+<h2 id="tabella">Una tabella: T e Ctrl+Alt+frecce</h2>
+<p>T porta alla tabella. Dentro la tabella Ctrl+Alt+frecce passano da una cella all'altra, e Orca dice anche il titolo della colonna.</p>
+<table>
+  <caption>Voci di VabaxOS</caption>
+  <thead>
+    <tr><th scope="col">Voce</th><th scope="col">Lingua</th><th scope="col">Tipo</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Nicola</th><td>Italiano</td><td>Naturale, Kokoro</td></tr>
+    <tr><th scope="row">Sara</th><td>Italiano</td><td>Naturale, Kokoro</td></tr>
+    <tr><th scope="row">eSpeak NG</th><td>Tutte</td><td>Sintetica, rapida</td></tr>
+  </tbody>
+</table>
+
+<h2>Citazioni, immagini e separatori: Q, G, S</h2>
+<blockquote><p>L'accessibilità non è una funzione in più: è il modo in cui il sistema funziona.</p></blockquote>
+<p><img alt="Il logo di VabaxOS: una V viola in un cerchio" width="64" height="64" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%236a0dad'/%3E%3Cpath d='M18 18 L32 48 L46 18' stroke='white' stroke-width='6' fill='none'/%3E%3C/svg%3E"></p>
+<hr>
+<p>La riga qui sopra è un separatore: S ci porta.</p>
+
+<h2 id="notizie">Una regione che si aggiorna: M</h2>
+<p>Il pulsante aggiunge una notizia: Orca la legge da solo, senza spostare il cursore, come in una chat.</p>
+<p><button type="button" onclick="aggiungiNotizia()">Aggiungi una notizia</button></p>
+<div id="elenco-notizie" aria-live="polite" aria-label="Notizie">
+  <p>Nessuna notizia per ora.</p>
+</div>
+</main>
+
+<aside aria-label="Suggerimento">
+  <h2>Punti di riferimento: D</h2>
+  <p>D passa fra le grandi parti della pagina: intestazione, navigazione, contenuto principale, questo suggerimento, piè di pagina. Ins+Ctrl+punto e virgola le elenca tutte.</p>
+</aside>
+
+<footer>
+  <p>Pagina di esercizio dell'aiuto di VabaxOS. Funziona senza Internet.</p>
+</footer>
+<script>
+let numero = 0;
+function aggiungiNotizia() {
+  numero += 1;
+  const elenco = document.getElementById("elenco-notizie");
+  if (numero === 1) elenco.textContent = "";
+  const riga = document.createElement("p");
+  riga.textContent = "Notizia numero " + numero + ": VabaxOS parla.";
+  elenco.appendChild(riga);
+}
+</script>
+</body>
+</html>
