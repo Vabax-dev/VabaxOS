@@ -669,13 +669,24 @@ fi
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     send 'sudo systemctl suspend </dev/null'
     sleep 15
-    monitor system_wakeup
-    sleep 10
+    # Entering the suspend can take longer than 15 seconds (CI, 2026-09-26:
+    # the wake-up came first, then the machine went to sleep for good): wake
+    # it up again until the journal says it came back. A wake-up while it
+    # runs does nothing.
     # In QEMU the suspend sometimes stops half-way after a long test (the
     # kernel still echoes the keys, the shell does not answer; 2026-09-25,
     # not reproduced by hand): a known defect, to check on a physical PC
     # (ROADMAP v0.1: suspend works, or the defect is documented).
-    if ! ask_within 120 resumed 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "returned from sleep"'; then
+    # One key for each try: ask waits for the line VABAX-DONE-<key>.
+    resumed=0
+    for try in 1 2 3 4; do
+        monitor system_wakeup
+        sleep 10
+        ask_within 120 "resumed$try" 'journalctl -b --no-pager -o cat -u systemd-suspend.service | grep -c "returned from sleep"' || break
+        resumed="$(value "resumed$try")"
+        [[ "$resumed" -gt 0 ]] && break
+    done
+    if [[ "$resumed" -eq 0 ]]; then
         printf 'INFO: dopo la sospensione la macchina virtuale non risponde (difetto noto in QEMU, da provare su PC fisico)\n'
         stop_vm
         if [[ "$FAILED" -eq 0 ]]; then
@@ -686,7 +697,7 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
         exit "$FAILED"
     fi
     ask sleepstate 'cat /sys/power/state; journalctl -b --no-pager -o cat -u systemd-suspend.service | tail -1' || exit 1
-    printf 'INFO: sospensione riuscita %s volte; stati: %s\n' "$(value resumed)" "$(value sleepstate)"
+    printf 'INFO: sospensione riuscita %s volte; stati: %s\n' "$resumed" "$(value sleepstate)"
     check 'Orca udibile dopo la sospensione' "$(orca_speaks orca-resume)" "$WANT_SOUND"
 fi
 
