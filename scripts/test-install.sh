@@ -238,8 +238,11 @@ check 'schermata di accesso udibile' "$(record greeter 8)" yes
 # The serial login has its own PipeWire, which espeakup uses: it gets the
 # card only once the login screen's PipeWire lets it go, 5 seconds after
 # Orca stops speaking (WirePlumber's suspend timeout). A person at the
-# computer has one PipeWire only (CI, 2026-09-25: silent one time in two).
-sleep 6
+# computer has one PipeWire only. A fixed wait was not enough (CI,
+# 2026-09-25 and 26): wait, up to 30 seconds, until no process of the
+# login screen (Debian-gdm) has a playback device open.
+ask cardfree 'for i in $(seq 30); do o=$(sed -n "s/^owner_pid *: *//p" /proc/asound/card*/pcm*p/sub*/status | head -1); [ -z "$o" ] && break; [ "$(ps -o user= -p "$o")" != Debian-gdm ] && break; sleep 1; done; echo "${o:-none}" "$(ps -o user= -p "${o:-1}")" "$i"'
+printf 'INFO: scheda audio prima di Ctrl+Alt+F3 (processo, utente, secondi): %s\n' "$(value cardfree)"
 press ctrl-alt-f3
 check 'voce della console udibile' "$(record console 10)" yes
 send 'echo test | sudo -S poweroff'
