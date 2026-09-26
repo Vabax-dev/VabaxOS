@@ -137,6 +137,53 @@ class Store:
 
 # -- profiles -----------------------------------------------------------------
 
+DEFAULTS_DIR = "/etc/dconf/db/vabaxos.d"
+
+
+def apply_vabaxos_defaults(directory=DEFAULTS_DIR):
+    """Writes VabaxOS's Orca defaults (the Orca groups of the dconf keyfiles
+    in directory, such as 40-orca-keys and 41-orca-typing) as the user's
+    own values, for every key the user has not set.
+
+    Orca 50 reads its settings and keys only from values the user set
+    (get_user_value): the system dconf defaults of VabaxOS were ignored, so
+    the NVDA keys and the typing echo never applied (found in QEMU,
+    2026-09-26). Run before Orca starts (orca.service.d); the number of
+    values written is returned."""
+    written = 0
+    try:
+        names = sorted(os.listdir(directory))
+    except OSError:
+        return 0
+    for name in names:
+        keyfile = GLib.KeyFile()
+        try:
+            keyfile.load_from_file(os.path.join(directory, name), GLib.KeyFileFlags.NONE)
+        except GLib.Error:
+            continue
+        for group_path in keyfile.get_groups()[0]:
+            parts = group_path.strip("/").split("/")
+            if parts[:3] != ["org", "gnome", "orca"] or len(parts) != 5:
+                continue
+            group = parts[4]
+            schema_id = SCHEMAS.get(group)
+            if schema_id is None or not schema_installed(schema_id):
+                continue
+            settings = Gio.Settings.new_with_path(schema_id, "/" + "/".join(parts) + "/")
+            for key in keyfile.get_keys(group_path)[0]:
+                if settings.get_user_value(key) is not None:
+                    continue
+                try:
+                    value = GLib.Variant.parse(settings.get_value(key).get_type(),
+                                               keyfile.get_value(group_path, key), None, None)
+                except GLib.Error:
+                    continue
+                settings.set_value(key, value)
+                written += 1
+    Gio.Settings.sync()
+    return written
+
+
 def list_profiles():
     """[(display name, internal name)], the default profile first."""
     profiles = []

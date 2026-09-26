@@ -721,14 +721,16 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     ask webopen "for i in \$(seq 90); do env $BUS vabaxos-a11y-check --focused Firefox 2>/dev/null | grep -q 'document web: Pagina di prova' && break; sleep 2; done; env $BUS vabaxos-a11y-check --focused Firefox" || exit 1
     check 'Firefox apre la pagina di prova con il focus' "$(value webopen | grep -c 'document web: Pagina di prova per Orca')" 1
     ask webmark "sleep 5; grep -ac '' $SPEECHD_LOG" || exit 1
-    # H twice: the first heading has the text of the window title, which
-    # Orca also says when the window opens; the second is only in the page.
-    for key in h h k d t; do
+    # Ctrl+Home first: Firefox may start with the caret on a link of the
+    # navigation (CI, 2026-09-26). Then H twice: the first heading has the
+    # text of the window title, which Orca also says when the window opens;
+    # the second is only in the page.
+    for key in ctrl-home h h k d t; do
         press "$key"
         sleep 4
     done
     ask webspeech "sleep 4; tail -n +$(value webmark) $SPEECHD_LOG | grep -a 'Incoming text' | sed 's/.*Incoming text: |//; s/|\$//; s/<[^>]*>//g' | tr '\\n' '/'" || exit 1
-    printf 'INFO: Orca nella pagina di prova (H, H, K, D, T): %s\n' "$(value webspeech)"
+    printf 'INFO: Orca nella pagina di prova (Ctrl+Inizio, H, H, K, D, T): %s\n' "$(value webspeech)"
     check 'Orca legge il titolo con H' "$(value webspeech | grep -c 'Titoli')" 1
     check 'Orca legge il collegamento con K' "$(value webspeech | grep -c 'vai al modulo')" 1
     check 'Orca legge la tabella con T' "$(value webspeech | grep -c 'Orari della biblioteca')" 1

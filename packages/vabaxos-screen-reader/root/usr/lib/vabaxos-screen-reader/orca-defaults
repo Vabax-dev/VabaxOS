@@ -1,0 +1,13 @@
+#!/usr/bin/python3
+"""Writes VabaxOS's Orca defaults (NVDA keys, typing echo) as the user's own
+values, for every key the user has not set, before Orca starts
+(orca.service.d/60-vabaxos-defaults.conf). Orca 50 ignores system dconf
+defaults: see vabaxos_screen_reader.store.apply_vabaxos_defaults."""
+
+import sys
+
+from vabaxos_screen_reader import store
+
+if __name__ == "__main__":
+    count = store.apply_vabaxos_defaults(sys.argv[1] if len(sys.argv) > 1 else store.DEFAULTS_DIR)
+    print(f"vabaxos orca defaults: {count} values written")
