@@ -15,13 +15,13 @@ mkdir -p "$sources"
 cat > "$sources/vabaxos-debian.sources" <<SOURCES
 # Debian for VabaxOS (ADR-0017, ADR-0020): testing "$VABAXOS_DISTRIBUTION" at a date
 # checked by VabaxOS. A new date comes with an update of vabaxos-apt, after
-# the automatic tests of VabaxOS passed with it.
+# the automatic tests of VabaxOS passed with it. Its Release files are past
+# their Valid-Until date: APT accepts them (apt.conf.d/50vabaxos-sources).
 Types: deb
 URIs: https://snapshot.debian.org/archive/debian/$VABAXOS_SNAPSHOT/
 Suites: $VABAXOS_DISTRIBUTION
 Components: main non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
-Check-Valid-Until: no
 SOURCES
 # Read by the daily check of vabaxos-update from the archive index.
 if [ -n "${VABAXOS_SECURITY_SNAPSHOT:-}" ]; then

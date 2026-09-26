@@ -4,3 +4,11 @@
 // live-build with Debian testing day by day, which VabaxOS does not follow.
 // To use it again, delete this file.
 Dir::Etc::SourceList "/usr/share/vabaxos-apt/sources.list";
+
+// The Release files of a past date of snapshot.debian.org are past their
+// Valid-Until date: APT must not reject them. Here, not as an option of the
+// source in vabaxos-debian.sources: while the ISO is built, live-build has
+// its own source for the same address without that option, and APT stops
+// on the two different values (CI, 2026-09-26). The same setting as
+// image/config/archives/snapshot.conf.chroot.
+Acquire::Check-Valid-Until "false";
