@@ -199,10 +199,10 @@ PAGES = [
     ("keyboard", N_("Keyboard"), "input-keyboard-symbolic", N_("The screen reader key"), [
         (N_("Screen reader key"), [
             ("choice", "keybindings", "keyboard-layout", N_("Keyboard"),
-             N_("Laptop uses Caps Lock as the screen reader key and the letters for reviewing"),
+             N_("Laptop uses Caps Lock as the screen reader key and the letters for reviewing; for now each press of Caps Lock also switches capital letters"),
              [(N_("Desktop, with number pad"), "desktop"), (N_("Laptop"), "laptop")]),
             ("choice", "keybindings", "desktop-modifier-keys", N_("Screen reader key"),
-             N_("The key held with the screen reader commands"),
+             N_("The key held with the screen reader commands. With Caps Lock, for now each press also switches capital letters on or off"),
              [(N_("Insert"), ["Insert", "KP_Insert"]), (N_("Insert or Caps Lock, as in NVDA"),
                                                       ["Insert", "KP_Insert", "Caps_Lock"]),
               (N_("Caps Lock"), ["Caps_Lock"])]),

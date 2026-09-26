@@ -118,10 +118,14 @@ JAWS = {
 
 SCHEMES = ["nvda", "jaws", "orca"]
 DEFAULT_SCHEME = "nvda"
-# The screen reader key of each scheme, for the desktop layout.
+# The screen reader key of each scheme, for the desktop layout: Insert, as
+# NVDA does by default. Not Caps Lock: under Wayland Orca 50 does not ask
+# Mutter to hold it back (its SetKeyGrabs lists only Insert), so every press
+# also switched capital letters on (found in QEMU, 2026-09-26). It can still
+# be chosen in the Keyboard page.
 MODIFIERS = {
-    "nvda": ["Insert", "KP_Insert", "Caps_Lock"],
-    "jaws": ["Insert", "KP_Insert", "Caps_Lock"],
+    "nvda": ["Insert", "KP_Insert"],
+    "jaws": ["Insert", "KP_Insert"],
     "orca": ["Insert", "KP_Insert"],
 }
 

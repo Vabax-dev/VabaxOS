@@ -575,28 +575,23 @@ if [[ "$WANT_ORCA" == yes ]]; then
     check 'velocità salvata nelle impostazioni' "$(value orcadconf)" 63
 fi
 
-# Orca's keys (block 10): the NVDA scheme is the default, with Insert and
-# Caps Lock as the screen reader key, and Orca answers to it: Insert+F12
-# says the time (recorded).
+# Orca's keys (block 10): the NVDA scheme is the default, with Insert as
+# the screen reader key (not Caps Lock: Orca 50 does not hold it back under
+# Wayland), and Orca answers to it: Insert+F12 says the time (recorded).
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ask orcakeys "env $BUS gsettings get org.gnome.Orca.Keybindings:/org/gnome/orca/default/keybindings/ entries | grep -o \"'sayAllHandler': \[\['Down', '461', '256', '1'\]\]\" | wc -l" || exit 1
     check 'tasti di Orca come NVDA (Ins+Freccia giù legge tutto)' "$(value orcakeys)" 1
     ask orcamod "env $BUS gsettings get org.gnome.Orca.Keybindings:/org/gnome/orca/default/keybindings/ desktop-modifier-keys" || exit 1
-    check 'tasto del lettore di schermo (Ins o Bloc Maiusc)' "$(value orcamod)" "['Insert', 'KP_Insert', 'Caps_Lock']"
+    check 'tasto del lettore di schermo (Ins, come in NVDA)' "$(value orcamod)" "['Insert', 'KP_Insert']"
 fi
 if [[ "$WANT_ORCA" == yes ]]; then
     sleep 3
     press insert-f12
     check 'Ins+F12: Orca dice l'"'"'ora' "$(record orca-f12 5)" "$WANT_SOUND"
-    sleep 2
-    press caps_lock-f12
-    check 'Bloc Maiusc+F12: Orca risponde' "$(record orca-caps-f12 5)" "$WANT_SOUND"
     # Orca runs without DISPLAY (orca.service.d/50-vabaxos-wayland.conf):
     # no xkbcomp through Xwayland, which froze GNOME Shell at startup.
     ask orcadisplay 'tr "\\0" "\\n" < /proc/$(pgrep -u user -x orca)/environ | grep -c "^DISPLAY="' || exit 1
     check 'Orca senza DISPLAY (niente xkbcomp)' "$(value orcadisplay)" 0
-    ask capslock 'cat /sys/class/leds/*capslock*/brightness 2>/dev/null | sort -u | head -1'
-    check 'Bloc Maiusc come tasto di Orca non attiva le maiuscole' "$(value capslock)" 0
 fi
 
 # Navigation and Tab (block 11). Tab is pressed many times in a program
@@ -655,7 +650,8 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     printf 'INFO: finestra nuova: %s\n' "$(value newwindow)"
     if [[ "$WANT_ORCA" == yes ]]; then
         press meta_l-alt-d
-        check 'Super+Alt+D: dove sono (Orca)' "$(record where-am-i 5)" "$WANT_SOUND"
+        # Orca may start speaking after 3 seconds: record 10.
+        check 'Super+Alt+D: dove sono (Orca)' "$(record where-am-i 10)" "$WANT_SOUND"
     fi
     send 'pkill -u user -x vabaxos-apps; pkill -u user -x gnome-text-edit; sleep 2'
 fi

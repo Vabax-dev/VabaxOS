@@ -77,7 +77,7 @@ class SchemesTest(unittest.TestCase):
         text = keymaps.dconf_defaults()
         self.assertIn("[org/gnome/orca/default/keybindings]", text)
         self.assertIn("'sayAllHandler': [['Down', '461', '256', '1']]", text)
-        self.assertIn("desktop-modifier-keys=['Insert', 'KP_Insert', 'Caps_Lock']", text)
+        self.assertIn("desktop-modifier-keys=['Insert', 'KP_Insert']", text)
         try:
             from gi.repository import GLib
         except ImportError:

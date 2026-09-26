@@ -18,7 +18,7 @@ La finestra **Impostazioni del lettore di schermo** raccoglie tutte le impostazi
 - **Tabelle:** riga intera, intestazioni, posizione e nome della cella.
 - **Suoni e avanzamento:** i suoni di Orca e le barre di avanzamento, a voce o con un bip che sale, come in NVDA.
 - **Braille:** barra Braille, Braille contratto, messaggi.
-- **Mouse**, **Ora e data**, **Tastiera** (fissa o portatile, e il tasto del lettore di schermo: Ins, Bloc Maiusc, o tutti e due come in NVDA).
+- **Mouse**, **Ora e data**, **Tastiera** (fissa o portatile, e il tasto del lettore di schermo: Ins, come in NVDA; Bloc Maiusc si può aggiungere, ma per ora ogni pressione cambia anche le maiuscole).
 
 ## I profili
 
