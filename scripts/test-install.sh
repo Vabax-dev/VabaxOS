@@ -205,7 +205,17 @@ printf 'INFO: primo avvio del sistema installato (log: %s)\n' "$LOG"
 check 'benvenuto al primo avvio udibile' "$(record welcome 40)" yes
 wait_for 'login: *$' 'richiesta di accesso sulla console seriale' 600 || exit 1
 press ret
-sleep 10
+# The login screen and the console speech as a person finds them, before
+# the serial login: that login starts a second PipeWire, which a person at
+# the computer does not have, and the two took the sound card from each
+# other (CI, 2026-09-25 and 26). Orca at the login screen speaks when the
+# focus moves: Tab, then listen; then Ctrl+Alt+F3, where espeakup speaks
+# through the login screen's PipeWire.
+sleep 45
+press tab
+check 'schermata di accesso udibile' "$(record greeter 8)" yes
+press ctrl-alt-f3
+check 'voce della console udibile' "$(record console 10)" yes
 login || exit 1
 ask os '. /etc/os-release; echo $PRETTY_NAME'
 # One line: value() reads only the first line of an answer.
@@ -237,19 +247,8 @@ check 'benvenuto concluso e segnato' "$(value welcome | tr -s ' ')" "inactive do
 check "scelte dell'installazione salvate" "$(value choices)" "vabaxos.a11y=high-contrast,large-text vabaxos.rate=5 vabaxos.lang=en"
 check 'alto contrasto dal benvenuto prima di installare' "$(value contrast)" true
 check 'testo grande dal benvenuto prima di installare' "$(value textsize)" 1.5
-# Orca at the login screen speaks when the focus moves: Tab, then listen.
-press tab
-check 'schermata di accesso udibile' "$(record greeter 8)" yes
-# The serial login has its own PipeWire, which espeakup uses: it gets the
-# card only once the login screen's PipeWire lets it go, 5 seconds after
-# Orca stops speaking (WirePlumber's suspend timeout). A person at the
-# computer has one PipeWire only. A fixed wait was not enough (CI,
-# 2026-09-25 and 26): wait_card_free waits, up to 30 seconds, until no
-# process of the login screen (gdm-greeter, the dynamic user of GDM 49 and
-# later, or Debian-gdm) has a playback device open.
+# Which process had the sound card at the end (diagnosis).
 wait_card_free
-press ctrl-alt-f3
-check 'voce della console udibile' "$(record console 10)" yes
 send 'echo test | sudo -S poweroff'
 for _ in $(seq 120); do kill -0 "$QEMU_WRAPPER" 2>/dev/null || break; sleep 1; done
 stop_vm
@@ -258,14 +257,16 @@ stop_vm
 LOG="$OUT/logs/test-install-$STAMP-second-start.log"
 start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" --from-disk --no-network
 printf 'INFO: secondo avvio, senza rete (log: %s)\n' "$LOG"
+# Console speech before the serial login, as for the first start.
+wait_for 'login: *$' 'richiesta di accesso sulla console seriale' 600 || exit 1
+sleep 30
+press ctrl-alt-f3
+check 'voce della console udibile senza rete' "$(record console-offline 10)" yes
 login || exit 1
 ask welcome2 'systemctl show -p ConditionResult --value vabaxos-welcome'
 ask speech2 'systemctl is-active espeakup'
 check 'benvenuto non ripetuto' "$(value welcome2)" no
 check 'voce della console senza rete' "$(value speech2)" active
-wait_card_free
-press ctrl-alt-f3
-check 'voce della console udibile senza rete' "$(record console-offline 10)" yes
 send 'echo test | sudo -S poweroff'
 for _ in $(seq 120); do kill -0 "$QEMU_WRAPPER" 2>/dev/null || break; sleep 1; done
 
