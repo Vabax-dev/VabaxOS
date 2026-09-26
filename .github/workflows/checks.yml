@@ -28,7 +28,7 @@ jobs:
           apt-get install -y --no-install-recommends shellcheck
       - name: ShellCheck
         run: |
-          find scripts -name '*.sh' -print0 | xargs -0 shellcheck
+          find scripts tests -name '*.sh' -print0 | xargs -0 shellcheck
           shellcheck image/auto/config
           shellcheck packages/*/postinst packages/*/postrm packages/*/build packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
       - name: Every workstation package exists in Debian trixie
@@ -63,7 +63,7 @@ jobs:
             python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas libglib2.0-bin \
             python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0 \
             python3-docx python3-ebooklib python3-pil poppler-utils \
-            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng
+            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng reprepro gnupg
       - uses: actions/checkout@v7
       # Large files of the packages (the Kokoro model), downloaded once.
       - uses: actions/cache@v4
@@ -74,6 +74,8 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Build the packages
         run: ./scripts/build-packages.sh /tmp/packages
+      - name: APT archive (throwaway key, apt reads it and refuses another key)
+        run: bash tests/archive/test-archive.sh
       - name: Python programs compile
         run: |
           for f in packages/*/root/usr/bin/* packages/*/root/usr/lib/speech-dispatcher-modules/*; do
@@ -92,8 +94,10 @@ jobs:
         run: python3 tests/screen-reader/test_keys.py
       - name: Start menu tests (hidden Broadway display, made-up programs)
         run: python3 tests/start/test_start.py
-      - name: Update tests (fake PackageKit)
-        run: python3 tests/update/test_update.py
+      - name: Update tests (fake PackageKit) and vabaxctl
+        run: |
+          python3 tests/update/test_update.py
+          python3 tests/update/test_vabaxctl.py
       - name: Voice tests (Kokoro module, audio to a file)
         run: |
           dpkg-deb -x /tmp/packages/vabaxos-voice_*.deb /tmp/voice

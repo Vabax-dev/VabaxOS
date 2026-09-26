@@ -1,0 +1,6 @@
+// VabaxOS (ADR-0020): APT reads its sources only from sources.list.d, where
+// vabaxos-apt puts Debian at a date checked by VabaxOS and the VabaxOS
+// archive. /etc/apt/sources.list is written by the installer and by
+// live-build with Debian testing day by day, which VabaxOS does not follow.
+// To use it again, delete this file.
+Dir::Etc::SourceList "/usr/share/vabaxos-apt/sources.list";

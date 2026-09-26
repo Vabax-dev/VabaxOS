@@ -1,0 +1,93 @@
+name: APT archive
+
+# Publishes the VabaxOS APT archive on GitHub Pages (ADR-0020), at
+# https://vabax-dev.github.io/VabaxOS/apt/, signed with the archive key.
+# It runs only when the secret VABAXOS_ARCHIVE_KEY and the public key
+# keys/vabaxos-archive.asc both exist (see docs/sviluppo/chiavi.md), and
+# needs GitHub Pages with the source "GitHub Actions".
+
+on:
+  push:
+    branches: [main]
+    paths: [packages/**, keys/**, image/build.conf, scripts/build-packages.sh, scripts/build-archive.sh, .github/workflows/archive.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the signed archive
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates curl python3 reprepro gnupg
+      - uses: actions/checkout@v7
+      - name: Is the archive key there?
+        id: check
+        env:
+          VABAXOS_ARCHIVE_KEY: ${{ secrets.VABAXOS_ARCHIVE_KEY }}
+        run: |
+          if [ -n "$VABAXOS_ARCHIVE_KEY" ] && [ -f keys/vabaxos-archive.asc ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No archive key yet (secret VABAXOS_ARCHIVE_KEY or keys/vabaxos-archive.asc): nothing published."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/cache@v4
+        if: steps.check.outputs.ready == 'true'
+        with:
+          path: cache/downloads
+          key: downloads-${{ hashFiles('packages/*/fetch') }}
+      - name: Trust the checkout
+        if: steps.check.outputs.ready == 'true'
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Build the archive
+        if: steps.check.outputs.ready == 'true'
+        env:
+          VABAXOS_ARCHIVE_KEY: ${{ secrets.VABAXOS_ARCHIVE_KEY }}
+        run: |
+          ./scripts/build-archive.sh _site/apt
+          cat > _site/index.html <<'EOF'
+          <!doctype html>
+          <html lang="it">
+          <head><meta charset="utf-8"><title>Archivio APT di VabaxOS</title></head>
+          <body>
+          <main>
+          <h1>Archivio APT di VabaxOS</h1>
+          <p>Qui ci sono i pacchetti di VabaxOS, firmati. VabaxOS li usa da solo per gli aggiornamenti: non serve fare nulla.</p>
+          <p>La chiave pubblica dell'archivio è <a href="apt/vabaxos-archive.asc">apt/vabaxos-archive.asc</a>.</p>
+          <p lang="en">This is the signed APT archive of VabaxOS. VabaxOS uses it by itself for updates.</p>
+          <p><a href="https://github.com/Vabax-dev/VabaxOS">VabaxOS su GitHub</a></p>
+          </main>
+          </body>
+          </html>
+          EOF
+      - uses: actions/upload-pages-artifact@v4
+        if: steps.check.outputs.ready == 'true'
+        with:
+          path: _site
+
+  deploy:
+    name: Publish on GitHub Pages
+    needs: build
+    if: needs.build.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

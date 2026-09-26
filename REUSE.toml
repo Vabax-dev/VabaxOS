@@ -86,3 +86,10 @@ path = "tests/screen-reader/org.gnome.Orca.gschema.xml"
 precedence = "override"
 SPDX-FileCopyrightText = "2005-2026 The Orca Team"
 SPDX-License-Identifier = "LGPL-2.1-or-later"
+
+# Public OpenPGP keys of VabaxOS (keys/README.md): facts, no copyright.
+[[annotations]]
+path = "keys/*.asc"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Vabax and VabaxOS contributors"
+SPDX-License-Identifier = "CC0-1.0"
