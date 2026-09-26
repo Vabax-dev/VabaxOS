@@ -328,6 +328,10 @@ SPD_DEBUG="python3 -c 'import speechd; c = speechd.SSIPClient(\"vabaxos-test\");
 if [[ "$WANT_ORCA" == yes ]]; then
     ask spddebug "$SPD_DEBUG" || exit 1
     printf 'INFO: registro dettagliato di speech-dispatcher: %s\n' "$(value spddebug)"
+    # Which audio output speech-dispatcher loaded (00-vabaxos-audio.conf:
+    # PipeWire's own, not the PulseAudio one).
+    ask spdaudio 'grep -ho "spd_[a-z]*\.so" /proc/$(pgrep -u user -x speech-dispatch | head -1)/maps 2>/dev/null | sort -u | paste -sd,' || exit 1
+    printf 'INFO: uscita audio di speech-dispatcher: %s\n' "$(value spdaudio)"
 fi
 
 case "$MODE" in
