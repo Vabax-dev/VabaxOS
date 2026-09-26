@@ -319,10 +319,12 @@ else
 fi
 
 # speech-dispatcher's debug log, switched on while it runs (SSIP DEBUG, no
-# restart): what Orca says (lines "Incoming text", for the web test) and,
-# when a probe is silent, what speech-dispatcher and its modules did.
-SPEECHD_LOG=/tmp/spd-debug/speech-dispatcher.log
-SPD_DEBUG='mkdir -p /tmp/spd-debug; python3 -c "import speechd; c = speechd.SSIPClient(\"vabaxos-test\"); c.set_debug_destination(\"/tmp/spd-debug\"); exec(\"try: c.set_debug(True)\\nexcept Exception: pass\"); c.close()" >/dev/null 2>&1; test -s /tmp/spd-debug/speech-dispatcher.log && echo on || echo off'
+# restart; its folder cannot be changed: DEBUG_DESTINATION is refused):
+# what Orca says (lines "Queueing message", for the web test) and, when a
+# probe is silent, what speech-dispatcher and its modules did.
+SPEECHD_DEBUG=/run/user/1000/speech-dispatcher/log/debug
+SPEECHD_LOG=$SPEECHD_DEBUG/speech-dispatcher.log
+SPD_DEBUG="python3 -c 'import speechd; c = speechd.SSIPClient(\"vabaxos-test\"); c.set_debug(True); c.close()' >/dev/null 2>&1; test -s $SPEECHD_LOG && echo on || echo off"
 if [[ "$WANT_ORCA" == yes ]]; then
     ask spddebug "$SPD_DEBUG" || exit 1
     printf 'INFO: registro dettagliato di speech-dispatcher: %s\n' "$(value spddebug)"
@@ -378,7 +380,7 @@ orca_state() {
     printf 'INFO: Orca %s: %s\n' "$1" "$(value orcastate)"
     # Who is silent: speech-dispatcher said directly (without Orca), and
     # the sound server's outputs and streams.
-    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat -u orca | tail -15 | sed "s/^/ORCA-DIAG: /"; grep -a -E "Incoming text|Queueing|Audio|rror|[Ss]top|[Pp]ause|END|BEGIN|Terminating|started" /tmp/spd-debug/speech-dispatcher.log | tail -n 60 | cut -c1-200 | sed "s/^/SPEECHD-DIAG: /"; tail -n 30 /tmp/spd-debug/espeak-ng*.log | cut -c1-200 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
+    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat -u orca | tail -15 | sed "s/^/ORCA-DIAG: /"; grep -a -E "Incoming text|Queueing|Audio|rror|[Ss]top|[Pp]ause|END|BEGIN|Terminating|started" /run/user/1000/speech-dispatcher/log/debug/speech-dispatcher.log | tail -n 60 | cut -c1-200 | sed "s/^/SPEECHD-DIAG: /"; tail -n 30 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log | cut -c1-200 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
     printf 'INFO: speech-dispatcher da solo %s: %s\n' "$1" "$(record "spd-$2" 5)"
     # Below speech-dispatcher (CI of block 15, 2026-09-26: even spd-say was
     # silent, until a suspend and resume): a sound played straight on
@@ -768,7 +770,7 @@ fi
 # The web with Orca (block 14): Firefox opens the practice page of the
 # help, and the quick keys of NVDA read its content, not only the roles
 # (the GNOME 50 problem of Orca reading only labels in Firefox). What Orca
-# says is read from speech-dispatcher's debug log ("Incoming text").
+# says is read from speech-dispatcher's debug log ("Queueing message").
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     ask weblog "$SPD_DEBUG" || exit 1
     send "env $DESKTOP_ENV firefox-esr /usr/share/doc/vabaxos-help/html/prova-web.html >/dev/null 2>&1 &"
@@ -783,7 +785,7 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
         press "$key"
         sleep 4
     done
-    ask webspeech "sleep 4; tail -n +$(value webmark) $SPEECHD_LOG | grep -a 'Incoming text' | sed 's/.*Incoming text: |//; s/|\$//; s/<[^>]*>//g' | tr '\\n' '/'" || exit 1
+    ask webspeech "sleep 4; tail -n +$(value webmark) $SPEECHD_LOG | grep -a 'Queueing message |' | sed 's/.*Queueing message |//; s/| with priority.*//; s/<[^>]*>//g' | tr '\\n' '/'" || exit 1
     printf 'INFO: Orca nella pagina di prova (Ctrl+Inizio, H, H, K, D, T): %s\n' "$(value webspeech)"
     check 'Orca legge il titolo con H' "$(value webspeech | grep -c 'Titoli')" 1
     check 'Orca legge il collegamento con K' "$(value webspeech | grep -c 'vai al modulo')" 1
