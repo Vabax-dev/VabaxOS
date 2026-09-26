@@ -1,6 +1,6 @@
 # ADR-0020: Aggiornamenti e sicurezza
 
-- **Stato:** Proposta
+- **Stato:** Accettata (Vabax, 2026-09-26)
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
 - **Sostituisce / Sostituita da:** —
@@ -18,7 +18,9 @@ La situazione oggi:
 - ADR-0009: ext4, niente snapshot del disco prima della v1.5, quindi niente ritorno automatico a prima di un aggiornamento.
 - GNOME Software e PackageKit sono già nella ISO; Flatpak ancora no.
 
-## Decisione proposta
+## Decisione
+
+Accettata da Vabax il 2026-09-26: date controllate di snapshot.debian.org provate ogni settimana dalla CI, nessun aggiornamento che parta senza l'utente nella serie 0.x, archivio VabaxOS su GitHub Pages di questo repository, due chiavi di firma (una per l'archivio, usata dalla CI; una per le versioni ufficiali, solo sul computer di Vabax). L'archivio e `vabaxctl` entrano nella 0.1 (blocco 13), non più nella 0.2.
 
 ### 1. Da dove arrivano gli aggiornamenti
 
@@ -65,6 +67,16 @@ La situazione oggi:
 - Serve il repository APT VabaxOS (v0.2) e una CI settimanale che prova la data nuova di snapshot.debian.org.
 - snapshot.debian.org è lento e ha limiti: con molti utenti servirà un mirror nostro delle date approvate.
 - Fino alla v0.2, il sistema installato resta su `deb.debian.org` forky, e `vabaxos-update` lo dice chiaramente all'utente.
+
+## Attuazione (blocco 13, 2026-09-26)
+
+- `vabaxos-apt`: sorgenti deb822 con `Signed-By`; Debian alla data di `image/build.conf` su snapshot.debian.org (con `Acquire::Check-Valid-Until "false"` nella configurazione di APT, non sulla sorgente: durante la costruzione live-build ha la sua sorgente per lo stesso indirizzo e APT si ferma su due valori diversi), l'archivio VabaxOS su `https://vabax-dev.github.io/VabaxOS/apt/`. APT legge le sorgenti solo da questo pacchetto (`Dir::Etc::SourceList`), non da `/etc/apt/sources.list` scritto dall'installer e da live-build.
+- `scripts/build-archive.sh` (reprepro) e la CI `archive.yml` pubblicano l'archivio firmato con la chiave dell'archivio (segreto `VABAXOS_ARCHIVE_KEY`); `tests/archive/test-archive.sh` lo prova con una chiave usa e getta. Le chiavi: [docs/sviluppo/chiavi.md](../sviluppo/chiavi.md).
+- Versioni dei pacchetti: la versione seguente di `image/build.conf` con la data dell'ultimo commit (`0.1.0~alpha.1~git20260926104500`); una versione ufficiale usa `VABAXOS_VERSION`.
+- GitHub Pages non accetta file sopra i 100 MB: il modello Kokoro è nel pacchetto `vabaxos-kokoro-model`, a versione fissa, solo nella ISO. Un modello nuovo richiederà un'altra via (per esempio un allegato delle versioni su GitHub).
+- Sicurezza su testing: PackageKit non riconosce aggiornamenti di sicurezza senza un archivio di sicurezza. Una data spostata per sicurezza si segna in `VABAXOS_SECURITY_SNAPSHOT`; `vabaxos-apt` la porta nel campo `Vabaxos-Security-Snapshot`, e il controllo giornaliero di `vabaxos-update` avvisa quando è più recente della data installata.
+- `snapshot.yml`: ogni lunedì prova la data più recente con tutte le prove della ISO (`iso.yml`), e se passano mette la data nuova sul ramo `snapshot/<data>`, pronto per una pull request.
+- `vabaxctl`: stato, voce, aggiornamenti e rapporto da terminale.
 
 ## Riesame
 

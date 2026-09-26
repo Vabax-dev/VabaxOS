@@ -1,0 +1,152 @@
+#!/usr/bin/python3
+"""The VabaxOS system command, for the terminal (ADR-0020, block 13).
+
+    vabaxctl status                     VabaxOS, Debian date, voice, updates
+    vabaxctl voice                      the voice in use
+    vabaxctl voice espeak|kokoro|auto   choose the desktop voice
+    vabaxctl update [--now|--at-restart]   the same as vabaxos-update
+    vabaxctl report                     the same as vabaxos-report
+
+Every answer is a few short lines, easy to follow with a screen reader.
+Changing the voice needs the administrator password: in the desktop GNOME
+asks it (pkexec, read by Orca), in a text console sudo does.
+"""
+
+import gettext
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+gettext.textdomain("vabaxos-update")
+_ = gettext.gettext
+
+DEBIAN_SOURCES = "/etc/apt/sources.list.d/vabaxos-debian.sources"
+ARCHIVE_SOURCES = "/etc/apt/sources.list.d/vabaxos.sources"
+VOICE_CONFIG = "/etc/vabaxos/voice.conf"
+VOICE_STATE = "/var/lib/vabaxos/voice.conf"
+ENGINES = ("espeak", "kokoro", "auto")
+
+
+def read(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return ""
+
+
+def output(*command):
+    try:
+        return subprocess.run(command, capture_output=True, text=True, timeout=10, check=False).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def setting(text, key):
+    for line in text.splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line.startswith(key + "="):
+            return line.split("=", 1)[1].strip()
+    return ""
+
+
+def version():
+    return output("dpkg-query", "-W", "-f=${Version}", "vabaxos-apt") or _("unknown")
+
+
+def debian_date():
+    match = re.search(r"snapshot\.debian\.org/archive/debian/(\d{4})(\d{2})(\d{2})T", read(DEBIAN_SOURCES))
+    return "-".join(match.groups()) if match else None
+
+
+def status():
+    lines = [_("VabaxOS {version}.").format(version=version())]
+    lines.append(_("Running from the live medium.") if os.path.isdir("/run/live/medium")
+                 else _("Installed on this computer."))
+    date = debian_date()
+    lines.append(_("Debian testing checked by VabaxOS, date {date}.").format(date=date) if date
+                 else _("Debian testing day by day, not checked by VabaxOS."))
+    lines.append(_("VabaxOS archive: on.") if os.path.exists(ARCHIVE_SOURCES)
+                 else _("VabaxOS archive: not set up yet."))
+    lines.append(voice_text())
+    orca = output("systemctl", "--user", "is-active", "orca")
+    lines.append(_("Orca is on.") if orca == "active" else _("Orca is off."))
+    return "\n".join(lines)
+
+
+def voice_text():
+    engine = setting(read(VOICE_STATE), "engine") or "espeak"
+    choice = setting(read(VOICE_CONFIG), "engine") or "espeak"
+    name = {"kokoro": _("Kokoro, the natural voice"), "espeak": _("eSpeak NG")}.get(engine, engine)
+    text = _("Desktop voice: {name}.").format(name=name)
+    if choice == "auto":
+        text += " " + _("Chosen at every start, measuring the computer.")
+    return text
+
+
+def write_voice(engine):
+    """Runs as root: writes engine= in /etc/vabaxos/voice.conf, keeping the
+    other settings, and chooses the voice again."""
+    lines = [line for line in read(VOICE_CONFIG).splitlines()
+             if not line.split("#", 1)[0].strip().startswith("engine=")]
+    lines.append(f"engine={engine}")
+    os.makedirs(os.path.dirname(VOICE_CONFIG), exist_ok=True)
+    with open(VOICE_CONFIG + ".new", "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    os.replace(VOICE_CONFIG + ".new", VOICE_CONFIG)
+    if shutil.which("vabaxos-voice-select"):
+        subprocess.run(["vabaxos-voice-select"], check=False)
+
+
+def voice(args):
+    if not args:
+        print(voice_text())
+        return 0
+    engine = args[0]
+    if engine not in ENGINES:
+        print(_("Unknown voice {name}: use espeak, kokoro or auto.").format(name=engine), file=sys.stderr)
+        return 2
+    if os.geteuid() != 0:
+        graphical = os.environ.get("WAYLAND_DISPLAY") or os.environ.get("DISPLAY")
+        helper = "pkexec" if graphical and shutil.which("pkexec") else "sudo"
+        code = subprocess.run([helper, os.path.abspath(sys.argv[0]), "--as-root-voice", engine], check=False).returncode
+        if code != 0:
+            print(_("The voice did not change."), file=sys.stderr)
+            return 1
+    else:
+        write_voice(engine)
+    print(voice_text())
+    print(_("The new voice speaks when Orca starts again: press Super+Alt+S twice."))
+    return 0
+
+
+def run_program(name, args):
+    if not shutil.which(name):
+        print(_("{name} is not installed.").format(name=name), file=sys.stderr)
+        return 1
+    return subprocess.run([name, *args], check=False).returncode
+
+
+def main(argv):
+    if len(argv) == 2 and argv[0] == "--as-root-voice" and argv[1] in ENGINES:
+        write_voice(argv[1])
+        return 0
+    command, args = (argv[0], argv[1:]) if argv else ("status", [])
+    if command == "status":
+        print(status())
+        return 0
+    if command == "voice":
+        return voice(args)
+    if command == "update":
+        return run_program("vabaxos-update", args)
+    if command == "report":
+        return run_program("vabaxos-report", args)
+    print(_("Commands: status, voice, update, report. Example: vabaxctl voice kokoro"),
+          file=sys.stderr if command not in ("help", "--help", "-h") else sys.stdout)
+    return 0 if command in ("help", "--help", "-h") else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

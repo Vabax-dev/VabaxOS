@@ -1,8 +1,7 @@
-VabaxOS: vabaxos-voice
-Copyright 2026 Vabax and VabaxOS contributors
-License: GPL-3.0-or-later, see /usr/share/common-licenses/GPL-3
+VabaxOS: vabaxos-kokoro-model
 
-Files: usr/share/vabaxos/kokoro/vocab.json
+Files: usr/share/vabaxos/kokoro/kokoro-v1.0.onnx
+       usr/share/vabaxos/kokoro/voices-v1.0.bin
 Source: https://huggingface.co/hexgrad/Kokoro-82M
         https://github.com/thewh1teagle/kokoro-onnx (ONNX export)
 Copyright: 2024-2025 hexgrad

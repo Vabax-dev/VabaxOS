@@ -4,22 +4,23 @@
 # Each packages/<name>/ has:
 #   control           the DEBIAN/control file, without Version (added here)
 #   root/             the files to install, as they will be on the system
+#                     (optional when fetch or build make all of them)
+#   version           a fixed version (optional): for large data that must
+#                     not be downloaded again with every update of VabaxOS
 #   postinst, postrm  maintainer scripts (optional)
 #   triggers          dpkg triggers (optional)
 #   fetch             large files downloaded at build time, one per line:
 #                     URL SHA256 PATH (optional; kept in cache/downloads)
 #   copyright         licence of the contents (optional, default GPL-3.0+)
 #   build             a program run with the package tree, to make files
-#                     (optional; REPO is set, for example the HTML help)
+#                     (optional; REPO is set, for example the HTML help);
+#                     it may write more control fields in DEBIAN/fields
 #   po/*.po           translations of the domain <name> (optional)
 # No root needed: files belong to root:root inside the package.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${1:?Uso: build-packages.sh CARTELLA_DI_USCITA}"
-# Until the Vabax APT repository exists (v0.2), packages go only in the ISO.
-VERSION="0.1.0~dev"
-
 mkdir -p "$OUT"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -36,12 +37,28 @@ if [[ -z "$SOURCE_DATE_EPOCH" ]]; then
 fi
 export SOURCE_DATE_EPOCH
 
+# Package version (ADR-0015, ADR-0020), with "~" instead of "-" as Debian
+# orders it (0.1.0-alpha.1 -> 0.1.0~alpha.1). A release sets
+# VABAXOS_VERSION, as for scripts/build.sh. Other builds take the next
+# version of image/build.conf and the date of the last commit, so every
+# publication of the VabaxOS archive is newer than the one before and
+# still older than the release: 0.1.0~alpha.1~git20260926104500.
+if [[ -n "${VABAXOS_VERSION:-}" ]]; then
+    VERSION="${VABAXOS_VERSION//-/\~}"
+else
+    # shellcheck source=/dev/null
+    . "$REPO/image/build.conf"
+    VERSION="${VABAXOS_NEXT_VERSION//-/\~}~git$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y%m%d%H%M%S)"
+fi
+
 for dir in "$REPO"/packages/*/; do
     name="$(basename "$dir")"
     [[ -f "$dir/control" ]] || continue
     tree="$TMP/$name"
     mkdir -p "$tree/DEBIAN"
-    cp -a "$dir/root/." "$tree/"
+    if [[ -d "$dir/root" ]]; then
+        cp -a "$dir/root/." "$tree/"
+    fi
     find "$tree" -name __pycache__ -prune -exec rm -rf {} +
     if [[ -x "$dir/build" ]]; then
         REPO="$REPO" "$dir/build" "$tree"
@@ -74,7 +91,13 @@ for dir in "$REPO"/packages/*/; do
     if [[ -d "$tree/etc" ]]; then
         (cd "$tree" && find etc -type f | sort | sed 's|^|/|') > "$tree/DEBIAN/conffiles"
     fi
-    { cat "$dir/control"; printf 'Version: %s\n' "$VERSION"; } > "$tree/DEBIAN/control"
+    version="$VERSION"
+    if [[ -f "$dir/version" ]]; then
+        version="$(<"$dir/version")"
+    fi
+    { cat "$dir/control"; printf 'Version: %s\n' "$version"; cat "$tree/DEBIAN/fields" 2>/dev/null || true; } \
+        > "$tree/DEBIAN/control"
+    rm -f "$tree/DEBIAN/fields"
     for script in postinst postrm; do
         if [[ -f "$dir/$script" ]]; then
             install -m 0755 "$dir/$script" "$tree/DEBIAN/$script"
@@ -104,6 +127,6 @@ for dir in "$REPO"/packages/*/; do
             "$name" > "$tree/usr/share/doc/$name/copyright"
     fi
     find "$tree" -exec touch --no-dereference -d "@$SOURCE_DATE_EPOCH" {} +
-    dpkg-deb --root-owner-group "${compress[@]}" --build "$tree" "$OUT/${name}_${VERSION}_all.deb" >/dev/null
-    printf 'Pacchetto: %s\n' "$OUT/${name}_${VERSION}_all.deb"
+    dpkg-deb --root-owner-group "${compress[@]}" --build "$tree" "$OUT/${name}_${version}_all.deb" >/dev/null
+    printf 'Pacchetto: %s\n' "$OUT/${name}_${version}_all.deb"
 done

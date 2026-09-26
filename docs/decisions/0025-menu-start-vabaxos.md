@@ -1,6 +1,6 @@
 # ADR-0025: Il menu Start di VabaxOS, con ricerca e categorie ad albero
 
-- **Stato:** Proposta
+- **Stato:** Accettata (Vabax, 2026-09-26), con le modifiche scritte sotto
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead, responsabile accessibilità), Principal Software Engineer
 - **Sostituisce / Sostituita da:** — (cambia ADR-0018 per il tasto Super; ArcMenu resta sulla barra)
@@ -13,7 +13,11 @@ Il 2026-09-25 Vabax ha descritto il menu Start che vuole: «quando si apre, un c
 
 ArcMenu ha una disposizione vicina a questa («Whisker»: categorie a sinistra, programmi a destra; la freccia destra passa ai programmi), ma non un albero: Orca non dice «espanso» e «compresso» né il livello, e gli elementi di GNOME Shell non espongono queste informazioni come fanno le finestre GTK. Cambiare ArcMenu significherebbe mantenere modifiche a un'estensione di altri.
 
-## Decisione proposta
+## Decisione
+
+Accettata da Vabax il 2026-09-26 (alternativa C, con due aggiunte): **il menu Start di VabaxOS per tutti, ArcMenu tolto**. Il menu si usa anche con il mouse. Da chiuso, sulla barra delle applicazioni c'è una **casella di ricerca**, come in Windows 11: scrivere lì apre il menu con la ricerca già fatta. Il punto 5 qui sotto non vale più.
+
+Proposta originale:
 
 1. **Super apre il menu Start di VabaxOS** (`vabaxos-start`, programma GTK 4, blocco 12), non più ArcMenu. Super+S fa lo stesso. Super di nuovo, o Esc, lo chiude e il focus torna alla finestra di prima.
 2. Il menu si apre con il **focus nel campo di ricerca**. I risultati arrivano mentre si scrive: programmi (anche per parole chiave e descrizione, senza badare agli accenti), impostazioni, cartelle, file recenti, comandi (Blocca, Esci, Sospendi, Riavvia, Spegni). Orca dice quanti sono; Freccia giù va ai risultati, Invio apre il primo.

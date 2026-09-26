@@ -1,0 +1,12 @@
+Package: vabaxos-apt
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: admin
+Priority: optional
+Depends: apt (>= 2.4), debian-archive-keyring, ca-certificates
+Description: where VabaxOS gets its updates from
+ The sources of APT for VabaxOS (ADR-0020): Debian at a date checked by
+ VabaxOS (snapshot.debian.org), not Debian testing day by day, and the
+ signed VabaxOS archive with the VabaxOS packages. APT reads its sources
+ only from the files of this package; /etc/apt/sources.list, written by
+ the installer and by live-build, is not used.

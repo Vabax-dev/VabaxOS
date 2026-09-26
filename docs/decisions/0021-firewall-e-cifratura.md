@@ -1,6 +1,6 @@
 # ADR-0021: Firewall e cifratura del disco
 
-- **Stato:** Proposta
+- **Stato:** Accettata (Vabax, 2026-09-26)
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
 - **Sostituisce / Sostituita da:** — (completa ADR-0009 per la cifratura)
@@ -12,7 +12,9 @@ Nel blocco 7 Vabax ha chiesto un sistema completo, e sicuro. Due funzioni che Wi
 - **Firewall.** Debian non ne attiva uno, GNOME non ha una pagina nelle Impostazioni. VabaxOS non apre servizi di rete per default, ma una persona può installare un programma che lo fa (condivisione di file, desktop remoto).
 - **Cifratura del disco.** L'installer di Debian sa cifrare il disco (LUKS2). ADR-0009 la lascia spenta e non consigliata finché non è provata con la voce: la password si chiede all'avvio, **prima** che la voce della console parta. Chi non vede sente solo silenzio e non sa che il computer sta aspettando.
 
-## Decisione proposta
+## Decisione
+
+Accettata da Vabax il 2026-09-26: ufw attivo per default già nella 0.1; la cifratura del disco resta per la 0.2, con voce e segnale alla richiesta della password.
 
 ### Firewall
 

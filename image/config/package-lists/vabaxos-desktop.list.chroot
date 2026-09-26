@@ -26,10 +26,8 @@ locales-all
 keyboard-configuration
 console-setup
 
-# Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility, vabaxos-apps,
-# vabaxos-branding, vabaxos-reader, vabaxos-screen-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds, vabaxos-start,
-# vabaxos-update, vabaxos-voice, vabaxos-welcome)
-# are built from packages/ by
+# Speech (ADR-0005, ADR-0006). The VabaxOS packages (all of packages/, from
+# vabaxos-accessibility to vabaxos-welcome) are built by
 # scripts/build-packages.sh and installed by live-build automatically.
 espeakup
 espeak-ng

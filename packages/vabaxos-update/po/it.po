@@ -47,3 +47,60 @@ msgstr "Pronto. Gli aggiornamenti verranno installati al prossimo avvio."
 
 msgid "Update finished."
 msgstr "Aggiornamento concluso."
+
+msgid "unknown"
+msgstr "sconosciuta"
+
+msgid "VabaxOS {version}."
+msgstr "VabaxOS {version}."
+
+msgid "Running from the live medium."
+msgstr "Avviato dalla chiavetta, senza installazione."
+
+msgid "Installed on this computer."
+msgstr "Installato su questo computer."
+
+msgid "Debian testing checked by VabaxOS, date {date}."
+msgstr "Debian testing controllata da VabaxOS, data {date}."
+
+msgid "Debian testing day by day, not checked by VabaxOS."
+msgstr "Debian testing giorno per giorno, non controllata da VabaxOS."
+
+msgid "VabaxOS archive: on."
+msgstr "Archivio di VabaxOS: attivo."
+
+msgid "VabaxOS archive: not set up yet."
+msgstr "Archivio di VabaxOS: non ancora attivo."
+
+msgid "Orca is on."
+msgstr "Orca è acceso."
+
+msgid "Orca is off."
+msgstr "Orca è spento."
+
+msgid "Kokoro, the natural voice"
+msgstr "Kokoro, la voce naturale"
+
+msgid "eSpeak NG"
+msgstr "eSpeak NG"
+
+msgid "Desktop voice: {name}."
+msgstr "Voce del desktop: {name}."
+
+msgid "Chosen at every start, measuring the computer."
+msgstr "Scelta a ogni avvio, misurando il computer."
+
+msgid "Unknown voice {name}: use espeak, kokoro or auto."
+msgstr "Voce sconosciuta {name}: usa espeak, kokoro o auto."
+
+msgid "The voice did not change."
+msgstr "La voce non è cambiata."
+
+msgid "The new voice speaks when Orca starts again: press Super+Alt+S twice."
+msgstr "La nuova voce parla quando Orca riparte: premi due volte Super+Alt+S."
+
+msgid "{name} is not installed."
+msgstr "{name} non è installato."
+
+msgid "Commands: status, voice, update, report. Example: vabaxctl voice kokoro"
+msgstr "Comandi: status, voice, update, report. Esempio: vabaxctl voice kokoro"

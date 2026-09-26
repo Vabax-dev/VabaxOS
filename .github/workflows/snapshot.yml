@@ -1,0 +1,64 @@
+name: Debian date
+
+# Every week, tries the newest date of snapshot.debian.org (ADR-0020): the
+# whole ISO test (iso.yml: build, boot with sound checks, installation).
+# If everything passes, the new date goes on a branch snapshot/<date>, for a
+# pull request: installed systems get it with the next vabaxos-apt.
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  date:
+    name: Newest Debian date
+    runs-on: ubuntu-latest
+    outputs:
+      snapshot: ${{ steps.date.outputs.snapshot }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: date
+        run: |
+          . image/build.conf
+          new="$(date -u +%Y%m%dT000000Z)"
+          url="https://snapshot.debian.org/archive/debian/$new/dists/$VABAXOS_DISTRIBUTION/InRelease"
+          if [ "$new" = "$VABAXOS_SNAPSHOT" ]; then
+            echo "::notice::Already at $new."
+          elif curl -fsI --retry 3 "$url" >/dev/null; then
+            echo "snapshot=$new" >> "$GITHUB_OUTPUT"
+            echo "::notice::Trying $new (now $VABAXOS_SNAPSHOT)."
+          else
+            echo "::warning::snapshot.debian.org does not answer for $new."
+          fi
+
+  test:
+    name: Test the ISO with the new date
+    needs: date
+    if: needs.date.outputs.snapshot != ''
+    uses: ./.github/workflows/iso.yml
+    with:
+      snapshot: ${{ needs.date.outputs.snapshot }}
+
+  branch:
+    name: Branch with the new date
+    needs: [date, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - env:
+          SNAPSHOT: ${{ needs.date.outputs.snapshot }}
+        run: |
+          sed -i "s/^VABAXOS_SNAPSHOT=.*/VABAXOS_SNAPSHOT=$SNAPSHOT/" image/build.conf
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "snapshot/$SNAPSHOT"
+          git commit -s -am "build: Debian date $SNAPSHOT, tested by the CI" \
+            -m "The weekly test of snapshot.yml built the ISO with this date, booted it with the sound checks and installed it (ADR-0020)."
+          git push origin "snapshot/$SNAPSHOT"
+          echo "::notice::Branch snapshot/$SNAPSHOT is ready for a pull request."

@@ -11,12 +11,23 @@ on:
   pull_request:
     paths: [image/**, packages/**, scripts/**, .github/workflows/iso.yml]
   workflow_dispatch:
+    inputs:
+      snapshot:
+        description: Another date of snapshot.debian.org to try, such as 20261005T000000Z
+        type: string
+        default: ''
+  # The weekly try of a new Debian date (snapshot.yml, ADR-0020).
+  workflow_call:
+    inputs:
+      snapshot:
+        type: string
+        default: ''
 
 permissions:
   contents: read
 
 concurrency:
-  group: iso-${{ github.ref }}
+  group: iso-${{ github.ref }}-${{ inputs.snapshot }}
   cancel-in-progress: true
 
 jobs:
@@ -47,6 +58,15 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
+
+      - name: Try another Debian date
+        if: inputs.snapshot != ''
+        env:
+          SNAPSHOT: ${{ inputs.snapshot }}
+        run: |
+          [[ "$SNAPSHOT" =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || { echo "Wrong date: $SNAPSHOT"; exit 1; }
+          sed -i "s/^VABAXOS_SNAPSHOT=.*/VABAXOS_SNAPSHOT=$SNAPSHOT/" image/build.conf
+          grep '^VABAXOS_SNAPSHOT=' image/build.conf
 
       # Debian 13 with root rights, as on the workstation (ADR-0002, ADR-0013).
       - name: Build the ISO
@@ -91,7 +111,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: vabaxos-iso-${{ github.sha }}
+          name: vabaxos-iso-${{ github.sha }}${{ inputs.snapshot && format('-{0}', inputs.snapshot) || '' }}
           path: |
             out/*.iso
             out/SHA256SUMS

@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Updates VabaxOS, with every step said aloud (ADR-0020, proposed).
+"""Updates VabaxOS, with every step said aloud (ADR-0020).
 
     vabaxos-update              check, and say what there is
     vabaxos-update --now        download and install now
@@ -12,10 +12,17 @@ printed and shown as a desktop notification, which Orca reads wherever the
 focus is. Flatpak applications are updated too.
 
 Nothing is installed unless the user asks (series 0.x, ADR-0020).
+
+With vabaxos-apt, Debian comes from a date of snapshot.debian.org checked
+by VabaxOS, and a newer date arrives as an update of vabaxos-apt. Testing
+has no security archive, so PackageKit sees no security updates there:
+the VabaxOS archive marks a date moved for a security fix with the field
+Vabaxos-Security-Snapshot of vabaxos-apt, and that counts as one.
 """
 
 import gettext
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -23,7 +30,8 @@ import sys
 gettext.textdomain("vabaxos-update")
 _ = gettext.gettext
 
-NOTE_SOURCES = ("/etc/apt/sources.list", "/etc/apt/sources.list.d")
+DEBIAN_SOURCES = "/etc/apt/sources.list.d/vabaxos-debian.sources"
+SNAPSHOT = re.compile(r"snapshot\.debian\.org/archive/debian/(\d{8}T\d{6}Z)")
 
 
 def notify(text, urgent=False):
@@ -38,23 +46,27 @@ def notify(text, urgent=False):
                    capture_output=True, check=False)
 
 
-def unchecked_sources():
-    """True while the installed system follows Debian testing directly,
-    before the VabaxOS repository (ADR-0020, point 1)."""
-    paths = []
-    for path in NOTE_SOURCES:
-        if os.path.isdir(path):
-            paths += [os.path.join(path, name) for name in sorted(os.listdir(path))]
-        elif os.path.exists(path):
-            paths.append(path)
-    text = ""
-    for path in paths:
-        try:
-            with open(path, encoding="utf-8") as f:
-                text += f.read()
-        except OSError:
-            pass
-    return "deb.debian.org" in text and "vabaxos" not in text
+def installed_snapshot(path=DEBIAN_SOURCES):
+    """The Debian date this system uses, or None while it follows Debian
+    testing directly (without vabaxos-apt)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            match = SNAPSHOT.search(f.read())
+    except OSError:
+        return None
+    return match.group(1) if match else None
+
+
+def security_snapshot(installed):
+    """The newest date moved for security in the VabaxOS archive, if newer
+    than the installed one (APT's lists, refreshed by PackageKit)."""
+    if not installed or not shutil.which("apt-cache"):
+        return None
+    out = subprocess.run(["apt-cache", "show", "vabaxos-apt"], capture_output=True,
+                         text=True, check=False).stdout
+    dates = re.findall(r"^Vabaxos-Security-Snapshot:\s*(\d{8}T\d{6}Z)\s*$", out, re.M | re.I)
+    newest = max(dates, default=None)
+    return newest if newest and newest > installed else None
 
 
 class Updater:
@@ -117,6 +129,9 @@ def main(argv, updater=None):
     try:
         updater = updater or Updater()
         packages, security = updater.updates()
+        snapshot = installed_snapshot()
+        if security_snapshot(snapshot):
+            security += [p for p in packages if p.get_id().startswith("vabaxos-apt;") and p not in security]
     except Exception as error:  # noqa: BLE001 - tell the user in words
         if mode != "daily":
             notify(_("Cannot look for updates: {error}. Check the network and try again.").format(error=error))
@@ -132,7 +147,7 @@ def main(argv, updater=None):
         return 0
     text = _("{count} updates, {security} for security; {apps} applications.").format(
         count=len(packages), security=len(security), apps=apps)
-    if unchecked_sources():
+    if not snapshot:
         text += " " + _("Note: in this test version updates come straight from Debian testing, "
                         "not yet checked by VabaxOS.")
     if mode == "check":
@@ -140,6 +155,12 @@ def main(argv, updater=None):
         return 0
     notify(text)
     try:
+        sources = [p for p in packages if p.get_id().startswith("vabaxos-apt;")]
+        if sources and mode == "now":
+            # A new Debian date first: its packages are seen only after
+            # APT reads the new sources.
+            updater.install(sources)
+            packages, _security = updater.updates()
         if packages:
             updater.install(packages, at_restart=(mode == "restart"))
         if apps:

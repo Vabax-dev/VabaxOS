@@ -1,0 +1,2 @@
+# VabaxOS (ADR-0020): intentionally empty. APT reads the sources of VabaxOS
+# from /etc/apt/sources.list.d (vabaxos-debian.sources, vabaxos.sources).
