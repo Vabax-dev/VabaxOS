@@ -143,10 +143,10 @@ class UpdateTest(unittest.TestCase):
 
     def test_note_only_without_vabaxos_sources(self):
         _, out, _ = run([], [Package("gedit", Info.NORMAL)])
-        self.assertIn("straight from Debian testing", out)
+        self.assertIn("straight from Debian,", out)
         update.installed_snapshot = lambda path=None: "20260924T000000Z"
         _, out, _ = run([], [Package("gedit", Info.NORMAL)])
-        self.assertNotIn("straight from Debian testing", out)
+        self.assertNotIn("straight from Debian,", out)
 
     def test_daily_speaks_for_a_date_moved_for_security(self):
         update.installed_snapshot = lambda path=None: "20260924T000000Z"

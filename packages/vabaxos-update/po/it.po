@@ -33,8 +33,8 @@ msgstr "VabaxOS è aggiornato."
 msgid "{count} updates, {security} for security; {apps} applications."
 msgstr "{count} aggiornamenti, di cui {security} di sicurezza; {apps} applicazioni."
 
-msgid "Note: in this test version updates come straight from Debian testing, not yet checked by VabaxOS."
-msgstr "Nota: in questa versione di prova gli aggiornamenti arrivano direttamente da Debian testing, non ancora controllati da VabaxOS."
+msgid "Note: in this test version updates come straight from Debian, not yet checked by VabaxOS."
+msgstr "Nota: in questa versione di prova gli aggiornamenti arrivano direttamente da Debian, non ancora controllati da VabaxOS."
 
 msgid "To install: vabaxos-update --now, or --at-restart."
 msgstr "Per installarli: vabaxos-update --now, oppure --at-restart."
@@ -60,11 +60,11 @@ msgstr "Avviato dalla chiavetta, senza installazione."
 msgid "Installed on this computer."
 msgstr "Installato su questo computer."
 
-msgid "Debian testing checked by VabaxOS, date {date}."
-msgstr "Debian testing controllata da VabaxOS, data {date}."
+msgid "Debian 13 checked by VabaxOS, date {date}."
+msgstr "Debian 13 controllata da VabaxOS, data {date}."
 
-msgid "Debian testing day by day, not checked by VabaxOS."
-msgstr "Debian testing giorno per giorno, non controllata da VabaxOS."
+msgid "Debian day by day, not checked by VabaxOS."
+msgstr "Debian giorno per giorno, non controllata da VabaxOS."
 
 msgid "VabaxOS archive: on."
 msgstr "Archivio di VabaxOS: attivo."

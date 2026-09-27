@@ -66,8 +66,8 @@ def status():
     lines.append(_("Running from the live medium.") if os.path.isdir("/run/live/medium")
                  else _("Installed on this computer."))
     date = debian_date()
-    lines.append(_("Debian testing checked by VabaxOS, date {date}.").format(date=date) if date
-                 else _("Debian testing day by day, not checked by VabaxOS."))
+    lines.append(_("Debian 13 checked by VabaxOS, date {date}.").format(date=date) if date
+                 else _("Debian day by day, not checked by VabaxOS."))
     lines.append(_("VabaxOS archive: on.") if os.path.exists(ARCHIVE_SOURCES)
                  else _("VabaxOS archive: not set up yet."))
     lines.append(voice_text())

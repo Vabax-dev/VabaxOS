@@ -8,7 +8,7 @@
 set -e
 
 brand() {
-    sed -e 's/^PRETTY_NAME=.*/PRETTY_NAME="VabaxOS 0.1 (Debian forky)"/' -e '/^LOGO=/d' "$1" > "$2.new"
+    sed -e 's/^PRETTY_NAME=.*/PRETTY_NAME="VabaxOS 0.1 (Debian 13 trixie)"/' -e '/^LOGO=/d' "$1" > "$2.new"
     echo 'LOGO=vabaxos-logo' >> "$2.new"
     chmod 0644 "$2.new"
     mv "$2.new" "$2"

@@ -13,8 +13,8 @@ gnome-shell-extension-gpaste
 gnome-shell-extension-tiling-assistant
 gnome-system-monitor
 # One look for the whole system: Atkinson Hyperlegible Next, a font made
-# for low vision (vabaxos-branding); log in and log out sounds.
-fonts-atkinson-hyperlegible-next
+# for low vision (vabaxos-fonts, required by vabaxos-branding); log in and
+# log out sounds.
 gnome-session-canberra
 network-manager
 # Applications from outside Debian (ADR-0008), updated by vabaxos-update.

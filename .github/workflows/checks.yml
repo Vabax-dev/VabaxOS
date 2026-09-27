@@ -42,7 +42,7 @@ jobs:
     container: debian:trixie
     steps:
       - uses: actions/checkout@v7
-      - name: Install live-build from forky (ADR-0017)
+      - name: Install live-build from Git (scripts/install-live-build.sh)
         run: |
           apt-get update
           apt-get install -y --no-install-recommends curl ca-certificates
@@ -116,8 +116,8 @@ jobs:
   shell-extension:
     name: GNOME Shell extension (headless GNOME Shell)
     runs-on: ubuntu-latest
-    # GNOME 50, as in the ISO (ADR-0017).
-    container: debian:forky
+    # GNOME 48, as in the ISO (ADR-0027).
+    container: debian:trixie
     steps:
       - name: Install tools
         run: |

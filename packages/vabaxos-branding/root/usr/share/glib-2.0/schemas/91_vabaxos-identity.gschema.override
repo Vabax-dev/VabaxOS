@@ -4,11 +4,11 @@
 
 # Atkinson Hyperlegible Next was designed for readers with low vision
 # (Braille Institute): letters that are easy to tell apart, like I, l, 1.
-# Adwaita Mono stays for fixed-width text.
+# Fixed-width text: Monospace (DejaVu Sans Mono in Debian 13).
 [org.gnome.desktop.interface]
 font-name='Atkinson Hyperlegible Next 11'
 document-font-name='Atkinson Hyperlegible Next 11'
-monospace-font-name='Adwaita Mono 11'
+monospace-font-name='Monospace 11'
 accent-color='purple'
 # The battery level in the top bar, where Orca reads it.
 show-battery-percentage=true

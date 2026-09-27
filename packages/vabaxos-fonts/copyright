@@ -1,0 +1,6 @@
+VabaxOS: vabaxos-fonts
+
+Files: usr/share/fonts/truetype/atkinson-hyperlegible-next/*
+Source: https://github.com/googlefonts/atkinson-hyperlegible-next (commit 7925f50)
+Copyright: 2020-2024 The Atkinson Hyperlegible Next Project Authors (Braille Institute of America)
+License: OFL-1.1, see /usr/share/doc/vabaxos-fonts/OFL.txt

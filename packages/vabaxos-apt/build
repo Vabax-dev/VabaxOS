@@ -13,13 +13,20 @@ tree="$1"
 sources="$tree/etc/apt/sources.list.d"
 mkdir -p "$sources"
 cat > "$sources/vabaxos-debian.sources" <<SOURCES
-# Debian for VabaxOS (ADR-0017, ADR-0020): testing "$VABAXOS_DISTRIBUTION" at a date
-# checked by VabaxOS. A new date comes with an update of vabaxos-apt, after
-# the automatic tests of VabaxOS passed with it. Its Release files are past
-# their Valid-Until date: APT accepts them (apt.conf.d/50vabaxos-sources).
+# Debian for VabaxOS (ADR-0020, ADR-0027): Debian 13 "$VABAXOS_DISTRIBUTION" stable,
+# with its updates and security archives, at a date checked by VabaxOS. A
+# new date comes with an update of vabaxos-apt, after the automatic tests
+# of VabaxOS passed with it. Its Release files are past their Valid-Until
+# date: APT accepts them (apt.conf.d/50vabaxos-sources).
 Types: deb
 URIs: https://snapshot.debian.org/archive/debian/$VABAXOS_SNAPSHOT/
-Suites: $VABAXOS_DISTRIBUTION
+Suites: $VABAXOS_DISTRIBUTION $VABAXOS_DISTRIBUTION-updates
+Components: main non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
+
+Types: deb
+URIs: https://snapshot.debian.org/archive/debian-security/$VABAXOS_SNAPSHOT/
+Suites: $VABAXOS_DISTRIBUTION-security
 Components: main non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
 SOURCES

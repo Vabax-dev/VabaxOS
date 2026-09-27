@@ -48,7 +48,7 @@ def notify(text, urgent=False):
 
 def installed_snapshot(path=DEBIAN_SOURCES):
     """The Debian date this system uses, or None while it follows Debian
-    testing directly (without vabaxos-apt)."""
+    directly (without vabaxos-apt)."""
     try:
         with open(path, encoding="utf-8") as f:
             match = SNAPSHOT.search(f.read())
@@ -148,7 +148,7 @@ def main(argv, updater=None):
     text = _("{count} updates, {security} for security; {apps} applications.").format(
         count=len(packages), security=len(security), apps=apps)
     if not snapshot:
-        text += " " + _("Note: in this test version updates come straight from Debian testing, "
+        text += " " + _("Note: in this test version updates come straight from Debian, "
                         "not yet checked by VabaxOS.")
     if mode == "check":
         notify(text + " " + _("To install: vabaxos-update --now, or --at-restart."))

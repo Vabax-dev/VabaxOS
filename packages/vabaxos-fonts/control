@@ -1,0 +1,11 @@
+Package: vabaxos-fonts
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: fonts
+Priority: optional
+Description: Atkinson Hyperlegible Next, the font of VabaxOS
+ A font designed by the Braille Institute for readers with low vision,
+ used by the whole desktop and the boot menu of VabaxOS. Debian 13 has
+ only the first Atkinson Hyperlegible; this is the newer family, taken
+ from its upstream repository at the commit of Debian's package in
+ testing (ADR-0027).

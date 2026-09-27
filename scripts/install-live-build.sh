@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Installs live-build from its Git repository at a fixed commit (ADR-0017).
+# Installs live-build from its Git repository at a fixed commit.
 #   sudo bash scripts/install-live-build.sh
 #
-# Why not the Debian package: live-build 1:20250814, the newest in Debian
-# (also in forky), cannot build a forky image with the installer. It still
-# requires libfuse2, which forky no longer has. The Git version fixes this
-# ("Installer: stop requiring fuse2", 2026-01-02) and brings installer fixes
-# we need: offline installation with speech and Braille in the installed
-# system, locale from d-i, kernel filter for the installer.
+# Why not the Debian package: the Git version brings installer fixes that
+# VabaxOS needs and that live-build 1:20250505 of trixie does not have:
+# offline installation with speech and Braille in the installed system,
+# locale from d-i, kernel filter for the installer. (It was first needed
+# for Debian testing, ADR-0017, whose live-build could not build the
+# installer; VabaxOS is built on trixie again, ADR-0027.)
 #
 # The commit is fixed: a Git commit hash also checks the contents, so the
 # same files are installed on every machine. The package is built here,
