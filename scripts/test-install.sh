@@ -224,8 +224,9 @@ ask packages 'dpkg-query -W -f "\${Package} " vabaxos-accessibility vabaxos-bran
 ask live 'dpkg-query -W -f "\${db:Status-Abbrev}\${Package} " live-boot live-config 2>/dev/null | grep -c "^ii" || true'
 ask speech 'systemctl is-active espeakup'
 ask gdm 'systemctl is-active gdm'
-# GDM 49 and later run the login screen as a dynamic user, gdm-greeter.
-ask greeteraudio 'id -nG gdm-greeter 2>/dev/null | grep -qw audio && echo yes || echo no'
+# The login screen's user: Debian-gdm in GDM 48 (Debian 13, ADR-0027),
+# the dynamic gdm-greeter from GDM 49.
+ask greeteraudio 'for u in Debian-gdm gdm-greeter; do id -nG $u 2>/dev/null | grep -qw audio && { echo yes; exit; }; done; echo no'
 ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select'
 ask user 'id -un'
 # The installer saved the choices for the welcome, which applied them.
