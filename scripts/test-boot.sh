@@ -383,17 +383,16 @@ orca_speaks() {
     send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
 }
 # Orca's state, when it has to be heard and is not, or after it restarts:
-# whether it runs, how often systemd restarted it (its watchdog, 30
-# seconds in VabaxOS, kills Orca when its main loop waits longer, for
-# example on speech-dispatcher), the watchdog kills and the speech
-# processes. Details to the serial log (ORCA-DIAG), a summary as INFO.
+# whether it runs and for how long (Orca 48 has no systemd unit: GNOME
+# starts it, ADR-0027), its messages and the speech processes. Details to
+# the serial log (ORCA-DIAG), a summary as INFO.
 orca_state() {
-    send 'journalctl --user -b --no-pager -o short-monotonic -u orca | grep -E "Start|watchdog|Killing|Failed" | tail -12 | sed "s/^/ORCA-DIAG: /"; pgrep -u user -a -f "speech-dispatch|sd_[a-z]" | sed "s/^/ORCA-DIAG: /"'
-    ask orcastate 'echo $(systemctl --user show orca -p ActiveState -p SubState -p NRestarts --value) watchdog=$(journalctl --user -b --no-pager -o cat -u orca | grep -c "result .watchdog.")' || exit 1
+    send 'journalctl --user -b --no-pager -o short-monotonic _COMM=orca | tail -12 | sed "s/^/ORCA-DIAG: /"; pgrep -u user -a -f "speech-dispatch|sd_[a-z]" | sed "s/^/ORCA-DIAG: /"'
+    ask orcastate 'p=$(pgrep -u user -x orca | head -1); echo processes=$(pgrep -u user -x orca | wc -l) seconds=$(ps -o etimes= -p "${p:-1}" | tr -d " ")' || exit 1
     printf 'INFO: Orca %s: %s\n' "$1" "$(value orcastate)"
     # Who is silent: speech-dispatcher said directly (without Orca), and
     # the sound server's outputs and streams.
-    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat -u orca | tail -15 | sed "s/^/ORCA-DIAG: /"; grep -a -E "Incoming text|Queueing|Audio|rror|[Ss]top|[Pp]ause|END|BEGIN|Terminating|started" /run/user/1000/speech-dispatcher/log/debug/speech-dispatcher.log | tail -n 60 | cut -c1-200 | sed "s/^/SPEECHD-DIAG: /"; tail -n 30 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log | cut -c1-200 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
+    send 'wpctl status 2>&1 | sed -n "/Audio/,/Video/p" | sed "s/^/ORCA-DIAG: /"; journalctl --user -b --no-pager -o cat _COMM=orca | tail -15 | sed "s/^/ORCA-DIAG: /"; grep -a -E "Incoming text|Queueing|Audio|rror|[Ss]top|[Pp]ause|END|BEGIN|Terminating|started" /run/user/1000/speech-dispatcher/log/debug/speech-dispatcher.log | tail -n 60 | cut -c1-200 | sed "s/^/SPEECHD-DIAG: /"; tail -n 30 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log | cut -c1-200 2>&1 | sed "s/^/SPEECHD-DIAG: /"; spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
     printf 'INFO: speech-dispatcher da solo %s: %s\n' "$1" "$(record "spd-$2" 5)"
     # Below speech-dispatcher (CI of block 15, 2026-09-26: even spd-say was
     # silent, until a suspend and resume): a sound played straight on
@@ -480,7 +479,7 @@ if [[ "$SOAK" -gt 0 && "$WANT_ORCA" == yes ]]; then
     DESKTOP_ENV="$BUS WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 XDG_CURRENT_DESKTOP=GNOME"
     if [[ "$SPEECH_MODULES" == espeak ]]; then
         # An AddModule line turns off the loading of every module found.
-        ask onlyespeak "echo 'AddModule \"espeak-ng\" \"sd_espeak-ng\" \"espeak-ng.conf\"' | sudo -n tee /etc/speech-dispatcher/clients/zzzz-test-espeak-only.conf >/dev/null; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; for t in 1 2; do for i in \$(seq 180); do [ \"\$(systemctl --user is-active orca)\" = active ] && break; sleep 1; done; sleep 15; done; echo \$(pgrep -u user '^sd_' -l | awk '{print \$2}' | sort | paste -sd,)" || exit 1
+        ask onlyespeak "echo 'AddModule \"espeak-ng\" \"sd_espeak-ng\" \"espeak-ng.conf\"' | sudo -n tee /etc/speech-dispatcher/clients/zzzz-test-espeak-only.conf >/dev/null; pkill -u user -x speech-dispatch; env $DESKTOP_ENV setsid /usr/libexec/vabaxos/orca-start --replace >/dev/null 2>&1 < /dev/null & sleep 2; for t in 1 2; do for i in \$(seq 180); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; done; echo \$(pgrep -u user '^sd_' -l | awk '{print \$2}' | sort | paste -sd,)" || exit 1
         printf 'INFO: moduli di speech-dispatcher: %s\n' "$(value onlyespeak)"
         ask spddebug2 "$SPD_DEBUG" || exit 1
     fi
@@ -742,29 +741,34 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     speech_probe 'dopo i tasti di Windows e Alt+F4' keys
 fi
 
-# Screen reader settings (block 9): every control of the window has a name,
-# and a change reaches the running Orca at once through its D-Bus service
-# (the speed read back from Orca itself).
+# Screen reader settings (block 9): every control of the window has a name;
+# a change is saved in Orca 48's settings file and Orca starts again to use
+# it (ADR-0027: Orca 48 has no service to change it while it runs).
 if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y screenreader vabaxos-screen-reader vabaxos-screen-reader
 fi
 if [[ "$WANT_ORCA" == yes ]]; then
-    ask orcaset "env $BUS vabaxos-screen-reader --set voices/default rate 63" || exit 1
-    check 'impostazione di Orca applicata subito' "$(value orcaset)" 'saved, applied at once'
+    ask orcaset "env $DESKTOP_ENV vabaxos-screen-reader --set voices/default rate 63" || exit 1
+    check 'impostazione di Orca salvata' "$(value orcaset)" 'saved, applied when Orca starts again'
     ask orcarate "env $BUS vabaxos-screen-reader --status | sed -n 's/^rate: //p'" || exit 1
-    check 'velocità letta da Orca (D-Bus)' "$(value orcarate)" 63
-    ask orcadconf "env $BUS gsettings get org.gnome.Orca.Voice:/org/gnome/orca/default/voices/default/ rate" || exit 1
-    check 'velocità salvata nelle impostazioni' "$(value orcadconf)" 63
+    check 'velocità nelle impostazioni di Orca' "$(value orcarate)" 63
+    ask orcafile "python3 -c 'import json, os; print(json.load(open(os.path.expanduser(\"~/.local/share/orca/user-settings.conf\")))[\"profiles\"][\"default\"][\"voices\"][\"default\"][\"rate\"])'" || exit 1
+    check 'velocità salvata come la legge Orca 48' "$(value orcafile)" 63
+    ask orcarestart 'sleep 10; p=$(pgrep -u user -x orca | head -1); [ -n "$p" ] && [ "$(ps -o etimes= -p "$p" | tr -d " ")" -lt 60 ] && echo yes || echo no' || exit 1
+    check 'Orca ripartito con la nuova impostazione' "$(value orcarestart)" yes
     speech_probe 'dopo le impostazioni del lettore di schermo' screenreader
 fi
 
 # Orca's keys (block 10): the NVDA scheme is the default, with Insert as
-# the screen reader key (not Caps Lock: Orca 50 does not hold it back under
-# Wayland), and Orca answers to it: Insert+F12 says the time (recorded).
-if [[ "$WANT_DESKTOP" == yes ]]; then
-    ask orcakeys "env $BUS gsettings get org.gnome.Orca.Keybindings:/org/gnome/orca/default/keybindings/ entries | grep -o \"'sayAllHandler': \[\['Down', '461', '256', '1'\]\]\" | wc -l" || exit 1
-    check 'tasti di Orca come NVDA (Ins+Freccia giù legge tutto)' "$(value orcakeys)" 1
-    ask orcamod "env $BUS gsettings get org.gnome.Orca.Keybindings:/org/gnome/orca/default/keybindings/ desktop-modifier-keys" || exit 1
+# the screen reader key (not Caps Lock, which Orca did not hold back under
+# Wayland), copied into Orca 48's settings by orca-start, and Orca answers
+# to it: Insert+F12 says the time (recorded).
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    # A value of the default profile, by its keys: ORCA_VALUE keybindings sayAllHandler.
+    ORCA_VALUE="python3 -c 'import json, os, sys; from functools import reduce; p = json.load(open(os.path.expanduser(\"~/.local/share/orca/user-settings.conf\")))[\"profiles\"][\"default\"]; print(reduce(lambda v, k: v.get(k) if isinstance(v, dict) else None, sys.argv[1:], p))'"
+    ask orcakeys "$ORCA_VALUE keybindings sayAllHandler" || exit 1
+    check 'tasti di Orca come NVDA (Ins+Freccia giù legge tutto)' "$(value orcakeys)" "[['Down', '461', '256', '1']]"
+    ask orcamod "$ORCA_VALUE orcaModifierKeys" || exit 1
     check 'tasto del lettore di schermo (Ins, come in NVDA)' "$(value orcamod)" "['Insert', 'KP_Insert']"
 fi
 if [[ "$WANT_ORCA" == yes ]]; then
@@ -773,7 +777,7 @@ if [[ "$WANT_ORCA" == yes ]]; then
     HEARD="$(record orca-f12 5)"
     check 'Ins+F12: Orca dice l'"'"'ora' "$HEARD" "$WANT_SOUND"
     [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo Ins+F12' f12
-    # Orca runs without DISPLAY (orca.service.d/50-vabaxos-wayland.conf):
+    # Orca runs without DISPLAY (/usr/libexec/vabaxos/orca-start):
     # no xkbcomp through Xwayland, which froze GNOME Shell at startup.
     ask orcadisplay 'tr "\\0" "\\n" < /proc/$(pgrep -u user -x orca)/environ | grep -c "^DISPLAY="' || exit 1
     check 'Orca senza DISPLAY (niente xkbcomp)' "$(value orcadisplay)" 0
@@ -952,11 +956,12 @@ fi
 # voice here stops speech-dispatcher by force, which no user does, and it
 # must not change what the checks before it hear (Vabax, 2026-09-26).
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
-    ask forcekokoro "env $BUS gsettings set org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer kokoro; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
+    # As a user does it: the voice chosen in the settings; Orca starts again.
+    ask forcekokoro "env $DESKTOP_ENV vabaxos-screen-reader --set speech synthesizer kokoro" || exit 1
     # Orca active and still active 20 seconds later: with Kokoro loading,
     # speech-dispatcher answers late, and Orca may give up and start again
     # by itself ("something has hung", CI 2026-09-26).
-    ask orcaback 'for t in 1 2; do for i in $(seq 180); do [ "$(systemctl --user is-active orca)" = active ] && break; sleep 1; done; sleep 20; done; [ "$(systemctl --user is-active orca)" = active ] && echo yes || echo no' || exit 1
+    ask orcaback 'for t in 1 2; do for i in $(seq 180); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 20; done; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
     # The module loads the model in the background when Orca uses Kokoro
     # (about 570 MB): wait for it, up to 2 minutes on slow machines
     # such as the CI runners, then Orca must speak with it.
@@ -965,10 +970,8 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
     # Back to the default voice (ADR-0024) for the rest of the test: the
     # checks after this one test what a user has at first.
-    ask backespeak "env $BUS gsettings reset org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; for i in \$(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; echo fatto" || exit 1
-    # The switch above stops speech-dispatcher by force, which no user does:
-    # what Orca does after it is information (the silence of the CI on
-    # 2026-09-26 always came after it).
+    ask backespeak "env $DESKTOP_ENV vabaxos-screen-reader --set speech synthesizer ''; sleep 5; for i in \$(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; echo fatto" || exit 1
+    # What Orca does after two restarts in a row is information.
     HEARD="$(orca_speaks orca-ritorno-espeak)"
     soft_check 'Orca udibile dopo il ritorno a eSpeak NG' "$HEARD" "$WANT_SOUND"
     [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo il ritorno a eSpeak NG' ritorno
