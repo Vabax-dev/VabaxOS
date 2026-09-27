@@ -381,6 +381,12 @@ check 'nome e logo VabaxOS' "$(value logo)" vabaxos-logo
 # GNOME Shell 50 have no name) instead of the Start menu alone.
 NOTIFY="env DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications"
 orca_speaks() {
+    # GNOME Shell shows one banner at a time, and keeps a banner shown
+    # while the user is idle until a key is pressed: in a long wait without
+    # keys (the Kokoro step) the test's notification queued behind another
+    # one and Orca had nothing to read (CI, 2026-09-27). Shift, as a person
+    # at the keyboard, lets a banner that waits go away.
+    press shift; sleep 3; press shift; sleep 2
     # gdbus prints "(uint32 ID,)".
     send "n=\$($NOTIFY.Notify VabaxOS 0 '' 'Test $1' 'VabaxOS test' '[]' '{}' 5000 | awk '{print \$2+0}')"
     record "$1" 8
