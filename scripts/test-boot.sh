@@ -410,16 +410,19 @@ speech_probe() {
     send 'spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
     printf 'INFO: voce udibile %s (%s): %s\n' "$1" "$(value "probetime$2")" "$(record "probe-$2" 4)"
 }
-# Where each thread of GNOME Shell waits, with function names: gdb from
-# the network, symbols from debuginfod.debian.net (asked before gdb loads
-# anything: "-ex" came too late and gdb answered its own question "no"),
-# and the JavaScript stack of GNOME Shell. For a frozen GNOME Shell: on
+# gdb and the debug symbols of the programs that freeze, from the Debian
+# debug archive at the date of the ISO: debuginfod fetched symbols for
+# every library of GNOME Shell and ran out of time (2026-09-27).
+DEBUG_SNAPSHOT="$(sed -n 's/^VABAXOS_SNAPSHOT=//p' "$REPO/image/build.conf")"
+GDB_SETUP="test -x /usr/bin/gdb || { echo 'deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg check-valid-until=no] https://snapshot.debian.org/archive/debian-debug/$DEBUG_SNAPSHOT forky-debug main' > /tmp/debug.list; sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; sudo apt-get -o Dir::Etc::SourceList=/tmp/debug.list -o Dir::Etc::SourceParts=/nonexistent update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get -o Dir::Etc::SourceList=/tmp/debug.list -o Dir::Etc::SourceParts=/nonexistent install -y -qq --no-install-recommends libglib2.0-0t64-dbgsym libgjs0-dbgsym dconf-gsettings-backend-dbgsym gnome-shell-dbgsym libmutter-18-0-dbgsym speech-dispatcher-dbgsym speech-dispatcher-espeak-ng-dbgsym >/dev/null 2>&1; }"
+# Where each thread of GNOME Shell waits, with function names (gdb and
+# symbols from GDB_SETUP), and the JavaScript stack of GNOME Shell. For a frozen GNOME Shell: on
 # 2026-09-26 its main thread, collecting garbage, waited for a lock of the
 # dconf worker thread, which waited for GJS (a deadlock, cause of the
 # freeze at startup; scripts/lib/gdb-gsettings.py says which settings).
 shell_threads() {
     send "echo $(base64 -w0 "$REPO/scripts/lib/gdb-gsettings.py") | base64 -d > /tmp/gdb-gsettings.py"
-    send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 900 gdb -iex "set debuginfod enabled on" -iex "set confirm off" -p "$(pgrep -u user -x gnome-shell)" -batch -ex "set pagination off" -ex "thread apply all bt 40" -ex "call (void)gjs_dumpstack()" -x /tmp/gdb-gsettings.py 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/GDB: /"; journalctl --user -b --no-pager -o cat _COMM=gnome-shell | tail -40 | sed "s/^/GJS: /"; echo GDB""END'
+    send "$GDB_SETUP"'; sudo timeout 900 gdb -iex "set debuginfod enabled off" -iex "set confirm off" -p "$(pgrep -u user -x gnome-shell)" -batch -ex "set pagination off" -ex "thread apply all bt 40" -ex "call (void)gjs_dumpstack()" -x /tmp/gdb-gsettings.py 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/GDB: /"; journalctl --user -b --no-pager -o cat _COMM=gnome-shell | tail -40 | sed "s/^/GJS: /"; echo GDB""END'
     TIMEOUT=1200 wait_for '^GDBEND' 'gdb' || exit 1
 }
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
@@ -466,7 +469,7 @@ fi
 speech_deep_diag() {
     send 'pactl list sink-inputs | grep -E "Sink Input|Corked|application.name|media.name|node.name" | sed "s/^/SINKINPUT: /"; L=/run/user/1000/speech-dispatcher/log/debug/speech-dispatcher.log; T=$(tail -n 1 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log | grep -o "[0-9][0-9]:[0-9][0-9]:[0-9][0-9]"); [ -n "$T" ] && awk -v t="$T" "BEGIN { split(t, a, \":\"); s = a[1] * 3600 + a[2] * 60 + a[3] } { split(\$4, b, \":\"); x = b[1] * 3600 + b[2] * 60 + b[3]; if (x >= s - 2 && x <= s + 1) print }" $L | cut -c1-200 | tail -n 1500 | sed "s/^/SPEECHD-WINDOW: /"; tail -n 40 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log 2>/dev/null | cut -c1-200 | sed "s/^/ESPEAK-LOG: /"; echo DEEP""END'
     wait_for '^DEEPEND' 'diagnosi della voce' || exit 1
-    send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; for p in $(pgrep -u user -x speech-dispatch) $(pgrep -u user -x sd_espeak-ng); do sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 600 gdb -iex "set debuginfod enabled on" -iex "set confirm off" -p "$p" -batch -ex "set pagination off" -ex "thread apply all bt 30" -ex "p *speaking_module" -ex "p output_stop_requested" -ex "p output_pause_requested" -ex "p output_end_queued" -ex "p SPEAKING" -ex "p speaking_uid" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/SPEECHD-GDB $p: /"; done; echo SPDGDB""END'
+    send "$GDB_SETUP"'; for p in $(pgrep -u user -x speech-dispatch) $(pgrep -u user -x sd_espeak-ng); do sudo timeout 600 gdb -iex "set debuginfod enabled off" -iex "set confirm off" -p "$p" -batch -ex "set pagination off" -ex "thread apply all bt 30" -ex "p *speaking_module" -ex "p output_stop_requested" -ex "p output_pause_requested" -ex "p output_end_queued" -ex "p SPEAKING" -ex "p speaking_uid" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/SPEECHD-GDB $p: /"; done; echo SPDGDB""END'
     TIMEOUT=1500 wait_for '^SPDGDBEND' 'gdb della voce' || exit 1
 }
 if [[ "$SOAK" -gt 0 && "$WANT_ORCA" == yes ]]; then
