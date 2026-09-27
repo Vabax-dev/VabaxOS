@@ -416,9 +416,10 @@ speech_probe() {
 # and the JavaScript stack of GNOME Shell. For a frozen GNOME Shell: on
 # 2026-09-26 its main thread, collecting garbage, waited for a lock of the
 # dconf worker thread, which waited for GJS (a deadlock, cause of the
-# freeze at startup).
+# freeze at startup; scripts/lib/gdb-gsettings.py says which settings).
 shell_threads() {
-    send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 900 gdb -iex "set debuginfod enabled on" -iex "set confirm off" -p "$(pgrep -u user -x gnome-shell)" -batch -ex "set pagination off" -ex "thread apply all bt 40" -ex "call (void)gjs_dumpstack()" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/GDB: /"; journalctl --user -b --no-pager -o cat _COMM=gnome-shell | tail -40 | sed "s/^/GJS: /"; echo GDB""END'
+    send "echo $(base64 -w0 "$REPO/scripts/lib/gdb-gsettings.py") | base64 -d > /tmp/gdb-gsettings.py"
+    send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 900 gdb -iex "set debuginfod enabled on" -iex "set confirm off" -p "$(pgrep -u user -x gnome-shell)" -batch -ex "set pagination off" -ex "thread apply all bt 40" -ex "call (void)gjs_dumpstack()" -x /tmp/gdb-gsettings.py 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/GDB: /"; journalctl --user -b --no-pager -o cat _COMM=gnome-shell | tail -40 | sed "s/^/GJS: /"; echo GDB""END'
     TIMEOUT=1200 wait_for '^GDBEND' 'gdb' || exit 1
 }
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then

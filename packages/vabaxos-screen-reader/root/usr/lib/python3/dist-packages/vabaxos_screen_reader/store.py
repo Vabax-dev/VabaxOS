@@ -194,6 +194,10 @@ def apply_vabaxos_defaults(directory=DEFAULTS_DIR, state_path=None):
             if schema_id is None or not schema_installed(schema_id):
                 continue
             settings = Gio.Settings.new_with_path(schema_id, "/" + "/".join(parts) + "/")
+            # One dconf write per group, not one per key: each write is a
+            # change every GNOME Shell settings object hears, while GNOME
+            # Shell starts (see scripts/lib/gdb-gsettings.py).
+            settings.delay()
             for key in keyfile.get_keys(group_path)[0]:
                 text = keyfile.get_value(group_path, key)
                 path = "/" + "/".join(parts) + "/" + key
@@ -218,6 +222,7 @@ def apply_vabaxos_defaults(directory=DEFAULTS_DIR, state_path=None):
                         continue
                 settings.set_value(key, value)
                 written += 1
+            settings.apply()
     Gio.Settings.sync()
     if given != before:
         try:
