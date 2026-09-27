@@ -51,7 +51,7 @@ Non installare mai VabaxOS sulla postazione (il Galaxy Book). Non chiedere mai p
 
 ## Stato
 
-Aggiornato al 2026-09-27 (mattina).
+Aggiornato al 2026-09-27 (pomeriggio).
 
 - Fatto: repository pubblico `Vabax-dev/VabaxOS`, ADR-0001–0017, guida e script della postazione Windows, CI (REUSE, ShellCheck, pacchetti Debian, PowerShell, `lb config`, pacchetti VabaxOS e test del benvenuto). La postazione è pronta: `verifica-postazione.sh` passa, KVM e audio WSLg funzionano, `sudo` senza password per `/usr/bin/lb`, live-build da Git (commit fisso 531cdb98, 2026-09-13) installato con `scripts/install-live-build.sh`: la versione di Debian 1:20250814 non costruisce l'installer su forky (chiede `libfuse2`).
 - Fatto e unito a `main`: lavoro 2 (ISO con live-build, `build.sh`, `run-qemu.sh`, `test-boot.sh`), lavoro 4 (menu GRUB con due bip, lettere V, N, R, L, T, attesa di 10 secondi). Letti tutti i documenti DOC-01–32.
@@ -131,7 +131,8 @@ Aggiornato al 2026-09-27 (mattina).
   - i manici delle barre di scorrimento nascoste di Dash to Panel (32x0 e 0x32) risultavano pulsanti senza nome: `vabaxos-a11y-check` salta i comandi senza area;
   - font di GRUB con i caratteri fuori ordine (GRUB li cerca con la ricerca binaria): rifatti.
   - Lezioni: nella VM senza KVM DING viene ucciso e riavviato ogni 3 secondi (la sua finestra non compare in tempo), non succede con KVM; la ISO della CI si scarica dall'artefatto (curl e unzip) in `out/`.
-- Prossimo: ISO del ramo `feat/trixie-base` nella CI (avviata), prove con la voce, poi ascolto di Vabax; poi decidere come unire (gruppo 13-15 e base trixie) (difetti intermittenti sopra); #18 verde e unita; PR dei blocchi 13, 14, 15 su `main`; Vabax crea le chiavi e attiva Pages (docs/sviluppo/chiavi.md); ISO da `main` per VMware sul mini PC; ascolto; pre-release `v0.1.0-alpha.1`.
+- **ISO trixie verde (run 141, commit 118c38a, 2026-09-27 pomeriggio): tutte le prove passano**: avvio con e senza voce, recupero, Secure Boot, installer (anche dal benvenuto), Kokoro e ritorno a eSpeak NG, installazione (live tolta, nessun file messo da parte), **aggiornamento alla versione successiva con riavvio e voce**. Resta solo l'avviso informativo di Super+T. Correzioni dopo la run 140: diversione di Orca in `postinst` (in `preinst` lasciava `orca-autostart.desktop.dpkg-new` nella ISO), `live.list.chroot` vuoto e `live.list.chroot_live` (live-build da Git installava live-boot nel primo passo), la prova di Orca preme Maiusc prima della notifica (GNOME 48 tiene un fumetto finché l'utente è inattivo, e le notifiche dopo aspettano).
+- Prossimo: ascolto di Vabax sulla ISO della run 141 (artefatto `vabaxos-iso-118c38a…`); poi decidere come unire il gruppo 13-15 e la base trixie su `main` (pull request solo quando Vabax lo chiede); Vabax crea le chiavi e attiva Pages (docs/sviluppo/chiavi.md) prima della ISO della 0.1; prova in VMware sul mini PC; pre-release `v0.1.0-alpha.1`.
 
 Piano dei blocchi 9-12, deciso con Vabax il 2026-09-25 (lavoro autonomo come nella notte del 24; niente merge su `main` prima del suo ascolto). Richiesta di Vabax: «voglio le impostazioni di Orca più personalizzabili, le scorciatoie di Orca, più praticità quando si naviga in generale; il Tab deve funzionare meglio».
 
