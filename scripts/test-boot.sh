@@ -334,7 +334,11 @@ fi
 # probe is silent, what speech-dispatcher and its modules did.
 SPEECHD_DEBUG=/run/user/1000/speech-dispatcher/log/debug
 SPEECHD_LOG=$SPEECHD_DEBUG/speech-dispatcher.log
-SPD_DEBUG="python3 -c 'import speechd; c = speechd.SSIPClient(\"vabaxos-test\"); c.set_debug(True); c.close()' >/dev/null 2>&1; test -s $SPEECHD_LOG && echo on || echo off"
+# speech-dispatcher 0.12.0 applies DEBUG to every client connection and
+# answers 317 when one already has it, after turning it on: the client
+# raised, never closed its thread and never exited (CI, 2026-09-27). The
+# log file says whether it is on.
+SPD_DEBUG="timeout 30 python3 -c 'import speechd; c = speechd.SSIPClient(\"vabaxos-test\"); exec(\"try: c.set_debug(True)\\nexcept speechd.SSIPCommandError: pass\"); c.close()' >/dev/null 2>&1; test -s $SPEECHD_LOG && echo on || echo off"
 if [[ "$WANT_ORCA" == yes ]]; then
     ask spddebug "$SPD_DEBUG" || exit 1
     printf 'INFO: registro dettagliato di speech-dispatcher: %s\n' "$(value spddebug)"

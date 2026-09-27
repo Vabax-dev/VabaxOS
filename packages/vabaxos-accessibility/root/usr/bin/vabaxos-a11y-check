@@ -81,6 +81,21 @@ def decoration(node):
     return True
 
 
+def no_area(node):
+    """A control placed on the screen with no width or no height: nobody sees
+    it, the keyboard does not stop there and Orca's flat review skips it.
+    GNOME Shell 48 keeps the handles of hidden scroll bars like that (Dash
+    to Panel's taskbar: 32x0 and 0x32, CI 2026-09-27). A control not laid
+    out at all (0,0 0x0) is still reported."""
+    try:
+        box = node.get_extents(Atspi.CoordType.SCREEN)
+    except gi.repository.GLib.Error:
+        return False
+    if (box.x, box.y, box.width, box.height) == (0, 0, 0, 0):
+        return False
+    return box.width == 0 or box.height == 0
+
+
 def describe(node):
     """Role and states of a node, and the names around it, to find it."""
     parent = node.get_parent()
@@ -112,7 +127,8 @@ def walk(node, depth, report, listing):
     showing = states.contains(Atspi.StateType.SHOWING) and states.contains(Atspi.StateType.FOCUSABLE)
     if listing:
         print(f"{'  ' * depth}{node.get_role_name()}: {name}")
-    if role in CONTROLS and showing and not name and not labelled_by_text(node) and not decoration(node):
+    if (role in CONTROLS and showing and not name and not labelled_by_text(node) and not decoration(node)
+            and not no_area(node)):
         report.append(f"{node.get_role_name()} without a name (depth {depth}), {describe(node)}")
     for index in range(node.get_child_count()):
         child = node.get_child_at_index(index)
