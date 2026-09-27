@@ -14,6 +14,7 @@ here. "Windows programs" installs Bottles from Flathub on request.
 
 import gettext
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -72,6 +73,14 @@ def package_of(app):
     if result.returncode == 0 and ":" in result.stdout:
         return ("deb", result.stdout.split(":", 1)[0].split(",")[0].strip())
     return None
+
+
+def package_remove_command(package):
+    """PackageKit's command to remove a Debian package: pkcon in PackageKit
+    1.3 (Debian 13, ADR-0027), pkgcli from PackageKit 1.3.4."""
+    if shutil.which("pkgcli"):
+        return ["pkgcli", "--yes", "remove", package]
+    return ["pkcon", "--noninteractive", "remove", package]
 
 
 def also_removed(package, simulate=None):
@@ -194,7 +203,7 @@ class AppsWindow(Adw.ApplicationWindow):
         self.say(_("Removing {name}.").format(name=name))
         kind, ident = package
         command = (["flatpak", "uninstall", "-y", "--noninteractive", ident] if kind == "flatpak"
-                   else ["pkgcli", "--yes", "remove", ident])
+                   else package_remove_command(ident))
         threading.Thread(target=self.run, args=(command, name, row, package), daemon=True).start()
 
     def run(self, command, name, row, package=None):

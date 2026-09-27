@@ -74,6 +74,14 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Build the packages
         run: ./scripts/build-packages.sh /tmp/packages
+      # Every VabaxOS package and every package of the ISO's lists can be
+      # installed together, with the versions of Debian 13 (a dependency on
+      # a newer version stopped the ISO build, 2026-09-27).
+      - name: Packages installable together
+        run: |
+          apt-get install --simulate -q -y /tmp/packages/*.deb \
+            $(grep -hEv '^[[:space:]]*(#|$)' image/config/package-lists/*.list.chroot) > /tmp/simulate.log \
+            || { grep -E '^E:|Depends' /tmp/simulate.log; exit 1; }
       - name: APT archive (throwaway key, apt reads it and refuses another key)
         run: bash tests/archive/test-archive.sh
       - name: vabaxos-desktop depends on every VabaxOS package
