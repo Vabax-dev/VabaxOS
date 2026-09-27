@@ -12,6 +12,19 @@
 # VABAXOS_ARCHIVE_KEY (ASCII armour, without passphrase: in the CI a GitHub
 # secret), whose public key must be keys/vabaxos-archive.asc. --unsigned
 # builds it without signature, only for tests (apt refuses it otherwise).
+# For tests (scripts/test-upgrade.sh): VABAXOS_ARCHIVE_PUBLIC_KEY is another
+# public key than keys/vabaxos-archive.asc, and VABAXOS_ARCHIVE_DEBS a
+# folder of packages already built (scripts/build-packages.sh) instead of
+# building them here.
+#
+# Components:
+#   main          the VabaxOS packages, installed when the user updates
+#                 VabaxOS (Aggiorna VabaxOS);
+#   debian-fixes  the Debian packages rebuilt with VabaxOS's fixes
+#                 (ADR-0026) at their newest version, security updates
+#                 included, from the folder in VABAXOS_DEBIAN_FIXES
+#                 (scripts/build-debian-patched.sh --out). Installed by
+#                 themselves with Debian's security updates (ADR-0028).
 #
 # Layout: OUTPUT_DIR/dists/vabaxos/..., OUTPUT_DIR/pool/..., and the public
 # key as OUTPUT_DIR/vabaxos-archive.asc.
@@ -24,6 +37,7 @@ if [[ "${1:-}" == --unsigned ]]; then
     shift
 fi
 OUT="${1:?Uso: build-archive.sh [--unsigned] CARTELLA_DI_USCITA}"
+PUBLIC_KEY="${VABAXOS_ARCHIVE_PUBLIC_KEY:-$REPO/keys/vabaxos-archive.asc}"
 
 for tool in reprepro gpg dpkg-deb; do
     command -v "$tool" >/dev/null || { printf 'ERRORE: manca %s.\n' "$tool" >&2; exit 1; }
@@ -31,7 +45,12 @@ done
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-"$REPO/scripts/build-packages.sh" "$TMP/debs" >/dev/null
+if [[ -n "${VABAXOS_ARCHIVE_DEBS:-}" ]]; then
+    mkdir -p "$TMP/debs"
+    cp "$VABAXOS_ARCHIVE_DEBS"/*.deb "$TMP/debs/"
+else
+    "$REPO/scripts/build-packages.sh" "$TMP/debs" >/dev/null
+fi
 
 mkdir -p "$TMP/conf"
 cat > "$TMP/conf/distributions" <<EOF
@@ -40,27 +59,27 @@ Label: VabaxOS
 Suite: vabaxos
 Codename: vabaxos
 Architectures: amd64
-Components: main
-Description: VabaxOS packages (ADR-0020)
+Components: main debian-fixes
+Description: VabaxOS packages (ADR-0020, ADR-0028)
 EOF
 
 if [[ "$SIGNED" == true ]]; then
     [[ -n "${VABAXOS_ARCHIVE_KEY:-}" ]] || { printf 'ERRORE: VABAXOS_ARCHIVE_KEY non è impostata.\n' >&2; exit 1; }
-    [[ -f "$REPO/keys/vabaxos-archive.asc" ]] || { printf 'ERRORE: manca keys/vabaxos-archive.asc.\n' >&2; exit 1; }
+    [[ -f "$PUBLIC_KEY" ]] || { printf 'ERRORE: manca %s.\n' "$PUBLIC_KEY" >&2; exit 1; }
     export GNUPGHOME="$TMP/gnupg"
     mkdir -m 0700 "$GNUPGHOME"
     printf '%s\n' "$VABAXOS_ARCHIVE_KEY" | gpg --batch --quiet --import
     fingerprint="$(gpg --batch --with-colons --list-secret-keys | awk -F: '$1 == "fpr" {print $10; exit}')"
     # The secret key must match the public key that the packages carry,
     # or every installed system would refuse the archive.
-    public="$(gpg --batch --with-colons --show-keys "$REPO/keys/vabaxos-archive.asc" | awk -F: '$1 == "fpr" {print $10}')"
+    public="$(gpg --batch --with-colons --show-keys "$PUBLIC_KEY" | awk -F: '$1 == "fpr" {print $10}')"
     grep -qx "$fingerprint" <<< "$public" \
-        || { printf 'ERRORE: la chiave segreta non corrisponde a keys/vabaxos-archive.asc.\n' >&2; exit 1; }
+        || { printf 'ERRORE: la chiave segreta non corrisponde a %s.\n' "$PUBLIC_KEY" >&2; exit 1; }
     printf 'SignWith: %s\n' "$fingerprint" >> "$TMP/conf/distributions"
     # A key past its date stops the updates of every installed system, and
     # they get a longer date only with an update of vabaxos-apt: warn well
     # before (docs/sviluppo/chiavi.md, "Quando una chiave scade").
-    expires="$(gpg --batch --with-colons --show-keys "$REPO/keys/vabaxos-archive.asc" | awk -F: '$1 == "pub" {print $7; exit}')"
+    expires="$(gpg --batch --with-colons --show-keys "$PUBLIC_KEY" | awk -F: '$1 == "pub" {print $7; exit}')"
     if [[ -n "$expires" ]] && (( expires - $(date +%s) < 180 * 86400 )); then
         printf '::warning::La chiave dell'"'"'archivio scade il %s: allungala (docs/sviluppo/chiavi.md).\n' \
             "$(date -u -d "@$expires" +%Y-%m-%d)"
@@ -75,8 +94,13 @@ for deb in "$TMP"/debs/*.deb; do
         rm "$deb"
     fi
 done
-reprepro --silent --basedir "$TMP" --outdir "$OUT" includedeb vabaxos "$TMP"/debs/*.deb
-if [[ -f "$REPO/keys/vabaxos-archive.asc" ]]; then
-    install -m 0644 "$REPO/keys/vabaxos-archive.asc" "$OUT/vabaxos-archive.asc"
+reprepro --silent --basedir "$TMP" --outdir "$OUT" -C main includedeb vabaxos "$TMP"/debs/*.deb
+if [[ -n "${VABAXOS_DEBIAN_FIXES:-}" ]]; then
+    fixes=("$VABAXOS_DEBIAN_FIXES"/*.deb)
+    [[ -f "${fixes[0]}" ]] || { printf 'ERRORE: nessun pacchetto in %s.\n' "$VABAXOS_DEBIAN_FIXES" >&2; exit 1; }
+    reprepro --silent --basedir "$TMP" --outdir "$OUT" -C debian-fixes includedeb vabaxos "${fixes[@]}"
+fi
+if [[ -f "$PUBLIC_KEY" ]]; then
+    install -m 0644 "$PUBLIC_KEY" "$OUT/vabaxos-archive.asc"
 fi
 printf 'Archivio: %s (%s pacchetti)\n' "$OUT" "$(find "$OUT/pool" -name '*.deb' | wc -l)"

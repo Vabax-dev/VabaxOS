@@ -5,11 +5,21 @@ name: APT archive
 # It runs only when the secret VABAXOS_ARCHIVE_KEY and the public key
 # keys/vabaxos-archive.asc both exist (see docs/sviluppo/chiavi.md), and
 # needs GitHub Pages with the source "GitHub Actions".
+#
+# Every day it also rebuilds the Debian packages with VabaxOS's fixes
+# (ADR-0026) at the newest version that VabaxOS systems get, security
+# updates included, into the component debian-fixes (ADR-0028): after a
+# security update of such a package, the same day the systems get it again
+# with the fixes, by themselves. The rebuilt packages are kept in the cache
+# while Debian's versions and the fixes stay the same.
 
 on:
   push:
     branches: [main]
-    paths: [packages/**, keys/**, image/build.conf, scripts/build-packages.sh, scripts/build-archive.sh, .github/workflows/archive.yml]
+    paths: [packages/**, keys/**, patches/**, image/build.conf, scripts/build-packages.sh, scripts/build-archive.sh,
+            scripts/build-debian-patched.sh, .github/workflows/archive.yml]
+  schedule:
+    - cron: '17 5 * * *'
   workflow_dispatch:
 
 permissions:
@@ -51,10 +61,39 @@ jobs:
       - name: Trust the checkout
         if: steps.check.outputs.ready == 'true'
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      # The Debian sources of a VabaxOS system: the date of image/build.conf
+      # and the security archive of today (vabaxos-apt).
+      - name: Debian as VabaxOS systems see it
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          mkdir -p /tmp/apt-tree/DEBIAN
+          REPO="$PWD" sh packages/vabaxos-apt/build /tmp/apt-tree
+          rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*
+          cp /tmp/apt-tree/etc/apt/sources.list.d/vabaxos-debian.sources /etc/apt/sources.list.d/
+          cp packages/vabaxos-apt/root/etc/apt/apt.conf.d/50vabaxos-sources /etc/apt/apt.conf.d/
+          sed -i '/^Dir::Etc::SourceList/d' /etc/apt/apt.conf.d/50vabaxos-sources
+          apt-get update
+      - name: Versions of the Debian packages with fixes
+        id: fixes
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          sh scripts/build-debian-patched.sh --print-versions | tee /tmp/fixes-versions
+          key="$( { cat /tmp/fixes-versions scripts/build-debian-patched.sh; find patches/debian -type f | sort | xargs cat; } | sha256sum | cut -c1-16)"
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: fixes-cache
+        if: steps.check.outputs.ready == 'true'
+        with:
+          path: cache/debian-fixes
+          key: debian-fixes-${{ steps.fixes.outputs.key }}
+      - name: Rebuild the Debian packages with fixes (ADR-0026, ADR-0028)
+        if: steps.check.outputs.ready == 'true' && steps.fixes-cache.outputs.cache-hit != 'true'
+        run: sh scripts/build-debian-patched.sh --out cache/debian-fixes
       - name: Build the archive
         if: steps.check.outputs.ready == 'true'
         env:
           VABAXOS_ARCHIVE_KEY: ${{ secrets.VABAXOS_ARCHIVE_KEY }}
+          VABAXOS_DEBIAN_FIXES: cache/debian-fixes
         run: |
           ./scripts/build-archive.sh _site/apt
           cat > _site/index.html <<'EOF'
