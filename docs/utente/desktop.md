@@ -4,7 +4,7 @@
 
 Come in Windows:
 
-- **in basso, la barra delle applicazioni**: a sinistra il simbolo di VabaxOS (il [menu Start](menu-start.md)), poi i programmi aperti e quelli fissati; a destra le icone dei programmi in esecuzione, il Wi-Fi, il volume, la batteria e l'orologio. Con Orca: Ctrl+Alt+Tab porta il cursore sulla barra;
+- **in basso, la barra delle applicazioni**: a sinistra il pulsante Start con il simbolo di VabaxOS e la casella Cerca (il [menu Start](menu-start.md)), poi i programmi aperti e quelli fissati; a destra le icone dei programmi in esecuzione, il Wi-Fi, il volume, la batteria e l'orologio. Con Orca: Ctrl+Alt+Tab porta il cursore sulla barra;
 - **ogni finestra** ha i pulsanti Riduci a icona, Ingrandisci e Chiudi;
 - **le finestre si affiancano**: Super+Freccia sinistra o destra le mette a metà schermo, e si possono mettere anche in un quarto;
 - **le icone sul desktop**: Cartella personale e Cestino;
@@ -20,7 +20,7 @@ VabaxOS usa i tasti di Windows 11: l'elenco completo è nella guida [I tasti di 
 - **Ctrl+Maiusc+Esc**: il Monitor di sistema, come Gestione attività di Windows.
 - **Super+V**: la cronologia degli appunti, cioè le ultime cose copiate.
 - **Alt+Tab**: passa da una finestra all'altra.
-- **Super+Alt+I**: dice lo stato del computer: ora e data, batteria, rete Wi-Fi o cavo, Bluetooth, volume. È una notifica, quindi Orca la legge dovunque sia il cursore. Da terminale: `vabaxos-status`, oppure `vabaxos-status battery` per la sola batteria.
+- **Super+Alt+I**: dice lo stato del computer: ora e data, batteria, rete Wi-Fi o cavo, firewall, Bluetooth, volume. È una notifica, quindi Orca la legge dovunque sia il cursore. Da terminale: `vabaxos-status`, oppure `vabaxos-status battery` per la sola batteria.
 - **Super+Alt+S**: accende e spegne Orca.
 - **Super+Alt+8**: accende e spegne lo zoom.
 - **Super+Tab**: la panoramica di GNOME con tutte le finestre.
@@ -56,6 +56,14 @@ Crediti: il cestino e il timbro del tema Campane sono di Mads Rosendahl (tema Ya
 - il pulsante **Disinstalla**, che chiede conferma. I componenti che servono a VabaxOS per parlare e funzionare, come Orca e la voce, lì non si possono disinstallare.
 
 La sezione **Programmi di Windows** installa Bottles, che fa funzionare molti programmi .exe. Si scarica da Flathub, quindi serve Internet.
+
+## Il firewall
+
+Il firewall è **attivo per default**, anche nel sistema live ([ADR-0021](../decisions/0021-firewall-e-cifratura.md)): blocca le connessioni che arrivano da fuori e lascia passare quelle che partono dal computer, come la navigazione e la posta. Super+Alt+I dice «Firewall attivo». Da terminale:
+
+- `sudo ufw status`: lo stato e le regole;
+- `sudo ufw allow 1716`: apre una porta, per un programma che deve ricevere connessioni;
+- `sudo ufw disable` lo spegne, `sudo ufw enable` lo riaccende.
 
 ## Energia, Wi-Fi e Bluetooth
 

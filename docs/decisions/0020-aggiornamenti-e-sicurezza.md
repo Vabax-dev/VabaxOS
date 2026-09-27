@@ -77,6 +77,8 @@ Accettata da Vabax il 2026-09-26: date controllate di snapshot.debian.org provat
 - Sicurezza su testing: PackageKit non riconosce aggiornamenti di sicurezza senza un archivio di sicurezza. Una data spostata per sicurezza si segna in `VABAXOS_SECURITY_SNAPSHOT`; `vabaxos-apt` la porta nel campo `Vabaxos-Security-Snapshot`, e il controllo giornaliero di `vabaxos-update` avvisa quando è più recente della data installata.
 - `snapshot.yml`: ogni lunedì prova la data più recente con tutte le prove della ISO (`iso.yml`), e se passano mette la data nuova sul ramo `snapshot/<data>`, pronto per una pull request.
 - `vabaxctl`: stato, voce, aggiornamenti e rapporto da terminale.
+- `vabaxos-desktop`: pacchetto che dipende da tutti i pacchetti VabaxOS. Una versione successiva aggiunge lì i componenti nuovi (per esempio la dettatura nella v0.2), e l'aggiornamento li installa anche su chi ha installato una versione precedente. `tests/packages/test_desktop.py` controlla che non manchi nessun pacchetto.
+- Da una versione all'altra si passa dentro il sistema, con Aggiorna VabaxOS: niente reinstallazione. Condizione: la chiave dell'archivio deve esistere prima di costruire la ISO della 0.1, altrimenti chi installa la 0.1 non avrebbe l'archivio di VabaxOS fra le sorgenti.
 
 ## Riesame
 

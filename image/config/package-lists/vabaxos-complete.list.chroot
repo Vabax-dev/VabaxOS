@@ -42,3 +42,6 @@ gnome-sound-recorder
 deja-dup
 file-roller
 seahorse
+
+# The firewall, on by default (ADR-0021): hooks/normal/1000-vabaxos-firewall.
+ufw

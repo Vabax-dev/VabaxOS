@@ -52,6 +52,13 @@ def check(application):
     window.filter()
     print("VISIBLE:" + "|".join(r.get_title() for r, _n in window.rows if r.get_visible()), flush=True)
     print("PROTECTED:%s,%s" % (apps.protected(("deb", "orca")), apps.protected(("deb", "gimp"))), flush=True)
+    # What APT would remove with a package (block 15 review): gnome-core
+    # with Text Editor, nothing more with GIMP, unknown if APT fails.
+    sim = {"gnome-text-editor": "Remv gnome-core [1:48]\nRemv gnome-text-editor [48.1-1]\n",
+           "gimp": "NOTE: simulation\nRemv gimp:amd64 [3.0-1]\n"}
+    print("ALSO:%s|%s|%s" % (",".join(apps.also_removed("gnome-text-editor", sim.get)),
+                             ",".join(apps.also_removed("gimp", sim.get)),
+                             apps.also_removed("missing", sim.get)), flush=True)
     application.quit()
 app.connect("activate", check)
 app.run([])
@@ -118,6 +125,9 @@ class AppsTest(unittest.TestCase):
 
     def test_voice_and_desktop_cannot_be_removed(self):
         self.assertEqual(self.out.get("PROTECTED"), "True,False", self.err)
+
+    def test_removal_that_takes_others_is_refused(self):
+        self.assertEqual(self.out.get("ALSO"), "gnome-core||None", self.err)
 
 
 if __name__ == "__main__":

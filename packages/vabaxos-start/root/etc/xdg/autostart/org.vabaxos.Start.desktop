@@ -8,4 +8,3 @@ Icon=vabaxos-logo
 Terminal=false
 NoDisplay=true
 OnlyShowIn=GNOME;
-X-GNOME-Autostart-Phase=Applications

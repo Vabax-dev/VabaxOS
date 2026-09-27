@@ -9,7 +9,7 @@ would not work, because Orca itself takes the keys held with Insert.
 
 import gettext
 
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, Gdk, Gtk
 
 from . import keymaps
 from .orca_commands import COMMANDS
@@ -38,7 +38,12 @@ def key_from_text(text):
         return None
     lower = text.lower()
     if len(text) == 1:
-        return lower
+        if lower.isascii() and lower.isalnum():
+            return lower
+        # Punctuation and accented letters have a keysym name for Orca:
+        # "," is comma, "." period, "ù" ugrave.
+        name = Gdk.keyval_name(Gdk.unicode_to_keyval(ord(text)))
+        return name if name and not name.startswith("0x") else None
     if lower in ITALIAN_NAMES:
         return ITALIAN_NAMES[lower]
     if lower in ENGLISH_NAMES:

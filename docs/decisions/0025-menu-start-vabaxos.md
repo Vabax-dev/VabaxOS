@@ -36,7 +36,8 @@ Proposta originale:
 - Un programma in più, `vabaxos-start`, con i suoi test (`tests/start/test_start.py`) e le prove in `test-boot.sh` (Super apre il menu con il focus nella ricerca, Tab va alle categorie, Freccia destra espande).
 - `vabaxos-keys` prende il tasto Super, come fa ArcMenu.
 - La guida «Il menu Start» cambia.
+- Blocco 15 (con la scelta C): ArcMenu tolto dalla ISO e dalle estensioni; il pulsante Start e la casella di ricerca della barra sono in `vabaxos-keys` (`taskbarStart.js`, prova `tests/start/test_taskbar_start.py` con GNOME Shell senza schermo); `vabaxos-start --search TESTO` apre il menu con la ricerca già scritta; nel menu il clic apre risultati, categorie e voci. Dash to Panel non mostra più il suo pulsante «Mostra applicazioni».
 
 ## Riesame
 
-- Dopo l'ascolto di Vabax: se l'albero, i nomi o la velocità di apertura non convincono, si torna ad ArcMenu per Super cambiando due impostazioni.
+- Dopo l'ascolto di Vabax: se l'albero, i nomi o la velocità di apertura non convincono.

@@ -114,8 +114,11 @@ def sound_server():
     if not live_system():
         return None
     for socket in sorted(glob.glob("/run/user/*/pulse/native")):
-        if stat.S_ISSOCK(os.stat(socket).st_mode):
-            return socket
+        try:
+            if stat.S_ISSOCK(os.stat(socket).st_mode):
+                return socket
+        except OSError:
+            continue  # gone since the glob (a sound server stopping)
     return None
 
 

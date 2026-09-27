@@ -31,7 +31,7 @@ Accettata da Vabax il 2026-09-26: ufw attivo per default già nella 0.1; la cifr
    - la voce: eSpeak NG e i driver audio dentro l'initramfs, per dire «Scrivi la password del disco, poi premi Invio», e poi «Password sbagliata» o «Disco aperto»;
    - il Braille: brltty nell'initramfs, che Debian già supporta, per le barre Braille.
 3. Una prova automatica in QEMU installa con la cifratura, riavvia, registra l'audio alla richiesta della password e controlla che la voce parli. Vabax ascolta prima di rendere la scelta consigliata.
-4. Obiettivo: v0.2.
+4. Obiettivo: v0.3 (Vabax, 2026-09-26: dopo i blocchi 16-20 della v0.2). L'installer chiederà se cifrare il disco e in che modo; fino ad allora la guida all'installazione sconsiglia la cifratura, perché la richiesta della password è muta.
 
 ## Alternative considerate
 

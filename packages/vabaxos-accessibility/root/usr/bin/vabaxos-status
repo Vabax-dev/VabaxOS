@@ -1,7 +1,8 @@
 #!/usr/bin/python3
-"""Says the state of the computer: time, battery, network, Bluetooth, volume.
+"""Says the state of the computer: time, battery, network, firewall,
+Bluetooth, volume.
 
-    vabaxos-status [all|time|battery|network|bluetooth|volume]
+    vabaxos-status [all|time|battery|network|firewall|bluetooth|volume]
 
 Bound to Super+Alt+I in the desktop (vabaxos-settings). The answer is a
 desktop notification, which Orca reads wherever the focus is, and is also
@@ -70,6 +71,18 @@ def network_text():
     return _("No network.")
 
 
+def firewall_text():
+    """ufw, on by default (ADR-0021). Its rules need root; its setting and
+    its service do not."""
+    try:
+        with open("/etc/ufw/ufw.conf", encoding="utf-8") as f:
+            enabled = any(line.strip() == "ENABLED=yes" for line in f)
+    except OSError:
+        return ""
+    active = output("systemctl", "is-active", "ufw").strip() == "active"
+    return _("Firewall on.") if enabled and active else _("Firewall off.")
+
+
 def bluetooth_text():
     show = output("bluetoothctl", "show")
     if not show.strip() or "No default controller" in show:
@@ -94,7 +107,7 @@ def volume_text():
 
 
 PARTS = {"time": time_text, "battery": battery_text, "network": network_text,
-         "bluetooth": bluetooth_text, "volume": volume_text}
+         "firewall": firewall_text, "bluetooth": bluetooth_text, "volume": volume_text}
 
 
 def notify(text):

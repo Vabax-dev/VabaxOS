@@ -1,0 +1,88 @@
+name: Speech soak
+
+# Finds the cause of the silence of speech-dispatcher (2026-09-26, about one
+# voice boot test in two): the steps after which it went silent, many times,
+# on an ISO already built by iso.yml, with every speech module or with the
+# eSpeak NG module only (test-boot.sh --soak, --speech-modules). When the
+# voice is lost, the serial log has where speech-dispatcher waits (gdb),
+# its sound streams and its log around the last message it finished.
+# It is a diagnosis, not a check of each block.
+
+on:
+  # Started from iso.yml (input soak_iso_run): a workflow started by hand
+  # must be on main, and this one is needed before its branch is.
+  workflow_call:
+    inputs:
+      iso_run:
+        type: string
+        required: true
+      modules:
+        type: string
+        default: all
+      rounds:
+        type: string
+        default: '12'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: speech-soak-${{ github.ref }}-${{ inputs.modules }}
+  cancel-in-progress: true
+
+jobs:
+  soak:
+    name: Speech soak (${{ inputs.modules }}, ${{ matrix.mode }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [uefi, secure-boot]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm
+
+      - name: Get the ISO
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.iso_run }}
+          github-token: ${{ github.token }}
+          pattern: vabaxos-iso-*
+          merge-multiple: true
+          path: out
+
+      - name: Soak
+        env:
+          MODULES: ${{ inputs.modules }}
+          ROUNDS: ${{ inputs.rounds }}
+          MODE: ${{ matrix.mode }}
+        run: |
+          rm -rf out/logs
+          ls -l out
+          args="--soak $ROUNDS --speech-modules $MODULES"
+          if [ "$MODE" = secure-boot ]; then args="$args --secure-boot"; fi
+          docker run --rm --privileged --device /dev/kvm -v "$PWD:/src" -w /src \
+            -e ARGS="$args" debian:trixie bash -c '
+            set -e
+            apt-get update -q
+            apt-get install -y -q --no-install-recommends git ca-certificates python3 qemu-system-x86 ovmf procps
+            ./scripts/test-boot.sh $ARGS
+          '
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: speech-soak-${{ inputs.modules }}-${{ matrix.mode }}-${{ github.run_id }}
+          path: out/logs/
+          retention-days: 7
+          if-no-files-found: warn

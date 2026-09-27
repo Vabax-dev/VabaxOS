@@ -74,6 +74,27 @@ def package_of(app):
     return None
 
 
+def also_removed(package, simulate=None):
+    """The other packages that removing a Debian package would remove with
+    it (those that depend on it), from a simulation of APT: no root needed,
+    nothing changes. None if the simulation failed.
+
+    GNOME comes as the metapackage gnome-core, which depends on Text
+    Editor, Files and others: removing one of them would remove gnome-core,
+    and the packages it brought (the login screen among them) would be left
+    unused and removed too. Such a removal is refused here."""
+    if simulate is None:
+        def simulate(name):
+            result = subprocess.run(["apt-get", "-s", "-q", "remove", name], capture_output=True, text=True,
+                                    env=dict(os.environ, LC_ALL="C.UTF-8"))
+            return result.stdout if result.returncode == 0 else None
+    out = simulate(package)
+    if out is None:
+        return None
+    removed = [line.split()[1] for line in out.splitlines() if line.startswith("Remv ") and len(line.split()) > 1]
+    return [name for name in removed if name.split(":")[0] != package]
+
+
 def protected(package):
     return package is not None and package[0] == "deb" and package[1].startswith(PROTECTED)
 
@@ -174,9 +195,19 @@ class AppsWindow(Adw.ApplicationWindow):
         kind, ident = package
         command = (["flatpak", "uninstall", "-y", "--noninteractive", ident] if kind == "flatpak"
                    else ["pkgcli", "--yes", "remove", ident])
-        threading.Thread(target=self.run, args=(command, name, row), daemon=True).start()
+        threading.Thread(target=self.run, args=(command, name, row, package), daemon=True).start()
 
-    def run(self, command, name, row):
+    def run(self, command, name, row, package=None):
+        if package is not None and package[0] == "deb":
+            others = also_removed(package[1])
+            if others is None:
+                GLib.idle_add(self.say, _("{name} was not removed: VabaxOS could not check "
+                                          "what it would take with it.").format(name=name))
+                return
+            if others:
+                GLib.idle_add(self.say, _("{name} was not removed: removing it would also remove "
+                                          "{others}.").format(name=name, others=", ".join(others)))
+                return
         result = subprocess.run(command, capture_output=True, text=True)
         if result.returncode == 0:
             GLib.idle_add(self.group.remove, row)

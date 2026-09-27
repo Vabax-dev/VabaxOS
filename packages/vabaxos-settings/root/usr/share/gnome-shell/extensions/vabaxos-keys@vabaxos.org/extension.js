@@ -28,6 +28,9 @@
 // The focus moves with the keyboard focus of GNOME Shell, as Ctrl+Alt+Tab
 // does, so Orca reads it; then the arrows move, Enter opens and Escape goes
 // back to the window.
+//
+// The Start button and the search box of the taskbar are in taskbarStart.js
+// (block 15).
 
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
@@ -40,6 +43,8 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+import {TaskbarStart} from './taskbarStart.js';
 
 const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i'];
 const NEW_WINDOW_MS = 8000;
@@ -89,9 +94,13 @@ export default class VabaxOSKeys extends Extension {
                 });
             }
         });
+        this._taskbarStart = new TaskbarStart(this.gettext.bind(this), () => this._toggleStart());
+        this._taskbarStart.enable();
     }
 
     disable() {
+        this._taskbarStart.disable();
+        this._taskbarStart = null;
         for (const key of KEYS)
             Main.wm.removeKeybinding(key);
         Meta.keybindings_set_custom_handler('close', null);
@@ -111,9 +120,16 @@ export default class VabaxOSKeys extends Extension {
     }
 
     // The panel of Dash to Panel on the main screen, or GNOME's top bar.
+    // Dash to Panel's panels, the main screen first, only those on screen:
+    // after Dash to Panel makes its panels again an old one may still be in
+    // its list (CI of block 15, 2026-09-26: Super+T found no program there).
+    _panels() {
+        const panels = (global.dashToPanel?.panels ?? []).filter(p => p.panel?.mapped ?? true);
+        return [...panels.filter(p => p.isPrimary), ...panels.filter(p => !p.isPrimary)];
+    }
+
     _panel() {
-        const panels = global.dashToPanel?.panels ?? [];
-        return panels.find(p => p.isPrimary) ?? panels[0] ?? null;
+        return this._panels()[0] ?? null;
     }
 
     _focused(actor) {
@@ -122,13 +138,24 @@ export default class VabaxOSKeys extends Extension {
     }
 
     _focusTaskbar() {
-        const icons = this._panel()?.taskbar?._getAppIcons?.() ?? [];
-        if (icons.length === 0) {
-            this._focusIn(Main.panel);
-            return;
+        let icons = [];
+        for (const panel of this._panels()) {
+            icons = (panel.taskbar?._getAppIcons?.() ?? []).filter(icon => icon.mapped);
+            if (icons.length > 0)
+                break;
         }
-        const index = icons.findIndex(icon => this._focused(icon));
-        icons[(index + 1) % icons.length].grab_key_focus();
+        if (icons.length === 0) {
+            this._focusIn(this._panel()?._leftBox ?? Main.panel);
+        } else {
+            const index = icons.findIndex(icon => this._focused(icon));
+            icons[(index + 1) % icons.length].grab_key_focus();
+        }
+        // One line in the journal for each Super+T: in the CI it moved the
+        // focus nowhere, while it worked by hand (2026-09-26).
+        const focus = global.stage.get_key_focus();
+        console.log(`vabaxos-keys: Super+T: ${this._panels().length} panels, ${icons.length} icons, ` +
+            `focus ${focus?.constructor?.name ?? 'none'} ${focus?.accessible_name ?? ''}, ` +
+            `window ${global.display.focus_window?.get_wm_class() ?? 'none'}, mode ${Main.actionMode}`);
     }
 
     _focusTray() {
@@ -195,8 +222,13 @@ export default class VabaxOSKeys extends Extension {
     }
 
     _newWindowAttention(window) {
+        // The Start menu runs hidden from the login: when it shows (the
+        // search box of the taskbar starts it with --search), it asks for
+        // attention, and it is always the user's request.
+        const isStart = Shell.WindowTracker.get_default().get_window_app(window)?.get_id() ===
+            'org.vabaxos.Start.desktop';
         const created = window._vabaxosCreated;
-        if (created === undefined || GLib.get_monotonic_time() / 1000 - created > NEW_WINDOW_MS)
+        if (!isStart && (created === undefined || GLib.get_monotonic_time() / 1000 - created > NEW_WINDOW_MS))
             return;
         if (Main.modalCount > 0 || this._isDesktop(window))
             return;
@@ -240,6 +272,11 @@ export default class VabaxOSKeys extends Extension {
 
     _focusDesktop() {
         if (global.display.focus_window || Main.modalCount > 0)
+            return;
+        // The user is in GNOME Shell (the taskbar after Super+T, the
+        // notification area): the desktop must not take the focus away.
+        const keyFocus = global.stage.get_key_focus();
+        if (keyFocus && keyFocus !== global.stage)
             return;
         // Not global.get_window_actors(): Desktop Icons NG hides its window there.
         const windows = global.display.list_all_windows();

@@ -40,6 +40,10 @@ jobs:
     needs: date
     if: needs.date.outputs.snapshot != ''
     uses: ./.github/workflows/iso.yml
+    # iso.yml also holds the speech soak, which reads the artifacts of runs.
+    permissions:
+      contents: read
+      actions: read
     with:
       snapshot: ${{ needs.date.outputs.snapshot }}
 

@@ -3,19 +3,33 @@ name: ISO
 # Builds the VabaxOS ISO and boots it in QEMU with the same checks as on the
 # workstation, sound included (ROADMAP v0.1, work item 10). The ISO is kept
 # for a week as an artifact: nightly builds are not releases (ADR-0015).
+#
+# It takes about 75 minutes, so it does not run by itself (Vabax's rule,
+# 2026-09-26): each block's pull request has the short checks of
+# checks.yml; this one is started by hand once every 4-5 blocks, on the
+# branch of the last block, and the blocks go to main when it passes.
 
 on:
-  push:
-    branches: [main]
-    paths: [image/**, packages/**, scripts/**, .github/workflows/iso.yml]
-  pull_request:
-    paths: [image/**, packages/**, scripts/**, .github/workflows/iso.yml]
   workflow_dispatch:
     inputs:
       snapshot:
         description: Another date of snapshot.debian.org to try, such as 20261005T000000Z
         type: string
         default: ''
+      # speech-soak.yml instead of a new ISO: the voice steps many times on
+      # the ISO of an earlier run.
+      soak_iso_run:
+        description: Speech soak only, on the ISO of this earlier run
+        type: string
+        default: ''
+      soak_modules:
+        description: Speech soak, speech modules (all or espeak)
+        type: string
+        default: all
+      soak_rounds:
+        description: Speech soak, rounds of the steps
+        type: string
+        default: '12'
   # The weekly try of a new Debian date (snapshot.yml, ADR-0020).
   workflow_call:
     inputs:
@@ -27,11 +41,23 @@ permissions:
   contents: read
 
 concurrency:
-  group: iso-${{ github.ref }}-${{ inputs.snapshot }}
+  group: iso-${{ github.ref }}-${{ inputs.snapshot }}-${{ inputs.soak_iso_run }}-${{ inputs.soak_modules }}
   cancel-in-progress: true
 
 jobs:
+  speech-soak:
+    if: ${{ inputs.soak_iso_run }}
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/speech-soak.yml
+    with:
+      iso_run: ${{ inputs.soak_iso_run }}
+      modules: ${{ inputs.soak_modules }}
+      rounds: ${{ inputs.soak_rounds }}
+
   build-and-boot:
+    if: ${{ !inputs.soak_iso_run }}
     name: Build and boot the ISO
     runs-on: ubuntu-latest
     timeout-minutes: 150
