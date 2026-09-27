@@ -228,6 +228,13 @@ ask gdm 'systemctl is-active gdm'
 # the dynamic gdm-greeter from GDM 49.
 ask greeteraudio 'for u in Debian-gdm gdm-greeter; do id -nG $u 2>/dev/null | grep -qw audio && { echo yes; exit; }; done; echo no'
 ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select'
+# Updates must work in the installed system: no source for the installation
+# medium, which is gone after the installation (preseed late_command).
+ask cdrom 'cat /usr/share/vabaxos-apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null | grep -c "^[[:space:]]*deb.*cdrom:" || true'
+# The Debian packages rebuilt by VabaxOS stay (ADR-0026): the installer
+# removed them once, and GNOME Shell, GDM and Orca with them.
+ask patched 'dpkg-query -W -f "\${Version}\n" speech-dispatcher libgjs0g 2>/dev/null | grep -c "+0vabaxos" || true'
+ask orcastart 'readlink /etc/xdg/autostart/orca-autostart.desktop'
 ask user 'id -un'
 # The installer saved the choices for the welcome, which applied them.
 ask choices 'tr "\n" " " < /var/lib/vabaxos/installer-choices | sed "s/ $//"'
@@ -244,6 +251,9 @@ check 'voce della console (espeakup)' "$(value speech)" active
 check 'schermata di accesso (GDM)' "$(value gdm)" active
 check 'la schermata di accesso tiene la scheda audio' "$(value greeteraudio)" yes
 check "scelta della voce all'avvio" "$(value voiceselect)" success
+check "nessuna sorgente APT del supporto d'installazione" "$(value cdrom)" 0
+check 'pacchetti Debian corretti da VabaxOS installati' "$(value patched)" 2
+check 'Orca parte con le impostazioni di VabaxOS' "$(value orcastart)" /usr/share/vabaxos-accessibility/orca-autostart.desktop
 check 'benvenuto concluso e segnato' "$(value welcome | tr -s ' ')" "inactive done"
 check "scelte dell'installazione salvate" "$(value choices)" "vabaxos.a11y=high-contrast,large-text vabaxos.rate=5 vabaxos.lang=en"
 check 'alto contrasto dal benvenuto prima di installare' "$(value contrast)" true
