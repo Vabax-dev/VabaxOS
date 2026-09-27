@@ -5,7 +5,7 @@
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
 - **Modifica:** [ADR-0020](0020-aggiornamenti-e-sicurezza.md) (punto 1 e 2: la sicurezza non aspetta più una data nuova e non aspetta l'utente); si appoggia su [ADR-0026](0026-pacchetti-debian-corretti.md) e [ADR-0027](0027-base-debian-stable.md)
 
-Decisione di Vabax (2026-09-27): «l'importante è che è stabile e che funziona, gli aggiornamenti di sicurezza li facciamo arrivare subito, che saranno diversi dagli aggiornamenti di VabaxOS, assicurati che aggiornare dalla 0.1 alla successiva non rompa niente e che funzioni».
+Decisione di Vabax (2026-09-27): «l'importante è che è stabile e che funziona, gli aggiornamenti di sicurezza li facciamo arrivare subito, che saranno diversi dagli aggiornamenti di VabaxOS, assicurati che aggiornare dalla 0.1 alla successiva non rompa niente e che funzioni». Confermata da Vabax dopo l'attuazione (installazione automatica della sicurezza, senza riavvii automatici): «va bene tutto così come hai fatto».
 
 ## Contesto
 
