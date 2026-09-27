@@ -1,0 +1,4 @@
+# Binary packages of the rebuilt source that replace Debian's in VabaxOS,
+# when they are installed (ADR-0026). GNOME Shell uses libgjs0g.
+libgjs0g
+gjs

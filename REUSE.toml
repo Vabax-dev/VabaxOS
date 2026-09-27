@@ -15,6 +15,19 @@ precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Vabax and VabaxOS contributors"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
+# Fixes to Debian packages (ADR-0026), under the licence of each package.
+[[annotations]]
+path = ["patches/debian/speech-dispatcher/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2026 Vabax and VabaxOS contributors", "speech-dispatcher contributors (Brailcom)"]
+SPDX-License-Identifier = "GPL-2.0-or-later"
+
+[[annotations]]
+path = ["patches/debian/gjs/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2026 Vabax and VabaxOS contributors", "GJS contributors"]
+SPDX-License-Identifier = "MIT OR LGPL-2.0-or-later"
+
 # Documentation.
 [[annotations]]
 path = ["**/*.md", "docs/**"]

@@ -1,0 +1,107 @@
+Description: finalize the GObjects released after a GC once the toggle queue is unlocked
+ The weak pointer update after a GC held the toggle queue lock while it
+ released GObjects. Finalizing a GSettings takes the GSettings backend
+ lock, which the dconf worker thread holds while it toggles up another
+ JavaScript-owned GSettings and waits for the toggle queue: a deadlock,
+ GNOME Shell froze at startup. The last references of the released
+ objects are now dropped after the lock.
+ Reproducer: tests/upstream/gjs-gsettings-deadlock.js (VabaxOS).
+Author: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Forwarded: not yet (docs/sviluppo/segnalazioni.md, report 7)
+Last-Update: 2026-09-27
+---
+--- a/gi/object.h
++++ b/gi/object.h
+@@ -309,6 +309,14 @@
+ 
+     static bool s_weak_pointer_callback;
+ 
++    /* While the weak pointers are updated after a GC, with the toggle queue
++     * locked, the last references of the released GObjects are kept here
++     * and dropped after the lock: finalizing a GObject can take a lock that
++     * another thread holds while it toggles up an object (the GSettings
++     * backend lock and the dconf worker thread), a deadlock. */
++    static bool s_defer_unrefs;
++    static std::vector<GObject*> s_deferred_unrefs;
++
+     /* Constructors */
+ 
+  private:
+--- a/gi/object.cpp
++++ b/gi/object.cpp
+@@ -86,6 +86,8 @@
+ #endif  // x86-64 clang
+ 
+ bool ObjectInstance::s_weak_pointer_callback = false;
++bool ObjectInstance::s_defer_unrefs = false;
++std::vector<GObject*> ObjectInstance::s_deferred_unrefs;
+ decltype(ObjectInstance::s_wrapped_gobject_list)
+     ObjectInstance::s_wrapped_gobject_list;
+ 
+@@ -1504,8 +1506,17 @@
+         ignore_gobject_finalization();
+ 
+     if (m_uses_toggle_ref && !m_gobj_disposed) {
+-        g_object_remove_toggle_ref(m_ptr.release(), wrapped_gobj_toggle_notify,
+-                                   this);
++        GObject* gobj = m_ptr.release();
++        if (s_defer_unrefs) {
++            // Keep the object alive past the toggle ref: the extra ref may
++            // queue a toggle up for this instance, which is cancelled here.
++            g_object_ref(gobj);
++            g_object_remove_toggle_ref(gobj, wrapped_gobj_toggle_notify, this);
++            ToggleQueue::get_default()->cancel(this);
++            s_deferred_unrefs.push_back(gobj);
++            return;
++        }
++        g_object_remove_toggle_ref(gobj, wrapped_gobj_toggle_notify, this);
+         return;
+     }
+ 
+@@ -1537,6 +1548,10 @@
+         }
+     }
+ 
++    if (m_ptr && s_defer_unrefs) {
++        s_deferred_unrefs.push_back(m_ptr.release());
++        return;
++    }
+     m_ptr = nullptr;
+ }
+ 
+@@ -1607,15 +1622,26 @@
+                         "%zu wrapped GObject(s) to examine",
+                         ObjectInstance::num_wrapped_gobjects());
+ 
+-    // Take a lock on the queue till we're done with it, so that we don't
+-    // risk that another thread will queue something else while sweeping
+-    auto locked_queue = ToggleQueue::get_default();
+-
+-    ObjectInstance::remove_wrapped_gobjects_if(
+-        [&trc](ObjectInstance* instance) -> bool {
+-            return instance->weak_pointer_was_finalized(trc);
+-        },
+-        std::mem_fn(&ObjectInstance::disassociate_js_gobject));
++    {
++        // Take a lock on the queue till we're done with it, so that we don't
++        // risk that another thread will queue something else while sweeping
++        auto locked_queue = ToggleQueue::get_default();
++
++        s_defer_unrefs = true;
++        ObjectInstance::remove_wrapped_gobjects_if(
++            [&trc](ObjectInstance* instance) -> bool {
++                return instance->weak_pointer_was_finalized(trc);
++            },
++            std::mem_fn(&ObjectInstance::disassociate_js_gobject));
++        s_defer_unrefs = false;
++    }
++
++    // Now that the toggle queue is unlocked, the released GObjects may be
++    // finalized (see s_defer_unrefs).
++    std::vector<GObject*> unrefs;
++    unrefs.swap(s_deferred_unrefs);
++    for (GObject* gobj : unrefs)
++        g_object_unref(gobj);
+ 
+     s_wrapped_gobject_list.shrink_to_fit();
+ }

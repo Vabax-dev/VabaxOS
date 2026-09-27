@@ -1,0 +1,89 @@
+#!/bin/sh
+# Debian packages rebuilt with VabaxOS's small fixes (ADR-0026).
+#
+# scripts/build.sh copies patches/debian/ to /usr/src/vabaxos-debian-patched:
+# one folder per Debian source package, with
+#   series     the fixes, in the order they are added (quilt)
+#   *.patch    the fixes
+#   packages   the binary packages that replace Debian's, when installed
+# For each source this hook downloads Debian's source of the version that
+# is installed, from the same snapshot as the binary packages, adds the
+# fixes, builds it with the version <Debian's>+vabaxos1 and installs the
+# rebuilt packages over Debian's. "+vabaxos1" sorts after Debian's stable
+# updates of the same version ("+deb13u1"): APT keeps the fixed packages
+# until VabaxOS rebuilds the newer version with its fixes (ADR-0026).
+# What the builds installed is removed at the end.
+set -e
+
+top=/usr/src/vabaxos-debian-patched
+[ -d "$top" ] || exit 0
+
+export DEBIAN_FRONTEND=noninteractive
+work="$(mktemp -d)"
+
+# Sources of the same snapshot as the binary packages.
+src_list=/etc/apt/sources.list.d/zz-vabaxos-debian-patched-src.list
+cat /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null \
+    | sed -n 's/^deb \(.*\)$/deb-src \1/p' > "$src_list"
+apt-get update -q
+
+dpkg-query -W -f '${Package}\n' | sort > "$work/before"
+apt-get install -y -q --no-install-recommends dpkg-dev build-essential fakeroot
+
+# The date of the snapshot, for the changelog entry: the rebuilt packages
+# get the same timestamps in every build.
+stamp="$(date -u -R -d "@${SOURCE_DATE_EPOCH:-0}")"
+
+for dir in "$top"/*/; do
+    source="$(basename "$dir")"
+    first="$(grep -v '^#' "$dir/packages" | head -n 1)"
+    version="$(dpkg-query -W -f '${source:Version}' "$first")"
+    new="$version+vabaxos1"
+    echo "vabaxos-debian-patched: $source $version -> $new"
+
+    mkdir -p "$work/$source"
+    (cd "$work/$source" && apt-get source -q --only-source "$source=$version")
+    tree="$(find "$work/$source" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+
+    while read -r patch; do
+        case "$patch" in ''|'#'*) continue ;; esac
+        cp "$dir/$patch" "$tree/debian/patches/$patch"
+        echo "$patch" >> "$tree/debian/patches/series"
+    done < "$dir/series"
+
+    {
+        printf '%s (%s) %s; urgency=medium\n\n' "$source" "$new" \
+            "$(dpkg-parsechangelog -l "$tree/debian/changelog" -S Distribution)"
+        printf '  * VabaxOS (ADR-0026): %s.\n\n' \
+            "$(grep -v '^#' "$dir/series" | grep -v '^$' | paste -sd, - | sed 's/,/, /g')"
+        printf ' -- VabaxOS <https://github.com/Vabax-dev/VabaxOS>  %s\n\n' "$stamp"
+        cat "$tree/debian/changelog"
+    } > "$work/changelog"
+    mv "$work/changelog" "$tree/debian/changelog"
+
+    apt-get build-dep -y -q "$tree"
+    (cd "$tree" && DEB_BUILD_OPTIONS="nocheck nodoc parallel=$(nproc)" \
+        dpkg-buildpackage -b -uc -us)
+
+    debs=""
+    while read -r package; do
+        case "$package" in ''|'#'*) continue ;; esac
+        dpkg-query -W -f '${Status}' "$package" 2>/dev/null | grep -q 'ok installed' || continue
+        deb="$(find "$work/$source" -maxdepth 1 -name "${package}_*.deb" | head -n 1)"
+        [ -n "$deb" ] || { echo "vabaxos-debian-patched: $package was not built" >&2; exit 1; }
+        debs="$debs $deb"
+    done < "$dir/packages"
+    # shellcheck disable=SC2086
+    dpkg -i $debs
+done
+
+# Remove what the builds installed, and the sources.
+dpkg-query -W -f '${Package}\n' | sort > "$work/after"
+added="$(comm -13 "$work/before" "$work/after")"
+if [ -n "$added" ]; then
+    # shellcheck disable=SC2086
+    apt-get purge -y -q $added
+fi
+rm -f "$src_list"
+apt-get update -q
+rm -rf "$work" "$top"

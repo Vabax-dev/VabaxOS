@@ -57,6 +57,10 @@ prepare_config() {
     cp -a "$IMAGE/auto" "$IMAGE/config" "$IMAGE/build.conf" "$dir/"
     if [[ "${2:-}" == packages ]]; then
         "$REPO/scripts/build-packages.sh" "$dir/config/packages.chroot"
+        # Debian packages rebuilt with VabaxOS's fixes (ADR-0026), by the
+        # hook 0400-vabaxos-debian-patched inside the chroot.
+        mkdir -p "$dir/config/includes.chroot_after_packages/usr/src"
+        cp -a "$REPO/patches/debian" "$dir/config/includes.chroot_after_packages/usr/src/vabaxos-debian-patched"
     fi
     (cd "$dir" && lb config)
 }

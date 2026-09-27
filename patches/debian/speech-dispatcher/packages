@@ -1,0 +1,8 @@
+# Binary packages of the rebuilt source that replace Debian's in VabaxOS,
+# when they are installed (ADR-0026). The server is in speech-dispatcher.
+speech-dispatcher
+speech-dispatcher-audio-plugins
+speech-dispatcher-espeak-ng
+libspeechd2
+libspeechd-module0
+python3-speechd

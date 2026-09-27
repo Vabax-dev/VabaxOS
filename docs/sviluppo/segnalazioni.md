@@ -98,7 +98,7 @@ Causa del silenzio di speech-dispatcher nelle prove (2026-09-27): riprodotto nel
 >
 > Stacks when it happens: the module (sd_espeak-ng) is blocked in `write()` of a 705 audio message in `module_tts_output_send_server()`, its stdout pipe full; the server's output thread waits in `output_read_event()` (output.c:359, `pthread_cond_wait(&output->event_cond, ...)`), while `speaking_module` shows `reading_message = 0, event = NULL, reading_events = 1`: nobody reads the module any more. Just before, the log has `200 OK VOICE LIST SENT`: Orca asked for the voices while the module was speaking.
 >
-> Cause: in `output_read_reply()`, after reading, the reply reader sets `reading_message = FALSE` and signals `reply_cond`. The event thread waits on `event_cond` for `reading_message` to drop, so if the reply reader got its reply, the event thread is never woken. `output_read_event()` does the symmetric thing correctly (it signals `reply_cond`, where reply readers wait).
+> Cause: in `output_read_reply()`, after reading, the reply reader sets `reading_message = FALSE` and signals `reply_cond` (this signal came with the fix for stuck output that Debian carries as `output-stuck`; it is also in 0.12.0). The event thread waits on `event_cond` for `reading_message` to drop, so if the reply reader got its reply, the event thread is never woken. `output_read_event()` does the symmetric thing correctly (it signals `reply_cond`, where reply readers wait).
 >
 > Reproducer: https://github.com/Vabax-dev/VabaxOS/blob/main/tests/upstream/speechd-reply-race.py (a long message, then LIST VOICES from a second connection, then a probe message that must end): stuck at round 1 or 2 without the fix, no stall in 200 rounds with it.
 >
@@ -137,7 +137,7 @@ Causa del blocco di GNOME Shell all'avvio (circa 2 avvii su 10): riprodotto in 2
 >
 > Reproducer (20 lines): https://github.com/Vabax-dev/VabaxOS/blob/main/tests/upstream/gjs-gsettings-deadlock.js — GSettings objects with a signal handler created and dropped with a GC after each batch, while another process changes a watched key; it deadlocks within seconds, with the same two stacks.
 >
-> A possible direction: collect the objects to release during the sweep and release them (the final unref) after the toggle queue lock is dropped, so that no finalization code runs under it.
+> Fix we ship in VabaxOS (Debian's GJS 1.82.3 rebuilt; the same code is in master): during the sweep the last references of the released GObjects are kept in a list and dropped after the toggle queue lock is released, so no finalization code runs under it. For a toggle-ref object, an extra ref is taken before `g_object_remove_toggle_ref()` (the toggle up it may queue for the instance being released is cancelled right away; `toggle_up()` already ignores an instance whose pointer was released). With the reproducer, GJS 1.82.3 deadlocks after about 150 rounds; with the fix it ran 10 minutes (193,000 rounds) without a stall. Patch: https://github.com/Vabax-dev/VabaxOS/blob/main/patches/debian/gjs/vabaxos-defer-unref-after-gc.patch
 
 ## Stato
 

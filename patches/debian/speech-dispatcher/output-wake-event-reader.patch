@@ -1,0 +1,24 @@
+Description: wake the event thread when a reply reader stops reading
+ In output_read_reply(), after reading, the reply reader signalled
+ reply_cond; the event thread waits on event_cond for reading_message to
+ drop, and slept for ever when the reply reader got its reply (Orca asks
+ for the voices while a module speaks): nobody read the module any more,
+ the module blocked writing audio and speech stopped until a restart.
+ Debian's output-stuck patch added this signal on the wrong condition.
+ Reproducer: tests/upstream/speechd-reply-race.py (VabaxOS).
+Author: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Forwarded: not yet (docs/sviluppo/segnalazioni.md, report 6)
+Last-Update: 2026-09-27
+---
+--- a/src/server/output.c
++++ b/src/server/output.c
+@@ -315,7 +315,8 @@
+ 			message = output_read_message(output);
+ 			pthread_mutex_lock(&output->read_mutex);
+ 			output->reading_message = FALSE;
+-			pthread_cond_signal(&output->reply_cond);
++			/* The event thread may be waiting for us to stop reading */
++			pthread_cond_signal(&output->event_cond);
+ 			if (!message)
+ 				/* Module broke */
+ 				break;
