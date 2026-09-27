@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Orca Screen Reader
-Comment=VabaxOS: Orca with VabaxOS's defaults (the original is orca-autostart.desktop.orca)
+Comment=VabaxOS: Orca with VabaxOS's defaults (linked from /etc/xdg/autostart; the original is orca-autostart.desktop.orca)
 Exec=/usr/libexec/vabaxos/orca-start
 NoDisplay=true
 AutostartCondition=GSettings org.gnome.desktop.a11y.applications screen-reader-enabled

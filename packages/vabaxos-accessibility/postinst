@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 if [ "$1" = configure ]; then
+    # VabaxOS's Orca start, in the place of Orca's (preinst). ln -sfn also
+    # replaces a regular file left by an earlier version.
+    ln -sfn /usr/share/vabaxos-accessibility/orca-autostart.desktop /etc/xdg/autostart/orca-autostart.desktop
     deb-systemd-helper enable vabaxos-voice-off.service >/dev/null || true
     deb-systemd-helper enable vabaxos-greeter-audio.service >/dev/null || true
 fi

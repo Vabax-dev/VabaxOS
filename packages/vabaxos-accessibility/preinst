@@ -1,5 +1,10 @@
 #!/bin/sh
 # Orca's autostart entry is replaced by VabaxOS's (/usr/libexec/vabaxos/orca-start).
+# Orca's file is moved aside (diversion); postinst links VabaxOS's in its
+# place. VabaxOS's file is not a configuration file at the same path:
+# dpkg keeps configuration files by path, it would take Orca's record for
+# VabaxOS's and ask about a file "deleted by you", in the ISO build and at
+# every update of Orca (as config-package-dev's "displace" avoids).
 set -e
 if [ "$1" = install ] || [ "$1" = upgrade ]; then
     dpkg-divert --package vabaxos-accessibility --rename \
