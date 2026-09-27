@@ -1,0 +1,5 @@
+# Intentionally without packages. live-build (from Git, 531cdb98) writes
+# live-boot and live-config into this file when it is missing, and a
+# .list.chroot is installed in the first pass: the live packages were then
+# not on the list of packages the installer removes, and stayed in the
+# installed system (CI, 2026-09-27). They are in live.list.chroot_live.

@@ -1,8 +1,18 @@
 #!/bin/sh
 set -e
 if [ "$1" = configure ]; then
-    # VabaxOS's Orca start, in the place of Orca's (preinst). ln -sfn also
-    # replaces a regular file left by an earlier version.
+    # Orca's autostart entry is replaced by VabaxOS's (/usr/libexec/vabaxos/
+    # orca-start): Orca's file is moved aside (diversion) and VabaxOS's is
+    # linked in its place. Here, not in preinst: Orca is configured before
+    # this package (Depends), while in preinst, in the same APT run, Orca
+    # could still be only unpacked, its file still named .dpkg-new, and the
+    # diversion left it there (ISO, 2026-09-27). VabaxOS's file is not a
+    # configuration file at Orca's path: dpkg keeps configuration files by
+    # path and would ask about a file "deleted by you" (as config-package-
+    # dev's "displace" avoids). ln -sfn also replaces a regular file.
+    dpkg-divert --package vabaxos-accessibility --rename \
+        --divert /etc/xdg/autostart/orca-autostart.desktop.orca \
+        --add /etc/xdg/autostart/orca-autostart.desktop
     ln -sfn /usr/share/vabaxos-accessibility/orca-autostart.desktop /etc/xdg/autostart/orca-autostart.desktop
     deb-systemd-helper enable vabaxos-voice-off.service >/dev/null || true
     deb-systemd-helper enable vabaxos-greeter-audio.service >/dev/null || true

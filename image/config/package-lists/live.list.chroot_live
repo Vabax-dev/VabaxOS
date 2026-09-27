@@ -1,0 +1,7 @@
+# The packages of the live system only (live-build's list for systemd):
+# installed in the live pass, so live-build puts them, and what only they
+# need (live-tools), on live/filesystem.packages-remove, and the installer
+# takes them away from the installed system.
+live-boot
+live-config
+live-config-systemd

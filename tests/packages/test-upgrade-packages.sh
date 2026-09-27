@@ -70,13 +70,16 @@ done > "$WORK/moved"
 # The upgrade, as dpkg does it. Missing Debian dependencies are ignored
 # (this is not the whole system): configuration errors are not.
 export DEBIAN_FRONTEND=noninteractive
-# Orca from Debian first, as in VabaxOS. Every dpkg reads from /dev/null:
-# a question (a configuration file prompt) fails the test.
+# Orca from Debian and the old packages in one dpkg run, as APT does in
+# the ISO build: Orca only unpacked while the VabaxOS packages are unpacked
+# left its autostart file as .dpkg-new once (ISO, 2026-09-27). Every dpkg
+# reads from /dev/null: a question (a configuration file prompt) fails the
+# test.
 (cd "$WORK" && apt-get download -q orca >/dev/null) || fail "Orca non si scarica da Debian"
-dpkg -i --force-depends "$WORK"/orca_*.deb > "$WORK/orca.log" 2>&1 < /dev/null \
-    || { tail -20 "$WORK/orca.log"; fail "installazione di Orca"; }
-dpkg -i --force-depends "$WORK"/old-debs/*.deb > "$WORK/install-old.log" 2>&1 \
-    < /dev/null || { tail -30 "$WORK/install-old.log"; fail "installazione dei pacchetti di $REF"; }
+dpkg -i --force-depends "$WORK"/orca_*.deb "$WORK"/old-debs/*.deb > "$WORK/install-old.log" 2>&1 \
+    < /dev/null || { tail -30 "$WORK/install-old.log"; fail "installazione di Orca e dei pacchetti di $REF"; }
+left="$(find /etc -name '*.dpkg-dist' -o -name '*.dpkg-new' -o -name '*.dpkg-old')"
+[[ -z "$left" ]] || fail "file di configurazione lasciati dall'installazione: $left"
 diversions_before="$(dpkg-divert --list | grep -c vabaxos || true)"
 dpkg -i --force-depends "$WORK"/new-debs/*.deb > "$WORK/upgrade.log" 2>&1 \
     < /dev/null || { tail -30 "$WORK/upgrade.log"; fail "aggiornamento ai pacchetti nuovi"; }

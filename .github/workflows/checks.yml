@@ -30,7 +30,8 @@ jobs:
         run: |
           find scripts tests -name '*.sh' -print0 | xargs -0 shellcheck
           shellcheck image/auto/config
-          shellcheck packages/*/preinst packages/*/postinst packages/*/postrm packages/*/build packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
+          shellcheck $(ls packages/*/preinst packages/*/postinst packages/*/prerm packages/*/postrm 2>/dev/null) \
+            packages/*/build packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
       - name: Every workstation package exists in Debian trixie
         run: |
           grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
