@@ -4,15 +4,24 @@
 # running this (the original is diverted by vabaxos-accessibility).
 # - VabaxOS's defaults for Orca (NVDA keys, typing echo, the speed chosen in
 #   the spoken welcome) are copied into the user's settings first;
-# - under Wayland Orca runs without DISPLAY: with it, Orca read and wrote
-#   the keyboard map through Xwayland (xkbcomp) every time it set up its
-#   keys, and GNOME Shell sometimes froze reloading its key bindings
-#   (Orca 50, 2026-09-25); Mutter holds back Orca's keys by itself.
-# Arguments go to Orca (vabaxos-screen-reader starts it with --replace).
+# - DISPLAY stays: Orca 48 reads the keyboard map with xkbcomp at every
+#   start and stops with KeyError: 'DISPLAY' without it (CI, 2026-09-27).
+#   Under Orca 50 VabaxOS took DISPLAY away, because GNOME Shell sometimes
+#   froze when Orca wrote the map back; the freeze was GJS's deadlock,
+#   which the rebuilt GJS fixes (ADR-0026), and Orca writes the map only
+#   when it reloads its settings, while vabaxos-screen-reader starts it
+#   again (--replace). Started from a place without DISPLAY (a text
+#   console, a terminal outside the session), Orca gets DISPLAY and
+#   XAUTHORITY from the user's session (systemd's user environment).
+# Arguments go to Orca.
 if [ -x /usr/lib/vabaxos-screen-reader/orca-defaults ]; then
     /usr/lib/vabaxos-screen-reader/orca-defaults || true
 fi
-if [ -n "$WAYLAND_DISPLAY" ] || [ "$XDG_SESSION_TYPE" = wayland ]; then
-    unset DISPLAY
+if [ -z "$DISPLAY" ]; then
+    session="$(systemctl --user show-environment 2>/dev/null)"
+    display="$(printf '%s\n' "$session" | sed -n 's/^DISPLAY=//p')"
+    xauthority="$(printf '%s\n' "$session" | sed -n 's/^XAUTHORITY=//p')"
+    [ -n "$display" ] && export DISPLAY="$display"
+    [ -n "$xauthority" ] && [ -z "$XAUTHORITY" ] && export XAUTHORITY="$xauthority"
 fi
 exec /usr/bin/orca "$@"

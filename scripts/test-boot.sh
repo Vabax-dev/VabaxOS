@@ -781,10 +781,12 @@ if [[ "$WANT_ORCA" == yes ]]; then
     HEARD="$(record orca-f12 5)"
     check 'Ins+F12: Orca dice l'"'"'ora' "$HEARD" "$WANT_SOUND"
     [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo Ins+F12' f12
-    # Orca runs without DISPLAY (/usr/libexec/vabaxos/orca-start):
-    # no xkbcomp through Xwayland, which froze GNOME Shell at startup.
-    ask orcadisplay 'tr "\\0" "\\n" < /proc/$(pgrep -u user -x orca)/environ | grep -c "^DISPLAY="' || exit 1
-    check 'Orca senza DISPLAY (niente xkbcomp)' "$(value orcadisplay)" 0
+    # Orca 48 needs DISPLAY (xkbcomp at every start): without it Orca
+    # stopped with KeyError: 'DISPLAY' a minute after starting (CI,
+    # 2026-09-27). Its /proc environment cannot say (setproctitle writes
+    # over it): Orca's Python errors in the user's journal can.
+    ask orcaerrors "journalctl --user -b --no-pager -o cat | grep -c 'File \"/usr/lib/python3/dist-packages/orca/' || true" || exit 1
+    soft_check 'Orca senza errori Python dall'"'"'avvio' "$(value orcaerrors)" 0
 fi
 
 # Navigation and Tab (block 11). Tab is pressed many times in a program
