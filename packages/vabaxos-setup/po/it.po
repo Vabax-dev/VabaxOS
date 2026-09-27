@@ -67,8 +67,8 @@ msgstr "Orca legge lo schermo ad alta voce"
 msgid "Voice"
 msgstr "Voce"
 
-msgid "Changes apply to the next sentences."
-msgstr "Le modifiche valgono dalle frasi successive."
+msgid "Changes apply two seconds after the last one, when the screen reader starts again."
+msgstr "Le modifiche valgono due secondi dopo l'ultima, quando il lettore di schermo riparte."
 
 msgid "Speed"
 msgstr "Velocità"

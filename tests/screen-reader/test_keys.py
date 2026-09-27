@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Tests for Orca's key schemes (block 10): NVDA and JAWS keys without
-conflicts, in both keyboard layouts; the dconf defaults; key names.
+conflicts, in both keyboard layouts; the defaults for Orca 48; key names.
 
     python3 tests/screen-reader/test_keys.py
 """
@@ -49,13 +49,13 @@ class SchemesTest(unittest.TestCase):
             "whereAmIBasicHandler": ("Tab", 256, 1), "getTitleHandler": ("t", 256, 1),
             "presentTimeHandler": ("F12", 256, 1), "presentDateHandler": ("F12", 256, 2),
             "flatReviewSayAllHandler": ("b", 256, 1), "getStatusBarHandler": ("End", 256, 1),
-            "toggle_presentation_mode": ("space", 256, 1), "shutdownHandler": ("q", 256, 1),
+            "togglePresentationModeHandler": ("space", 256, 1), "shutdownHandler": ("q", 256, 1),
             "enterLearnModeHandler": ("1", 256, 1), "increaseSpeechRateHandler": ("Up", 260, 1),
-            "list_links": ("F7", 256, 1), "list_headings": ("F6", 256, 1),
+            "linkShowList": ("F7", 256, 1), "headingShowList": ("F6", 256, 1),
             # Browse mode quick keys of NVDA (block 14).
-            "next_heading": ("h", 0, 1), "next_link": ("k", 0, 1), "next_form_field": ("f", 0, 1),
-            "next_table": ("t", 0, 1), "next_landmark": ("d", 0, 1), "previous_landmark": ("d", 1, 1),
-            "next_iframe": ("m", 0, 1), "next_live_region": ("j", 0, 1),
+            "headingGoNext": ("h", 0, 1), "linkGoNext": ("k", 0, 1), "formFieldGoNext": ("f", 0, 1),
+            "tableGoNext": ("t", 0, 1), "landmarkGoNext": ("d", 0, 1), "landmarkGoPrevious": ("d", 1, 1),
+            "iframeGoNext": ("m", 0, 1), "liveRegionGoNext": ("j", 0, 1),
         }
         for name, key in expected.items():
             self.assertEqual(keys[name], key, name)
@@ -63,7 +63,7 @@ class SchemesTest(unittest.TestCase):
     def test_jaws_differences(self):
         keys = keymaps.effective(keymaps.entries("jaws"))
         self.assertEqual(keys["getStatusBarHandler"], ("Page_Down", 256, 1))
-        self.assertEqual(keys["toggle_presentation_mode"], ("z", 256, 1))
+        self.assertEqual(keys["togglePresentationModeHandler"], ("z", 256, 1))
         self.assertEqual(keys["shutdownHandler"], ("F4", 256, 1))
 
     def test_orca_scheme_keeps_orca_keys(self):
@@ -71,24 +71,21 @@ class SchemesTest(unittest.TestCase):
         self.assertEqual(keymaps.effective({}), keymaps.defaults())
 
     def test_entries_format(self):
-        for bindings in keymaps.entries("nvda").values():
-            self.assertEqual(len(bindings), 1)
-            self.assertEqual(len(bindings[0]), 4)
-            self.assertTrue(all(isinstance(part, str) for part in bindings[0]))
-            self.assertEqual(bindings[0][1], "461")
+        # One key per command, except the bookmarks: one per number.
+        for name, bindings in keymaps.entries("nvda").items():
+            self.assertEqual(len(bindings), 6 if name == "goToBookmark" else 1, name)
+            for binding in bindings:
+                self.assertEqual(len(binding), 4)
+                self.assertTrue(all(isinstance(part, str) for part in binding))
+                self.assertEqual(binding[1], "461")
 
-    def test_dconf_defaults(self):
-        text = keymaps.dconf_defaults()
-        self.assertIn("[org/gnome/orca/default/keybindings]", text)
-        self.assertIn("'sayAllHandler': [['Down', '461', '256', '1']]", text)
-        self.assertIn("desktop-modifier-keys=['Insert', 'KP_Insert']", text)
-        try:
-            from gi.repository import GLib
-        except ImportError:
-            self.skipTest("no GLib")
-        line = next(l for l in text.splitlines() if l.startswith("entries="))
-        value = GLib.Variant.parse(GLib.VariantType("a{saas}"), line[len("entries="):], None, None)
-        self.assertEqual(value.unpack(), keymaps.entries("nvda"))
+    def test_json_defaults(self):
+        # VabaxOS's defaults for Orca 48 (orca-defaults.json): the NVDA keys,
+        # Insert as the screen reader key, typing echo as NVDA.
+        defaults = keymaps.json_defaults()
+        self.assertEqual(defaults["keybindings"], keymaps.entries("nvda"))
+        self.assertEqual(defaults["general"], {"enableKeyEcho": False, "enableEchoByCharacter": True,
+                                               "orcaModifierKeys": ["Insert", "KP_Insert"]})
 
     def test_labels(self):
         self.assertEqual(keymaps.label(("Down", 256, 1)), "Ins+Freccia giù")

@@ -71,8 +71,9 @@ def status():
     lines.append(_("VabaxOS archive: on.") if os.path.exists(ARCHIVE_SOURCES)
                  else _("VabaxOS archive: not set up yet."))
     lines.append(voice_text())
-    orca = output("systemctl", "--user", "is-active", "orca")
-    lines.append(_("Orca is on.") if orca == "active" else _("Orca is off."))
+    # Orca 48 is started by GNOME, not by a systemd unit (ADR-0027).
+    orca = output("pgrep", "-u", str(os.getuid()), "-x", "orca")
+    lines.append(_("Orca is on.") if orca else _("Orca is off."))
     return "\n".join(lines)
 
 

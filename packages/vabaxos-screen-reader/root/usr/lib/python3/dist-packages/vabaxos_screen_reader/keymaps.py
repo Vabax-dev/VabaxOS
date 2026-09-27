@@ -3,16 +3,17 @@
 """Key schemes for Orca (block 10): NVDA (the VabaxOS default), JAWS, and
 Orca's own keys.
 
-Orca 50 keeps user keys in dconf, org.gnome.Orca.Keybindings "entries":
-{command: [[keysym, mask, modifiers, clicks]]}, all strings. A command has
-one key: an override replaces Orca's key for that command, in both keyboard
-layouts. So every scheme below chooses the key people from NVDA or JAWS
-press most, also on laptops without a number pad; the number pad review
-keys of Orca are already those of NVDA (7 8 9 lines, 4 5 6 words, 1 2 3
-characters) and stay as they are.
+Orca 48 (ADR-0027) keeps user keys in its settings, "keybindings" of a
+profile: {command: [[keysym, mask, modifiers, clicks]]}. An override
+replaces Orca's keys for that command, in both keyboard layouts. Every
+scheme below chooses the key people from NVDA or JAWS press most, also on
+laptops without a number pad; the number pad review keys of Orca are
+already those of NVDA (7 8 9 lines, 4 5 6 words, 1 2 3 characters) and stay
+as they are. Command names are Orca 48's (orca_commands).
 
-A key here is (keysym, modifiers, clicks); modifiers: O the screen reader
-key (Insert, or Caps Lock), C Ctrl, A Alt, S Shift.
+A key here is (keysym, modifiers, clicks), or a list of them for a command
+with more than one key; modifiers: O the screen reader key (Insert, or Caps
+Lock), C Ctrl, A Alt, S Shift.
 """
 
 from .orca_commands import COMMANDS
@@ -42,7 +43,6 @@ COMMON = {
     "cycleSpeakingPunctuationLevelHandler": ("p", O, 1),
     "enterLearnModeHandler": ("1", O, 1),
     "cycleSettingsProfileHandler": ("p", O | C, 1),
-    "presentCurrentProfileHandler": ("p", O | S, 1),
     "increaseSpeechRateHandler": ("Up", O | C, 1),
     "decreaseSpeechRateHandler": ("Down", O | C, 1),
     "increaseSpeechVolumeHandler": ("Right", O | C, 1),
@@ -53,18 +53,25 @@ COMMON = {
     # Orca's Insert+F12 (caret navigation on and off) leaves room for the time.
     "toggle_enabled": ("F12", O | S, 1),
     "present_cpu_and_memory_usage": ("F11", O | S, 1),
-    "list_links": ("F7", O, 1),
-    "list_headings": ("F6", O, 1),
-    "list_form_fields": ("F5", O, 1),
-    "list_buttons": ("b", O | C, 1),
-    "list_tables": ("t", O | C, 1),
-    "list_landmarks": ("semicolon", O | C, 1),
-    "list_lists": ("l", O | C, 1),
-    "list_images": ("g", O | C, 1),
-    "list_radio_buttons": ("r", O | C, 1),
-    "list_checkboxes": ("x", O | C, 1),
-    "list_comboboxes": ("c", O | C, 1),
-    "list_entries": ("e", O | C, 1),
+    "linkShowList": ("F7", O, 1),
+    "headingShowList": ("F6", O, 1),
+    "formFieldShowList": ("F5", O, 1),
+    "buttonShowList": ("b", O | C, 1),
+    "tableShowList": ("t", O | C, 1),
+    "landmarkShowList": ("semicolon", O | C, 1),
+    "listShowList": ("l", O | C, 1),
+    "imageShowList": ("g", O | C, 1),
+    "radioButtonShowList": ("r", O | C, 1),
+    "checkBoxShowList": ("x", O | C, 1),
+    "comboBoxShowList": ("c", O | C, 1),
+    "entryShowList": ("e", O | C, 1),
+    # Orca 48's bookmarks (Insert+B, Insert+Shift+B, Insert+1 to 6) take
+    # keys of NVDA: the window, the battery, the help of the keys. They move
+    # to Insert+brackets and Insert+Ctrl+number (the number chooses the
+    # bookmark; Insert+Alt+number still adds one).
+    "goToNextBookmark": ("bracketright", O, 1),
+    "goToPrevBookmark": ("bracketleft", O, 1),
+    "goToBookmark": [(str(number), O | C, 1) for number in range(1, 7)],
 }
 
 # The voice ring takes Insert+Ctrl+arrows, where Orca has object
@@ -93,7 +100,7 @@ OBJECT_NAVIGATION = {
 NVDA = {
     **COMMON,
     "getStatusBarHandler": ("End", O, 1),
-    "toggle_presentation_mode": ("space", O, 1),
+    "togglePresentationModeHandler": ("space", O, 1),
     "preferencesSettingsHandler": ("n", O, 1),
     "appPreferencesSettingsHandler": ("n", O | C, 1),
     "shutdownHandler": ("q", O, 1),
@@ -101,37 +108,34 @@ NVDA = {
     # The quick keys of NVDA's browse mode (block 14): D landmarks, M
     # frames. Orca has M for landmarks and D for live regions, which NVDA
     # does not have: they go to J (Y stays the last live region).
-    "next_landmark": ("d", 0, 1),
-    "previous_landmark": ("d", S, 1),
-    "next_iframe": ("m", 0, 1),
-    "previous_iframe": ("m", S, 1),
-    "next_live_region": ("j", 0, 1),
-    "previous_live_region": ("j", S, 1),
+    "landmarkGoNext": ("d", 0, 1),
+    "landmarkGoPrevious": ("d", S, 1),
+    "iframeGoNext": ("m", 0, 1),
+    "iframeGoPrevious": ("m", S, 1),
+    "liveRegionGoNext": ("j", 0, 1),
+    "liveRegionGoPrevious": ("j", S, 1),
 }
-NVDA_LAYOUT = {
-    "desktop": {"toggle_sleep_mode": ("s", O | S, 1)},
-    "laptop": {"toggle_sleep_mode": ("z", O | S, 1)},
-}
+# Orca 48's sleep mode (Ctrl+Alt+Shift+Q) has no key of its own in the
+# settings: its key cannot change.
+NVDA_LAYOUT = {"desktop": {}, "laptop": {}}
 
 JAWS = {
     **COMMON,
     "getStatusBarHandler": ("Page_Down", O, 1),
-    "toggle_presentation_mode": ("z", O, 1),
-    "structural_navigator_mode_cycle": ("z", O | S, 1),
+    "togglePresentationModeHandler": ("z", O, 1),
+    "toggleStructuralNavigationHandler": ("z", O | S, 1),
     "preferencesSettingsHandler": ("j", O, 1),
     "appPreferencesSettingsHandler": ("j", O | C, 1),
     "shutdownHandler": ("F4", O, 1),
     "bypass_mode_toggle": ("3", O, 1),
-    "toggle_sleep_mode": ("s", O | S, 1),
 }
 
 SCHEMES = ["nvda", "jaws", "orca"]
 DEFAULT_SCHEME = "nvda"
 # The screen reader key of each scheme, for the desktop layout: Insert, as
-# NVDA does by default. Not Caps Lock: under Wayland Orca 50 does not ask
-# Mutter to hold it back (its SetKeyGrabs lists only Insert), so every press
-# also switched capital letters on (found in QEMU, 2026-09-26). It can still
-# be chosen in the Keyboard page.
+# NVDA does by default. Not Caps Lock: under Wayland Orca 50 did not ask
+# Mutter to hold it back, so every press also switched capital letters on
+# (found in QEMU, 2026-09-26). It can still be chosen in the Keyboard page.
 MODIFIERS = {
     "nvda": ["Insert", "KP_Insert"],
     "jaws": ["Insert", "KP_Insert"],
@@ -145,12 +149,14 @@ MODIFIERS = {
 LAPTOP = {
     "whereAmILinkHandler": ("k", O | S, 1),
     "cycleSpeakingPunctuationLevelHandler": ("p", O | A, 1),
-    "list_lists": None,
+    # Insert+brackets find text on a laptop.
+    "goToNextBookmark": ("bracketright", O | A, 1),
+    "goToPrevBookmark": ("bracketleft", O | A, 1),
+    "listShowList": None,
 }
 JAWS_LAPTOP = {
     "preferencesSettingsHandler": None,
     "appPreferencesSettingsHandler": None,
-    "toggle_sleep_mode": None,
 }
 
 
@@ -170,9 +176,10 @@ def overrides(scheme, layout="desktop"):
 
 
 def entries(scheme, layout="desktop"):
-    """The value of org.gnome.Orca.Keybindings entries for a scheme."""
-    return {name: [[keysym, MASK, str(mods), str(clicks)]]
-            for name, (keysym, mods, clicks) in overrides(scheme, layout).items()}
+    """Orca's "keybindings" for a scheme."""
+    return {name: [[keysym, MASK, str(mods), str(clicks)] for keysym, mods, clicks in
+                   (keys if isinstance(keys, list) else [keys])]
+            for name, keys in overrides(scheme, layout).items()}
 
 
 def defaults(layout="desktop"):
@@ -182,15 +189,16 @@ def defaults(layout="desktop"):
 
 
 def effective(user_entries, layout="desktop"):
-    """{command: key or None} with the user's entries over Orca's keys."""
+    """{command: key or None} with the user's entries over Orca's keys (the
+    first key of a command with more than one)."""
     keys = defaults(layout)
     for name, bindings in user_entries.items():
         if name not in keys:
             continue
-        if not bindings or not bindings[-1] or not bindings[-1][0]:
+        if not bindings or not bindings[0] or not bindings[0][0]:
             keys[name] = None
         else:
-            keysym, _mask, mods, clicks = bindings[-1]
+            keysym, _mask, mods, clicks = bindings[0]
             keys[name] = (keysym, int(mods), int(clicks))
     return keys
 
@@ -260,27 +268,24 @@ def label(key, italian=True, orca_key=None):
     return text
 
 
-def gvariant_entries(value):
-    """entries as GVariant text, for a dconf keyfile."""
-    items = ", ".join("'%s': [%s]" % (name, ", ".join("[%s]" % ", ".join("'%s'" % part for part in binding)
-                                                     for binding in bindings))
-                      for name, bindings in sorted(value.items()))
-    return "{" + items + "}"
-
-
-def dconf_defaults(scheme=DEFAULT_SCHEME):
-    """The dconf keyfile that makes a scheme the default for everyone."""
-    modifiers = ", ".join("'%s'" % key for key in MODIFIERS[scheme])
-    return ("# VabaxOS: Orca's keys, the %s scheme (block 10), for the default profile.\n"
-            "# Written by vabaxos_screen_reader.keymaps --dconf when the package is built.\n"
-            "[org/gnome/orca/default/keybindings]\n"
-            "entries=%s\n"
-            "desktop-modifier-keys=[%s]\n" % (scheme.upper(), gvariant_entries(entries(scheme)), modifiers))
+def json_defaults(scheme=DEFAULT_SCHEME):
+    """VabaxOS's defaults for Orca (store.apply_vabaxos_defaults): the keys
+    of a scheme, the screen reader key, and what Orca says while typing, as
+    NVDA does by default (block 14): the characters written, not every key
+    pressed (Orca said the letter of each quick key in web pages, H, K, D,
+    before the heading or link)."""
+    from .orca48_map import SETTINGS
+    general = {SETTINGS[("typing-echo", "key-echo")][0]: False,
+               SETTINGS[("typing-echo", "character-echo")][0]: True,
+               "orcaModifierKeys": list(MODIFIERS[scheme])}
+    return {"general": general, "keybindings": entries(scheme)}
 
 
 if __name__ == "__main__":
     import sys
-    if sys.argv[1:] == ["--dconf"]:
-        sys.stdout.write(dconf_defaults())
+    import json
+    if sys.argv[1:] == ["--defaults"]:
+        json.dump(json_defaults(), sys.stdout, indent=1, sort_keys=True)
+        sys.stdout.write("\n")
     else:
-        sys.exit("usage: python3 -m vabaxos_screen_reader.keymaps --dconf")
+        sys.exit("usage: python3 -m vabaxos_screen_reader.keymaps --defaults")

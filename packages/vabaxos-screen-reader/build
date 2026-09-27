@@ -1,8 +1,9 @@
 #!/bin/sh
-# Called by scripts/build-packages.sh with the package tree: the dconf
-# defaults for Orca's keys (the NVDA scheme, block 10), written from the
-# same tables the settings window uses.
+# Called by scripts/build-packages.sh with the package tree: VabaxOS's
+# defaults for Orca (the NVDA keys, block 10; typing echo as NVDA, block
+# 14), written from the same tables the settings window uses, and copied
+# into the user's Orca settings by orca-defaults before Orca starts.
 set -e
-mkdir -p "$1/etc/dconf/db/vabaxos.d"
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$1/usr/lib/python3/dist-packages" python3 -m vabaxos_screen_reader.keymaps --dconf \
-    > "$1/etc/dconf/db/vabaxos.d/40-orca-keys"
+mkdir -p "$1/usr/share/vabaxos-screen-reader"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$1/usr/lib/python3/dist-packages" python3 -m vabaxos_screen_reader.keymaps --defaults \
+    > "$1/usr/share/vabaxos-screen-reader/orca-defaults.json"

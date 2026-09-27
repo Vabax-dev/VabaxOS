@@ -42,7 +42,7 @@ class VabaxctlTest(unittest.TestCase):
         ctl.ARCHIVE_SOURCES = os.path.join(d, "vabaxos.sources")
         ctl.VOICE_CONFIG = os.path.join(d, "etc", "voice.conf")
         ctl.VOICE_STATE = os.path.join(d, "state.conf")
-        ctl.output = lambda *command: {"dpkg-query": "0.1.0~alpha.1", "systemctl": "active"}.get(command[0], "")
+        ctl.output = lambda *command: {"dpkg-query": "0.1.0~alpha.1", "pgrep": "1234"}.get(command[0], "")
 
     def tearDown(self):
         for name, value in self.saved.items():

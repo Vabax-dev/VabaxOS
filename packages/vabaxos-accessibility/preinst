@@ -1,0 +1,8 @@
+#!/bin/sh
+# Orca's autostart entry is replaced by VabaxOS's (/usr/libexec/vabaxos/orca-start).
+set -e
+if [ "$1" = install ] || [ "$1" = upgrade ]; then
+    dpkg-divert --package vabaxos-accessibility --rename \
+        --divert /etc/xdg/autostart/orca-autostart.desktop.orca \
+        --add /etc/xdg/autostart/orca-autostart.desktop
+fi

@@ -38,8 +38,10 @@ gettext.bindtextdomain(DOMAIN, LOCALE_DIR)
 gettext.textdomain(DOMAIN)
 _ = gettext.gettext
 
-ORCA_VOICE_PATH = "/org/gnome/orca/default/voices/default/"
-ORCA_SPEECH_PATH = "/org/gnome/orca/default/speech/"
+try:
+    from vabaxos_screen_reader import store as orca_store  # Orca 48's settings (ADR-0027)
+except ImportError:
+    orca_store = None
 LAYOUTS = [("it", "Italiano"), ("us", "English (US)")]
 
 
@@ -144,6 +146,63 @@ class Rows:
         return row
 
 
+class OrcaRows:
+    """Rows bound to Orca's settings (vabaxos_screen_reader.store): Orca 48
+    reads them when it starts, so it starts again two seconds after the
+    last change."""
+
+    def __init__(self):
+        self.store = orca_store.Store() if orca_store else None
+        self._timer = 0
+
+    def changed(self):
+        if self._timer:
+            GLib.source_remove(self._timer)
+        self._timer = GLib.timeout_add(2000, self.reload)
+
+    def reload(self):
+        self._timer = 0
+        if self.store is not None:
+            self.store.reload_orca_if_needed()
+        return GLib.SOURCE_REMOVE
+
+    def number(self, title, subtitle, group_name, key, lower, upper, step, digits=0, sub=None):
+        row = Adw.SpinRow.new_with_range(lower, upper, step)
+        row.set_title(title)
+        row.set_subtitle(subtitle)
+        row.set_digits(digits)
+        if self.store is None:
+            row.set_sensitive(False)
+            return row
+        value = self.store.get(group_name, key, sub)
+        row.set_value(float(value) if value is not None else lower)
+
+        def changed(spin, _pspec):
+            value = spin.get_value()
+            self.store.set(group_name, key, int(round(value)) if digits == 0 else value, sub)
+            self.changed()
+
+        row.connect("notify::value", changed)
+        return row
+
+    def choice(self, title, subtitle, group_name, key, options, sub=None):
+        row = Adw.ComboRow(title=title, subtitle=subtitle)
+        row.set_model(Gtk.StringList.new([label for label, _ in options]))
+        if self.store is None:
+            row.set_sensitive(False)
+            return row
+        values = [value for _, value in options]
+        current = self.store.get(group_name, key, sub)
+        row.set_selected(values.index(current) if current in values else 0)
+
+        def changed(combo, _pspec):
+            self.store.set(group_name, key, values[combo.get_selected()], sub)
+            self.changed()
+
+        row.connect("notify::selected", changed)
+        return row
+
+
 def group(title, description, rows):
     box = Adw.PreferencesGroup(title=title, description=description)
     for row in rows:
@@ -187,32 +246,32 @@ def all_settings_row():
     return row
 
 
-def voice_page(rows):
-    voice = "org.gnome.Orca.Voice"
+def voice_page(rows, orca=None):
+    orca = orca or OrcaRows()
+    voice = "voices/default"
     return [
         group(_("Screen reader"), _("Super+Alt+S turns the screen reader on and off at any time."), [
             rows.switch(_("Screen reader"), _("Orca reads the screen aloud"),
                         "org.gnome.desktop.a11y.applications", "screen-reader-enabled"),
             all_settings_row(),
         ]),
-        group(_("Voice"), _("Changes apply to the next sentences."), [
-            rows.choice(_("Kind of voice"),
+        group(_("Voice"), _("Changes apply two seconds after the last one, when the screen reader starts again."), [
+            orca.choice(_("Kind of voice"),
                         _("eSpeak NG answers at once on every computer; the natural voice "
                           "sounds human but needs a fast computer"),
-                        "org.gnome.Orca.Speech", "synthesizer",
-                        [(_("eSpeak NG, the default"), ""), (_("Natural voice (Kokoro)"), "kokoro")],
-                        path=ORCA_SPEECH_PATH),
-            rows.choice(_("Natural voice"), _("Automatic: Nicola in Italian, Heart in English"),
-                        voice, "family-name",
+                        "speech", "synthesizer",
+                        [(_("eSpeak NG, the default"), ""), (_("Natural voice (Kokoro)"), "kokoro")]),
+            orca.choice(_("Natural voice"), _("Automatic: Nicola in Italian, Heart in English"),
+                        "voice", "family-name",
                         [(_("Automatic"), ""), (_("Nicola, male, Italian"), "im_nicola"),
                          (_("Sara, female, Italian"), "if_sara"), (_("Heart, female, English"), "af_heart"),
-                         (_("Michael, male, English"), "am_michael")], path=ORCA_VOICE_PATH),
-            rows.number(_("Speed"), _("From 0, slowest, to 100, fastest"), voice, "rate", 0, 100, 5,
-                        path=ORCA_VOICE_PATH),
-            rows.number(_("Pitch"), _("From 0, lowest, to 10, highest"), voice, "pitch", 0, 10, 0.5,
-                        digits=1, path=ORCA_VOICE_PATH),
-            rows.number(_("Volume"), _("From 0, silent, to 10, loudest"), voice, "volume", 0, 10, 0.5,
-                        digits=1, path=ORCA_VOICE_PATH),
+                         (_("Michael, male, English"), "am_michael")], sub=voice),
+            orca.number(_("Speed"), _("From 0, slowest, to 100, fastest"), "voice", "rate", 0, 100, 5,
+                        sub=voice),
+            orca.number(_("Pitch"), _("From 0, lowest, to 10, highest"), "voice", "pitch", 0, 10, 0.5,
+                        digits=1, sub=voice),
+            orca.number(_("Volume"), _("From 0, silent, to 10, loudest"), "voice", "volume", 0, 10, 0.5,
+                        digits=1, sub=voice),
         ]),
     ]
 

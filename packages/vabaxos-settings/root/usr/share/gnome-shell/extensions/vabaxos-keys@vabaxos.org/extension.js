@@ -257,17 +257,20 @@ export default class VabaxOSKeys extends Extension {
         this._speak(parts.filter(p => p).join('. '));
     }
 
-    // Orca says it at once; without Orca, a notification.
+    // Orca 48 has no service to say a message (ADR-0027): speech-dispatcher
+    // says it, with the priority of a message, as Orca would; when the
+    // screen reader is off, or spd-say is missing, a notification.
     _speak(text) {
-        Gio.DBus.session.call('org.gnome.Orca.Service', '/org/gnome/Orca/Service', 'org.gnome.Orca.Service',
-            'PresentMessage', new GLib.Variant('(s)', [text]), null, Gio.DBusCallFlags.NONE, 2000, null,
-            (connection, result) => {
-                try {
-                    connection.call_finish(result);
-                } catch {
-                    Main.notify(this.gettext('Where am I'), text);
-                }
-            });
+        const a11y = new Gio.Settings({schema_id: 'org.gnome.desktop.a11y.applications'});
+        if (a11y.get_boolean('screen-reader-enabled')) {
+            try {
+                Gio.Subprocess.new(['spd-say', '-P', 'message', '-N', 'vabaxos-keys', text],
+                    Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_SILENCE);
+                return;
+            } catch {
+            }
+        }
+        Main.notify(this.gettext('Where am I'), text);
     }
 
     _focusDesktop() {

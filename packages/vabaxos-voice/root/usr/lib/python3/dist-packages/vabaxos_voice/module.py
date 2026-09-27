@@ -19,6 +19,7 @@ single characters it cannot say, are spoken by eSpeak NG.
 
 import html
 import io
+import json
 import os
 import queue
 import re
@@ -36,7 +37,6 @@ from .player import make_player
 
 CONFIG = "/etc/speech-dispatcher/modules/kokoro.conf"
 STATE = os.environ.get("VABAXOS_VOICE_STATE", "/var/lib/vabaxos/voice.conf")
-ORCA_SPEECH_PATH = "/org/gnome/orca/default/speech/"
 PHRASES = os.path.join(engine.DATA_DIR, "phrases-{lang}.txt")
 
 _MARK = re.compile(r"<mark\s+name=\"([^\"]*)\"\s*/>")
@@ -119,15 +119,24 @@ def gain_for(volume):
     return (volume + 100) / 100.0
 
 
-def orca_uses_kokoro():
+def orca_uses_kokoro(path=None):
     """The user chose Kokoro for Orca (ADR-0024: eSpeak NG is the default,
-    Kokoro the user's choice in vabaxos-setup)."""
+    Kokoro the user's choice in vabaxos-setup). Orca 48 keeps it in its
+    settings file (ADR-0027): speechServerInfo of the profile it starts
+    with, or of "general"."""
+    if path is None:
+        data_home = os.environ.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
+        path = os.path.join(data_home, "orca", "user-settings.conf")
     try:
-        result = subprocess.run(["gsettings", "get", "org.gnome.Orca.Speech:" + ORCA_SPEECH_PATH,
-                                 "synthesizer"], capture_output=True, text=True, timeout=3)
-    except (OSError, subprocess.SubprocessError):
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
         return False
-    return "kokoro" in result.stdout
+    general = data.get("general") or {}
+    starting = general.get("startingProfile") or ["Default", "default"]
+    profile = (data.get("profiles") or {}).get(starting[-1] if starting else "default") or {}
+    info = profile.get("speechServerInfo", general.get("speechServerInfo"))
+    return isinstance(info, list) and "kokoro" in info
 
 
 class Module:

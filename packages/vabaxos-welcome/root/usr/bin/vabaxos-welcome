@@ -28,6 +28,7 @@ one line each ("say <lang>: <text>", "do <action>").
 
 import gettext
 import glob
+import json
 import os
 import select
 import signal
@@ -350,14 +351,14 @@ def apply_console_font(large):
     run("setupcon", "--force")
 
 
-def desktop_override(settings, rate):
-    """GSettings defaults for the desktop and Orca, from the welcome's choices.
+def desktop_override(settings):
+    """GSettings defaults for the desktop, from the welcome's choices, or
+    None when there are none.
 
     Written as a schema override, so they apply to the live user and to the
     login screen; people can still change them later.
     """
     lines = ["# Written by vabaxos-welcome (ADR-0016): choices made before the desktop."]
-    lines += ["[org.gnome.Orca.Voice]", f"rate={ORCA_RATES[rate]}"]
     if settings.large_text:
         lines += ["[org.gnome.desktop.interface]", "text-scaling-factor=1.5", "cursor-size=48"]
     if settings.high_contrast:
@@ -367,19 +368,37 @@ def desktop_override(settings, rate):
                   "[org.gnome.desktop.a11y.magnifier]", "mag-factor=2.0"]
     if settings.sticky_keys:
         lines += ["[org.gnome.desktop.a11y.keyboard]", "stickykeys-enable=true"]
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n" if len(lines) > 1 else None
+
+
+ORCA_DEFAULTS = "/var/lib/vabaxos/orca-defaults.json"
+
+
+def orca_defaults(rate):
+    """The speed of Orca chosen in the welcome, as a default of VabaxOS for
+    Orca 48 (ADR-0027): orca-defaults copies it into the user's settings
+    before Orca starts, once (vabaxos_screen_reader.store)."""
+    voices = {"default": {"rate": ORCA_RATES[rate], "established": True},
+              "uppercase": {"average-pitch": 7.0}, "hyperlink": {"established": False},
+              "system": {"established": False}}
+    return {"general": {"voices": voices}}
 
 
 def apply_desktop(settings, rate):
-    text = desktop_override(settings, rate)
+    text = desktop_override(settings)
     if DRY_RUN:
-        for line in text.splitlines()[1:]:
+        record(f"do orca rate={ORCA_RATES[rate]}")
+        for line in (text or "").splitlines()[1:]:
             record(f"do gsettings {line}")
         return
-    schemas = "/usr/share/glib-2.0/schemas"
-    with open(f"{schemas}/96_vabaxos-welcome.gschema.override", "w", encoding="utf-8") as f:
-        f.write(text)
-    run("glib-compile-schemas", schemas)
+    os.makedirs(os.path.dirname(ORCA_DEFAULTS), exist_ok=True)
+    with open(ORCA_DEFAULTS, "w", encoding="utf-8") as f:
+        json.dump(orca_defaults(rate), f, indent=1)
+    if text:
+        schemas = "/usr/share/glib-2.0/schemas"
+        with open(f"{schemas}/96_vabaxos-welcome.gschema.override", "w", encoding="utf-8") as f:
+            f.write(text)
+        run("glib-compile-schemas", schemas)
 
 
 def state(_, on):

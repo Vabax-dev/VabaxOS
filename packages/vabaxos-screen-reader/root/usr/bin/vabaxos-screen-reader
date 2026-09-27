@@ -3,7 +3,7 @@
 with profiles and settings for each program (block 9, Vabax's request).
 
     vabaxos-screen-reader
-    vabaxos-screen-reader --status                  profile, and whether Orca answers
+    vabaxos-screen-reader --status                  profiles, speed, and whether Orca runs
     vabaxos-screen-reader --set GROUP KEY VALUE      change one setting, e.g.
         --set speech punctuation-level all   or   --set voices/default rate 60
 
@@ -11,12 +11,13 @@ On the left the list of pages (Voice, Reading, Typing, Documents and web,
 Tables, Sounds and progress, Braille, Mouse, Time and date, Keyboard); on
 the right the settings of the page. At the top: the profile to change, and
 "All programs" or one program, whose settings then win over the profile's.
-Every change is saved at once; most of them also reach the running screen
-reader at once, the others when this window closes (Orca reloads its
-settings). Profiles, ready-made profiles, export and import to a file are
-in the menu of the header bar and in the Profile page.
+Every change is saved at once, and reaches the screen reader when you move
+to another page or close the window: Orca 48 reads its settings when it
+starts, so it starts again (a short silence). Profiles, ready-made
+profiles, export and import to a file are in the menu of the header bar and
+in the Profile page.
 
-Orca 50 keeps its settings in dconf (vabaxos_screen_reader.store).
+Orca 48 keeps its settings in JSON files (vabaxos_screen_reader.store).
 """
 
 import gettext
@@ -116,8 +117,9 @@ class SettingRows:
         def update():
             if row.handler is not None:
                 row.handler_block(row.handler)
-            available = self.window.store.settings(group, sub) is not None
-            row.set_sensitive(available)
+            # Settings of Orca 50 that Orca 48 does not have are hidden.
+            available = self.window.store.available(group, key, sub)
+            row.set_visible(available)
             if available:
                 read()
             self.program_note(row, group, key, sub)
@@ -409,6 +411,9 @@ class ScreenReaderWindow(Adw.ApplicationWindow):
 
     def page_selected(self, _box, row):
         if row is not None:
+            # Orca 48 reads its settings when it starts: the changes of the
+            # page left reach it now.
+            self.store.reload_orca_if_needed()
             self.stack.set_visible_child_name(row.ident)
 
     def key_pressed(self, _controller, keyval, _keycode, _state):
@@ -469,27 +474,22 @@ def command_line(args):
     """--status and --set, without a window; the exit status says if it worked."""
     settings = store.Store()
     if args[0] == "--status":
-        rate_path = settings.orca.setters().get("Rate", [None])[0]
-        rate = None
-        if rate_path:
-            reply = settings.orca._call(rate_path, "org.gnome.Orca.Module", "ExecuteRuntimeGetter",
-                                        GLib.Variant("(s)", ("Rate",)), "(v)")
-            rate = reply[0] if reply else None
-        print(f"orca-service: {'yes' if rate_path else 'no'}")
-        print(f"rate: {rate}")
+        running = settings.orca.running()
+        print(f"orca: {'yes' if running else 'no'}")
+        print(f"rate: {settings.get('voice', 'rate', 'voices/default')}")
         print("profiles: " + ", ".join(internal for _d, internal in store.list_profiles()))
-        return 0 if rate_path else 1
+        return 0 if running else 1
     if args[0] == "--set" and len(args) == 4:
         group, key, text = args[1:]
         sub = None
         if group.startswith("voices/"):
             group, sub = "voice", group
-        if group not in store.SCHEMAS or settings.settings(group, sub) is None:
+        if group not in store.SCHEMAS or not settings.available(group, key, sub):
             print(f"unknown group {args[1]}", file=sys.stderr)
             return 2
         value = parse_value(settings.get(group, key, sub), text)
         settings.set(group, key, value, sub)
-        print("saved, " + ("applied after reload" if settings.pending_reload else "applied at once"))
+        print("saved, applied when Orca starts again")
         settings.reload_orca_if_needed()
         return 0
     print(__doc__)

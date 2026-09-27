@@ -7,7 +7,7 @@
 #                     (optional when fetch or build make all of them)
 #   version           a fixed version (optional): for large data that must
 #                     not be downloaded again with every update of VabaxOS
-#   postinst, postrm  maintainer scripts (optional)
+#   preinst, postinst, prerm, postrm  maintainer scripts (optional)
 #   triggers          dpkg triggers (optional)
 #   fetch             large files downloaded at build time, one per line:
 #                     URL SHA256 PATH (optional; kept in cache/downloads)
@@ -98,7 +98,7 @@ for dir in "$REPO"/packages/*/; do
     { cat "$dir/control"; printf 'Version: %s\n' "$version"; cat "$tree/DEBIAN/fields" 2>/dev/null || true; } \
         > "$tree/DEBIAN/control"
     rm -f "$tree/DEBIAN/fields"
-    for script in postinst postrm; do
+    for script in preinst postinst prerm postrm; do
         if [[ -f "$dir/$script" ]]; then
             install -m 0755 "$dir/$script" "$tree/DEBIAN/$script"
         fi

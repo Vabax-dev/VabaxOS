@@ -4,7 +4,7 @@ Orca, il lettore di schermo di VabaxOS, usa in VabaxOS gli stessi tasti di **NVD
 
 ## Il tasto del lettore di schermo
 
-Nei tasti qui sotto **Ins** è il tasto del lettore di schermo: **Ins**, o **Ins** del tastierino, come in NVDA. Nella pagina Tastiera delle impostazioni del lettore di schermo si può aggiungere **Bloc Maiusc**, ma per ora con un limite: ogni volta che lo premi cambiano anche le maiuscole (Orca 50 sotto Wayland non lo trattiene ancora).
+Nei tasti qui sotto **Ins** è il tasto del lettore di schermo: **Ins**, o **Ins** del tastierino, come in NVDA. Nella pagina Tastiera delle impostazioni del lettore di schermo si può aggiungere **Bloc Maiusc**, ma per ora con un limite: ogni volta che lo premi cambiano anche le maiuscole (sotto Wayland Orca non lo trattiene ancora: da provare con Orca 48).
 
 Sul portatile, nella pagina Tastiera, scegli «Portatile»: alcuni tasti cambiano, perché Orca usa Bloc Maiusc e le lettere per rivedere lo schermo (con lo stesso limite di Bloc Maiusc). La pagina Tasti mostra sempre i tasti giusti per la tua tastiera.
 
@@ -85,7 +85,6 @@ Per ogni comando: il tasto nello schema NVDA (quello di VabaxOS), nello schema J
 - **Cambia il tipo di tasti rapidi:** Ins+Z (JAWS Ins+Maiusc+Z; originale di Orca: Ins+Z)
 - **Cursore di Orca o del programma, nelle pagine:** Ins+Maiusc+F12 (uguale in JAWS; originale di Orca: Ins+F12)
 - **Voce spenta e accesa:** Ins+S (uguale in JAWS; originale di Orca: Ins+S)
-- **Pausa di Orca in questo programma:** Ins+Maiusc+S (uguale in JAWS; originale di Orca: Ctrl+Alt+Maiusc+Q)
 - **Eco dei tasti:** Ins+2 (uguale in JAWS; originale di Orca: nessun tasto)
 - **Livello della punteggiatura:** Ins+P (uguale in JAWS; originale di Orca: nessun tasto)
 - **Come si dicono le maiuscole:** Ins+F8 (uguale in JAWS; originale di Orca: nessun tasto)
@@ -94,7 +93,6 @@ Per ogni comando: il tasto nello schema NVDA (quello di VabaxOS), nello schema J
 - **Preferenze di Orca:** Ins+N (JAWS Ins+J; originale di Orca: Ins+Spazio)
 - **Preferenze di Orca per il programma in uso:** Ins+Ctrl+N (JAWS Ins+Ctrl+J; originale di Orca: Ins+Ctrl+Spazio)
 - **Profilo successivo:** Ins+Ctrl+P (uguale in JAWS; originale di Orca: nessun tasto)
-- **Profilo in uso:** Ins+Maiusc+P (uguale in JAWS; originale di Orca: nessun tasto)
 - **Chiudi Orca:** Ins+Q (JAWS Ins+F4; originale di Orca: nessun tasto)
 
 ### Voce al volo
@@ -113,6 +111,12 @@ Per ogni comando: il tasto nello schema NVDA (quello di VabaxOS), nello schema J
 - **Oggetto precedente:** Ins+4 del tastierino (uguale in JAWS; originale di Orca: Ins+Ctrl+Freccia sinistra)
 - **Oggetto successivo:** Ins+6 del tastierino (uguale in JAWS; originale di Orca: Ins+Ctrl+Freccia destra)
 - **Attiva l'oggetto:** Ins+Invio del tastierino (uguale in JAWS; originale di Orca: Ins+Ctrl+Invio)
+
+### Segnalibri (sul portatile con Ins+Alt+parentesi)
+
+- **Segnalibro successivo:** Ins+Parentesi quadra chiusa (uguale in JAWS; originale di Orca: Ins+B)
+- **Segnalibro precedente:** Ins+Parentesi quadra aperta (uguale in JAWS; originale di Orca: Ins+Maiusc+B)
+- **Vai al segnalibro 1 (con i numeri da 1 a 6; Ins+Alt+numero lo aggiunge):** Ins+Ctrl+1 (uguale in JAWS; originale di Orca: Ins+1)
 
 <!-- tabella dei tasti: fine -->
 

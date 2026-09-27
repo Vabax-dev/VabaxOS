@@ -1,0 +1,18 @@
+#!/bin/sh
+# Starts Orca for the desktop (ADR-0027): Orca 48 has no systemd unit, GNOME
+# starts it from orca-autostart.desktop, which VabaxOS replaces with one
+# running this (the original is diverted by vabaxos-accessibility).
+# - VabaxOS's defaults for Orca (NVDA keys, typing echo, the speed chosen in
+#   the spoken welcome) are copied into the user's settings first;
+# - under Wayland Orca runs without DISPLAY: with it, Orca read and wrote
+#   the keyboard map through Xwayland (xkbcomp) every time it set up its
+#   keys, and GNOME Shell sometimes froze reloading its key bindings
+#   (Orca 50, 2026-09-25); Mutter holds back Orca's keys by itself.
+# Arguments go to Orca (vabaxos-screen-reader starts it with --replace).
+if [ -x /usr/lib/vabaxos-screen-reader/orca-defaults ]; then
+    /usr/lib/vabaxos-screen-reader/orca-defaults || true
+fi
+if [ -n "$WAYLAND_DISPLAY" ] || [ "$XDG_SESSION_TYPE" = wayland ]; then
+    unset DISPLAY
+fi
+exec /usr/bin/orca "$@"

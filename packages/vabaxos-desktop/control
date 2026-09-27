@@ -3,7 +3,7 @@ Architecture: all
 Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
 Section: metapackages
 Priority: optional
-Depends: vabaxos-accessibility, vabaxos-apps, vabaxos-apt, vabaxos-branding, vabaxos-help, vabaxos-kokoro-model, vabaxos-reader, vabaxos-screen-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds, vabaxos-start, vabaxos-update, vabaxos-voice, vabaxos-welcome
+Depends: vabaxos-accessibility, vabaxos-apps, vabaxos-apt, vabaxos-branding, vabaxos-fonts, vabaxos-help, vabaxos-kokoro-model, vabaxos-reader, vabaxos-screen-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds, vabaxos-start, vabaxos-update, vabaxos-voice, vabaxos-welcome
 Description: all of VabaxOS
  This package installs nothing by itself: it depends on every VabaxOS
  package. Updates of VabaxOS bring new components through it: a new

@@ -192,7 +192,8 @@ class WelcomeTest(unittest.TestCase):
         self.assertIn("do localectl set-x11-keymap it", log)
         self.assertIn("do console font TerminusBold 16x32", log)
         self.assertIn("do speakup rate 6", log)
-        for line in ("rate=70", "text-scaling-factor=1.5", "cursor-size=48", "high-contrast=true",
+        self.assertIn("do orca rate=70", log)
+        for line in ("text-scaling-factor=1.5", "cursor-size=48", "high-contrast=true",
                      "screen-magnifier-enabled=true", "mag-factor=2.0", "stickykeys-enable=true"):
             self.assertIn("do gsettings " + line, log)
 
@@ -201,8 +202,8 @@ class WelcomeTest(unittest.TestCase):
         w.press(ENTER, ENTER)
         code, log = w.finish()
         self.assertEqual(code, 0)
-        settings = [line for line in log if line.startswith("do gsettings ")]
-        self.assertEqual(settings, ["do gsettings [org.gnome.Orca.Voice]", "do gsettings rate=50"])
+        settings = [line for line in log if line.startswith(("do gsettings ", "do orca "))]
+        self.assertEqual(settings, ["do orca rate=50"])
 
     def test_italian_accessibility_labels(self):
         w = Welcome("vabaxos.lang=it")
@@ -259,7 +260,7 @@ class WelcomeTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertNotIn("say en: English", log)
         self.assertIn("do gsettings text-scaling-factor=1.5", log)
-        self.assertIn("do gsettings rate=80", log)
+        self.assertIn("do orca rate=80", log)
         self.assertIn("do speakup rate 7", log)
 
     def test_no_install_item_without_installer(self):
