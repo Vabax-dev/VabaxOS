@@ -24,8 +24,8 @@ msgstr "Cerco gli aggiornamenti. Attendi."
 msgid "Cannot look for updates: {error}. Check the network and try again."
 msgstr "Non riesco a cercare gli aggiornamenti: {error}. Controlla la rete e riprova."
 
-msgid "{count} security updates are ready. Open Update VabaxOS to install them."
-msgstr "Ci sono {count} aggiornamenti di sicurezza. Apri Aggiorna VabaxOS per installarli."
+msgid "Security updates were installed. Restart the computer when you can."
+msgstr "Sono stati installati aggiornamenti di sicurezza. Riavvia il computer appena puoi."
 
 msgid "VabaxOS is up to date."
 msgstr "VabaxOS è aggiornato."
@@ -47,6 +47,9 @@ msgstr "Pronto. Gli aggiornamenti verranno installati al prossimo avvio."
 
 msgid "Update finished."
 msgstr "Aggiornamento concluso."
+
+msgid "Update finished. Restart the computer to complete it."
+msgstr "Aggiornamento concluso. Riavvia il computer per completarlo."
 
 msgid "unknown"
 msgstr "sconosciuta"
@@ -71,6 +74,15 @@ msgstr "Archivio di VabaxOS: attivo."
 
 msgid "VabaxOS archive: not set up yet."
 msgstr "Archivio di VabaxOS: non ancora attivo."
+
+msgid "Security updates: by themselves, every day."
+msgstr "Aggiornamenti di sicurezza: automatici, ogni giorno."
+
+msgid "Security updates: only in the installed system."
+msgstr "Aggiornamenti di sicurezza: solo nel sistema installato."
+
+msgid "Restart the computer to complete the updates."
+msgstr "Riavvia il computer per completare gli aggiornamenti."
 
 msgid "Orca is on."
 msgstr "Orca è acceso."

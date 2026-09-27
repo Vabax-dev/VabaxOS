@@ -24,6 +24,7 @@ _ = gettext.gettext
 
 DEBIAN_SOURCES = "/etc/apt/sources.list.d/vabaxos-debian.sources"
 ARCHIVE_SOURCES = "/etc/apt/sources.list.d/vabaxos.sources"
+REBOOT_REQUIRED = "/run/reboot-required"
 VOICE_CONFIG = "/etc/vabaxos/voice.conf"
 VOICE_STATE = "/var/lib/vabaxos/voice.conf"
 ENGINES = ("espeak", "kokoro", "auto")
@@ -70,6 +71,13 @@ def status():
                  else _("Debian day by day, not checked by VabaxOS."))
     lines.append(_("VabaxOS archive: on.") if os.path.exists(ARCHIVE_SOURCES)
                  else _("VabaxOS archive: not set up yet."))
+    # ADR-0028: Debian's security archive of today, installed by itself
+    # (not in the live system).
+    if "security.debian.org" in read(DEBIAN_SOURCES):
+        lines.append(_("Security updates: by themselves, every day.") if not os.path.isdir("/run/live/medium")
+                     else _("Security updates: only in the installed system."))
+    if os.path.exists(REBOOT_REQUIRED):
+        lines.append(_("Restart the computer to complete the updates."))
     lines.append(voice_text())
     # Orca 48 is started by GNOME, not by a systemd unit (ADR-0027).
     orca = output("pgrep", "-u", str(os.getuid()), "-x", "orca")

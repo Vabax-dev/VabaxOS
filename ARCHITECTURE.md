@@ -12,7 +12,7 @@ Dal basso verso l'alto:
 
 1. **Firmware e avvio:** UEFI con Secure Boot oppure BIOS. Shim e GRUB firmati da Debian. Il menu di avvio emette un segnale acustico. (ADR-0003, ADR-0014)
 2. **Kernel:** Linux di Debian, firmato. Speakup, il lettore di schermo del kernel, legge la console. (ADR-0003, ADR-0005)
-3. **Sistema di base:** Debian 13 «trixie» stable a data fissa, con gli aggiornamenti di sicurezza, systemd, NetworkManager, PipeWire e WirePlumber. (ADR-0001, ADR-0027)
+3. **Sistema di base:** Debian 13 «trixie» stable a data fissa, con gli aggiornamenti di sicurezza di oggi installati da soli, systemd, NetworkManager, PipeWire e WirePlumber. (ADR-0001, ADR-0027, ADR-0028)
 4. **Voce e Braille:** speech-dispatcher con eSpeak NG (Piper opzionale), espeakup per la console, BRLTTY per il Braille. (ADR-0005, ADR-0006)
 5. **Accessibilità:** AT-SPI2, il bus attraverso cui le applicazioni descrivono al lettore di schermo cosa c'è sullo schermo. (ADR-0004)
 6. **Desktop:** GNOME 48 su Wayland, con XWayland, configurato da VabaxOS. Orca parte da solo, anche nella schermata di accesso. (ADR-0004, ADR-0005)

@@ -4,20 +4,22 @@
     vabaxos-update              check, and say what there is
     vabaxos-update --now        download and install now
     vabaxos-update --at-restart download now, install at the next start
-    vabaxos-update --daily      the daily check: speaks only for security
+    vabaxos-update --daily      the daily check: speaks only when the
+                                computer must restart for security
 
 Uses PackageKit, the same service as GNOME Software; the administrator
 password is asked by GNOME (polkit), which Orca reads. Every message is
 printed and shown as a desktop notification, which Orca reads wherever the
 focus is. Flatpak applications are updated too.
 
-Nothing is installed unless the user asks (series 0.x, ADR-0020).
-
-With vabaxos-apt, Debian comes from a date of snapshot.debian.org checked
-by VabaxOS, and a newer date arrives as an update of vabaxos-apt. Testing
-has no security archive, so PackageKit sees no security updates there:
-the VabaxOS archive marks a date moved for a security fix with the field
-Vabaxos-Security-Snapshot of vabaxos-apt, and that counts as one.
+Two kinds of updates (ADR-0028):
+- security updates of Debian (and VabaxOS's rebuilt Debian packages)
+  install by themselves every day, with unattended-upgrades (vabaxos-apt);
+  the daily check says when the computer must restart for them;
+- the updates of VabaxOS: with vabaxos-apt, Debian comes from a date of
+  snapshot.debian.org checked by VabaxOS, and a newer date arrives as an
+  update of vabaxos-apt, with the new VabaxOS packages. They are installed
+  only when the user asks (ADR-0020).
 """
 
 import gettext
@@ -32,6 +34,7 @@ _ = gettext.gettext
 
 DEBIAN_SOURCES = "/etc/apt/sources.list.d/vabaxos-debian.sources"
 SNAPSHOT = re.compile(r"snapshot\.debian\.org/archive/debian/(\d{8}T\d{6}Z)")
+REBOOT_REQUIRED = "/run/reboot-required"
 
 
 def notify(text, urgent=False):
@@ -57,16 +60,10 @@ def installed_snapshot(path=DEBIAN_SOURCES):
     return match.group(1) if match else None
 
 
-def security_snapshot(installed):
-    """The newest date moved for security in the VabaxOS archive, if newer
-    than the installed one (APT's lists, refreshed by PackageKit)."""
-    if not installed or not shutil.which("apt-cache"):
-        return None
-    out = subprocess.run(["apt-cache", "show", "vabaxos-apt"], capture_output=True,
-                         text=True, check=False).stdout
-    dates = re.findall(r"^Vabaxos-Security-Snapshot:\s*(\d{8}T\d{6}Z)\s*$", out, re.M | re.I)
-    newest = max(dates, default=None)
-    return newest if newest and newest > installed else None
+def restart_needed(path=REBOOT_REQUIRED):
+    """True when an installed update needs a restart (a new kernel, for
+    example): Debian's packages write /run/reboot-required."""
+    return os.path.exists(path)
 
 
 class Updater:
@@ -124,24 +121,20 @@ def main(argv, updater=None):
     for option, name in (("--now", "now"), ("--at-restart", "restart"), ("--daily", "daily")):
         if option in argv:
             mode = name
-    if mode != "daily":
-        notify(_("Looking for updates. Please wait."))
+    if mode == "daily":
+        # The security updates were installed by themselves.
+        if restart_needed():
+            notify(_("Security updates were installed. Restart the computer when you can."), urgent=True)
+        return 0
+    notify(_("Looking for updates. Please wait."))
     try:
         updater = updater or Updater()
         packages, security = updater.updates()
         snapshot = installed_snapshot()
-        if security_snapshot(snapshot):
-            security += [p for p in packages if p.get_id().startswith("vabaxos-apt;") and p not in security]
     except Exception as error:  # noqa: BLE001 - tell the user in words
-        if mode != "daily":
-            notify(_("Cannot look for updates: {error}. Check the network and try again.").format(error=error))
+        notify(_("Cannot look for updates: {error}. Check the network and try again.").format(error=error))
         return 1
     apps = flatpak_updates()
-    if mode == "daily":
-        if security:
-            notify(_("{count} security updates are ready. Open Update VabaxOS to install them.").format(
-                count=len(security)), urgent=True)
-        return 0
     if not packages and not apps:
         notify(_("VabaxOS is up to date."))
         return 0
@@ -154,14 +147,19 @@ def main(argv, updater=None):
         notify(text + " " + _("To install: vabaxos-update --now, or --at-restart."))
         return 0
     notify(text)
+    # The voice, Orca's start and the VabaxOS services take a new version
+    # of VabaxOS at the next start.
+    vabaxos = False
     try:
         sources = [p for p in packages if p.get_id().startswith("vabaxos-apt;")]
+        vabaxos = bool(sources)
         if sources and mode == "now":
             # A new Debian date first: its packages are seen only after
             # APT reads the new sources.
             updater.install(sources)
             packages, _security = updater.updates()
         if packages:
+            vabaxos = vabaxos or any(p.get_id().startswith("vabaxos-") for p in packages)
             updater.install(packages, at_restart=(mode == "restart"))
         if apps:
             subprocess.run(["flatpak", "update", "--noninteractive"], check=False)
@@ -170,6 +168,8 @@ def main(argv, updater=None):
         return 1
     if mode == "restart":
         notify(_("Ready. The updates will be installed at the next start."))
+    elif vabaxos or restart_needed():
+        notify(_("Update finished. Restart the computer to complete it."))
     else:
         notify(_("Update finished."))
     return 0

@@ -41,7 +41,7 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0017](0017-base-debian-testing-forky.md) | Base di sviluppo: Debian testing «forky» a data fissa (serie 0.x) | Sostituita da 0027 |
 | [0018](0018-menu-start.md) | Menu Start con il logo di VabaxOS (ArcMenu) | Sostituita da 0025 |
 | [0019](0019-voce-naturale-kokoro.md) | Voce naturale Kokoro per il desktop, eSpeak NG come riserva | Accettata |
-| [0020](0020-aggiornamenti-e-sicurezza.md) | Aggiornamenti e sicurezza | Accettata |
+| [0020](0020-aggiornamenti-e-sicurezza.md) | Aggiornamenti e sicurezza | Accettata (sicurezza modificata da 0028) |
 | [0021](0021-firewall-e-cifratura.md) | Firewall e cifratura del disco | Accettata |
 | [0022](0022-nomi-dei-pulsanti-di-gnome-shell.md) | Nomi dei pulsanti di GNOME Shell, corretti da VabaxOS | Accettata |
 | [0023](0023-installare-dal-benvenuto.md) | Installare dal benvenuto, con le scelte di accessibilità | Accettata |
@@ -49,3 +49,4 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0025](0025-menu-start-vabaxos.md) | Il menu Start di VabaxOS, con ricerca e categorie ad albero | Accettata |
 | [0026](0026-pacchetti-debian-corretti.md) | Pacchetti Debian corretti da VabaxOS (speech-dispatcher) | Accettata |
 | [0027](0027-base-debian-stable.md) | Base di VabaxOS: Debian stable «trixie» | Accettata |
+| [0028](0028-sicurezza-subito.md) | Aggiornamenti di sicurezza subito, separati da quelli di VabaxOS | Accettata |

@@ -1,0 +1,36 @@
+// VabaxOS (ADR-0028): security updates arrive at once and install by
+// themselves, every day, with unattended-upgrades; nothing else does.
+// The updates of VabaxOS (new versions, a new Debian date) are installed
+// only when the user asks, with Aggiorna VabaxOS (ADR-0020).
+//
+// Only two origins:
+// - Debian's security archive (security.debian.org, trixie-security);
+// - the component debian-fixes of the VabaxOS archive: the Debian packages
+//   with VabaxOS's fixes (ADR-0026), rebuilt every day at Debian's newest
+//   version. A security update of such a package arrives first from
+//   Debian (its version sorts after VabaxOS's rebuild of the older one),
+//   then the same day with the fixes from debian-fixes.
+// Debian's default list (the point releases of trixie too) is cleared:
+// those come with a new date checked by VabaxOS.
+#clear Unattended-Upgrade::Origins-Pattern;
+Unattended-Upgrade::Origins-Pattern {
+    "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+    "origin=VabaxOS,codename=vabaxos,component=debian-fixes";
+};
+
+// The computer never restarts by itself: vabaxos-update says aloud when a
+// restart is needed (/run/reboot-required).
+Unattended-Upgrade::Automatic-Reboot "false";
+// Nothing is removed by itself: a removal could take away a voice.
+Unattended-Upgrade::Remove-Unused-Dependencies "false";
+Unattended-Upgrade::Remove-New-Unused-Dependencies "false";
+// Never on battery; a laptop being shut down waits for the end.
+Unattended-Upgrade::OnlyOnACPower "true";
+Unattended-Upgrade::InstallOnShutdown "false";
+
+// Every day: refresh the lists and install the security updates
+// (apt-daily.timer, apt-daily-upgrade.timer). Not in the live system:
+// apt-daily*.service.d/50-vabaxos-live.conf.
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";

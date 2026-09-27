@@ -4,6 +4,8 @@
 # - Debian at the date of snapshot.debian.org that this version of VabaxOS
 #   was built and tested with (image/build.conf), so the installed system
 #   gets the Debian packages VabaxOS checked;
+# - Debian's security archive as it is today, not at a date: security
+#   updates arrive at once, by themselves (ADR-0028);
 # - the VabaxOS archive, only when its public key is in keys/: without the
 #   key APT could not check the archive, and apt update would fail.
 set -e
@@ -14,35 +16,36 @@ sources="$tree/etc/apt/sources.list.d"
 mkdir -p "$sources"
 cat > "$sources/vabaxos-debian.sources" <<SOURCES
 # Debian for VabaxOS (ADR-0020, ADR-0027): Debian 13 "$VABAXOS_DISTRIBUTION" stable,
-# with its updates and security archives, at a date checked by VabaxOS. A
-# new date comes with an update of vabaxos-apt, after the automatic tests
-# of VabaxOS passed with it. Its Release files are past their Valid-Until
-# date: APT accepts them (apt.conf.d/50vabaxos-sources).
+# with its updates archive, at a date checked by VabaxOS. A new date comes
+# with an update of vabaxos-apt, after the automatic tests of VabaxOS
+# passed with it. Its Release files are past their Valid-Until date: APT
+# accepts them (apt.conf.d/50vabaxos-sources).
 Types: deb
 URIs: https://snapshot.debian.org/archive/debian/$VABAXOS_SNAPSHOT/
 Suites: $VABAXOS_DISTRIBUTION $VABAXOS_DISTRIBUTION-updates
 Components: main non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
 
+# Debian's security updates (ADR-0028): as soon as Debian publishes them,
+# installed by themselves every day (apt.conf.d/52vabaxos-security).
 Types: deb
-URIs: https://snapshot.debian.org/archive/debian-security/$VABAXOS_SNAPSHOT/
+URIs: https://security.debian.org/debian-security/
 Suites: $VABAXOS_DISTRIBUTION-security
 Components: main non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
 SOURCES
-# Read by the daily check of vabaxos-update from the archive index.
-if [ -n "${VABAXOS_SECURITY_SNAPSHOT:-}" ]; then
-    printf 'Vabaxos-Security-Snapshot: %s\n' "$VABAXOS_SECURITY_SNAPSHOT" > "$tree/DEBIAN/fields"
-fi
 key="$REPO/keys/vabaxos-archive.asc"
 if [ -f "$key" ]; then
     install -D -m 0644 "$key" "$tree/usr/share/keyrings/vabaxos-archive-keyring.asc"
     cat > "$sources/vabaxos.sources" <<SOURCES
-# The VabaxOS archive (ADR-0020): the VabaxOS packages, signed.
+# The VabaxOS archive (ADR-0020), signed: main has the VabaxOS packages,
+# installed with Aggiorna VabaxOS; debian-fixes the Debian packages with
+# VabaxOS's fixes (ADR-0026), rebuilt every day at Debian's newest
+# version and installed by themselves like security updates (ADR-0028).
 Types: deb
 URIs: https://vabax-dev.github.io/VabaxOS/apt/
 Suites: vabaxos
-Components: main
+Components: main debian-fixes
 Signed-By: /usr/share/keyrings/vabaxos-archive-keyring.asc
 SOURCES
 else

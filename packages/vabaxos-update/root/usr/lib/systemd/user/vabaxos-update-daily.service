@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily check for VabaxOS security updates
+Description=Daily notice when security updates need a restart
 Documentation=file:///usr/share/doc/vabaxos-update/copyright
 
 [Service]

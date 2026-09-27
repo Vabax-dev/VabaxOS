@@ -3,10 +3,15 @@ Architecture: all
 Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
 Section: admin
 Priority: optional
-Depends: apt (>= 2.4), debian-archive-keyring, ca-certificates
+Depends: apt (>= 2.4), debian-archive-keyring, ca-certificates, unattended-upgrades
 Description: where VabaxOS gets its updates from
- The sources of APT for VabaxOS (ADR-0020): Debian at a date checked by
- VabaxOS (snapshot.debian.org), not Debian day by day, and the
- signed VabaxOS archive with the VabaxOS packages. APT reads its sources
- only from the files of this package; /etc/apt/sources.list, written by
- the installer and by live-build, is not used.
+ The sources of APT for VabaxOS (ADR-0020, ADR-0028): Debian at a date
+ checked by VabaxOS (snapshot.debian.org), not Debian day by day; Debian's
+ security archive as it is today; and the signed VabaxOS archive with the
+ VabaxOS packages. APT reads its sources only from the files of this
+ package; /etc/apt/sources.list, written by the installer and by
+ live-build, is not used.
+ .
+ Security updates install by themselves every day (unattended-upgrades,
+ only Debian's security archive and VabaxOS's rebuilt Debian packages);
+ the updates of VabaxOS only when the user asks.

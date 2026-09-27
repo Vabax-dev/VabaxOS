@@ -37,11 +37,13 @@ class VabaxctlTest(unittest.TestCase):
         self.dir = tempfile.TemporaryDirectory()
         d = self.dir.name
         self.saved = {name: getattr(ctl, name) for name in
-                      ("DEBIAN_SOURCES", "ARCHIVE_SOURCES", "VOICE_CONFIG", "VOICE_STATE", "output")}
+                      ("DEBIAN_SOURCES", "ARCHIVE_SOURCES", "VOICE_CONFIG", "VOICE_STATE", "REBOOT_REQUIRED",
+                       "output")}
         ctl.DEBIAN_SOURCES = os.path.join(d, "vabaxos-debian.sources")
         ctl.ARCHIVE_SOURCES = os.path.join(d, "vabaxos.sources")
         ctl.VOICE_CONFIG = os.path.join(d, "etc", "voice.conf")
         ctl.VOICE_STATE = os.path.join(d, "state.conf")
+        ctl.REBOOT_REQUIRED = os.path.join(d, "reboot-required")
         ctl.output = lambda *command: {"dpkg-query": "0.1.0~alpha.1", "pgrep": "1234"}.get(command[0], "")
 
     def tearDown(self):
@@ -68,6 +70,19 @@ class VabaxctlTest(unittest.TestCase):
         self.assertIn("date 2026-09-24", out)
         self.assertIn("VabaxOS archive: on.", out)
         self.assertIn("Kokoro, the natural voice", out)
+        self.assertNotIn("Security updates", out)
+        self.assertNotIn("Restart", out)
+
+    def test_status_security_and_restart(self):
+        # ADR-0028: Debian's security archive of today, by itself.
+        with open(ctl.DEBIAN_SOURCES, "w") as f:
+            f.write("URIs: https://snapshot.debian.org/archive/debian/20260926T000000Z/\n"
+                    "URIs: https://security.debian.org/debian-security/\n")
+        open(ctl.REBOOT_REQUIRED, "w").close()
+        _, out, _ = run(["status"])
+        self.assertTrue("Security updates: by themselves, every day." in out
+                        or "Security updates: only in the installed system." in out, out)
+        self.assertIn("Restart the computer to complete the updates.", out)
 
     def test_write_voice_keeps_other_settings(self):
         os.makedirs(os.path.dirname(ctl.VOICE_CONFIG))

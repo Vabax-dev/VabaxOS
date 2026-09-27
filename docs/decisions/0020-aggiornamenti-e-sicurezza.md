@@ -3,7 +3,7 @@
 - **Stato:** Accettata (Vabax, 2026-09-26)
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
-- **Sostituisce / Sostituita da:** —
+- **Sostituisce / Sostituita da:** — (la sicurezza è modificata da [ADR-0028](0028-sicurezza-subito.md): arriva subito da security.debian.org e si installa da sola)
 
 ## Contesto
 
@@ -74,7 +74,7 @@ Accettata da Vabax il 2026-09-26: date controllate di snapshot.debian.org provat
 - `scripts/build-archive.sh` (reprepro) e la CI `archive.yml` pubblicano l'archivio firmato con la chiave dell'archivio (segreto `VABAXOS_ARCHIVE_KEY`); `tests/archive/test-archive.sh` lo prova con una chiave usa e getta. Le chiavi: [docs/sviluppo/chiavi.md](../sviluppo/chiavi.md).
 - Versioni dei pacchetti: la versione seguente di `image/build.conf` con la data dell'ultimo commit (`0.1.0~alpha.1~git20260926104500`); una versione ufficiale usa `VABAXOS_VERSION`.
 - GitHub Pages non accetta file sopra i 100 MB: il modello Kokoro è nel pacchetto `vabaxos-kokoro-model`, a versione fissa, solo nella ISO. Un modello nuovo richiederà un'altra via (per esempio un allegato delle versioni su GitHub).
-- Sicurezza su testing: PackageKit non riconosce aggiornamenti di sicurezza senza un archivio di sicurezza. Una data spostata per sicurezza si segna in `VABAXOS_SECURITY_SNAPSHOT`; `vabaxos-apt` la porta nel campo `Vabaxos-Security-Snapshot`, e il controllo giornaliero di `vabaxos-update` avvisa quando è più recente della data installata.
+- Sicurezza su testing: una data spostata per sicurezza si segnava in `VABAXOS_SECURITY_SNAPSHOT` (campo `Vabaxos-Security-Snapshot`). Tolto con ADR-0027 e ADR-0028: su Debian stable la sicurezza arriva da `trixie-security`, subito.
 - `snapshot.yml`: ogni lunedì prova la data più recente con tutte le prove della ISO (`iso.yml`), e se passano mette la data nuova sul ramo `snapshot/<data>`, pronto per una pull request.
 - `vabaxctl`: stato, voce, aggiornamenti e rapporto da terminale.
 - `vabaxos-desktop`: pacchetto che dipende da tutti i pacchetti VabaxOS. Una versione successiva aggiunge lì i componenti nuovi (per esempio la dettatura nella v0.2), e l'aggiornamento li installa anche su chi ha installato una versione precedente. `tests/packages/test_desktop.py` controlla che non manchi nessun pacchetto.

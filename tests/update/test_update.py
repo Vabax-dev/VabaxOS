@@ -11,7 +11,6 @@ import importlib.machinery
 import importlib.util
 import io
 import os
-import subprocess
 import tempfile
 import types
 import unittest
@@ -98,12 +97,12 @@ class UpdateTest(unittest.TestCase):
 
     def setUp(self):
         update.flatpak_updates = lambda: 0
-        self.saved = update.installed_snapshot, update.security_snapshot
+        self.saved = update.installed_snapshot, update.restart_needed
         update.installed_snapshot = lambda path=None: None
-        update.security_snapshot = lambda installed: None
+        update.restart_needed = lambda path=None: False
 
     def tearDown(self):
-        update.installed_snapshot, update.security_snapshot = self.saved
+        update.installed_snapshot, update.restart_needed = self.saved
 
     def test_up_to_date(self):
         code, out, _ = run([], [])
@@ -132,14 +131,31 @@ class UpdateTest(unittest.TestCase):
         self.assertTrue(client.offline)
         self.assertIn("installed at the next start", out)
 
-    def test_daily_is_silent_without_security(self):
-        code, out, _ = run(["--daily"], [Package("gedit", Info.NORMAL)])
+    def test_daily_is_silent_without_restart(self):
+        # Security updates install by themselves (ADR-0028): nothing to say,
+        # and nothing installed by vabaxos-update.
+        code, out, client = run(["--daily"], [Package("openssl", Info.SECURITY), Package("gedit", Info.NORMAL)])
         self.assertEqual(code, 0)
         self.assertEqual(out, "")
+        self.assertIsNone(client.installed)
 
-    def test_daily_speaks_for_security(self):
-        _, out, _ = run(["--daily"], [Package("openssl", Info.SECURITY)])
-        self.assertIn("1 security updates are ready", out)
+    def test_daily_says_restart(self):
+        update.restart_needed = lambda path=None: True
+        _, out, client = run(["--daily"], [Package("gedit", Info.NORMAL)])
+        self.assertIn("Security updates were installed. Restart the computer when you can.", out)
+        self.assertIsNone(client.installed)
+
+    def test_now_says_restart_after_vabaxos_packages(self):
+        _, out, _ = run(["--now"], [Package("vabaxos-voice", Info.NORMAL)])
+        self.assertIn("Update finished. Restart the computer to complete it.", out)
+        _, out, _ = run(["--now"], [Package("gedit", Info.NORMAL)])
+        self.assertIn("Update finished.\n", out)
+        self.assertNotIn("Restart", out)
+
+    def test_now_says_restart_when_needed(self):
+        update.restart_needed = lambda path=None: True
+        _, out, _ = run(["--now"], [Package("linux-image-amd64", Info.SECURITY)])
+        self.assertIn("Update finished. Restart the computer to complete it.", out)
 
     def test_note_only_without_vabaxos_sources(self):
         _, out, _ = run([], [Package("gedit", Info.NORMAL)])
@@ -147,12 +163,6 @@ class UpdateTest(unittest.TestCase):
         update.installed_snapshot = lambda path=None: "20260924T000000Z"
         _, out, _ = run([], [Package("gedit", Info.NORMAL)])
         self.assertNotIn("straight from Debian,", out)
-
-    def test_daily_speaks_for_a_date_moved_for_security(self):
-        update.installed_snapshot = lambda path=None: "20260924T000000Z"
-        update.security_snapshot = lambda installed: "20261001T000000Z"
-        _, out, _ = run(["--daily"], [Package("vabaxos-apt", Info.NORMAL), Package("gedit", Info.NORMAL)])
-        self.assertIn("1 security updates are ready", out)
 
     def test_new_debian_date_first(self):
         client = FakeClient([Package("vabaxos-apt", Info.NORMAL), Package("gedit", Info.NORMAL)])
@@ -179,18 +189,10 @@ class SnapshotTest(unittest.TestCase):
             self.assertEqual(update.installed_snapshot(f.name), "20260924T000000Z")
         self.assertIsNone(update.installed_snapshot("/nonexistent"))
 
-    def test_security_snapshot_only_when_newer(self):
-        shown = ("Package: vabaxos-apt\nVersion: 0.1.0~alpha.2\nVabaxos-Security-Snapshot: 20261001T000000Z\n\n"
-                 "Package: vabaxos-apt\nVersion: 0.1.0~alpha.1\n\n")
-        real_run, real_which = subprocess.run, update.shutil.which
-        update.subprocess.run = lambda *a, **k: types.SimpleNamespace(stdout=shown)
-        update.shutil.which = lambda name: "/usr/bin/" + name
-        try:
-            self.assertEqual(update.security_snapshot("20260924T000000Z"), "20261001T000000Z")
-            self.assertIsNone(update.security_snapshot("20261001T000000Z"))
-            self.assertIsNone(update.security_snapshot(None))
-        finally:
-            update.subprocess.run, update.shutil.which = real_run, real_which
+    def test_restart_needed(self):
+        with tempfile.NamedTemporaryFile() as f:
+            self.assertTrue(update.restart_needed(f.name))
+        self.assertFalse(update.restart_needed("/nonexistent"))
 
 
 if __name__ == "__main__":
