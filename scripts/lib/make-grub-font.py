@@ -22,9 +22,11 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-CHARS = list(range(0x20, 0x7F)) + list(range(0xA0, 0x180)) + [0x2026, 0x2013, 0x2014, 0x2018, 0x2019,
-                                                              0x201C, 0x201D, 0x20AC, 0x2190, 0x2191,
-                                                              0x2192, 0x2193]
+# In ascending order: GRUB finds a character by binary search in the index,
+# and says "font characters not in ascending order" otherwise.
+CHARS = sorted(set(list(range(0x20, 0x7F)) + list(range(0xA0, 0x180))
+                   + [0x2026, 0x2013, 0x2014, 0x2018, 0x2019, 0x201C, 0x201D, 0x20AC,
+                      0x2190, 0x2191, 0x2192, 0x2193]))
 
 
 def section(name, data):
