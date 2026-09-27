@@ -130,7 +130,21 @@ jobs:
             set -e
             apt-get update -q
             apt-get install -y -q --no-install-recommends git ca-certificates python3 qemu-system-x86 qemu-utils ovmf procps xorriso
-            ./scripts/test-install.sh
+            ./scripts/test-install.sh --keep
+          '
+
+      # From the installed system to the next version, with Aggiorna
+      # VabaxOS, then a restart with speech (ADR-0020, ADR-0028).
+      - name: Upgrade test
+        if: ${{ !cancelled() && hashFiles('out/test-install.qcow2') != '' }}
+        run: |
+          docker run --rm --privileged --device /dev/kvm -v "$PWD:/src" -w /src debian:trixie bash -c '
+            set -e
+            apt-get update -q
+            apt-get install -y -q --no-install-recommends git ca-certificates curl python3 qemu-system-x86 qemu-utils ovmf procps \
+              dpkg-dev gettext reprepro gnupg
+            git config --global --add safe.directory /src
+            ./scripts/test-upgrade.sh
           '
 
       - name: Keep the ISO and the logs

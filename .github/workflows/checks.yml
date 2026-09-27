@@ -30,7 +30,7 @@ jobs:
         run: |
           find scripts tests -name '*.sh' -print0 | xargs -0 shellcheck
           shellcheck image/auto/config
-          shellcheck packages/*/postinst packages/*/postrm packages/*/build packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
+          shellcheck packages/*/preinst packages/*/postinst packages/*/postrm packages/*/build packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
       - name: Every workstation package exists in Debian trixie
         run: |
           grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
@@ -63,8 +63,11 @@ jobs:
             python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas libglib2.0-bin \
             python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0 \
             python3-docx python3-ebooklib python3-pil poppler-utils \
-            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng reprepro gnupg
+            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng reprepro gnupg unattended-upgrades
+      # With the tags: the upgrade test starts from the last version.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       # Large files of the packages (the Kokoro model), downloaded once.
       - uses: actions/cache@v4
         with:
@@ -120,6 +123,9 @@ jobs:
         run: |
           export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
           python3 tests/reader/test_reader.py
+      # Last: it installs the packages into this container.
+      - name: Upgrade from the last version (package scripts, moved files, an update of Orca)
+        run: bash tests/packages/test-upgrade-packages.sh
 
   shell-extension:
     name: GNOME Shell extension (headless GNOME Shell)
