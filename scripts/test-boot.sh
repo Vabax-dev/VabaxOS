@@ -29,6 +29,8 @@ MODE_OPTION=()
 ENTRY=voice
 MENU_LANG=""
 TIMEOUT=600
+SOAK=0
+SPEECH_MODULES=all
 ISO=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -37,7 +39,13 @@ while [[ $# -gt 0 ]]; do
         --entry) ENTRY="${2:?--entry vuole voice, novoice o recovery}"; shift ;;
         --lang) MENU_LANG="${2:?--lang vuole it}"; shift ;;
         --timeout) TIMEOUT="${2:?--timeout vuole i secondi}"; shift ;;
-        -*) printf 'Uso: %s [--secure-boot | --bios] [--entry voice|novoice|recovery|install|welcome-install] [--lang it] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
+        # Only the steps after which speech-dispatcher went silent in the CI
+        # (2026-09-26), N times, then off: see "Speech soak" below.
+        --soak) SOAK="${2:?--soak vuole il numero di giri}"; shift ;;
+        # espeak: speech-dispatcher loads only its eSpeak NG module (no
+        # Kokoro, MBROLA or fallback), to compare.
+        --speech-modules) SPEECH_MODULES="${2:?--speech-modules vuole all o espeak}"; shift ;;
+        -*) printf 'Uso: %s [--secure-boot | --bios] [--entry voice|novoice|recovery|install|welcome-install] [--lang it] [--timeout SECONDI] [--soak GIRI] [--speech-modules all|espeak] [ISO]\n' "$0" >&2; exit 64 ;;
         *) ISO=("$1") ;;
     esac
     shift
@@ -59,7 +67,9 @@ case "$MENU_LANG" in
 esac
 
 mkdir -p "$OUT/logs"
-LOG="$OUT/logs/test-boot-$MODE-$ENTRY${MENU_LANG:+-$MENU_LANG}-$(date +%Y-%m-%d-%H%M%S).log"
+SOAK_NAME=""
+[[ "$SOAK" -gt 0 ]] && SOAK_NAME="-soak-$SPEECH_MODULES"
+LOG="$OUT/logs/test-boot-$MODE-$ENTRY${MENU_LANG:+-$MENU_LANG}$SOAK_NAME-$(date +%Y-%m-%d-%H%M%S).log"
 : > "$LOG"
 free_port() {
     python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'
@@ -400,6 +410,17 @@ speech_probe() {
     send 'spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
     printf 'INFO: voce udibile %s (%s): %s\n' "$1" "$(value "probetime$2")" "$(record "probe-$2" 4)"
 }
+# Where each thread of GNOME Shell waits, with function names: gdb from
+# the network, symbols from debuginfod.debian.net (asked before gdb loads
+# anything: "-ex" came too late and gdb answered its own question "no"),
+# and the JavaScript stack of GNOME Shell. For a frozen GNOME Shell: on
+# 2026-09-26 its main thread, collecting garbage, waited for a lock of the
+# dconf worker thread, which waited for GJS (a deadlock, cause of the
+# freeze at startup).
+shell_threads() {
+    send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 900 gdb -iex "set debuginfod enabled on" -iex "set confirm off" -p "$(pgrep -u user -x gnome-shell)" -batch -ex "set pagination off" -ex "thread apply all bt 40" -ex "call (void)gjs_dumpstack()" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/GDB: /"; journalctl --user -b --no-pager -o cat _COMM=gnome-shell | tail -40 | sed "s/^/GJS: /"; echo GDB""END'
+    TIMEOUT=1200 wait_for '^GDBEND' 'gdb' || exit 1
+}
 if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     # Orca speaks through speech-dispatcher, which starts with Orca.
     ask sd 'for i in $(seq 60); do pgrep -u user -x speech-dispatch >/dev/null && break; sleep 1; done; sleep 5; pgrep -u user -x speech-dispatch >/dev/null && echo yes || echo no' || exit 1
@@ -416,11 +437,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
         # whole journal. One line: typing after sudo would reach sudo.
         send 'sudo -n journalctl -b --no-pager -o short-monotonic _COMM=gnome-shell _COMM=orca | tail -80 | sed "s/^/JOURNAL: /"; p=$(pgrep -u user -x gnome-shell); top -b -H -n 2 -d 3 -p "$p" | tail -20 | sed "s/^/SHELLTOP: /"; sudo -n cat /proc/"$p"/stack | sed "s/^/SHELLSTACK: /"; sudo -n journalctl -b --no-pager -o short-monotonic --since=-3min | grep -v -e speech-disp -e sd_espeak -e sd_kokoro -e sudo | tail -120 | sed "s/^/JOURNALALL: /"'
         ask diagnosis 'echo done' || exit 1
-        # Where each thread of GNOME Shell waits: gdb from the network, with
-        # the symbols from debuginfod.debian.net (only when Orca is silent;
-        # to find the cause of the freeze at startup, 2026-09-26).
-        send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 900 gdb -p "$(pgrep -u user -x gnome-shell)" -batch -ex "set debuginfod enabled on" -ex "set pagination off" -ex "thread apply all bt 40" -ex "call (void)gjs_dumpstack()" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/GDB: /"; journalctl --user -b --no-pager -o cat _COMM=gnome-shell | tail -40 | sed "s/^/GJS: /"; echo GDB""END'
-        TIMEOUT=1200 wait_for '^GDBEND' 'gdb' || exit 1
+        shell_threads
     fi
     ask vt 'loginctl show-session $(loginctl list-sessions --no-legend | awk "\$3==\"user\" && \$4==\"seat0\" {print \$1}" | head -1) -p VTNr --value' || exit 1
     BACK_VT="$(value vt)"
@@ -433,6 +450,80 @@ press "ctrl-alt-f${BACK_VT:-1}"
 if [[ "$WANT_DESKTOP" == yes ]]; then
     sleep 3
     check 'Orca udibile al ritorno dalla console' "$(orca_speaks orca-ritorno)" "$WANT_SOUND"
+fi
+
+# Speech soak (--soak N): only the steps after which speech-dispatcher went
+# silent in the CI (2026-09-26, about one voice run in two: between the
+# Programs window and the keys of Windows), N times, as the full test does
+# them: Writer and Thunderbird open, the Programs window, Super+T, Super+B,
+# copy and paste in the text editor, Alt+F4, the windows closed, Alt+F4 on
+# the desktop. After each round speech-dispatcher alone and Orca must be
+# heard; when they are not, where speech-dispatcher and its modules wait
+# (gdb), the sound streams and the log around the last finished message.
+# --speech-modules espeak: speech-dispatcher with its eSpeak NG module only.
+speech_deep_diag() {
+    send 'pactl list sink-inputs | grep -E "Sink Input|Corked|application.name|media.name|node.name" | sed "s/^/SINKINPUT: /"; L=/run/user/1000/speech-dispatcher/log/debug/speech-dispatcher.log; n=$(grep -anE "got (end|stopped)" $L | tail -1 | cut -d: -f1); [ -n "$n" ] && sed -n "$((n > 80 ? n - 80 : 1)),$((n + 150))p" $L | grep -av -e "LINE here:|200-" -e "Finished reading" | cut -c1-200 | sed "s/^/SPEECHD-WINDOW: /"; tail -n 40 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log 2>/dev/null | cut -c1-200 | sed "s/^/ESPEAK-LOG: /"; echo DEEP""END'
+    wait_for '^DEEPEND' 'diagnosi della voce' || exit 1
+    send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; for p in $(pgrep -u user -x speech-dispatch) $(pgrep -u user -x sd_espeak-ng); do sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 600 gdb -iex "set debuginfod enabled on" -iex "set confirm off" -p "$p" -batch -ex "set pagination off" -ex "thread apply all bt 30" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/SPEECHD-GDB $p: /"; done; echo SPDGDB""END'
+    TIMEOUT=1500 wait_for '^SPDGDBEND' 'gdb della voce' || exit 1
+}
+if [[ "$SOAK" -gt 0 && "$WANT_ORCA" == yes ]]; then
+    BUS='DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus'
+    DESKTOP_ENV="$BUS WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 XDG_CURRENT_DESKTOP=GNOME"
+    if [[ "$SPEECH_MODULES" == espeak ]]; then
+        # An AddModule line turns off the loading of every module found.
+        ask onlyespeak "echo 'AddModule \"espeak-ng\" \"sd_espeak-ng\" \"espeak-ng.conf\"' | sudo -n tee /etc/speech-dispatcher/clients/zzzz-test-espeak-only.conf >/dev/null; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; for t in 1 2; do for i in \$(seq 180); do [ \"\$(systemctl --user is-active orca)\" = active ] && break; sleep 1; done; sleep 15; done; echo \$(pgrep -u user '^sd_' -l | awk '{print \$2}' | sort | paste -sd,)" || exit 1
+        printf 'INFO: moduli di speech-dispatcher: %s\n' "$(value onlyespeak)"
+        ask spddebug2 "$SPD_DEBUG" || exit 1
+    fi
+    silent_round=0
+    for round in $(seq "$SOAK"); do
+        send "env $DESKTOP_ENV libreoffice --writer >/dev/null 2>&1 &"
+        ask "soakwriter$round" "env $BUS vabaxos-a11y-check --wait 90 soffice | tail -1" || exit 1
+        send "env $DESKTOP_ENV thunderbird >/dev/null 2>&1 &"
+        ask "soakmail$round" "env $BUS vabaxos-a11y-check --wait 90 thunderbird | tail -1; pkill -u user -f thunderbird; sleep 2" || exit 1
+        send "env $DESKTOP_ENV vabaxos-apps >/dev/null 2>&1 &"
+        ask "soakapps$round" "env $BUS vabaxos-a11y-check --wait 40 vabaxos-apps | tail -1; pkill -f vabaxos-apps; sleep 5; echo ok" || exit 1
+        press meta_l-t; sleep 2; press esc; sleep 1
+        press meta_l-b; sleep 2; press esc; sleep 1
+        send "printf 'VabaxOS copia\\n' > /tmp/copia.txt; env $DESKTOP_ENV gnome-text-editor --standalone /tmp/copia.txt >/dev/null 2>&1 &"
+        ask "soakeditor$round" "env $BUS vabaxos-a11y-check --wait 40 --focused gnome-text-editor" || exit 1
+        sleep 3
+        press ctrl-a; press ctrl-c; press ctrl-end; press ctrl-v; press ctrl-s
+        sleep 2
+        press ctrl-a; press ctrl-x; press ctrl-s
+        sleep 2
+        press ctrl-v; press ctrl-s
+        sleep 2
+        press alt-f4
+        ask "soakclosed$round" 'sleep 3; pgrep -u user -x gnome-text-edit >/dev/null && echo aperto || echo chiuso' || exit 1
+        ask "soakclosedall$round" 'pkill -u user -x gnome-text-edit; pkill -u user -f vabaxos-setup; pkill -u user -f soffice; pkill -u user -x thunderbird; sleep 3; echo done' || exit 1
+        press alt-f4
+        sleep 3
+        press esc
+        sleep 3
+        ask "soaktime$round" 'date +%T' || exit 1
+        send 'spd-say -w "VabaxOS test" >/dev/null 2>&1 &'
+        SPD="$(record "soak-spd-$round" 4)"
+        press insert-f12
+        F12="$(record "soak-f12-$round" 5)"
+        printf 'INFO: giro %s (%s): speech-dispatcher da solo %s, Orca (Ins+F12) %s\n' "$round" "$(value "soaktime$round")" "$SPD" "$F12"
+        if [[ "$SPD" != yes || "$F12" != yes ]]; then
+            silent_round="$round"
+            orca_state "al giro $round" "soak-$round"
+            speech_deep_diag
+            break
+        fi
+    done
+    if [[ "$silent_round" -eq 0 ]]; then
+        printf 'OK: prova ripetuta della voce (%s, moduli: %s): voce sempre udibile in %s giri\n' "$MODE" "$SPEECH_MODULES" "$SOAK"
+    else
+        printf 'FALLITO: prova ripetuta della voce (%s, moduli: %s): voce persa al giro %s di %s\n' "$MODE" "$SPEECH_MODULES" "$silent_round" "$SOAK"
+        FAILED=$((FAILED + 1))
+    fi
+    stop_vm
+    printf 'Risultato: %d controlli falliti (%s, prova ripetuta della voce).\n' "$FAILED" "$MODE"
+    exit "$FAILED"
 fi
 
 # The first setup opens by itself a few seconds after login: every control
@@ -552,6 +643,11 @@ fi
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|vabaxos-keys|button-names'" || exit 1
     check 'estensioni attive (barra, icone, appunti, finestre, tasti e menu Start, nomi dei pulsanti)' "$(value extensions)" 7
+    # No extension running: GNOME Shell is frozen (also without Orca, CI
+    # 2026-09-26); where its threads wait, once.
+    if [[ "$(value extensions)" == 0 && "${ORCA_HEARD:-}" == "$WANT_SOUND" ]]; then
+        shell_threads
+    fi
     ask buttons "env $BUS gsettings get org.gnome.desktop.wm.preferences button-layout" || exit 1
     check 'pulsanti delle finestre' "$(value buttons)" "'appmenu:minimize,maximize,close'"
     press ctrl-shift-esc
