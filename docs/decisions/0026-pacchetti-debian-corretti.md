@@ -1,9 +1,9 @@
 # ADR-0026: Pacchetti Debian corretti da VabaxOS
 
-- **Stato:** Proposta
+- **Stato:** Accettata (Vabax, 2026-09-27)
 - **Data:** 2026-09-27
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
-- **Sostituisce / Sostituita da:** — (completa ADR-0017 e ADR-0020)
+- **Sostituisce / Sostituita da:** — (completa ADR-0027 e ADR-0020)
 
 ## Contesto
 

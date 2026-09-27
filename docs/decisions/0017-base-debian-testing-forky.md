@@ -1,6 +1,6 @@
 # ADR-0017: Base di sviluppo — Debian testing «forky» a data fissa
 
-- **Stato:** Accettata
+- **Stato:** Sostituita da [ADR-0027](0027-base-debian-stable.md) (Vabax, 2026-09-27)
 - **Data:** 2026-09-24
 - **Responsabile:** Vabax (Project Lead)
 - **Sostituisce in parte:** [ADR-0001](0001-base-debian-trixie.md), per la serie 0.x

@@ -22,7 +22,7 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 
 | ADR | Decisione | Stato |
 |---|---|---|
-| [0001](0001-base-debian-trixie.md) | Base del sistema: Debian 13 «trixie» stable | Accettata; per la serie 0.x vedi ADR-0017 |
+| [0001](0001-base-debian-trixie.md) | Base del sistema: Debian 13 «trixie» stable | Accettata (di nuovo anche per la serie 0.x, ADR-0027) |
 | [0002](0002-build-live-build.md) | Costruzione della ISO: live-build di Debian | Accettata |
 | [0003](0003-kernel-e-avvio.md) | Kernel e avvio: kernel Debian firmato, GRUB con Secure Boot | Accettata |
 | [0004](0004-desktop-gnome-wayland.md) | Desktop: GNOME su Wayland | Accettata |
@@ -38,7 +38,7 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0014](0014-voce-dal-primo-secondo.md) | Voce dal primo secondo: accessibilità attiva di default | Accettata |
 | [0015](0015-versioni-e-rilasci.md) | Versioni, canali e nomi degli artefatti | Accettata |
 | [0016](0016-benvenuto-parlato.md) | Benvenuto parlato all'avvio, prima del desktop | Accettata |
-| [0017](0017-base-debian-testing-forky.md) | Base di sviluppo: Debian testing «forky» a data fissa (serie 0.x) | Accettata |
+| [0017](0017-base-debian-testing-forky.md) | Base di sviluppo: Debian testing «forky» a data fissa (serie 0.x) | Sostituita da 0027 |
 | [0018](0018-menu-start.md) | Menu Start con il logo di VabaxOS (ArcMenu) | Sostituita da 0025 |
 | [0019](0019-voce-naturale-kokoro.md) | Voce naturale Kokoro per il desktop, eSpeak NG come riserva | Accettata |
 | [0020](0020-aggiornamenti-e-sicurezza.md) | Aggiornamenti e sicurezza | Accettata |
@@ -47,4 +47,5 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0023](0023-installare-dal-benvenuto.md) | Installare dal benvenuto, con le scelte di accessibilità | Accettata |
 | [0024](0024-espeak-predefinito.md) | eSpeak NG voce predefinita, Kokoro a scelta dell'utente | Accettata |
 | [0025](0025-menu-start-vabaxos.md) | Il menu Start di VabaxOS, con ricerca e categorie ad albero | Accettata |
-| [0026](0026-pacchetti-debian-corretti.md) | Pacchetti Debian corretti da VabaxOS (speech-dispatcher) | Proposta |
+| [0026](0026-pacchetti-debian-corretti.md) | Pacchetti Debian corretti da VabaxOS (speech-dispatcher) | Accettata |
+| [0027](0027-base-debian-stable.md) | Base di VabaxOS: Debian stable «trixie» | Accettata |
