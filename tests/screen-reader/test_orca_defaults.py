@@ -53,11 +53,51 @@ with open(defaults, "w") as f:
 fourth = store.apply_vabaxos_defaults(defaults, state, local)
 print("NEWDEFAULT:%d,%s,%s" % (fourth, echo.get("typing-echo", "key-echo"),
                                echo.get("keybindings", "entries").get("landmarkGoNext")))
+# The user changes one key; a newer VabaxOS adds a key for another
+# command: it arrives, the user's key stays.
+data = store.load()
+data["profiles"]["default"]["keybindings"]["landmarkGoNext"] = [["q", "461", "0", "1"]]
+store.save(data)
+with open(defaults) as f:
+    newer = json.load(f)
+newer["keybindings"]["headingGoNext"] = [["h", "461", "0", "1"]]
+newer["keybindings"]["landmarkGoNext"] = [["y", "461", "0", "1"]]
+with open(defaults, "w") as f:
+    json.dump(newer, f)
+added = store.apply_vabaxos_defaults(defaults, state, local)
+keys = store.load()["profiles"]["default"]["keybindings"]
+print("NEWKEY:%d,%s,%s" % (added, keys.get("headingGoNext"), keys.get("landmarkGoNext")))
 # The speed chosen in the spoken welcome.
 with open(local, "w") as f:
     json.dump({"general": {"voices": {"default": {"rate": 80, "established": True}}}}, f)
 fifth = store.apply_vabaxos_defaults(defaults, state, local)
 print("WELCOME:%d,%s" % (fifth, echo.get("voice", "rate", "voices/default")))
+'''
+
+
+# VabaxOS 0.1 kept all the keys as one line of the state file: after the
+# upgrade, a key still at 0.1's default gets the new one, a changed key stays.
+LEGACY_CHILD = r'''
+import json, os, sys
+sys.path.insert(0, sys.argv[1])
+from vabaxos_screen_reader import store
+defaults, state = sys.argv[2], sys.argv[3]
+old_keys = {"landmarkGoNext": [["d", "461", "0", "1"]], "headingGoNext": [["h", "461", "0", "1"]]}
+data = store.load()
+data["profiles"].setdefault("default", {"profile": ["Default", "default"]})["keybindings"] = {
+    "landmarkGoNext": [["d", "461", "0", "1"]], "headingGoNext": [["j", "461", "0", "1"]]}
+store.save(data)
+os.makedirs(os.path.dirname(state), exist_ok=True)
+with open(state, "w") as f:
+    f.write("keybindings\t%s\n" % json.dumps(old_keys, sort_keys=True))
+with open(defaults, "w") as f:
+    json.dump({"general": {}, "keybindings": {"landmarkGoNext": [["x", "461", "0", "1"]],
+                                              "headingGoNext": [["k", "461", "0", "1"]]}}, f)
+written = store.apply_vabaxos_defaults(defaults, state, defaults + ".local")
+keys = store.load()["profiles"]["default"]["keybindings"]
+print("LEGACY:%d,%s,%s" % (written, keys["landmarkGoNext"], keys["headingGoNext"]))
+with open(state) as f:
+    print("STATE:%s" % ",".join(sorted(line.split("\t")[0] for line in f)))
 '''
 
 
@@ -94,6 +134,20 @@ class OrcaDefaultsTest(unittest.TestCase):
     def test_given_once(self):
         # Orca removed the user's value that equals its own default: kept.
         self.assertEqual(self.out.get("AFTERRESET"), "0,True", self.err)
+
+    def test_new_key_for_a_user_who_changed_one(self):
+        self.assertEqual(self.out.get("NEWKEY"), "1,[['h', '461', '0', '1']],[['q', '461', '0', '1']]", self.err)
+
+    def test_upgrade_from_the_state_of_0_1(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = dict(os.environ, XDG_DATA_HOME=os.path.join(tmp, "data"), PYTHONDONTWRITEBYTECODE="1")
+            result = subprocess.run([sys.executable, "-c", LEGACY_CHILD, LIBRARY, os.path.join(tmp, "d.json"),
+                                     os.path.join(tmp, "state", "orca-defaults")], env=env,
+                                    capture_output=True, text=True, timeout=60)
+        out = dict(line.split(":", 1) for line in result.stdout.splitlines() if ":" in line)
+        self.assertEqual(out.get("LEGACY"), "1,[['x', '461', '0', '1']],[['j', '461', '0', '1']]",
+                         result.stderr[-3000:])
+        self.assertEqual(out.get("STATE"), "keybindings/headingGoNext,keybindings/landmarkGoNext")
 
     def test_speed_of_the_welcome(self):
         self.assertEqual(self.out.get("WELCOME"), "1,80", self.err)

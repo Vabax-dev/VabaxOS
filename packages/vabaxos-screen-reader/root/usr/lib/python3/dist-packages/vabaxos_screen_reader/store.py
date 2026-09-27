@@ -346,8 +346,9 @@ def apply_vabaxos_defaults(defaults_file=DEFAULTS_FILE, state_path=None, local_f
     writing VabaxOS's default again at the next start would undo the
     user's choice. The defaults already given are listed in state_path,
     with their value: a default changed by a newer VabaxOS is given again,
-    where the user still has the old one. Returns the number of values
-    written."""
+    where the user still has the old one. Keys go command by command, so
+    a newer VabaxOS adds its new keys also for a user who changed some.
+    Returns the number of values written."""
     defaults = read_defaults(defaults_file, local_file)
     if not defaults["general"] and "keybindings" not in defaults:
         return 0
@@ -362,20 +363,30 @@ def apply_vabaxos_defaults(defaults_file=DEFAULTS_FILE, state_path=None, local_f
     except OSError:
         pass
     before = dict(given)
+    # VabaxOS 0.1 listed all the keys as one value: the keys it gave.
+    legacy = {}
+    if "keybindings" in given:
+        try:
+            legacy = json.loads(given.pop("keybindings")) or {}
+        except ValueError:
+            legacy = {}
     data = load()
     profile = data["profiles"].setdefault(DEFAULT_PROFILE, {"profile": ["Default", DEFAULT_PROFILE]})
     written = 0
-    items = [("general/" + name, name, value) for name, value in sorted(defaults.get("general", {}).items())]
-    if "keybindings" in defaults:
-        items.append(("keybindings", None, defaults["keybindings"]))
-    for path, name, value in items:
+    items = [("general/" + name, name, None, value) for name, value in sorted(defaults.get("general", {}).items())]
+    items += [("keybindings/" + command, None, command, keys)
+              for command, keys in sorted((defaults.get("keybindings") or {}).items())]
+    for path, name, command, value in items:
         text = json.dumps(value, sort_keys=True)
         old = given.get(path)
+        if old is None and command in legacy:
+            old = json.dumps(legacy[command], sort_keys=True)
         if old == text:
+            given[path] = text
             continue
         given[path] = text
-        if name is None:
-            mine = profile.get("keybindings") or None
+        if command is not None:
+            mine = (profile.get("keybindings") or {}).get(command)
         else:
             mine = profile.get(name, data["general"].get(name))
         if mine is not None:
@@ -383,8 +394,10 @@ def apply_vabaxos_defaults(defaults_file=DEFAULTS_FILE, state_path=None, local_f
             # the new default replaces it.
             if old is None or json.dumps(mine, sort_keys=True) != old:
                 continue
-        if name is None:
-            profile["keybindings"] = value
+        if command is not None:
+            if not isinstance(profile.get("keybindings"), dict):
+                profile["keybindings"] = {}
+            profile["keybindings"][command] = value
         else:
             profile[name] = value
         written += 1
