@@ -6,7 +6,9 @@ Dove si incollano:
 
 - GNOME Shell: <https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/new> (serve un account di GitLab di GNOME);
 - Orca: <https://gitlab.gnome.org/GNOME/orca/-/issues/new> (stesso account);
-- Debian: un messaggio di posta a `submit@bugs.debian.org`, con le prime righe esattamente come sono scritte qui sotto.
+- Debian: un messaggio di posta a `submit@bugs.debian.org`, con le prime righe esattamente come sono scritte qui sotto;
+- speech-dispatcher: <https://github.com/brailcom/speechd/issues/new> (serve un account di GitHub; il repository non è fra quelli che la sessione di sviluppo può usare);
+- GJS: <https://gitlab.gnome.org/GNOME/gjs/-/issues/new> (account di GitLab di GNOME).
 
 Prima di inviare, conviene cercare se qualcuno l'ha già segnalato: il titolo, o le parole principali, nella pagina delle segnalazioni del progetto.
 
@@ -84,7 +86,61 @@ Configuration: lb config --distribution forky --debian-installer live
 https://github.com/Vabax-dev/VabaxOS/tree/main/image).
 ```
 
+## 6. speech-dispatcher: la voce si ferma per sempre (filo degli eventi mai svegliato)
+
+Causa del silenzio di speech-dispatcher nelle prove (2026-09-27): riprodotto nella macchina virtuale con solo eSpeak NG e in un sistema Debian forky minimo con `tests/upstream/speechd-reply-race.py`; con la correzione qui sotto 200 giri della prova e 2000 messaggi senza nessun blocco.
+
+**Titolo:** Server audio: speech stops for good when a command with a reply arrives while a module sends audio (event thread never woken)
+
+**Testo:**
+
+> speech-dispatcher 0.12.1 (Debian 0.12.1-5), also current master. With server-side audio, speech sometimes stops for good until speech-dispatcher is restarted: messages are queued, `output_stop()` sends STOP again and again, nothing is spoken. We hit it about once in two automatic test runs with Orca 50 and the espeak-ng module.
+>
+> Stacks when it happens: the module (sd_espeak-ng) is blocked in `write()` of a 705 audio message in `module_tts_output_send_server()`, its stdout pipe full; the server's output thread waits in `output_read_event()` (output.c:359, `pthread_cond_wait(&output->event_cond, ...)`), while `speaking_module` shows `reading_message = 0, event = NULL, reading_events = 1`: nobody reads the module any more. Just before, the log has `200 OK VOICE LIST SENT`: Orca asked for the voices while the module was speaking.
+>
+> Cause: in `output_read_reply()`, after reading, the reply reader sets `reading_message = FALSE` and signals `reply_cond`. The event thread waits on `event_cond` for `reading_message` to drop, so if the reply reader got its reply, the event thread is never woken. `output_read_event()` does the symmetric thing correctly (it signals `reply_cond`, where reply readers wait).
+>
+> Reproducer: https://github.com/Vabax-dev/VabaxOS/blob/main/tests/upstream/speechd-reply-race.py (a long message, then LIST VOICES from a second connection, then a probe message that must end): stuck at round 1 or 2 without the fix, no stall in 200 rounds with it.
+>
+> Fix:
+>
+> ```diff
+> --- a/src/server/output.c
+> +++ b/src/server/output.c
+> @@ -315,7 +315,8 @@
+>  			message = output_read_message(output);
+>  			pthread_mutex_lock(&output->read_mutex);
+>  			output->reading_message = FALSE;
+> -			pthread_cond_signal(&output->reply_cond);
+> +			/* The event thread may be waiting for us to stop reading */
+> +			pthread_cond_signal(&output->event_cond);
+>  			if (!message)
+>  				/* Module broke */
+>  				break;
+> ```
+
+## 7. GJS: GNOME Shell si blocca all'avvio (toggle queue e GSettings)
+
+Causa del blocco di GNOME Shell all'avvio (circa 2 avvii su 10): riprodotto in 20 secondi in un sistema Debian forky minimo con `tests/upstream/gjs-gsettings-deadlock.js`, con le stesse pile di GNOME Shell.
+
+**Titolo:** Deadlock between the toggle queue lock and the GSettings backend lock (GC sweep vs dconf worker)
+
+**Testo:**
+
+> GJS 1.88.1 (Debian 1.89.2+really1.88.1-1), GLib 2.90.0, dconf 51.0; the code involved is the same in master. GNOME Shell 50.5 froze at login in about 2 boots out of 10 in our automatic tests.
+>
+> Main thread: GC → `ObjectInstance::update_heap_wrapper_weak_pointers()` takes the toggle queue lock for the whole sweep → `disassociate_js_gobject()` → `release_native_object()` → `g_object_remove_toggle_ref()` → last unref of a GSettings → weak notify `g_settings_backend_watch_weak_notify()` → waits for `backend->priv->lock`.
+>
+> "dconf worker" thread: a change written by another process → `g_settings_backend_dispatch_signal()` holds `backend->priv->lock` while it calls `g_weak_ref_get()` on every watched GSettings → a JavaScript-owned one goes from 1 to 2 references → `wrapped_gobj_toggle_notify()` → `ToggleQueue::lock()` spins for ever (a whole CPU).
+>
+> It is a variant of #558 (fixed by !895 for the weak_locations lock): here any code that runs while a GObject is finalized under the toggle queue lock can deadlock with another thread that toggles up while holding that code's lock.
+>
+> Reproducer (20 lines): https://github.com/Vabax-dev/VabaxOS/blob/main/tests/upstream/gjs-gsettings-deadlock.js — GSettings objects with a signal handler created and dropped with a GC after each batch, while another process changes a watched key; it deadlocks within seconds, with the same two stacks.
+>
+> A possible direction: collect the objects to release during the sweep and release them (the final unref) after the toggle queue lock is dropped, so that no finalization code runs under it.
+
 ## Stato
 
 - 1, 2, 3, 4, 5: testi pronti, non ancora inviati (2026-09-26). Quando una segnalazione è inviata, scrivere qui il suo indirizzo.
+- 6, 7: testi pronti (2026-09-27), non ancora inviati.
 - ArcMenu (il separatore senza nome): non serve più, ArcMenu è stato tolto da VabaxOS (ADR-0025).
