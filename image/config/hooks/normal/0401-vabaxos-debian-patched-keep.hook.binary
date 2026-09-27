@@ -1,0 +1,23 @@
+#!/bin/sh
+# The Debian packages rebuilt by VabaxOS stay in the installed system
+# (ADR-0026).
+#
+# live-build lists the packages the installer removes from the installed
+# system (live/filesystem.packages-remove) by comparing "dpkg-query -W"
+# (name and version) before and after the live-only packages and the hooks.
+# The chroot hook 0400-vabaxos-debian-patched gives speech-dispatcher, GJS
+# and their libraries a new version (+0vabaxos1), so they were on that
+# list: the installer purged them, and with them GNOME Shell, GDM, Orca and
+# the VabaxOS packages (CI, 2026-09-27). Binary hooks run in binary/, after
+# the list is written.
+set -e
+
+list=live/filesystem.packages-remove
+[ -f "$list" ] || exit 0
+awk '$2 ~ /\+0vabaxos[0-9]+$/ { print $1 }' live/filesystem.packages > "$list.vabaxos"
+if [ -s "$list.vabaxos" ]; then
+    grep -vxF -f "$list.vabaxos" "$list" > "$list.new" || true
+    echo "vabaxos-debian-patched: kept in the installed system: $(tr '\n' ' ' < "$list.vabaxos")"
+    mv "$list.new" "$list"
+fi
+rm -f "$list.vabaxos"
