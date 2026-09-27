@@ -6,22 +6,20 @@ name: Speech soak
 # eSpeak NG module only (test-boot.sh --soak, --speech-modules). When the
 # voice is lost, the serial log has where speech-dispatcher waits (gdb),
 # its sound streams and its log around the last message it finished.
-# Started by hand: it is a diagnosis, not a check of each block.
+# It is a diagnosis, not a check of each block.
 
 on:
-  workflow_dispatch:
+  # Started from iso.yml (input soak_iso_run): a workflow started by hand
+  # must be on main, and this one is needed before its branch is.
+  workflow_call:
     inputs:
       iso_run:
-        description: Run of the ISO workflow whose ISO to test
         type: string
         required: true
       modules:
-        description: Speech modules of speech-dispatcher (all or espeak)
-        type: choice
-        options: [all, espeak]
+        type: string
         default: all
       rounds:
-        description: Rounds of the steps
         type: string
         default: '12'
 
