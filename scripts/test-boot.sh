@@ -460,12 +460,13 @@ fi
 # copy and paste in the text editor, Alt+F4, the windows closed, Alt+F4 on
 # the desktop. After each round speech-dispatcher alone and Orca must be
 # heard; when they are not, where speech-dispatcher and its modules wait
-# (gdb), the sound streams and the log around the last finished message.
+# (gdb, with the state of the module that speaks), the sound streams and
+# the speech-dispatcher log around the last second the module wrote.
 # --speech-modules espeak: speech-dispatcher with its eSpeak NG module only.
 speech_deep_diag() {
-    send 'pactl list sink-inputs | grep -E "Sink Input|Corked|application.name|media.name|node.name" | sed "s/^/SINKINPUT: /"; L=/run/user/1000/speech-dispatcher/log/debug/speech-dispatcher.log; n=$(grep -anE "got (end|stopped)" $L | tail -1 | cut -d: -f1); [ -n "$n" ] && sed -n "$((n > 80 ? n - 80 : 1)),$((n + 150))p" $L | grep -av -e "LINE here:|200-" -e "Finished reading" | cut -c1-200 | sed "s/^/SPEECHD-WINDOW: /"; tail -n 40 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log 2>/dev/null | cut -c1-200 | sed "s/^/ESPEAK-LOG: /"; echo DEEP""END'
+    send 'pactl list sink-inputs | grep -E "Sink Input|Corked|application.name|media.name|node.name" | sed "s/^/SINKINPUT: /"; L=/run/user/1000/speech-dispatcher/log/debug/speech-dispatcher.log; T=$(tail -n 1 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log | grep -o "[0-9][0-9]:[0-9][0-9]:[0-9][0-9]"); [ -n "$T" ] && awk -v t="$T" "BEGIN { split(t, a, \":\"); s = a[1] * 3600 + a[2] * 60 + a[3] } { split(\$4, b, \":\"); x = b[1] * 3600 + b[2] * 60 + b[3]; if (x >= s - 2 && x <= s + 1) print }" $L | cut -c1-200 | tail -n 1500 | sed "s/^/SPEECHD-WINDOW: /"; tail -n 40 /run/user/1000/speech-dispatcher/log/debug/espeak-ng.log 2>/dev/null | cut -c1-200 | sed "s/^/ESPEAK-LOG: /"; echo DEEP""END'
     wait_for '^DEEPEND' 'diagnosi della voce' || exit 1
-    send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; for p in $(pgrep -u user -x speech-dispatch) $(pgrep -u user -x sd_espeak-ng); do sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 600 gdb -iex "set debuginfod enabled on" -iex "set confirm off" -p "$p" -batch -ex "set pagination off" -ex "thread apply all bt 30" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/SPEECHD-GDB $p: /"; done; echo SPDGDB""END'
+    send 'sudo apt-get update -qq >/dev/null 2>&1; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq gdb >/dev/null 2>&1; for p in $(pgrep -u user -x speech-dispatch) $(pgrep -u user -x sd_espeak-ng); do sudo env DEBUGINFOD_URLS=https://debuginfod.debian.net timeout 600 gdb -iex "set debuginfod enabled on" -iex "set confirm off" -p "$p" -batch -ex "set pagination off" -ex "thread apply all bt 30" -ex "p *speaking_module" -ex "p output_stop_requested" -ex "p output_pause_requested" -ex "p output_end_queued" -ex "p SPEAKING" -ex "p speaking_uid" 2>&1 | grep -v -e "^\\[New LWP" -e "^Reading" -e "^Download" | sed "s/^/SPEECHD-GDB $p: /"; done; echo SPDGDB""END'
     TIMEOUT=1500 wait_for '^SPDGDBEND' 'gdb della voce' || exit 1
 }
 if [[ "$SOAK" -gt 0 && "$WANT_ORCA" == yes ]]; then
