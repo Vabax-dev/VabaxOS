@@ -131,6 +131,11 @@ def orca_uses_kokoro():
 
 
 class Module:
+    # Maximum number of threads left behind by stuck messages.
+    MAX_STUCK_THREADS = 5
+    _stuck_count = 0
+    _stuck_lock = threading.Lock()
+
     def __init__(self, out=sys.stdout, config=CONFIG, state=STATE):
         self.out = out
         self.out_lock = threading.Lock()
@@ -272,7 +277,14 @@ class Module:
                 running.terminate = True
             self.job.join(limit)
             if self.job.is_alive():
-                log("a message did not stop: new player")
+                # Thread is stuck: if we've accumulated too many stuck threads,
+                # exit to prevent OOM. Speech Dispatcher will restart us.
+                with Module._stuck_lock:
+                    Module._stuck_count += 1
+                    if Module._stuck_count >= Module.MAX_STUCK_THREADS:
+                        log(f"too many stuck threads ({Module._stuck_count}): exiting to prevent OOM")
+                        sys.exit(1)
+                log(f"a message did not stop: new player (stuck count: {Module._stuck_count})")
                 # The server waits for the end of that message: say it
                 # stopped, as the message itself would have.
                 if not getattr(self.cancel, "began", False):

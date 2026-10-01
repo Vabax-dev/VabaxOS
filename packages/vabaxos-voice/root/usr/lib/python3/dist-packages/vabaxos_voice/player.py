@@ -70,15 +70,24 @@ class Player:
         data = np.ascontiguousarray(pcm, dtype=np.int16)
         error = ctypes.c_int(0)
         with self.lock:
-            self._open()
-            for start in range(0, len(data), self.chunk):
-                if cancelled():
-                    self.lib.pa_simple_flush(self.stream, ctypes.byref(error))
-                    return False
-                piece = data[start:start + self.chunk]
-                if self.lib.pa_simple_write(self.stream, piece.ctypes.data, piece.nbytes, ctypes.byref(error)) < 0:
+            try:
+                self._open()
+                for start in range(0, len(data), self.chunk):
+                    if cancelled():
+                        self.lib.pa_simple_flush(self.stream, ctypes.byref(error))
+                        return False
+                    piece = data[start:start + self.chunk]
+                    if self.lib.pa_simple_write(self.stream, piece.ctypes.data, piece.nbytes, ctypes.byref(error)) < 0:
+                        raise OSError(f"sound server write failed (error {error.value})")
+            except OSError:
+                # Close the stream outside the lock to prevent deadlock.
+                # The finally block releases the lock first.
+                self._should_close = True
+                raise
+            finally:
+                if hasattr(self, '_should_close') and self._should_close:
                     self.close()
-                    raise OSError(f"sound server write failed (error {error.value})")
+                    delattr(self, '_should_close')
         return True
 
     def drain(self, cancelled, limit=2.0):

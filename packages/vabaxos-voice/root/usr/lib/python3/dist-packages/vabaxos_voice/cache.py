@@ -23,6 +23,9 @@ def cache_dir():
 
 
 class PhraseCache:
+    # Maximum entries in the seen counter to prevent unbounded memory growth.
+    MAX_SEEN_ENTRIES = 10000
+
     def __init__(self, directory=None, max_bytes=96 * 1024 * 1024):
         self.directory = directory or cache_dir()
         self.max_bytes = max_bytes
@@ -48,7 +51,17 @@ class PhraseCache:
         path = self._path(voice, key)
         try:
             pcm = np.fromfile(path, dtype=np.int16)
-        except OSError:
+            # Validate: audio should be reasonable (not empty, not huge).
+            # Corrupted cache files after crashes could have any size.
+            if len(pcm) == 0 or len(pcm) > 10_000_000:  # ~7 minutes at 24kHz
+                os.unlink(path)  # Remove corrupted file
+                return None
+        except (OSError, ValueError):
+            # ValueError: cannot reshape, wrong size, etc.
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
             return None
         self._remember(key, pcm)
         return pcm
@@ -59,6 +72,12 @@ class PhraseCache:
         with self.lock:
             self.seen[key] += 1
             persist = persist or self.seen[key] >= 2
+            # Limit the size of the seen counter to prevent unbounded growth.
+            if len(self.seen) > self.MAX_SEEN_ENTRIES:
+                # Remove the least common entries.
+                to_remove = len(self.seen) - self.MAX_SEEN_ENTRIES + 1000
+                for k, _ in self.seen.most_common()[-(to_remove):]:
+                    del self.seen[k]
         if persist:
             self._write(self._path(voice, key), pcm)
 
@@ -79,7 +98,15 @@ class PhraseCache:
         try:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             tmp = path + ".tmp"
-            pcm.astype(np.int16).tofile(tmp)
+            # Write with fsync to ensure durability and prevent corruption
+            # after crashes (empty cache files or truncated data).
+            data = pcm.astype(np.int16).tobytes()
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+            try:
+                os.write(fd, data)
+                os.fsync(fd)
+            finally:
+                os.close(fd)
             os.replace(tmp, path)
         except OSError:
             pass

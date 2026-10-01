@@ -46,8 +46,11 @@ class Phonemizer:
         self.lib.espeak_TextToPhonemes.argtypes = [ctypes.POINTER(ctypes.c_void_p), ctypes.c_int, ctypes.c_int]
         self.lib.espeak_TextToPhonemes.restype = ctypes.c_char_p
         # AUDIO_OUTPUT_SYNCHRONOUS: no audio device is opened.
-        if self.lib.espeak_Initialize(2, 0, None, 0) < 0:
-            raise RuntimeError("espeak-ng cannot start")
+        # Initialize with lock to prevent race condition if two threads
+        # create Phonemizer simultaneously.
+        with self._lock:
+            if self.lib.espeak_Initialize(2, 0, None, 0) < 0:
+                raise RuntimeError("espeak-ng cannot start")
         self.language = None
 
     def _words(self, text):
@@ -107,6 +110,11 @@ class Sonic:
             lib.sonicWriteShortToStream(stream, data.ctypes.data_as(ctypes.POINTER(ctypes.c_short)), len(data))
             lib.sonicFlushStream(stream)
             count = lib.sonicSamplesAvailable(stream)
+            # Validate count: corrupted state could return huge values.
+            # Sonic should never produce more than 3x the input (speed 0.33).
+            count = min(count, len(data) * 3)
+            if count <= 0:
+                return np.zeros(0, dtype=np.int16)
             out = np.zeros(count, dtype=np.int16)
             lib.sonicReadShortFromStream(stream, out.ctypes.data_as(ctypes.POINTER(ctypes.c_short)), count)
             return out
@@ -167,6 +175,10 @@ class Kokoro:
                 "style": np.asarray(style, dtype=np.float32).reshape(1, -1), "speed": speed}
         with self._run_lock:
             audio = self.session.run(None, feed, run_options)[0].ravel()
+            # If terminated, give ONNX threads time to notice before deallocation.
+            if run_options and getattr(run_options, 'terminate', False):
+                import time
+                time.sleep(0.05)
         pcm = (np.clip(audio, -1, 1) * 32767).astype(np.int16)
         return trim(pcm)
 

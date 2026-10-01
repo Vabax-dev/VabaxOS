@@ -99,7 +99,15 @@ def uri_opener(uri):
 
 
 def command_runner(command):
-    return lambda context=None: subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    """Runs a command, logging errors if it fails to start."""
+    def runner(context=None):
+        try:
+            subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError as error:
+            # Log the error (could also show a notification to the user).
+            import sys
+            print(f"vabaxos-start: cannot run {command}: {error}", file=sys.stderr)
+    return runner
 
 
 def all_apps():

@@ -157,8 +157,20 @@ export default class ButtonNamesExtension extends Extension {
             const actor = stack.pop();
             if (isLeaf(actor))
                 continue;
-            if (actor._vabaxosChildAdded === undefined)
+            if (actor._vabaxosChildAdded === undefined) {
                 actor._vabaxosChildAdded = actor.connect('child-added', this._onChildAdded);
+                // Disconnect when the actor is destroyed to prevent memory leak.
+                actor.connect('destroy', () => {
+                    if (actor._vabaxosChildAdded !== undefined) {
+                        actor.disconnect(actor._vabaxosChildAdded);
+                        delete actor._vabaxosChildAdded;
+                    }
+                    if (actor._vabaxosIconChanged !== undefined) {
+                        actor._vabaxosIconChanged.forEach(id => actor.disconnect(id));
+                        delete actor._vabaxosIconChanged;
+                    }
+                });
+            }
             this._check(actor);
             stack.push(...actor.get_children());
         }
@@ -196,6 +208,13 @@ export default class ButtonNamesExtension extends Extension {
                 icon.connect('notify::icon-name', recheck),
                 icon.connect('notify::gicon', recheck),
             ];
+            // Disconnect when the icon is destroyed to prevent memory leak.
+            icon.connect('destroy', () => {
+                if (icon._vabaxosIconChanged !== undefined) {
+                    icon._vabaxosIconChanged.forEach(id => icon.disconnect(id));
+                    delete icon._vabaxosIconChanged;
+                }
+            });
         }
         if (iconName && this._names[iconName])
             return this._names[iconName];
