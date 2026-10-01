@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Diagnostica VabaxOS
+Name[en]=VabaxOS Doctor
+Comment=Controlla che l'accessibilità funzioni correttamente
+Comment[en]=Check that accessibility is working correctly
+Icon=applications-system
+Exec=vabaxos-doctor
+Terminal=false
+Categories=Accessibility;System;
+Keywords=accessibility;diagnose;check;doctor;test;
+StartupNotify=true

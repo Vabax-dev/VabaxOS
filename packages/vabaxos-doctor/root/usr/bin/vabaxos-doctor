@@ -1,0 +1,174 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 VabaxOS Contributors
+
+"""VabaxOS Doctor - Diagnostica dell'accessibilità.
+
+Controlla che tutti i componenti di accessibilità funzionino:
+- Audio e sintesi vocale
+- Lettore di schermo
+- Estensioni GNOME
+- Risorse di sistema
+- Rete
+
+Uso:
+    vabaxos-doctor          # Interfaccia grafica
+    vabaxos-doctor --cli    # Modalità terminale
+    vabaxos-doctor --speak  # Con sintesi vocale
+"""
+
+import argparse
+import sys
+
+from vabaxos_doctor import Doctor, Status
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Diagnostica dell'accessibilità di VabaxOS"
+    )
+    parser.add_argument(
+        "--cli",
+        action="store_true",
+        help="Modalità terminale (senza interfaccia grafica)"
+    )
+    parser.add_argument(
+        "--speak",
+        action="store_true",
+        help="Legge i risultati con la sintesi vocale"
+    )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Mostra dettagli completi"
+    )
+
+    args = parser.parse_args()
+
+    if not args.cli:
+        # Modalità grafica
+        try:
+            from vabaxos_doctor.window import main as gui_main
+            return gui_main()
+        except ImportError as e:
+            print(f"Errore: impossibile avviare l'interfaccia grafica: {e}", file=sys.stderr)
+            print("Usa --cli per la modalità terminale.", file=sys.stderr)
+            return 1
+
+    # Modalità CLI
+    return run_cli(args.verbose, args.speak)
+
+
+def run_cli(verbose=False, speak=False):
+    """Esegue la diagnostica in modalità terminale."""
+    doctor = Doctor()
+
+    print("VabaxOS Doctor - Diagnostica dell'accessibilità")
+    print("=" * 60)
+    print()
+
+    if doctor.is_live:
+        print("ℹ Modalità: Sistema live")
+    print()
+
+    print("Esecuzione controlli...")
+    print()
+
+    results = doctor.run_all_checks()
+
+    # Simboli per stato
+    symbols = {
+        Status.OK: "✓",
+        Status.WARNING: "⚠",
+        Status.ERROR: "✗",
+        Status.SKIPPED: "○"
+    }
+
+    # Colori ANSI (se il terminale li supporta)
+    if sys.stdout.isatty():
+        colors = {
+            Status.OK: "\033[32m",      # Verde
+            Status.WARNING: "\033[33m",  # Giallo
+            Status.ERROR: "\033[31m",    # Rosso
+            Status.SKIPPED: "\033[90m",  # Grigio
+        }
+        reset = "\033[0m"
+        bold = "\033[1m"
+    else:
+        colors = {s: "" for s in Status}
+        reset = ""
+        bold = ""
+
+    # Mostra i risultati
+    for result in results:
+        symbol = symbols[result.status]
+        color = colors[result.status]
+
+        print(f"{color}{symbol} {bold}{result.name}{reset}")
+        print(f"  {result.message}")
+
+        if verbose and result.details:
+            print(f"  {result.details}")
+
+        if result.fix_command:
+            print(f"  → Soluzione: {result.fix_command}")
+
+        print()
+
+    # Riepilogo
+    summary = doctor.get_summary()
+    print("=" * 60)
+    print(f"Controlli: {summary['total']}")
+    print(f"OK: {summary['ok']} • "
+          f"Avvisi: {summary['warnings']} • "
+          f"Errori: {summary['errors']} • "
+          f"Saltati: {summary['skipped']}")
+    print()
+
+    # Sintesi vocale (se richiesta)
+    if speak:
+        speak_results(results, summary)
+
+    # Codice di uscita
+    if summary['errors'] > 0:
+        return 1
+    elif summary['warnings'] > 0:
+        return 2
+    return 0
+
+
+def speak_results(results, summary):
+    """Legge i risultati con la sintesi vocale."""
+    try:
+        import subprocess
+
+        # Riepilogo parlato
+        if summary['errors'] > 0:
+            text = f"Trovati {summary['errors']} problemi. "
+        elif summary['warnings'] > 0:
+            text = f"Trovati {summary['warnings']} avvisi. "
+        else:
+            text = "Tutti i controlli superati. "
+
+        # Problemi principali
+        errors = [r for r in results if r.status == Status.ERROR]
+        if errors:
+            text += "Problemi critici: "
+            text += ", ".join(r.name for r in errors[:3])
+            if len(errors) > 3:
+                text += f", e altri {len(errors) - 3}"
+
+        # Parla usando spd-say (se disponibile)
+        subprocess.run(
+            ["spd-say", "-w", "-r", "10", text],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception:
+        # Se spd-say non funziona, ignora silenziosamente
+        pass
+
+
+if __name__ == "__main__":
+    sys.exit(main())

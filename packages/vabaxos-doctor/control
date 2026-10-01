@@ -1,0 +1,21 @@
+Package: vabaxos-doctor
+Version: 0.1.0
+Section: admin
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.11), python3-gi, gir1.2-gtk-4.0, gir1.2-adwaita-1, speech-dispatcher, alsa-utils, dbus
+Recommends: vabaxos-voice, orca
+Maintainer: VabaxOS Contributors <noreply@vabax.it>
+Description: Sistema di diagnostica dell'accessibilità per VabaxOS
+ VabaxOS Doctor è uno strumento di diagnostica che controlla che tutti i
+ componenti di accessibilità funzionino correttamente:
+ .
+  - Audio (PipeWire, PulseAudio, scheda audio)
+  - Sintesi vocale (speech-dispatcher, Kokoro, eSpeak NG)
+  - Lettore di schermo (Orca, AT-SPI)
+  - Estensioni GNOME Shell
+  - Risorse di sistema (RAM, CPU, disco)
+  - Rete
+ .
+ Fornisce sia un'interfaccia grafica che una modalità terminale con
+ output vocale opzionale.
