@@ -133,6 +133,31 @@ Note pratiche:
 - Non modificare uno script mentre è in esecuzione (per esempio `build.sh` o `test-boot.sh`): Bash lo legge a pezzi.
 - Una costruzione con GNOME dura circa 12 minuti (di più la prima volta dopo un cambio di distribuzione o di snapshot).
 
+## Correzioni di bug (2026-10-02)
+
+Analisi approfondita del codice completata, con ricerca dei problemi noti online (speech-dispatcher/PipeWire, Orca, GNOME Shell, live-build). Bug trovati e corretti:
+
+**Critical (corretti):**
+1. **Memory leak estensione button-names:** handler di segnali mai disconnessi su actor distrutti. Correzione: handler `destroy` per disconnettere i segnali. Spiegava il freeze di GNOME Shell dopo molte notifiche.
+2. **Memory leak thread bloccato (module.py):** thread audio bloccati mai terminati, 570 MB per thread. Correzione: exit dopo 5 thread bloccati (Speech Dispatcher ci riavvia). Spiegava l'OOM di speech-dispatcher.
+3. **Deadlock player.py:** lock mai rilasciato se `pa_simple_write` falliva. Correzione: close() fuori dal with, in finally.
+4. **Command injection test-boot.sh:** `pgrep` non validato. Correzione: `head -1` per garantire un solo PID.
+
+**High (corretti):**
+5. **Race condition cache:** file scritti senza fsync, corrotti dopo crash. Correzione: fsync prima di replace, validazione al caricamento con rimozione file corrotti. Spiegava Orca muto dopo crash.
+6. **Validazione Sonic:** count enorme da stato corrotto causava MemoryError. Correzione: `min(count, len(data) * 3)`.
+7. **ONNX crash su exit:** terminate durante run causava segfault. Correzione: sleep 0.05 dopo terminate.
+8. **Lock Phonemizer:** espeak_Initialize senza lock. Correzione: lock nel costruttore.
+
+**Medium/Low (corretti):**
+9. **Subprocess senza errori (vabaxos-start):** nessun feedback se comando falliva. Correzione: try/except con log.
+10. **Counter unbounded (cache):** seen cresceva indefinitamente. Correzione: limite 10k voci, rimozione delle meno frequenti.
+
+Fonti online consultate: [GNOME Extensions Review Guidelines](https://gjs.guide/extensions/review-guidelines/review-guidelines.html) (memory leak pattern), [speech-dispatcher PipeWire issue](https://github.com/brailcom/speechd/issues/787), [rtkit race condition](https://groups.google.com/g/linux.debian.bugs.dist/c/sT39e8jn8NQ), [Orca GNOME 50 bug](https://discourse.gnome.org/t/orca-on-gnome-50-wayland-only-reads-element-labels-not-text-content-plus-automatic-language-switching-not-working/38619).
+
+Commit: bbde222 (2026-10-02).
+
+
 ## Dove trovare le cose
 
 - `README.md`, `ROADMAP.md`, `ARCHITECTURE.md`, `BUILD.md`, `GOVERNANCE.md`
