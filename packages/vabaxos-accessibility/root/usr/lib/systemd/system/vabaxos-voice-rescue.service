@@ -1,0 +1,8 @@
+[Unit]
+Description=VabaxOS: bring the voice back (Ctrl+Super+Enter)
+Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/utente/voce.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/vabaxos/voice-rescue
+TimeoutStartSec=120

@@ -16,4 +16,12 @@ if [ "$1" = configure ]; then
     ln -sfn /usr/share/vabaxos-accessibility/orca-autostart.desktop /etc/xdg/autostart/orca-autostart.desktop
     deb-systemd-helper enable vabaxos-voice-off.service >/dev/null || true
     deb-systemd-helper enable vabaxos-greeter-audio.service >/dev/null || true
+    deb-systemd-helper enable vabaxos-voice-rescue.path >/dev/null || true
+    # The trigger file (tmpfiles) and triggerhappy reading the new keys;
+    # in the image build nothing runs.
+    if [ -d /run/systemd/system ]; then
+        systemd-tmpfiles --create vabaxos-voice-rescue.conf || true
+        deb-systemd-invoke start vabaxos-voice-rescue.path >/dev/null || true
+        deb-systemd-invoke try-restart triggerhappy.service >/dev/null || true
+    fi
 fi

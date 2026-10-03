@@ -1,0 +1,10 @@
+[Unit]
+Description=VabaxOS: Ctrl+Super+Enter brings the voice back
+Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/utente/voce.md
+
+[Path]
+PathModified=/run/vabaxos-voice-rescue/request
+Unit=vabaxos-voice-rescue.service
+
+[Install]
+WantedBy=paths.target

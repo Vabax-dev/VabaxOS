@@ -989,6 +989,37 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
     [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo il ritorno a eSpeak NG' ritorno
 fi
 
+# Ctrl+Super+Enter brings the voice back (block 16), the very last step:
+# it starts sound, speech-dispatcher and Orca again, as only this key does.
+# Orca is made silent first the way a user can: speech off in the screen
+# reader's settings. The keys go to the VM's keyboard; triggerhappy reads
+# them below the desktop, so they would work with GNOME Shell frozen too.
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+    ask speechoff "env $DESKTOP_ENV vabaxos-screen-reader --set speech enable false; sleep 5; for i in \$(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 10; echo fatto" || exit 1
+    HEARD="$(orca_speaks orca-muto)"
+    printf 'INFO: Orca con la voce spenta nelle impostazioni: %s\n' "$HEARD"
+    monitor "wavcapture ${LOG%.log}-rescue.wav snd0"
+    press ctrl-meta_l-ret
+    sleep 8
+    monitor "stopcapture 0"
+    if python3 "$REPO/scripts/lib/wav-timeline.py" "${LOG%.log}-rescue.wav" 2>/dev/null | grep -q 'voce\|tono'; then
+        HEARD=yes
+    else
+        HEARD=no
+    fi
+    check 'Ctrl+Super+Invio: «Ripristino la voce»' "$HEARD" "$WANT_SOUND"
+    ask rescue 'for i in $(seq 90); do sudo -n journalctl -b --no-pager -o cat -u vabaxos-voice-rescue.service | grep -q "vabaxos-voice-rescue: done" && break; sleep 1; done; sudo -n journalctl -b --no-pager -o cat -u vabaxos-voice-rescue.service | grep -c "vabaxos-voice-rescue: done"' || exit 1
+    check 'Ctrl+Super+Invio: ripristino della voce eseguito' "$(value rescue)" 1
+    send 'sudo -n journalctl -b --no-pager -o cat -u vabaxos-voice-rescue.service -u triggerhappy.service | tail -20 | sed "s/^/RESCUE: /"'
+    ask rescuespeech "python3 -c 'import json, os; print(json.load(open(os.path.expanduser(\"~/.local/share/orca/user-settings.conf\")))[\"profiles\"][\"default\"].get(\"enableSpeech\"))'" || exit 1
+    check 'Ctrl+Super+Invio: voce di Orca riaccesa' "$(value rescuespeech)" True
+    ask rescueorca 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
+    check 'Ctrl+Super+Invio: Orca attivo' "$(value rescueorca)" yes
+    HEARD="$(orca_speaks orca-rescue)"
+    check 'Ctrl+Super+Invio: Orca di nuovo udibile' "$HEARD" "$WANT_SOUND"
+    [[ "$HEARD" == "$WANT_SOUND" ]] || orca_state 'dopo Ctrl+Super+Invio' rescue
+fi
+
 if [[ "$(value state)" != running ]]; then
     ask failed 'systemctl --failed --no-legend --plain | cut -d" " -f1 | paste -sd,' || exit 1
     printf 'INFO: unità fallite: %s\n' "$(value failed)"

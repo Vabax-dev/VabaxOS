@@ -168,3 +168,12 @@ msgstr "Firewall attivo."
 
 msgid "Firewall off."
 msgstr "Firewall spento."
+
+msgid "Bringing the voice back."
+msgstr "Ripristino la voce."
+
+msgid "Voice back."
+msgstr "Voce ripristinata."
+
+msgid "The desktop voice does not answer. Console speech works: press Ctrl+Alt+F3."
+msgstr "La voce del desktop non risponde. La voce della console funziona: premi Ctrl+Alt+F3."

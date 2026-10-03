@@ -33,12 +33,14 @@ toggle-overview=['<Super>Tab']
 show-screenshot-ui=['Print', '<Super><Shift>s']
 screenshot=['<Shift>Print', '<Super>Print']
 
-# Super+E Files, Super+I Settings, Super+Ctrl+Enter turns the screen
-# reader on and off (Narrator's key), next to GNOME's Super+Alt+S.
+# Super+E Files, Super+I Settings, Super+Alt+S turns the screen reader on
+# and off. Super+Ctrl+Enter (Narrator's key) is not GNOME's: it brings the
+# voice back and Orca on from anywhere (voice-rescue, block 16), and as a
+# second key here it would turn Orca off at the same moment.
 [org/gnome/settings-daemon/plugins/media-keys]
 home=['<Super>e']
 control-center=['<Super>i']
-screenreader=['<Alt><Super>s', '<Control><Super>Return']
+screenreader=['<Alt><Super>s']
 
 # Super+1 ... Super+9 open the programs of the taskbar in order.
 # Super+I is Settings, not the auto-hide of the panel.

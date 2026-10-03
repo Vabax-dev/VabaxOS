@@ -54,7 +54,8 @@ Funzionano come su Windows in tutti i programmi: **Ctrl+C** copia, **Ctrl+X** ta
 
 ## Lettore di schermo
 
-- **Super+Alt+S** oppure **Super+Ctrl+Invio**: accende e spegne Orca (su Windows, Super+Ctrl+Invio accende l'Assistente vocale).
+- **Super+Alt+S**: accende e spegne Orca.
+- **Ctrl+Super+Invio**: rimette la voce, da qualsiasi punto, anche quando il desktop è bloccato: riaccende Orca se era spento (su Windows, Ctrl+Super+Invio accende l'Assistente vocale). Vedi [Se la voce si ferma](voce.md#se-la-voce-si-ferma).
 - **Super+Alt+8**: accende e spegne l'ingrandimento.
 - I tasti di Orca, come NVDA o JAWS, sono nella guida [I tasti di Orca](tasti-orca.md). **Super+Alt+O** apre le impostazioni del lettore di schermo.
 
