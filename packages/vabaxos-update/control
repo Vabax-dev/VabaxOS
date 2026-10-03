@@ -1,0 +1,19 @@
+Package: vabaxos-update
+Version: 0.1.0
+Section: admin
+Priority: optional
+Architecture: all
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, apt, speech-dispatcher
+Recommends: flatpak
+Maintainer: VabaxOS Contributors <hello@vabaxos.org>
+Description: Sistema di aggiornamenti accessibile per VabaxOS
+ Gestisce gli aggiornamenti di sistema con interfaccia accessibile
+ e sintesi vocale integrata.
+ .
+ Caratteristiche:
+  - Interfaccia grafica GTK 4 completamente accessibile
+  - Modalità CLI con output vocale
+  - Supporto aggiornamenti Debian, VabaxOS e Flatpak
+  - Changelog leggibili a voce
+  - Notifiche giornaliere automatiche
+  - Gestione aggiornamenti di sicurezza

@@ -1,0 +1,12 @@
+[Unit]
+Description=VabaxOS Update Check
+Documentation=https://vabaxos.org/docs/updates
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/vabaxos-update --cli --check --no-cache
+# Se ci sono aggiornamenti, mostra notifica
+ExecStartPost=/usr/bin/bash -c 'if [ $? -eq 0 ]; then notify-send "VabaxOS" "Aggiornamenti disponibili"; fi'
+
+[Install]
+WantedBy=default.target

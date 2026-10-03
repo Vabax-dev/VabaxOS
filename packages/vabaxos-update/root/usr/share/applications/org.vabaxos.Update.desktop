@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Aggiornamenti VabaxOS
+Name[en]=VabaxOS Update
+Comment=Gestisci gli aggiornamenti del sistema con sintesi vocale
+Comment[en]=Manage system updates with speech synthesis
+Icon=system-software-update
+Exec=vabaxos-update
+Terminal=false
+Categories=System;Settings;PackageManager;
+Keywords=update;upgrade;packages;software;apt;flatpak;accessibility;
+StartupNotify=true

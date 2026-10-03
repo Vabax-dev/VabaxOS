@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 VabaxOS Contributors
+
+"""VabaxOS Update - Aggiornamenti accessibili con sintesi vocale.
+
+Gestisce aggiornamenti di pacchetti Debian, VabaxOS e Flatpak.
+
+Uso:
+    vabaxos-update              # Interfaccia grafica
+    vabaxos-update --cli        # Modalità terminale
+    vabaxos-update --speak      # Con sintesi vocale
+    vabaxos-update --check      # Solo controllo (no installazione)
+    vabaxos-update --security   # Solo aggiornamenti di sicurezza
+"""
+
+import argparse
+import sys
+
+from vabaxos_update import UpdateManager, UpdatePriority, format_size, speak
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Gestione aggiornamenti di VabaxOS"
+    )
+    parser.add_argument(
+        "--cli",
+        action="store_true",
+        help="Modalità terminale (senza interfaccia grafica)"
+    )
+    parser.add_argument(
+        "--speak",
+        action="store_true",
+        help="Legge i risultati con la sintesi vocale"
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Controlla aggiornamenti senza installarli"
+    )
+    parser.add_argument(
+        "--security",
+        action="store_true",
+        help="Installa solo aggiornamenti di sicurezza"
+    )
+    parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Non chiede conferma (solo con --security)"
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Aggiorna la cache APT prima di controllare"
+    )
+
+    args = parser.parse_args()
+
+    if not args.cli and not args.check and not args.security:
+        # Modalità grafica
+        try:
+            from vabaxos_update.window import main as gui_main
+            return gui_main()
+        except ImportError as e:
+            print(f"Errore: impossibile avviare l'interfaccia grafica: {e}", file=sys.stderr)
+            print("Usa --cli per la modalità terminale.", file=sys.stderr)
+            return 1
+
+    # Modalità CLI
+    return run_cli(args)
+
+
+def run_cli(args):
+    """Esegue il controllo/installazione in modalità terminale."""
+    manager = UpdateManager()
+
+    print("VabaxOS Update - Gestione aggiornamenti")
+    print("=" * 60)
+    print()
+
+    if args.speak:
+        speak("Controllo aggiornamenti in corso")
+
+    print("Controllo aggiornamenti...")
+    updates = manager.check_updates(use_cache=not args.no_cache)
+
+    if not updates:
+        message = "✓ Nessun aggiornamento disponibile. Il sistema è aggiornato."
+        print(message)
+        if args.speak:
+            speak("Nessun aggiornamento disponibile. Il sistema è aggiornato.")
+        return 0
+
+    # Filtra solo sicurezza se richiesto
+    if args.security:
+        updates = [u for u in updates if u.is_security]
+        if not updates:
+            message = "✓ Nessun aggiornamento di sicurezza disponibile."
+            print(message)
+            if args.speak:
+                speak(message)
+            return 0
+
+    # Mostra riepilogo
+    summary = manager.get_summary()
+    print(f"Aggiornamenti disponibili: {summary['total']}")
+    if summary['security'] > 0:
+        print(f"  Di cui sicurezza: {summary['security']}")
+    if summary['important'] > 0:
+        print(f"  Di cui importanti: {summary['important']}")
+    print(f"  Dimensione totale: {format_size(summary['total_size'])}")
+    if summary['requires_reboot']:
+        print("  ⚠ Richiede riavvio")
+    print()
+
+    if args.speak:
+        speak(manager.get_speech_summary())
+
+    # Mostra lista dettagliata
+    for i, update in enumerate(updates, 1):
+        priority_symbol = get_priority_symbol(update)
+        print(f"{i}. {priority_symbol} {update.name}")
+        print(f"   {update.current_version} → {update.new_version}")
+        print(f"   {update.description}")
+        print(f"   Dimensione: {format_size(update.size)} • Fonte: {update.source.value}")
+        if update.changelog and update.changelog != f"Aggiornamento a versione {update.new_version}":
+            print(f"   Changelog: {update.changelog}")
+        if update.requires_reboot:
+            print(f"   ⚠ Richiede riavvio")
+        print()
+
+    # Solo controllo?
+    if args.check:
+        return 0
+
+    # Conferma installazione
+    if not args.non_interactive:
+        if args.security:
+            prompt = f"Installare {len(updates)} aggiornamenti di sicurezza? [S/n] "
+        else:
+            prompt = f"Installare {len(updates)} aggiornamenti? [S/n] "
+
+        response = input(prompt).strip().lower()
+        if response and response not in ('s', 'si', 'sì', 'y', 'yes'):
+            print("Installazione annullata.")
+            return 0
+
+    # Installa
+    print()
+    print("Installazione in corso...")
+    print()
+
+    if args.speak:
+        speak("Installazione in corso")
+
+    current_pkg = [0]
+    total = len(updates)
+
+    def progress(name, current, total):
+        current_pkg[0] = current
+        print(f"[{current}/{total}] {name}")
+        if args.speak and (current % 5 == 0 or current == total):
+            speak(f"{current} di {total}")
+
+    success, message = manager.install_updates(updates, progress)
+
+    print()
+    if success:
+        print(f"✓ {message}")
+        if args.speak:
+            speak("Installazione completata con successo")
+
+        # Controlla se serve riavvio
+        if any(u.requires_reboot for u in updates):
+            print()
+            print("⚠ Alcuni aggiornamenti richiedono il riavvio del sistema.")
+            if args.speak:
+                speak("Richiesto riavvio del sistema")
+
+            if not args.non_interactive:
+                response = input("Riavviare ora? [s/N] ").strip().lower()
+                if response in ('s', 'si', 'sì', 'y', 'yes'):
+                    import subprocess
+                    subprocess.run(["systemctl", "reboot"], check=False)
+
+        return 0
+    else:
+        print(f"✗ Errore: {message}", file=sys.stderr)
+        if args.speak:
+            speak("Errore durante l'installazione")
+        return 1
+
+
+def get_priority_symbol(update):
+    """Restituisce il simbolo per la priorità."""
+    if update.is_security:
+        return "🛡️ "
+    elif update.priority == UpdatePriority.IMPORTANT:
+        return "⚠️ "
+    elif update.priority == UpdatePriority.BUGFIX:
+        return "🔧"
+    return "📦"
+
+
+if __name__ == "__main__":
+    sys.exit(main())
