@@ -191,21 +191,30 @@ def orca_settings():
 # -- the system (as root) -----------------------------------------------------------
 
 
-def run(command, timeout=10, env=None, user=None):
-    """Runs a command, as a user when given; True when it worked."""
+def as_user(command, user):
+    """command as the user, with the user's bus and folders. setpriv, not
+    runuser: no PAM session, so the journal keeps only this program's
+    lines."""
+    uid, name = user
+    entry = pwd.getpwnam(name)
+    return ["setpriv", f"--reuid={uid}", f"--regid={entry.pw_gid}", "--init-groups", "--", "env",
+            f"XDG_RUNTIME_DIR=/run/user/{uid}", f"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{uid}/bus",
+            f"HOME={entry.pw_dir}", f"USER={name}", f"LOGNAME={name}"] + command
+
+
+def run(command, timeout=10, env=None, user=None, show=False):
+    """Runs a command, as a user when given; True when it worked. With
+    show, its output goes to the journal."""
     if user is not None:
-        uid, name = user
-        command = ["runuser", "-u", name, "--", "env", f"XDG_RUNTIME_DIR=/run/user/{uid}",
-                   f"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{uid}/bus",
-                   f"HOME={pwd.getpwuid(uid).pw_dir}"] + command
+        command = as_user(command, user)
     if DRY_RUN:
         with open(DRY_RUN, "a", encoding="utf-8") as f:
             f.write(" ".join(command) + "\n")
         return True
+    quiet = None if show else subprocess.DEVNULL
     try:
-        return subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL, timeout=timeout, env=env,
-                              check=False).returncode == 0
+        return subprocess.run(command, stdin=subprocess.DEVNULL, stdout=quiet, stderr=quiet,
+                              timeout=timeout, env=env, check=False).returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
 
@@ -215,9 +224,7 @@ def output(command, timeout=5, user=None):
         run(command, user=user)
         return os.environ.get("VABAXOS_RESCUE_DRY_OUTPUT", "")
     if user is not None:
-        uid, name = user
-        command = ["runuser", "-u", name, "--", "env", f"XDG_RUNTIME_DIR=/run/user/{uid}",
-                   f"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{uid}/bus"] + command
+        command = as_user(command, user)
     try:
         result = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True,
                                 timeout=timeout, check=False)
@@ -307,7 +314,9 @@ def orca(user):
         log(f"{user[1]}: screen reader turned on")
         run(["gsettings", "set", "org.gnome.desktop.a11y.applications", "screen-reader-enabled", "true"],
             user=user)
-    for _ in range(0 if DRY_RUN else 50):
+    # GNOME starts Orca again within a second; after a few restarts in a
+    # row it stops trying (a frozen GNOME Shell never does).
+    for _ in range(0 if DRY_RUN else 30):
         time.sleep(0.1)
         if run(["pgrep", "-u", str(uid), "-x", "orca"], timeout=3):
             log(f"{user[1]}: Orca started again by GNOME")
@@ -340,7 +349,7 @@ def rescue():
         speech_dispatcher(user)
         if not graphical(user):
             continue
-        run([sys.argv[0], "--orca-settings"], timeout=20, user=user)
+        run([sys.argv[0], "--orca-settings"], timeout=20, user=user, show=True)
         if run(["spd-say", "-w", "-l", LANGUAGE, _("Voice back.")], timeout=20, user=user):
             log(f"{user[1]}: speech-dispatcher speaks")
         else:
