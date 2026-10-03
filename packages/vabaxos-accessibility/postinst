@@ -17,6 +17,13 @@ if [ "$1" = configure ]; then
     deb-systemd-helper enable vabaxos-voice-off.service >/dev/null || true
     deb-systemd-helper enable vabaxos-greeter-audio.service >/dev/null || true
     deb-systemd-helper enable vabaxos-voice-rescue.path >/dev/null || true
+    deb-systemd-helper enable vabaxos-recovery.service >/dev/null || true
+    # The boot menu of an installed system (/etc/default/grub.d/vabaxos.cfg);
+    # in the image build and the live system there is none to update.
+    if [ -x /usr/sbin/update-grub ] && [ -e /boot/grub/grub.cfg ] && [ ! -d /run/live/medium ] \
+            && ! ischroot 2>/dev/null; then
+        update-grub >/dev/null 2>&1 || true
+    fi
     # The trigger file (tmpfiles) and triggerhappy reading the new keys;
     # in the image build nothing runs.
     if [ -d /run/systemd/system ]; then

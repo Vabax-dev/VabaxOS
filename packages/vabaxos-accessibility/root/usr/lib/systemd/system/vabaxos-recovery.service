@@ -1,0 +1,26 @@
+[Unit]
+Description=VabaxOS recovery mode that speaks (a menu read by console speech)
+Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/utente/recupero.md
+# The boot menu's "Recovery mode with voice", and Debian's recovery mode
+# entries of an installed system (/etc/default/grub.d/vabaxos.cfg).
+ConditionKernelCommandLine=vabaxos.recovery
+Wants=vabaxos-recovery-audio.service
+After=systemd-user-sessions.service live-config.service espeakup.service vabaxos-recovery-audio.service
+Before=getty@tty1.service
+
+[Service]
+Type=oneshot
+ExecStartPre=-/usr/bin/plymouth quit
+# Console speech connects to the sound server first.
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/sbin/vabaxos-recovery
+StandardInput=tty
+StandardOutput=tty
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=multi-user.target

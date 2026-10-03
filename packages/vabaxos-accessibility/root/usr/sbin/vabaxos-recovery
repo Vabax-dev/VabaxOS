@@ -1,0 +1,242 @@
+#!/usr/bin/python3
+"""Recovery mode that speaks (block 16): a menu on the first console, read
+by console speech (Speakup), when the computer starts in recovery mode.
+
+The live system's boot menu has "Recovery mode with voice" (R); in an
+installed system Debian's own "recovery mode" entries start it too
+(GRUB_CMDLINE_LINUX_RECOVERY in /etc/default/grub.d/vabaxos.cfg). Both
+pass vabaxos.recovery and stop at the text console (multi-user.target).
+
+The menu prints one line at a time and Speakup reads each new line, with
+the speed and voice of console speech; it never clears the screen, so
+Speakup's review keys read everything said so far. A number chooses:
+
+ 1  start the desktop
+ 2  bring the voice back: Orca's speech on with eSpeak NG, for every user
+    (voice-rescue --orca-settings, a copy of the settings kept first)
+ 3  put back yesterday's settings: the newest automatic copy of each user
+    (vabaxos-settings-copy, voice and desktop)
+ 4  finish interrupted updates (dpkg --configure -a, apt-get -f install)
+ 5  save a report in each user's home folder (vabaxos-report)
+ 6  network (nmtui)
+ 7  text console: the login prompt
+ 8  restart
+ 9  shut down
+
+Runs as root, without a password, like Debian's recovery mode with a
+locked root account would not: the actions only put things back; the
+text console needs a user's password as always.
+
+VABAXOS_RECOVERY_DRY_RUN=FILE writes what would be done to FILE.
+"""
+
+import gettext
+import glob
+import os
+import pwd
+import subprocess
+import sys
+
+DRY_RUN = os.environ.get("VABAXOS_RECOVERY_DRY_RUN")
+RESCUE = "/usr/libexec/vabaxos/voice-rescue"
+
+
+def system_language():
+    lang = ""
+    try:
+        with open(os.environ.get("VABAXOS_LOCALE_FILE", "/etc/default/locale"), encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("LANG="):
+                    lang = line.split("=", 1)[1].strip().strip('"')
+    except OSError:
+        pass
+    return "it" if lang.startswith("it") else "en"
+
+
+_ = gettext.translation("vabaxos-accessibility", languages=[system_language()], fallback=True).gettext
+
+
+def say(line=""):
+    """One line on the console: Speakup reads it."""
+    sys.stdout.write(line + "\n")
+    sys.stdout.flush()
+
+
+def run(command, user=None, timeout=1800, interactive=False):
+    """Runs a command (as a user when given); True when it worked."""
+    if user is not None:
+        entry = pwd.getpwnam(user)
+        command = ["setpriv", f"--reuid={entry.pw_uid}", f"--regid={entry.pw_gid}", "--init-groups", "--",
+                   "env", f"HOME={entry.pw_dir}", f"USER={user}", f"LOGNAME={user}",
+                   f"XDG_RUNTIME_DIR=/run/user/{entry.pw_uid}", "dbus-run-session", "--"] + command
+    if DRY_RUN:
+        with open(DRY_RUN, "a", encoding="utf-8") as f:
+            f.write(" ".join(command) + "\n")
+        return True
+    quiet = None if interactive else subprocess.DEVNULL
+    try:
+        return subprocess.run(command, stdout=quiet, stderr=quiet, timeout=None if interactive else timeout,
+                              check=False).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def users():
+    """The people of this computer: UID 1000 and above, with a home."""
+    home = os.environ.get("VABAXOS_RECOVERY_HOME", "/home")
+    found = []
+    for entry in pwd.getpwall():
+        if 1000 <= entry.pw_uid < 60000 and entry.pw_dir.startswith(home + "/") and os.path.isdir(entry.pw_dir):
+            found.append(entry)
+    return sorted(found, key=lambda e: e.pw_uid)
+
+
+def latest_copy(entry):
+    copies = sorted(glob.glob(os.path.join(entry.pw_dir, ".local", "share", "vabaxos", "settings-copies",
+                                           "*.json")))
+    return copies[-1] if copies else None
+
+
+def bring_voice_back():
+    people = users()
+    for entry in people:
+        run([RESCUE, "--orca-settings"], user=entry.pw_name, timeout=60)
+        run(["gsettings", "set", "org.gnome.desktop.a11y.applications", "screen-reader-enabled", "true"],
+            user=entry.pw_name, timeout=60)
+    say(_("Voice settings put back for: {names}.").format(names=", ".join(e.pw_name for e in people))
+        if people else _("No user on this computer."))
+
+
+def put_copies_back():
+    done = []
+    for entry in users():
+        copy = latest_copy(entry)
+        if copy and run(["vabaxos-settings-copy", "restore", copy, "--only", "voice,desktop"],
+                        user=entry.pw_name, timeout=120):
+            done.append(f"{entry.pw_name} ({os.path.basename(copy)[:-5]})")
+    say(_("Settings put back for: {names}.").format(names=", ".join(done)) if done
+        else _("No automatic copy found."))
+
+
+def finish_updates():
+    say(_("Finishing the updates. It may take some minutes."))
+    ok = run(["env", "DEBIAN_FRONTEND=noninteractive", "dpkg", "--configure", "-a"]) and \
+        run(["env", "DEBIAN_FRONTEND=noninteractive", "apt-get", "-y", "-o", "Dpkg::Options::=--force-confold",
+             "-f", "install"])
+    say(_("Updates finished.") if ok else _("The updates did not finish: save a report and ask for help."))
+
+
+def save_reports():
+    saved = []
+    for entry in users():
+        path = os.path.join(entry.pw_dir, "vabaxos-report-recovery.txt")
+        if run(["vabaxos-report", path], timeout=300):
+            if not DRY_RUN:
+                os.chown(path, entry.pw_uid, entry.pw_gid)
+            saved.append(path)
+    say(_("Report saved: {files}.").format(files=", ".join(saved)) if saved else _("No report saved."))
+
+
+def menu():
+    items = [
+        ("desktop", _("Start the desktop")),
+        ("voice", _("Bring the voice back")),
+        ("copy", _("Put back yesterday's settings")),
+        ("updates", _("Finish interrupted updates")),
+        ("report", _("Save a report")),
+        ("network", _("Network")),
+        ("console", _("Text console")),
+        ("reboot", _("Restart")),
+        ("poweroff", _("Shut down")),
+    ]
+    say()
+    say(_("VabaxOS recovery mode. Press the number of your choice."))
+    for number, (_key, text) in enumerate(items, 1):
+        say(f"{number}  {text}")
+    return items
+
+
+class Keyboard:
+    """Keys one at a time, without Enter or echo. Set once, without
+    discarding: a key pressed while the menu is read must count."""
+
+    def __init__(self):
+        import termios
+        import tty
+        self.fd = sys.stdin.fileno()
+        try:
+            self.saved = termios.tcgetattr(self.fd)
+            tty.setcbreak(self.fd, termios.TCSANOW)
+        except termios.error:
+            self.saved = None
+
+    def restore(self):
+        import termios
+        if self.saved is not None:
+            termios.tcsetattr(self.fd, termios.TCSANOW, self.saved)
+
+    def again(self):
+        import termios
+        import tty
+        if self.saved is not None:
+            tty.setcbreak(self.fd, termios.TCSANOW)
+
+    def choice(self, count):
+        """A digit from 1 to count; None at the end of input."""
+        while True:
+            key = os.read(self.fd, 8)
+            if not key:
+                return None
+            # Keys typed quickly arrive together: each one counts.
+            for char in key.decode("ascii", "ignore"):
+                if char.isdigit() and 1 <= int(char) <= count:
+                    return int(char)
+
+
+def main():
+    keyboard = Keyboard()
+    try:
+        return loop(keyboard)
+    finally:
+        keyboard.restore()
+
+
+def loop(keyboard):
+    while True:
+        items = menu()
+        choice = keyboard.choice(len(items))
+        if choice is None:
+            return 0
+        key, text = items[choice - 1]
+        say(text)
+        if key == "desktop":
+            say(_("Starting the desktop. Please wait."))
+            run(["systemctl", "--no-block", "isolate", "graphical.target"])
+            return 0
+        if key == "voice":
+            bring_voice_back()
+        elif key == "copy":
+            put_copies_back()
+        elif key == "updates":
+            finish_updates()
+        elif key == "report":
+            save_reports()
+        elif key == "network":
+            keyboard.restore()
+            run(["nmtui"], interactive=True)
+            keyboard.again()
+        elif key == "console":
+            say(_("Log in with your name and password."))
+            return 0
+        elif key == "reboot":
+            say(_("Restarting."))
+            run(["systemctl", "reboot"])
+            return 0
+        elif key == "poweroff":
+            say(_("Shutting down."))
+            run(["systemctl", "poweroff"])
+            return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

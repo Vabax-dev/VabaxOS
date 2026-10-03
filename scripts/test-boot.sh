@@ -298,6 +298,15 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     press ret
     printf 'INFO: risposto al benvenuto (lingua o F1, poi Try VabaxOS).\n'
 fi
+# Recovery mode that speaks (block 16): a menu on the first console, read
+# by console speech. Startup ends when a choice is made: 7, the text
+# console, as a person who wants to log in.
+if [[ "$WANT_RECOVERY" == yes ]]; then
+    sleep 5
+    check 'menu di recupero udibile' "$(record recovery-menu 12)" "$WANT_SOUND"
+    press 7
+    printf 'INFO: menu di recupero: scelto 7, console di testo.\n'
+fi
 
 send user
 wait_for 'Password:' 'richiesta della password' || exit 1

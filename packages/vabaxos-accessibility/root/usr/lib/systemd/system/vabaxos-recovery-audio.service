@@ -1,0 +1,15 @@
+# VabaxOS: in the recovery mode of an installed system no one is logged in
+# and there is no login screen, so no sound server runs, and console speech
+# (espeak-ng through PulseAudio) would be silent. The first user's manager,
+# and so its PipeWire, starts here; espeakup is started again on it. The
+# live system has its own (vabaxos-live-audio.service).
+[Unit]
+Description=VabaxOS recovery mode: a sound server for console speech
+ConditionKernelCommandLine=vabaxos.recovery
+ConditionPathIsDirectory=!/run/live/medium
+After=systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/vabaxos/recovery-audio

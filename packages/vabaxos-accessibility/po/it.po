@@ -177,3 +177,69 @@ msgstr "Voce ripristinata."
 
 msgid "The desktop voice does not answer. Console speech works: press Ctrl+Alt+F3."
 msgstr "La voce del desktop non risponde. La voce della console funziona: premi Ctrl+Alt+F3."
+
+msgid "Voice settings put back for: {names}."
+msgstr "Impostazioni della voce rimesse a posto per: {names}."
+
+msgid "No user on this computer."
+msgstr "Nessun utente su questo computer."
+
+msgid "Settings put back for: {names}."
+msgstr "Impostazioni rimesse a posto per: {names}."
+
+msgid "No automatic copy found."
+msgstr "Nessuna copia automatica trovata."
+
+msgid "Finishing the updates. It may take some minutes."
+msgstr "Completo gli aggiornamenti. Può volerci qualche minuto."
+
+msgid "Updates finished."
+msgstr "Aggiornamenti completati."
+
+msgid "The updates did not finish: save a report and ask for help."
+msgstr "Gli aggiornamenti non sono stati completati: salva un rapporto e chiedi aiuto."
+
+msgid "Report saved: {files}."
+msgstr "Rapporto salvato: {files}."
+
+msgid "No report saved."
+msgstr "Nessun rapporto salvato."
+
+msgid "Start the desktop"
+msgstr "Avvia il desktop"
+
+msgid "Bring the voice back"
+msgstr "Rimetti la voce"
+
+msgid "Put back yesterday's settings"
+msgstr "Rimetti le impostazioni di ieri"
+
+msgid "Finish interrupted updates"
+msgstr "Completa gli aggiornamenti interrotti"
+
+msgid "Save a report"
+msgstr "Salva un rapporto"
+
+msgid "Network"
+msgstr "Rete"
+
+msgid "Text console"
+msgstr "Console di testo"
+
+msgid "Shut down"
+msgstr "Spegni"
+
+msgid "VabaxOS recovery mode. Press the number of your choice."
+msgstr "Modalità di recupero di VabaxOS. Premi il numero della tua scelta."
+
+msgid "Starting the desktop. Please wait."
+msgstr "Avvio il desktop. Attendi."
+
+msgid "Log in with your name and password."
+msgstr "Accedi con il tuo nome e la tua password."
+
+msgid "Restarting."
+msgstr "Riavvio."
+
+msgid "Shutting down."
+msgstr "Spengo."

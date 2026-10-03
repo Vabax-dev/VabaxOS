@@ -3,6 +3,7 @@ set -e
 if [ "$1" = remove ] || [ "$1" = purge ]; then
     deb-systemd-helper purge vabaxos-voice-off.service >/dev/null || true
     deb-systemd-helper purge vabaxos-voice-rescue.path >/dev/null || true
+    deb-systemd-helper purge vabaxos-recovery.service >/dev/null || true
 fi
 if [ "$1" = remove ] || [ "$1" = abort-install ] || [ "$1" = disappear ]; then
     # VabaxOS's link out, Orca's own file back.
