@@ -98,22 +98,17 @@ Stato al 2026-09-26 pomeriggio: blocchi 13, 14 e 15 sviluppati sui rami `feat/bl
 
 ## Dopo la v0.1
 
-### v0.2 e v0.3 (deciso con Vabax il 2026-09-26)
+### v0.2: blocchi 16-20 (deciso con Vabax il 2026-10-03)
 
-L'accessibilità al centro, e vantaggi concreti per chi sceglierebbe Debian, Ubuntu, Fedora o Arch. Due gruppi di blocchi, una ISO di prova alla fine di ciascun gruppo.
+Vabax ha scelto le idee a risposta multipla; un gruppo di cinque blocchi, sviluppati subito sopra il lavoro della v0.1 (che esce da `main` come previsto), con una sola ISO di prova e un ascolto alla fine del gruppo.
 
-**v0.2, gruppo A:**
+16. **Mai senza voce:** una combinazione di tasti d'emergenza che rimette sempre la voce e le impostazioni di accessibilità (riavvia Orca e speech-dispatcher, torna a eSpeak NG); modalità di recupero che parla; salvataggio automatico delle impostazioni; **diagnosi a voce** (`vabaxos-doctor`: audio, voce, rete, aggiornamenti, disco, con la correzione proposta; prima versione nel ramo `archivio/2026-10-02-vabaxos-doctor`); **copia delle impostazioni** (voce, Orca, tasti, programmi, Wi-Fi) in un file da rimettere su un altro PC o dopo una reinstallazione.
+17. **Leggere tutto:** **OCR dello schermo** con un tasto, come NVDA (Tesseract, già nella ISO): il testo della finestra o dell'immagine, da scorrere con le frecce, anche nei programmi che Orca non legge; **Braille completo** (brltty e Orca con le tabelle italiane, display Braille virtuale nelle prove automatiche, pagina Braille nelle impostazioni).
+18. **Ufficio, posta e dispositivi:** LibreOffice Writer, Calc e Thunderbird provati comando per comando con Orca, come Firefox nel blocco 14 (tasti come Word e Outlook con NVDA, prove automatiche, guide); **dispositivi a voce** (chiavette e dischi esterni annunciati, stampanti e scanner da tastiera, cuffie Bluetooth associate con una guida a voce).
+19. **Parlare al computer:** **dettatura** (si parla e il testo viene scritto dove c'è il cursore, italiano e inglese, senza Internet) e **sottotitoli in tempo reale** dell'audio del computer, in una finestra che Orca e la barra Braille leggono. Il modello di riconoscimento (per esempio Whisper o Vosk) e la sua licenza si scelgono con un ADR.
+20. **Disco cifrato e sistema leggero:** **cifratura del disco** ([ADR-0021](docs/decisions/0021-firewall-e-cifratura.md), anticipata dalla v0.3): l'installer chiede se cifrare il disco, e a ogni avvio la richiesta della password ha voce, segnale sonoro e Braille (fino ad allora la guida all'installazione la sconsiglia); **avvio e memoria** (avvio più rapido fino alla voce, meno memoria, misure su un PC con 4 GB).
 
-16. **Voce naturale più veloce:** Kokoro abbastanza rapido per l'uso quotidiano con Orca (frasi di Orca preparate in anticipo, frasi spezzate, misure sul mini PC).
-17. **Lettura dello schermo con l'OCR:** un tasto legge il testo della finestra anche nei programmi che Orca non legge, come l'OCR di NVDA (Tesseract, già nella ISO).
-18. **Dettatura:** si parla e il testo viene scritto dove c'è il cursore, in italiano e in inglese, senza Internet. Il modello di riconoscimento (per esempio Whisper o Vosk) e la sua licenza si scelgono con un ADR.
-19. **Sottotitoli in tempo reale** dell'audio del computer, in una finestra che Orca e la barra Braille leggono. Stesso modello della dettatura.
-20. **Sicurezza d'uso e ripristino:** una combinazione di tasti d'emergenza che rimette la voce e le impostazioni di accessibilità, la modalità di recupero che parla, il salvataggio automatico delle impostazioni.
-
-**v0.3, gruppo B:**
-
-21. **Cifratura del disco** ([ADR-0021](docs/decisions/0021-firewall-e-cifratura.md), spostata dalla v0.2 alla v0.3 da Vabax): l'installer chiede se cifrare il disco e in che modo, e a ogni avvio la richiesta della password ha voce, segnale sonoro e Braille. Fino ad allora la guida all'installazione la sconsiglia: la cifratura di Debian c'è, ma la richiesta della password è muta.
-22. **Dispositivi:** chiavette e dischi esterni annunciati a voce, stampanti e scanner da tastiera, cuffie Bluetooth associate con la guida a voce.
+Per dopo: Kokoro più veloce (frasi di Orca preparate in anticipo, frasi spezzate, misure sul mini PC), cronologia della voce, lezioni di tastiera, guida alla prova su altri PC, programmi a richiesta con l'etichetta «accessibile».
 
 Non ora: più lingue oltre italiano e inglese (scelta di Vabax, 2026-09-26). Idee per dopo: collegamento con il telefono, assistenza a distanza accessibile, installer tutto di VabaxOS (v0.5).
 
