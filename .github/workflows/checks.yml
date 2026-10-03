@@ -110,6 +110,8 @@ jobs:
         run: python3 tests/screen-reader/test_orca_defaults.py
       - name: Ctrl+Super+Enter brings the voice back (Orca's settings, steps as root written down)
         run: python3 tests/accessibility/test_voice_rescue.py
+      - name: Doctor tests (made-up computer, hidden Broadway display)
+        run: python3 tests/doctor/test_doctor.py
       - name: Start menu tests (hidden Broadway display, made-up programs)
         run: python3 tests/start/test_start.py
       - name: Update tests (fake PackageKit) and vabaxctl

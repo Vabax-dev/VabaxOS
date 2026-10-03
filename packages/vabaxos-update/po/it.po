@@ -114,5 +114,5 @@ msgstr "La nuova voce parla quando Orca riparte: premi due volte Super+Alt+S."
 msgid "{name} is not installed."
 msgstr "{name} non è installato."
 
-msgid "Commands: status, voice, update, report. Example: vabaxctl voice kokoro"
-msgstr "Comandi: status, voice, update, report. Esempio: vabaxctl voice kokoro"
+msgid "Commands: status, voice, update, report, doctor. Example: vabaxctl voice kokoro"
+msgstr "Comandi: status, voice, update, report, doctor. Esempio: vabaxctl voice kokoro"

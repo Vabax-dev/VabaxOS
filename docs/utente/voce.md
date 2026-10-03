@@ -48,6 +48,8 @@ Le copie delle impostazioni di Orca sono in `~/.local/share/vabaxos/voice-rescue
 
 Kokoro si sceglie di nuovo nelle impostazioni del lettore di schermo (Super+Alt+O).
 
+Per sapere cosa non andava, e controllare il resto del computer, apri la [Diagnosi di VabaxOS](diagnosi.md).
+
 ## Per chi amministra il computer
 
 - `/etc/vabaxos/voice.conf`: `engine=espeak` (predefinito), `kokoro` per tutti gli utenti, oppure `auto`, che misura il computer a ogni avvio e usa Kokoro se è abbastanza veloce; con `auto` contano il ritardo massimo accettato (`max_delay_ms`) e la memoria minima (`min_memory_mb`).

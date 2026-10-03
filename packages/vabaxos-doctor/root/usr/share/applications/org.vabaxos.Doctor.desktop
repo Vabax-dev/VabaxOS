@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS Doctor
+Name[it]=Diagnosi di VabaxOS
+Comment=Check sound, speech, the screen reader, network and disk, and put them right
+Comment[it]=Controlla audio, voce, lettore di schermo, rete e disco, e li rimette a posto
+Exec=vabaxos-doctor
+Icon=vabaxos-logo
+Terminal=false
+Categories=System;Settings;
+Keywords=doctor;diagnosis;problems;sound;speech;voice;fix;diagnosi;problemi;audio;voce;ripara;

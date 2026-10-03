@@ -1,0 +1,145 @@
+#!/usr/bin/python3
+"""VabaxOS Doctor: checks sound, speech, Orca, console speech, the
+emergency key, network, firewall, disk, memory, updates and services, says
+what is wrong and puts it right (block 16).
+
+    vabaxos-doctor              the window, read by Orca
+    vabaxos-doctor --text       the checks as short lines, for a terminal
+                                or a text console (also: vabaxctl doctor)
+    vabaxos-doctor --fix        the checks, then every fix, then again
+
+In the window every check is a row: its name, then "OK", "Warning" or
+"Problem" and one sentence. A row that VabaxOS can put right has a Fix
+button; Fix all does them all. The user's own services start again
+directly; the system's ask the administrator password (pkexec).
+
+When nothing speaks at all, Ctrl+Super+Enter brings the voice back first.
+"""
+
+import gettext
+import sys
+import threading
+
+from vabaxos_doctor import checks
+
+gettext.textdomain("vabaxos-doctor")
+_ = gettext.gettext
+
+
+def text(fix_all=False):
+    results = checks.run_checks()
+    for result in results:
+        print(result.line())
+    print(checks.summary(results))
+    if not fix_all:
+        if any(r.fix for r in results if r.state != checks.OK):
+            print(_("vabaxos-doctor --fix puts right what it can."))
+        return 0 if all(r.state != checks.PROBLEM for r in results) else 1
+    for result in results:
+        if result.state != checks.OK and result.fix:
+            done = checks.fix(result.fix)
+            print((_("Fixed: {title}.") if done else _("Not fixed: {title}.")).format(title=result.title))
+    results = checks.run_checks()
+    print(checks.summary(results))
+    return 0 if all(r.state != checks.PROBLEM for r in results) else 1
+
+
+def window():
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, GLib, Gtk
+
+    class DoctorWindow(Adw.ApplicationWindow):
+
+        def __init__(self, application, system=None):
+            super().__init__(application=application, title=_("VabaxOS Doctor"))
+            self.system = system
+            self.set_default_size(720, 760)
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin_top=12,
+                          margin_bottom=12, margin_start=12, margin_end=12)
+            buttons = Gtk.Box(spacing=12)
+            self.again = Gtk.Button(label=_("Check again"))
+            self.again.connect("clicked", lambda *_a: self.check())
+            self.fix_all = Gtk.Button(label=_("Fix all"), sensitive=False)
+            self.fix_all.connect("clicked", lambda *_a: self.fix(None))
+            buttons.append(self.again)
+            buttons.append(self.fix_all)
+            box.append(buttons)
+            self.group = Adw.PreferencesGroup(title=_("Checks"))
+            box.append(self.group)
+            self.rows = []
+            scroll = Gtk.ScrolledWindow(vexpand=True)
+            scroll.set_child(box)
+            view.set_content(scroll)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            self.results = []
+            self.check()
+
+        def say(self, message):
+            self.toasts.add_toast(Adw.Toast.new(message))
+
+        def check(self):
+            self.again.set_sensitive(False)
+            self.fix_all.set_sensitive(False)
+            self.group.set_description(_("Checking..."))
+            threading.Thread(target=lambda: GLib.idle_add(self.show, checks.run_checks(self.system)),
+                             daemon=True).start()
+
+        def show(self, results):
+            for row in self.rows:
+                self.group.remove(row)
+            self.rows = []
+            self.results = results
+            word = {checks.OK: _("OK"), checks.WARNING: _("Warning"), checks.PROBLEM: _("Problem")}
+            for result in results:
+                row = Adw.ActionRow(title=result.title, subtitle=f"{word[result.state]}: {result.message}")
+                if result.state != checks.OK and result.fix:
+                    button = Gtk.Button(label=_("Fix"), valign=Gtk.Align.CENTER)
+                    button.update_property([Gtk.AccessibleProperty.LABEL],
+                                           [_("Fix: {title}").format(title=result.title)])
+                    button.connect("clicked", lambda _b, r=result: self.fix(r))
+                    row.add_suffix(button)
+                self.group.add(row)
+                self.rows.append(row)
+            summary = checks.summary(results)
+            self.group.set_description(summary)
+            self.again.set_sensitive(True)
+            self.fix_all.set_sensitive(any(r.state != checks.OK and r.fix for r in results))
+            self.say(summary)
+            return False
+
+        def fix(self, result):
+            todo = [result] if result else [r for r in self.results if r.state != checks.OK and r.fix]
+            self.again.set_sensitive(False)
+            self.fix_all.set_sensitive(False)
+            self.say(_("Fixing..."))
+
+            def work():
+                for item in todo:
+                    done = checks.fix(item.fix, self.system)
+                    GLib.idle_add(self.say, (_("Fixed: {title}.") if done else
+                                             _("Not fixed: {title}.")).format(title=item.title))
+                GLib.idle_add(self.check)
+            threading.Thread(target=work, daemon=True).start()
+
+    class DoctorApplication(Adw.Application):
+
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Doctor")
+            self.connect("activate", lambda app: (app.get_active_window() or DoctorWindow(app)).present())
+
+    return DoctorApplication, DoctorWindow
+
+
+if __name__ == "__main__":
+    if "--text" in sys.argv[1:]:
+        sys.exit(text())
+    if "--fix" in sys.argv[1:]:
+        sys.exit(text(fix_all=True))
+    application, _window = window()
+    sys.exit(application().run(sys.argv[:1]))

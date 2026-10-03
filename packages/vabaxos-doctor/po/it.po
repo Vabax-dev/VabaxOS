@@ -1,0 +1,221 @@
+# Italian translation of vabaxos-doctor.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-doctor\n"
+"PO-Revision-Date: 2026-10-03 00:00+0200\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Warning"
+msgstr "Attenzione"
+
+msgid "Problem"
+msgstr "Problema"
+
+msgid "Sound card"
+msgstr "Scheda audio"
+
+msgid "No sound card found: the computer cannot speak. Try headphones or another USB sound card."
+msgstr "Nessuna scheda audio: il computer non può parlare. Prova le cuffie o un'altra scheda audio USB."
+
+msgid "Sound"
+msgstr "Audio"
+
+msgid "The sound server does not answer."
+msgstr "Il server audio non risponde."
+
+msgid "No sound output."
+msgstr "Nessuna uscita audio."
+
+msgid "The sound is muted."
+msgstr "L'audio è muto."
+
+msgid "The volume is low, {percent} percent."
+msgstr "Il volume è basso, {percent} per cento."
+
+msgid "Volume {percent} percent."
+msgstr "Volume {percent} per cento."
+
+msgid "Speech"
+msgstr "Voce"
+
+msgid "The speech service does not answer."
+msgstr "Il servizio della voce non risponde."
+
+msgid "eSpeak NG is missing from the speech service."
+msgstr "Nel servizio della voce manca eSpeak NG."
+
+msgid "Natural voice (Kokoro)"
+msgstr "Voce naturale (Kokoro)"
+
+msgid "The speech service answers; voice: {voice}."
+msgstr "Il servizio della voce risponde; voce: {voice}."
+
+msgid "Screen reader"
+msgstr "Lettore di schermo"
+
+msgid "Orca is off. Super+Alt+S turns it on."
+msgstr "Orca è spento. Super+Alt+S lo accende."
+
+msgid "Orca is on but not running."
+msgstr "Orca è acceso ma non è in esecuzione."
+
+msgid "Orca's speech is turned off in its settings."
+msgstr "La voce di Orca è spenta nelle sue impostazioni."
+
+msgid "Orca is running."
+msgstr "Orca è in esecuzione."
+
+msgid "Console speech"
+msgstr "Voce della console"
+
+msgid "The text console does not speak."
+msgstr "La console di testo non parla."
+
+msgid "The text console speaks."
+msgstr "La console di testo parla."
+
+msgid "Emergency key"
+msgstr "Tasto d'emergenza"
+
+msgid "Ctrl+Super+Enter would not bring the voice back."
+msgstr "Ctrl+Super+Invio non rimetterebbe la voce."
+
+msgid "Ctrl+Super+Enter brings the voice back."
+msgstr "Ctrl+Super+Invio rimette la voce."
+
+msgid "Network"
+msgstr "Rete"
+
+msgid "Connected to the Internet."
+msgstr "Collegato a Internet."
+
+msgid "The network asks to sign in, as in a hotel: open the web browser."
+msgstr "La rete chiede di accedere, come in un albergo: apri il browser."
+
+msgid "No Internet. Connect from the system menu, or with nmtui in the terminal."
+msgstr "Niente Internet. Collegati dal menu di sistema, oppure con nmtui nel terminale."
+
+msgid "The network state is unknown."
+msgstr "Lo stato della rete non si conosce."
+
+msgid "Firewall"
+msgstr "Firewall"
+
+msgid "The firewall is off."
+msgstr "Il firewall è spento."
+
+msgid "The firewall is on."
+msgstr "Il firewall è attivo."
+
+msgid "Disk"
+msgstr "Disco"
+
+msgid "Home folder"
+msgstr "Cartella Home"
+
+msgid "Almost full: {free} GB free."
+msgstr "Quasi pieno: {free} GB liberi."
+
+msgid "Little space: {free} GB free."
+msgstr "Poco spazio: {free} GB liberi."
+
+msgid "{free} GB free."
+msgstr "{free} GB liberi."
+
+msgid "The free space is unknown."
+msgstr "Lo spazio libero non si conosce."
+
+msgid "Memory"
+msgstr "Memoria"
+
+msgid "Little free memory, {mb} MB: close some programs."
+msgstr "Poca memoria libera, {mb} MB: chiudi qualche programma."
+
+msgid "{mb} MB free."
+msgstr "{mb} MB liberi."
+
+msgid "The free memory is unknown."
+msgstr "La memoria libera non si conosce."
+
+msgid "Updates"
+msgstr "Aggiornamenti"
+
+msgid "Updates were installed: restart the computer to use them."
+msgstr "Sono stati installati aggiornamenti: riavvia il computer per usarli."
+
+msgid "No restart needed."
+msgstr "Nessun riavvio necessario."
+
+msgid "Services"
+msgstr "Servizi"
+
+msgid "Stopped with an error: {names}. vabaxctl report saves the details."
+msgstr "Fermati con un errore: {names}. vabaxctl report salva i dettagli."
+
+msgid "No service stopped with an error."
+msgstr "Nessun servizio fermo per un errore."
+
+msgid "Everything works."
+msgstr "Funziona tutto."
+
+msgid "Speech is back."
+msgstr "La voce è tornata."
+
+msgid "vabaxos-doctor --fix puts right what it can."
+msgstr "vabaxos-doctor --fix rimette a posto quello che può."
+
+msgid "Fixed: {title}."
+msgstr "Corretto: {title}."
+
+msgid "Not fixed: {title}."
+msgstr "Non corretto: {title}."
+
+msgid "VabaxOS Doctor"
+msgstr "Diagnosi di VabaxOS"
+
+msgid "Check again"
+msgstr "Controlla di nuovo"
+
+msgid "Fix all"
+msgstr "Correggi tutto"
+
+msgid "Checks"
+msgstr "Controlli"
+
+msgid "Checking..."
+msgstr "Controllo in corso..."
+
+msgid "Fix"
+msgstr "Correggi"
+
+msgid "Fix: {title}"
+msgstr "Correggi: {title}"
+
+msgid "Fixing..."
+msgstr "Correzione in corso..."
+
+msgid "{count} sound card."
+msgid_plural "{count} sound cards."
+msgstr[0] "{count} scheda audio."
+msgstr[1] "{count} schede audio."
+
+msgid "{n} problem"
+msgid_plural "{n} problems"
+msgstr[0] "{n} problema"
+msgstr[1] "{n} problemi"
+
+msgid "{n} warning"
+msgid_plural "{n} warnings"
+msgstr[0] "{n} avviso"
+msgstr[1] "{n} avvisi"

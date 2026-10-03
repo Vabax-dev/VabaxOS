@@ -6,6 +6,8 @@
     vabaxctl voice espeak|kokoro|auto   choose the desktop voice
     vabaxctl update [--now|--at-restart]   the same as vabaxos-update
     vabaxctl report                     the same as vabaxos-report
+    vabaxctl doctor [--fix]             checks sound, speech, Orca, network,
+                                        disk (vabaxos-doctor); --fix puts right
 
 Every answer is a few short lines, easy to follow with a screen reader.
 Changing the voice needs the administrator password: in the desktop GNOME
@@ -152,7 +154,9 @@ def main(argv):
         return run_program("vabaxos-update", args)
     if command == "report":
         return run_program("vabaxos-report", args)
-    print(_("Commands: status, voice, update, report. Example: vabaxctl voice kokoro"),
+    if command == "doctor":
+        return run_program("vabaxos-doctor", ["--fix"] if "--fix" in args else ["--text"])
+    print(_("Commands: status, voice, update, report, doctor. Example: vabaxctl voice kokoro"),
           file=sys.stderr if command not in ("help", "--help", "-h") else sys.stdout)
     return 0 if command in ("help", "--help", "-h") else 2
 
