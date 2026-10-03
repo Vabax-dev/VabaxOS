@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily copy of the VabaxOS settings (voice, desktop, programs)
+Documentation=https://github.com/Vabax-dev/VabaxOS/blob/main/docs/utente/copia-impostazioni.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/vabaxos-settings-copy auto
+Nice=10

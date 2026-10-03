@@ -1,0 +1,120 @@
+# Italian translation of vabaxos-settings-copy.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-settings-copy\n"
+"PO-Revision-Date: 2026-10-03 00:00+0200\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Voice and screen reader put back."
+msgstr "Voce e lettore di schermo rimessi a posto."
+
+msgid "Desktop settings and keys put back."
+msgstr "Impostazioni e tasti del desktop rimessi a posto."
+
+msgid "The desktop settings could not be put back."
+msgstr "Non è stato possibile rimettere le impostazioni del desktop."
+
+msgid "{done} programs installed, {failed} not installed."
+msgstr "Programmi installati: {done}; non installati: {failed}."
+
+msgid "Voice and screen reader"
+msgstr "Voce e lettore di schermo"
+
+msgid "Desktop settings and keys"
+msgstr "Impostazioni e tasti del desktop"
+
+msgid "Wi-Fi networks, with their passwords"
+msgstr "Reti Wi-Fi, con le password"
+
+msgid "Programs you installed"
+msgstr "Programmi che hai installato"
+
+msgid "Copy saved in {file}."
+msgstr "Copia salvata in {file}."
+
+msgid "{file} is not a copy of VabaxOS settings."
+msgstr "{file} non è una copia delle impostazioni di VabaxOS."
+
+msgid "Copy of settings"
+msgstr "Copia delle impostazioni"
+
+msgid "What goes in the copy"
+msgstr "Cosa va nella copia"
+
+msgid "The same choice counts when a copy is put back."
+msgstr "La stessa scelta vale quando si rimette una copia."
+
+msgid "Keep the file in a safe place: anyone with it can read them."
+msgstr "Tieni il file in un posto sicuro: chi lo ha può leggerle."
+
+msgid "Save or put back"
+msgstr "Salva o rimetti"
+
+msgid "Save a copy..."
+msgstr "Salva una copia..."
+
+msgid "Put a copy back..."
+msgstr "Rimetti una copia..."
+
+msgid "Automatic copies"
+msgstr "Copie automatiche"
+
+msgid "VabaxOS saves a copy every day, without the Wi-Fi passwords, and keeps the last seven."
+msgstr "VabaxOS salva una copia ogni giorno, senza le password del Wi-Fi, e tiene le ultime sette."
+
+msgid "Put back"
+msgstr "Rimetti"
+
+msgid "Put back the copy of {day}"
+msgstr "Rimetti la copia del {day}"
+
+msgid "No automatic copy yet."
+msgstr "Ancora nessuna copia automatica."
+
+msgid "Choose at least one part."
+msgstr "Scegli almeno una parte."
+
+msgid "Save a copy"
+msgstr "Salva una copia"
+
+msgid "Saving..."
+msgstr "Salvataggio in corso..."
+
+msgid "The copy was not saved: {error}"
+msgstr "La copia non è stata salvata: {error}"
+
+msgid "Put a copy back"
+msgstr "Rimetti una copia"
+
+msgid "The copy has none of the chosen parts."
+msgstr "La copia non contiene nessuna delle parti scelte."
+
+msgid "Put back the copy of {date}?"
+msgstr "Rimettere la copia del {date}?"
+
+msgid "These settings of yours are replaced: {parts}."
+msgstr "Queste tue impostazioni vengono sostituite: {parts}."
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Putting the copy back..."
+msgstr "Sto rimettendo la copia..."
+
+msgid "{n} Wi-Fi network added."
+msgid_plural "{n} Wi-Fi networks added."
+msgstr[0] "{n} rete Wi-Fi aggiunta."
+msgstr[1] "{n} reti Wi-Fi aggiunte."
+
+msgid "{n} program installed."
+msgid_plural "{n} programs installed."
+msgstr[0] "{n} programma installato."
+msgstr[1] "{n} programmi installati."

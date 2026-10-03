@@ -112,6 +112,8 @@ jobs:
         run: python3 tests/accessibility/test_voice_rescue.py
       - name: Doctor tests (made-up computer, hidden Broadway display)
         run: python3 tests/doctor/test_doctor.py
+      - name: Copy of settings tests (temporary home, made-up computer, hidden Broadway display)
+        run: python3 tests/settings-copy/test_settings_copy.py
       - name: Start menu tests (hidden Broadway display, made-up programs)
         run: python3 tests/start/test_start.py
       - name: Update tests (fake PackageKit) and vabaxctl

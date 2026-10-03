@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Copy of settings
+Name[it]=Copia delle impostazioni
+Comment=Save your voice, desktop, Wi-Fi and programs in one file, and put them back
+Comment[it]=Salva voce, desktop, Wi-Fi e programmi in un file, e rimettili a posto
+Exec=vabaxos-settings-copy
+Icon=vabaxos-logo
+Terminal=false
+Categories=System;Settings;
+Keywords=backup;restore;copy;settings;migrate;copia;impostazioni;ripristina;salva;

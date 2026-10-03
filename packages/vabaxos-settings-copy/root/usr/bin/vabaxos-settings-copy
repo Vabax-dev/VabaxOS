@@ -1,0 +1,210 @@
+#!/usr/bin/python3
+"""Copy of settings: your VabaxOS in one file, to put back on another
+computer or after a new installation (block 16).
+
+    vabaxos-settings-copy                          the window, read by Orca
+    vabaxos-settings-copy save FILE [--without-wifi]
+    vabaxos-settings-copy restore FILE [--only voice,desktop,wifi,programs]
+    vabaxos-settings-copy auto                     the daily copy (timer)
+
+What goes in the copy: voice and screen reader (Orca, speech-dispatcher),
+desktop settings and keys (GNOME), Wi-Fi networks with their passwords, and
+the programs you installed. Every day vabaxos-settings-copy.timer saves a
+copy without the Wi-Fi passwords in ~/.local/share/vabaxos/settings-copies,
+the last seven kept.
+"""
+
+import gettext
+import os
+import sys
+import threading
+import time
+
+from vabaxos_settings_copy import copy
+
+gettext.textdomain("vabaxos-settings-copy")
+_ = gettext.gettext
+
+
+def part_names():
+    return {"voice": _("Voice and screen reader"), "desktop": _("Desktop settings and keys"),
+            "wifi": _("Wi-Fi networks, with their passwords"), "programs": _("Programs you installed")}
+
+
+def command_line(args):
+    if args[0] == "auto":
+        print(copy.auto_save())
+        return 0
+    if args[0] == "save" and len(args) >= 2:
+        parts = [p for p in copy.PARTS if not (p == "wifi" and "--without-wifi" in args)]
+        copy.write(args[1], copy.make(parts))
+        print(_("Copy saved in {file}.").format(file=args[1]))
+        return 0
+    if args[0] == "restore" and len(args) >= 2:
+        data = copy.read(args[1])
+        if data is None:
+            print(_("{file} is not a copy of VabaxOS settings.").format(file=args[1]), file=sys.stderr)
+            return 1
+        parts = copy.PARTS
+        if "--only" in args and args.index("--only") + 1 < len(args):
+            parts = [p for p in args[args.index("--only") + 1].split(",") if p in copy.PARTS]
+        for line in copy.restore(data, parts):
+            print(line)
+        return 0
+    print(__doc__)
+    return 2
+
+
+def window():
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gio, GLib, Gtk
+
+    class CopyWindow(Adw.ApplicationWindow):
+
+        def __init__(self, application, system=None):
+            super().__init__(application=application, title=_("Copy of settings"))
+            self.system = system
+            self.set_default_size(720, 720)
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+
+            parts = Adw.PreferencesGroup(
+                title=_("What goes in the copy"),
+                description=_("The same choice counts when a copy is put back."))
+            self.switches = {}
+            for part, title in part_names().items():
+                row = Adw.SwitchRow(title=title, active=True)
+                if part == "wifi":
+                    row.set_subtitle(_("Keep the file in a safe place: anyone with it can read them."))
+                self.switches[part] = row
+                parts.add(row)
+            page.add(parts)
+
+            actions = Adw.PreferencesGroup(title=_("Save or put back"))
+            save = Adw.ButtonRow(title=_("Save a copy..."))
+            save.connect("activated", lambda *_a: self.choose_save())
+            restore = Adw.ButtonRow(title=_("Put a copy back..."))
+            restore.connect("activated", lambda *_a: self.choose_restore())
+            actions.add(save)
+            actions.add(restore)
+            page.add(actions)
+
+            self.auto = Adw.PreferencesGroup(
+                title=_("Automatic copies"),
+                description=_("VabaxOS saves a copy every day, without the Wi-Fi passwords, "
+                              "and keeps the last seven."))
+            self.auto_rows = []
+            page.add(self.auto)
+            self.fill_auto()
+
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+
+        def say(self, message):
+            self.toasts.add_toast(Adw.Toast.new(message))
+
+        def chosen(self):
+            return [part for part, row in self.switches.items() if row.get_active()]
+
+        def fill_auto(self):
+            for row in self.auto_rows:
+                self.auto.remove(row)
+            self.auto_rows = []
+            for path in copy.auto_copies(self.system):
+                day = os.path.basename(path)[:-5]
+                row = Adw.ActionRow(title=day)
+                button = Gtk.Button(label=_("Put back"), valign=Gtk.Align.CENTER)
+                button.update_property([Gtk.AccessibleProperty.LABEL],
+                                       [_("Put back the copy of {day}").format(day=day)])
+                button.connect("clicked", lambda _b, p=path: self.restore(p))
+                row.add_suffix(button)
+                self.auto.add(row)
+                self.auto_rows.append(row)
+            if not self.auto_rows:
+                row = Adw.ActionRow(title=_("No automatic copy yet."))
+                self.auto.add(row)
+                self.auto_rows.append(row)
+
+        def choose_save(self):
+            if not self.chosen():
+                self.say(_("Choose at least one part."))
+                return
+            dialog = Gtk.FileDialog(title=_("Save a copy"),
+                                    initial_name=time.strftime("VabaxOS-settings-%Y-%m-%d.json"))
+            dialog.save(self, None, self.save_chosen)
+
+        def save_chosen(self, dialog, result):
+            try:
+                path = dialog.save_finish(result).get_path()
+            except GLib.Error:
+                return
+            parts = self.chosen()
+            self.say(_("Saving..."))
+
+            def work():
+                try:
+                    copy.write(path, copy.make(parts, self.system))
+                    GLib.idle_add(self.say, _("Copy saved in {file}.").format(file=path))
+                except OSError as error:
+                    GLib.idle_add(self.say, _("The copy was not saved: {error}").format(error=error.strerror))
+            threading.Thread(target=work, daemon=True).start()
+
+        def choose_restore(self):
+            dialog = Gtk.FileDialog(title=_("Put a copy back"))
+            dialog.open(self, None, self.restore_chosen)
+
+        def restore_chosen(self, dialog, result):
+            try:
+                self.restore(dialog.open_finish(result).get_path())
+            except GLib.Error:
+                return
+
+        def restore(self, path):
+            data = copy.read(path)
+            if data is None:
+                self.say(_("{file} is not a copy of VabaxOS settings.").format(file=os.path.basename(path)))
+                return
+            parts = [p for p in self.chosen() if p in copy.parts_in(data)]
+            if not parts:
+                self.say(_("The copy has none of the chosen parts."))
+                return
+            names = ", ".join(part_names()[p] for p in parts)
+            confirm = Adw.AlertDialog(
+                heading=_("Put back the copy of {date}?").format(date=data.get("created", "")),
+                body=_("These settings of yours are replaced: {parts}.").format(parts=names))
+            confirm.add_response("cancel", _("Cancel"))
+            confirm.add_response("restore", _("Put back"))
+            confirm.set_default_response("restore")
+            confirm.connect("response", self.restore_confirmed, data, parts)
+            confirm.present(self)
+
+        def restore_confirmed(self, _dialog, response, data, parts):
+            if response != "restore":
+                return
+            self.say(_("Putting the copy back..."))
+
+            def work():
+                for line in copy.restore(data, parts, self.system):
+                    GLib.idle_add(self.say, line)
+            threading.Thread(target=work, daemon=True).start()
+
+    class CopyApplication(Adw.Application):
+
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.SettingsCopy",
+                             flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+            self.connect("activate", lambda app: (app.get_active_window() or CopyWindow(app)).present())
+
+    return CopyApplication, CopyWindow
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        sys.exit(command_line(sys.argv[1:]))
+    application, _window = window()
+    sys.exit(application().run(sys.argv[:1]))

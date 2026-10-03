@@ -7,6 +7,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-accessibility` | Voce della console (Speakup con eSpeak NG) nella lingua del sistema, Orca attivo di default, «senza voce» che spegne entrambi, nomi dei pulsanti di GNOME Shell con la sola icona (ADR-0022) |
 | `vabaxos-settings` | Impostazioni di GNOME: niente tour, niente sospensione automatica, niente blocco dello schermo con password |
 | `vabaxos-welcome` | Il [benvenuto parlato](../docs/utente/benvenuto.md) prima del desktop (ADR-0016) |
+| `vabaxos-settings-copy` | La [copia delle impostazioni](../docs/utente/copia-impostazioni.md): voce, desktop, Wi-Fi e programmi in un file, e una copia automatica ogni giorno (blocco 16) |
 | `vabaxos-doctor` | La [diagnosi](../docs/utente/diagnosi.md): audio, voce, Orca, rete, disco, con le correzioni (blocco 16) |
 
 Previsto per la v0.1: `vabaxos-branding` (nome, logo, sfondo, suoni).
