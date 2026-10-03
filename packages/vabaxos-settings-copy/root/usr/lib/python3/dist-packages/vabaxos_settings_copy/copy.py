@@ -213,7 +213,8 @@ def restore_wifi(system, part):
 def user_packages(history, manual):
     """The Debian packages a person installed (apt with sudo, or PackageKit
     from Software and VabaxOS Programs), still installed and chosen by
-    hand: the installer's work has no Requested-By and no PackageKit."""
+    hand: the installer's work has no Requested-By and no PackageKit.
+    VabaxOS's own packages are never in the list."""
     found = []
     for entry in history.split("\n\n"):
         if "Requested-By:" not in entry and "packagekit" not in entry.lower():
@@ -223,7 +224,9 @@ def user_packages(history, manual):
                 continue
             # "Install: name:amd64 (1.0), other:amd64 (2.0, automatic)"
             for item in re.findall(r"([a-z0-9][a-z0-9+.-]*)(?::[a-z0-9]+)? \(([^)]*)\)", line[8:]):
-                if "automatic" not in item[1] and item[0] in manual and item[0] not in found:
+                # VabaxOS's own packages come with the system (and its updates).
+                if "automatic" not in item[1] and item[0] in manual and item[0] not in found \
+                        and not item[0].startswith("vabaxos-"):
                     found.append(item[0])
     return found
 

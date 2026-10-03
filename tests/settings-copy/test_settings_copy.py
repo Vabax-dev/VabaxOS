@@ -58,7 +58,7 @@ End-Date: 2026-10-01  09:02:00
 
 Start-Date: 2026-10-02  09:00:00
 Commandline: packagekit role='install-packages'
-Install: audacity:amd64 (3.7.3-1), removed-later:amd64 (1.0)
+Install: audacity:amd64 (3.7.3-1), removed-later:amd64 (1.0), vabaxos-doctor:amd64 (0.1)
 End-Date: 2026-10-02  09:02:00
 """
 
@@ -135,7 +135,7 @@ class Copy(unittest.TestCase):
             self.assertNotIn(gone, kept)
 
     def test_programs_a_person_installed(self):
-        found = copy.user_packages(HISTORY, {"gimp", "audacity", "grub-efi"})
+        found = copy.user_packages(HISTORY, {"gimp", "audacity", "grub-efi", "vabaxos-doctor"})
         self.assertEqual(found, ["gimp", "audacity"])
 
     def test_make_write_read(self):
