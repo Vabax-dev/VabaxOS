@@ -49,7 +49,7 @@ Non installare mai VabaxOS sulla postazione (il Galaxy Book). Non chiedere mai p
 
 ## Stato
 
-Aggiornato al 2026-11-01.
+Aggiornato al 2026-11-01 (piano delle 18 funzioni completo).
 
 - 2026-11-01: si riprende dopo i blocchi 3-12, tutti uniti a `main` (ultimo merge: PR #17). Nuova fase «prima le funzionalità» (vedi sopra). Sessione nel cloud, ramo `claude/beautiful-rubin-2thpuw` (un commit per funzionalità, nessuna PR ancora). Nel contenitore cloud: Ubuntu 24.04, GTK 4.14 e libadwaita 1.5 (usare `python3.12`; i programmi con `Adw.ButtonRow`, cioè setup e impostazioni del lettore di schermo, si provano solo nella CI), `reuse` recente con `pip install --user reuse`; deb.debian.org, salsa e packages.debian.org bloccati dalla rete (niente chroot forky), GitHub raggiungibile.
 - **ADR-0028 Accettata (Vabax, 2026-11-01): la prima versione pubblica è la 1.0**, niente 0.x pubbliche; la 1.0 esce solo con tutti i criteri (PC fisici, persone cieche, Debian 14 stabile, repository e somme firmati). ISO di prova come nightly o `1.0.0-alpha.N`.
@@ -116,6 +116,9 @@ Aggiornato al 2026-11-01.
 - Punti 13 e 14 fatti: `vabaxos-math` (calcolatrice con albero sicuro, formule LaTeX, MathML e semplici a parole, Super+Alt+M dagli appunti); lettore con `read_structure()` (titoli con livello da Markdown, HTML, Word, EPUB, ODT, DAISY 3; RTF senza titoli), Ctrl+T indice (Adw.Dialog), Alt+Pagina giù e su. **Restano i punti 15-18** (notizie e podcast, videochiamate e messaggi, giochi audio, «Qualcosa non va»). ADR-0029 (modello per descrivere le immagini) in attesa di Vabax.
 
 - Punti 15 e 16 fatti: `vabaxos-news` (RSS e Atom, feed trovato dalla pagina del sito, podcast con GStreamer); `vabaxos-communication` (WhatsApp Web, Telegram Web, Jitsi Meet in Firefox; guida). Da valutare: **AccessGram** (github.com/destructatron/AccessGram, MIT, GTK 4 e Python, Telegram per Orca; serve Telethon e credenziali API dell'utente da my.telegram.org) e la prova con Orca di WhatsApp Web e Jitsi nella fase delle prove.
+
+- **Punti 17 e 18 fatti: il piano delle 18 funzioni è completo** (2026-11-01). `vabaxos-games` (memory dei suoni con 1-4, indovina il numero, tris con il tastierino, R legge la griglia; regole in `vabaxos_games`, suoni WAV generati); `vabaxos-trouble` «Qualcosa non va» (primi controlli detti a voce: servizi falliti, audio muto o assente, Orca spento, rete, spazio, `dpkg --audit`; rapporto in Documenti con dati personali nascosti, registro del sistema con pkexec solo se chiesto; niente invio, niente aiuto remoto; sostituisce la voce «Esporta il rapporto di sistema»; `vabaxos-report -` scrive sullo standard output). Test: giochi 6, «Qualcosa non va» 10. Lezione: nei test non forzare `LANGUAGE=C` per tutti, i test dello sblocco del disco leggono la lingua da lì.
+- **Prossimo passo: la fase delle prove** (decisione di Vabax: prima le funzionalità, poi tutte le prove insieme, poi la ISO). Da verificare sulla postazione o nella CI: llama.cpp di forky con Qwen3.5 e `PINNED` di `vabaxos_describe/model.py`; nome del comando di whisper.cpp; percorso dconf del dizionario di pronuncia di Orca; `passwd/user-default-groups` e le chiavi partman-crypto con i modelli dell'installer; `UPower.conf.d`; Braille con il display di Vabax; WhatsApp Web, Telegram Web e Jitsi con Orca; AccessGram da valutare.
 
 Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
 
