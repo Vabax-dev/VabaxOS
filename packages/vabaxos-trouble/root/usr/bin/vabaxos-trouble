@@ -1,0 +1,211 @@
+#!/usr/bin/python3
+"""Something is wrong: first checks and a report to ask for help.
+
+    vabaxos-trouble
+
+The window says at once what the first checks found (services that did not
+start, no sound or muted, Orca off, no network, little space, programs
+installed in part). Then you choose what is wrong, write what happened and
+press Create the report: a text file is saved in Documents, with your
+personal data hidden. VabaxOS does not send it: attach it to a message or
+to a bug report. The whole system log needs the password.
+"""
+
+import gettext
+import sys
+import threading
+
+import vabaxos_trouble as vt
+
+gettext.textdomain("vabaxos-trouble")
+_ = gettext.gettext
+
+
+def present(text):
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - shown in the window anyway
+        pass
+
+
+def areas():
+    return [_("Speech or screen reader"), _("Sound"), _("Keyboard"), _("Network or Internet"),
+            _("A program"), _("Start or shutdown"), _("Printer, scanner or Braille"), _("Something else")]
+
+
+def window_classes(speak=present, checker=vt.findings, collector=vt.collect, saver=vt.save):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gio, GLib, Gtk
+
+    class TroubleWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Something is wrong"))
+            self.set_default_size(680, 640)
+            self.path = None
+            self.text = ""
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+
+            self.checks = Adw.PreferencesGroup(title=_("First checks"), description=_("Checking…"))
+            self.check_rows = []
+            page.add(self.checks)
+
+            group = Adw.PreferencesGroup(
+                title=_("The report"),
+                description=_("VabaxOS writes a text file to attach to a message or to a bug report. "
+                              "It sends nothing by itself."))
+            self.area = Adw.ComboRow(title=_("What is wrong"), model=Gtk.StringList.new(areas()))
+            group.add(self.area)
+            self.description = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR, accepts_tab=False,
+                                            top_margin=8, bottom_margin=8, left_margin=8, right_margin=8)
+            self.description.update_property([Gtk.AccessibleProperty.LABEL],
+                                             [_("What happened, in your words")])
+            frame = Gtk.Frame(child=self.description, margin_top=12)
+            frame.set_size_request(-1, 110)
+            label = Gtk.Label(label=_("What happened, in your words"), xalign=0, margin_top=12)
+            label.set_mnemonic_widget(self.description)
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            box.append(label)
+            box.append(frame)
+            group.add(box)
+            self.hide = Adw.SwitchRow(title=_("Hide my personal data"), active=True,
+                                      subtitle=_("Names of the user, of the computer and of the networks, "
+                                                 "addresses"))
+            group.add(self.hide)
+            self.system = Adw.SwitchRow(title=_("Add the whole system log"), active=False,
+                                        subtitle=_("More useful to find the problem; asks the password"))
+            group.add(self.system)
+            self.create = Gtk.Button(label=_("Create the report"), margin_top=12)
+            self.create.add_css_class("suggested-action")
+            self.create.connect("clicked", lambda *_a: self.make())
+            group.add(self.create)
+            page.add(group)
+
+            self.done = Adw.PreferencesGroup(title=_("Saved"), visible=False)
+            self.saved_row = Adw.ActionRow(title=_("Report"))
+            self.saved_row.set_focusable(True)
+            self.done.add(self.saved_row)
+            buttons = Gtk.Box(spacing=8, margin_top=12, homogeneous=True)
+            for text, action in ((_("Open the report"), self.open_report), (_("Open the folder"), self.open_folder),
+                                 (_("Copy the report"), self.copy_report)):
+                button = Gtk.Button(label=text)
+                button.connect("clicked", lambda *_a, act=action: act())
+                buttons.append(button)
+            self.done.add(buttons)
+            page.add(self.done)
+
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            self.GLib, self.Gio, self.Gtk, self.Adw = GLib, Gio, Gtk, Adw
+            self.check()
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        # -- first checks --------------------------------------------------
+
+        def check(self):
+            def work():
+                try:
+                    found = checker()
+                except Exception:  # noqa: BLE001 - the report still works
+                    found = []
+                GLib.idle_add(self.show_findings, found)
+            threading.Thread(target=work, daemon=True).start()
+
+        def show_findings(self, found):
+            self.found = found
+            for row in self.check_rows:
+                self.checks.remove(row)
+            self.check_rows = []
+            if not found:
+                self.checks.set_description(_("No problem found by the first checks."))
+                self.say(_("No problem found by the first checks. Choose what is wrong, then create the report."))
+                return False
+            count = len(found)
+            self.checks.set_description(gettext.ngettext("{count} problem found.", "{count} problems found.",
+                                                         count).format(count=count))
+            for _key, sentence in found:
+                row = Adw.ActionRow(title=sentence, title_lines=0)
+                row.set_focusable(True)
+                self.checks.add(row)
+                self.check_rows.append(row)
+            self.say(gettext.ngettext("{count} problem found: {list}", "{count} problems found: {list}",
+                                      count).format(count=count, list=" ".join(s for _k, s in found)))
+            return False
+
+        # -- the report --------------------------------------------------------
+
+        def make(self):
+            buffer = self.description.get_buffer()
+            description = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+            area = areas()[self.area.get_selected()]
+            hide, system = self.hide.get_active(), self.system.get_active()
+            found = getattr(self, "found", None)
+            self.create.set_sensitive(False)
+            self.say(_("Creating the report: it can take a minute."))
+
+            def work():
+                try:
+                    text = collector(description, area, system_log=system, hide_personal=hide, found=found)
+                    result = (text, saver(text))
+                except Exception as error:  # noqa: BLE001 - said to the user
+                    result = error
+                GLib.idle_add(finished, result)
+
+            def finished(result):
+                self.create.set_sensitive(True)
+                if isinstance(result, Exception):
+                    self.say(_("The report could not be saved: {error}").format(error=result))
+                    return False
+                self.text, self.path = result
+                self.saved_row.set_title(self.path)
+                self.done.set_visible(True)
+                self.saved_row.grab_focus()
+                self.say(_("Report saved in {path}. Attach it to a message or to a bug report.").format(
+                    path=self.path))
+                return False
+            threading.Thread(target=work, daemon=True).start()
+
+        def open_report(self):
+            if self.path:
+                Gio.AppInfo.launch_default_for_uri(Gio.File.new_for_path(self.path).get_uri(), None)
+
+        def open_folder(self):
+            if self.path:
+                Gio.AppInfo.launch_default_for_uri(Gio.File.new_for_path(self.path).get_parent().get_uri(), None)
+
+        def copy_report(self):
+            if self.text:
+                self.get_clipboard().set(self.text)
+                self.say(_("Report copied: paste it with Ctrl+V."))
+
+    class TroubleApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Trouble")
+            self.connect("activate", lambda app: (app.get_active_window() or TroubleWindow(app)).present())
+
+    return TroubleApp, TroubleWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
