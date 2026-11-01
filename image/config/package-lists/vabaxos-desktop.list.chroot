@@ -21,13 +21,20 @@ network-manager
 flatpak
 locales-all
 
+# Encrypted disk (ADR-0021): the installer copies this system, so the tools
+# for "guided - use entire disk and set up encrypted LVM" must be in it;
+# vabaxos-unlock speaks when the passphrase is asked at boot.
+cryptsetup
+cryptsetup-initramfs
+lvm2
+
 # Language and keyboard, chosen in the boot menu or in the welcome.
 keyboard-configuration
 console-setup
 
 # Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility, vabaxos-apps,
 # vabaxos-branding, vabaxos-reader, vabaxos-screen-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds, vabaxos-start,
-# vabaxos-update, vabaxos-welcome, vabaxos-ocr)
+# vabaxos-update, vabaxos-welcome, vabaxos-ocr, vabaxos-unlock)
 # are built from packages/ by
 # scripts/build-packages.sh and installed by live-build automatically.
 # vabaxos-voice (Kokoro) stays out of the ISO for now: only eSpeak NG (ADR-0026).

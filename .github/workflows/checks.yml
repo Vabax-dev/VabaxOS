@@ -30,7 +30,11 @@ jobs:
         run: |
           find scripts -name '*.sh' -print0 | xargs -0 shellcheck
           shellcheck image/auto/config
-          shellcheck packages/*/postinst packages/*/postrm packages/*/build packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
+          shellcheck packages/*/postinst packages/*/postrm packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
+          for f in packages/*/build; do head -1 "$f" | grep -q python || shellcheck "$f"; done
+          shellcheck -s sh packages/vabaxos-unlock/root/usr/share/initramfs-tools/hooks/* \
+            packages/vabaxos-unlock/root/usr/share/initramfs-tools/scripts/*/* \
+            packages/vabaxos-unlock/root/usr/lib/vabaxos/unlock/askpass packages/vabaxos-unlock/root/usr/lib/vabaxos/unlock/speech
       - name: Every workstation package exists in Debian trixie
         run: |
           grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
@@ -99,6 +103,8 @@ jobs:
           dpkg-deb -x /tmp/packages/vabaxos-voice_*.deb /tmp/voice
           export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
           python3 tests/voice/test_module.py
+      - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)
+        run: python3 tests/unlock/test_unlock.py
       - name: Text recognition tests (screen-like pictures, the result window)
         run: python3 tests/ocr/test_ocr.py
       - name: Reader tests (documents; the window reads into a file)

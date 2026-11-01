@@ -1,0 +1,117 @@
+#!/bin/sh
+# VabaxOS: a voice when the computer asks the password of the disk
+# (ADR-0021). Runs after cryptroot (cryptsetup-initramfs), only when the
+# system has encrypted disks: it puts in the initramfs eSpeak NG with the
+# language of the system, aplay and alsactl, the sound drivers, two tones,
+# and in place of Debian's askpass the one of VabaxOS, which speaks and
+# then runs Debian's.
+PREREQ="cryptroot"
+prereqs() { echo "$PREREQ"; }
+case "$1" in
+    prereqs) prereqs; exit 0 ;;
+esac
+
+# shellcheck source=/dev/null
+. "${VABAXOS_HOOK_FUNCTIONS:-/usr/share/initramfs-tools/hook-functions}"
+
+ROOT="${VABAXOS_UNLOCK_ROOT:-}"
+CONF="$ROOT/etc/vabaxos/unlock.conf"
+ENABLE=yes
+# shellcheck source=/dev/null
+[ -r "$CONF" ] && . "$CONF"
+[ "$ENABLE" = yes ] || exit 0
+
+# cryptroot copies askpass only when a disk is encrypted.
+askpass=""
+for path in "$DESTDIR/usr/lib/cryptsetup/askpass" "$DESTDIR/lib/cryptsetup/askpass"; do
+    if [ -f "$path" ] && [ ! -L "$path" ]; then
+        askpass="$path"
+        break
+    fi
+done
+[ -n "$askpass" ] || exit 0
+command -v espeak-ng >/dev/null 2>&1 && command -v aplay >/dev/null 2>&1 || exit 0
+
+# The language and speed of the system: Italian or English (the languages
+# of the welcome), the speed chosen in the welcome or in the installer.
+# shellcheck source=/dev/null
+lang="$( (. "$ROOT/etc/default/locale" 2>/dev/null; echo "${LANGUAGE:-${LANG:-en}}") | cut -c1-2)"
+rate=175
+choice="$(sed -n 's/^vabaxos\.rate=//p' "$ROOT/var/lib/vabaxos/installer-choices" 2>/dev/null | head -n 1)"
+case "$choice" in
+    0) rate=120 ;; 1) rate=150 ;; 2) rate=175 ;; 3) rate=210 ;; 4) rate=250 ;; 5) rate=300 ;; 6) rate=350 ;;
+esac
+case "$lang" in
+    it)
+        voice=it
+        ask="Il disco è cifrato. Scrivi la password del disco, poi premi Invio."
+        wrong="Password sbagliata. Riprova."
+        open="Disco aperto. VabaxOS si avvia."
+        ;;
+    *)
+        lang=en
+        voice=en-us
+        ask="The disk is encrypted. Type the password of the disk, then press Enter."
+        wrong="Wrong password. Try again."
+        open="Disk open. VabaxOS is starting."
+        ;;
+esac
+# Single quotes inside a message are kept: ' becomes '\''.
+quote() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+[ -n "${MSG_ASK:-}" ] && ask="$MSG_ASK"
+[ -n "${MSG_WRONG:-}" ] && wrong="$MSG_WRONG"
+[ -n "${MSG_OPEN:-}" ] && open="$MSG_OPEN"
+mkdir -p "$DESTDIR/etc"
+{
+    echo "VOICE=$(quote "$voice")"
+    echo "RATE=$(quote "$rate")"
+    echo "MSG_ASK=$(quote "$ask")"
+    echo "MSG_WRONG=$(quote "$wrong")"
+    echo "MSG_OPEN=$(quote "$open")"
+} > "$DESTDIR/etc/vabaxos-unlock.conf"
+
+# Speech: eSpeak NG with only the data of the language (and English).
+copy_exec "$(command -v espeak-ng)"
+data=""
+for dir in /usr/lib/*/espeak-ng-data /usr/share/espeak-ng-data; do
+    [ -d "$ROOT$dir" ] && data="$dir" && break
+done
+if [ -n "$data" ]; then
+    mkdir -p "$DESTDIR$data"
+    for item in "$ROOT$data"/*; do
+        name="$(basename "$item")"
+        case "$name" in
+            *_dict) [ "$name" = "${lang}_dict" ] || [ "$name" = en_dict ] || continue ;;
+        esac
+        cp -a "$item" "$DESTDIR$data/"
+    done
+fi
+
+# Sound: aplay, alsactl, alsa-lib's configuration, the saved volumes, all
+# the sound drivers (udev loads the right one) and the PC speaker.
+copy_exec "$(command -v aplay)"
+command -v alsactl >/dev/null 2>&1 && copy_exec "$(command -v alsactl)"
+for dir in /usr/share/alsa/alsa.conf /usr/share/alsa/alsa.conf.d /usr/share/alsa/pcm /usr/share/alsa/cards /usr/share/alsa/init; do
+    if [ -e "$ROOT$dir" ]; then
+        mkdir -p "$DESTDIR$(dirname "$dir")"
+        cp -a "$ROOT$dir" "$DESTDIR$(dirname "$dir")/"
+    fi
+done
+[ -r "$ROOT/var/lib/alsa/asound.state" ] && cp "$ROOT/var/lib/alsa/asound.state" "$DESTDIR/etc/vabaxos-unlock-asound.state"
+copy_modules_dir kernel/sound
+manual_add_modules pcspkr
+
+# The VabaxOS askpass in front of Debian's.
+mkdir -p "$DESTDIR/usr/lib/vabaxos/unlock"
+cp "$ROOT/usr/lib/vabaxos/unlock/speech" "$DESTDIR/usr/lib/vabaxos/unlock/speech"
+cp "$ROOT/usr/lib/vabaxos/unlock/ready.wav" "$DESTDIR/usr/lib/vabaxos/unlock/ready.wav" 2>/dev/null || true
+real="$(dirname "$askpass")/askpass.real"
+mv "$askpass" "$real"
+cp "$ROOT/usr/lib/vabaxos/unlock/askpass" "$askpass"
+chmod 0755 "$askpass"
+# The VabaxOS askpass calls Debian's from /usr/lib/cryptsetup.
+if [ "$real" != "$DESTDIR/usr/lib/cryptsetup/askpass.real" ]; then
+    mkdir -p "$DESTDIR/usr/lib/cryptsetup"
+    ln -sf "${real#"$DESTDIR"}" "$DESTDIR/usr/lib/cryptsetup/askpass.real"
+fi
+exit 0

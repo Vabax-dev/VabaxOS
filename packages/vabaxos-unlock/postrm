@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+# The initramfs without the voice, only if a disk is encrypted.
+if [ "$1" = remove ] && [ -s /etc/crypttab ] && grep -qv '^[[:space:]]*\(#\|$\)' /etc/crypttab \
+        && command -v update-initramfs >/dev/null; then
+    update-initramfs -u || true
+fi

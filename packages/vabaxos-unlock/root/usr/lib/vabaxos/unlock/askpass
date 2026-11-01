@@ -1,0 +1,31 @@
+#!/bin/sh
+# VabaxOS: Debian's /lib/cryptsetup/askpass, with a voice (ADR-0021).
+#
+# cryptroot asks the passphrase of an encrypted disk with
+# "askpass 'Please unlock disk NAME: '", CRYPTTAB_TRIED counting the failed
+# tries. This copy, put in its place by the initramfs hook, plays two tones,
+# says "Type the password of the disk, then press Enter" (after a failed
+# try first "Wrong password") and then runs Debian's askpass, which reads
+# the password as always: the voice plays in the background, typing can
+# start at once. Before this, a blind person heard only silence.
+
+ROOT="${VABAXOS_UNLOCK_ROOT:-}"
+# shellcheck source=/dev/null
+. "$ROOT/usr/lib/vabaxos/unlock/speech"
+
+mkdir -p "$RUN"
+: > "$RUN/asked"
+tried="${CRYPTTAB_TRIED:-0}"
+case "$tried" in
+    ''|*[!0-9]*) tried=0 ;;
+esac
+(
+    device="$(vabaxos_sound)" || device=""
+    if [ "$tried" -gt 0 ]; then
+        vabaxos_say "$device" "$MSG_WRONG"
+    fi
+    vabaxos_beep "$device"
+    vabaxos_say "$device" "$MSG_ASK"
+) </dev/null >/dev/null 2>&1 &
+
+exec "$ROOT/usr/lib/cryptsetup/askpass.real" "$@"

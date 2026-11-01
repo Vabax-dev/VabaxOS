@@ -1,0 +1,15 @@
+Package: vabaxos-unlock
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: admin
+Priority: optional
+Depends: initramfs-tools, espeak-ng, alsa-utils, kmod
+Enhances: cryptsetup-initramfs
+Description: A voice when the computer asks the password of the disk
+ With an encrypted disk, the computer asks its password at boot, before
+ any screen reader can start: a blind person hears only silence. With
+ vabaxos-unlock the initramfs plays two tones and says "Type the password
+ of the disk, then press Enter", then "Wrong password" or "Disk open", in
+ the language and at the speed of the system (ADR-0021). Debian's own
+ prompt reads the password as always. Nothing changes on systems without
+ encrypted disks.

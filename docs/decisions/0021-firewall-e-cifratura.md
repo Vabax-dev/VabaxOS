@@ -1,6 +1,6 @@
 # ADR-0021: Firewall e cifratura del disco
 
-- **Stato:** Proposta
+- **Stato:** Cifratura: Accettata (Vabax, 2026-11-01: «devi mettere la cifratura»), fatta in `vabaxos-unlock`; firewall: Proposta
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
 - **Sostituisce / Sostituita da:** — (completa ADR-0009 per la cifratura)
@@ -22,6 +22,16 @@ Nel blocco 7 Vabax ha chiesto un sistema completo, e sicuro. Due funzioni che Wi
 4. Nel sistema live il firewall è attivo allo stesso modo.
 
 ### Cifratura del disco
+
+Fatto il 2026-11-01 (pacchetto `vabaxos-unlock`, prove in `tests/unlock` e `test-install.sh --encrypt`):
+
+- l'installer offre già «Guidato - usa l'intero disco e imposta LVM cifrato»; `cryptsetup`, `cryptsetup-initramfs` e `lvm2` sono nella ISO, perché l'installer copia il sistema della chiavetta;
+- un hook dell'initramfs, solo quando un disco è cifrato, aggiunge eSpeak NG con la lingua del sistema, aplay, alsactl, i driver audio e l'altoparlante del PC, e mette davanti all'`askpass` di Debian quello di VabaxOS: due note, «Scrivi la password del disco, poi premi Invio», «Password sbagliata» dal secondo tentativo (`CRYPTTAB_TRIED`), «Disco aperto» alla fine; la password la legge sempre il programma di Debian, la voce parla in sottofondo;
+- nessuna modifica a `/etc/crypttab`; `/etc/vabaxos/unlock.conf` permette di spegnere la voce o cambiare le frasi.
+
+Restano: la prova in QEMU (`test-install.sh --encrypt`) e l'ascolto di Vabax; il Braille (brltty nell'initramfs); i portatili con audio SOF, il cui firmware può non essere nell'initramfs.
+
+Il piano iniziale:
 
 1. Resta **una scelta dell'installer**, spenta per default (ADR-0009).
 2. Si potrà consigliare solo quando la richiesta della password è accessibile. Prima di quel momento:

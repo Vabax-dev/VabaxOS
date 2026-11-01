@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Installation test of a VabaxOS ISO in QEMU, without a screen (ROADMAP
 # v0.1: "the installed system restarts in a VM with speech on").
-#   ./scripts/test-install.sh [--keep] [--timeout SECONDS] [ISO]
+#   ./scripts/test-install.sh [--keep] [--encrypt] [--timeout SECONDS] [ISO]
 #
 # 1. Installs VabaxOS on a new virtual disk, automatically, with speech on
 #    (speakup.synth=soft) and the test answers of
@@ -14,6 +14,12 @@
 #    before installing kept (ADR-0023), welcome at the first start
 #    only, speech with no network card.
 #
+# With --encrypt the disk is encrypted (vabaxos-test-crypto.cfg, ADR-0021):
+# at every start the passphrase is asked before the system; the test
+# records that the question is spoken (vabaxos-unlock), types a wrong
+# passphrase, records "wrong password", then types the right one, on the
+# serial console.
+#
 # The disk lives in a temporary folder in out/; --keep keeps it (out/test-install.qcow2).
 # Logs go to out/logs/test-install-*.log. Exit status: 0 if every check
 # passed, 1 otherwise.
@@ -25,12 +31,14 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$REPO/out"
 TIMEOUT=7200
 KEEP=false
+ENCRYPT=false
 ISO=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --keep) KEEP=true ;;
+        --encrypt) ENCRYPT=true ;;
         --timeout) TIMEOUT="${2:?--timeout vuole un numero}"; shift ;;
-        -*) printf 'Uso: %s [--keep] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
+        -*) printf 'Uso: %s [--keep] [--encrypt] [--timeout SECONDI] [ISO]\n' "$0" >&2; exit 64 ;;
         *) ISO="$1" ;;
     esac
     shift
@@ -165,7 +173,9 @@ xorriso -osirrox on -indev "$ISO" -extract /install/gtk/vmlinuz "$WORK/vmlinuz" 
     -extract /install/gtk/initrd.gz "$WORK/initrd.gz" >/dev/null 2>&1 \
     || { printf 'FALLITO: la ISO non contiene l'\''installer grafico.\n'; exit 1; }
 LOG="$OUT/logs/test-install-$STAMP-installer.log"
-APPEND="auto=true priority=critical preseed/file=/cdrom/preseed/vabaxos-test.cfg"
+PRESEED=vabaxos-test.cfg
+[[ "$ENCRYPT" == true ]] && PRESEED=vabaxos-test-crypto.cfg
+APPEND="auto=true priority=critical preseed/file=/cdrom/preseed/$PRESEED"
 APPEND+=" locale=en_US.UTF-8 keyboard-configuration/xkb-keymap=us speakup.synth=soft vga=788"
 # Choices made in the welcome before installing (ADR-0023), as vabaxos-install passes them.
 APPEND+=" vabaxos.a11y=high-contrast,large-text vabaxos.rate=5"
@@ -188,10 +198,33 @@ if ! qemu-img info "$DISK" | grep -q 'disk size: [0-9.]* GiB'; then
 fi
 printf 'OK: installazione conclusa in %d secondi.\n' "$INSTALL_TIME"
 
+# The passphrase of the encrypted disk (--encrypt): the question must be
+# spoken; a wrong passphrase must be said wrong; then the right one opens.
+# Arguments: the words for the check, the name of the recording.
+unlock() {
+    [[ "$ENCRYPT" == true ]] || return 0
+    wait_for 'Please unlock disk' 'richiesta della password del disco' 600 || exit 1
+    check "voce alla richiesta della password del disco$1" "$(record "$2" 12)" yes
+    if [[ "$2" == unlock ]]; then
+        send sbagliata
+        local limit=$((SECONDS + 120))
+        until [[ "$(clean_log | grep -c 'Please unlock disk')" -ge 2 ]]; do
+            if (( SECONDS > limit )); then
+                printf 'FALLITO: nessuna nuova richiesta dopo la password sbagliata.\n'
+                exit 1
+            fi
+            sleep 2
+        done
+        check 'voce: password sbagliata' "$(record unlock-wrong 12)" yes
+    fi
+    send vabaxos-test
+}
+
 # ---- 2. First start of the installed system ------------------------------
 LOG="$OUT/logs/test-install-$STAMP-first-start.log"
 start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" --from-disk
 printf 'INFO: primo avvio del sistema installato (log: %s)\n' "$LOG"
+unlock "" unlock
 # The welcome speaks about 8 seconds after the firmware, before the serial
 # login prompt, then waits: record from the start, then answer it as a
 # user would. The language comes from the installer (ADR-0023): Enter
@@ -204,12 +237,13 @@ login || exit 1
 ask os '. /etc/os-release; echo $PRETTY_NAME'
 # One line: value() reads only the first line of an answer.
 ask welcome 'printf "%s %s" "$(systemctl show -p ActiveState --value vabaxos-welcome)" "$(echo test | sudo -S test -f /var/lib/vabaxos/welcome-done 2>/dev/null && echo done)"'
-ask packages 'dpkg-query -W -f "\${Package} " vabaxos-accessibility vabaxos-branding vabaxos-settings vabaxos-setup vabaxos-voice vabaxos-welcome 2>/dev/null | wc -w'
+ask packages 'dpkg-query -W -f "\${Package} " vabaxos-accessibility vabaxos-branding vabaxos-settings vabaxos-setup vabaxos-unlock vabaxos-welcome 2>/dev/null | wc -w'
 ask live 'dpkg-query -W -f "\${db:Status-Abbrev}\${Package} " live-boot live-config 2>/dev/null | grep -c "^ii" || true'
 ask speech 'systemctl is-active espeakup'
 ask gdm 'systemctl is-active gdm'
-ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select'
+ask kokoro 'dpkg-query -W -f "\${db:Status-Abbrev}" vabaxos-voice 2>/dev/null | grep -c "^ii" || true'
 ask user 'id -un'
+ask crypt 'lsblk -n -o TYPE | grep -c crypt'
 # The installer saved the choices for the welcome, which applied them.
 ask choices 'tr "\n" " " < /var/lib/vabaxos/installer-choices | sed "s/ $//"'
 ask contrast 'gsettings get org.gnome.desktop.a11y.interface high-contrast'
@@ -221,9 +255,12 @@ send 'echo test | sudo -S journalctl -b --no-pager -o short-monotonic -u vabaxos
 sleep 5
 check 'pacchetti VabaxOS installati' "$(value packages)" 6
 check 'pacchetti della live rimossi' "$(value live)" 0
+if [[ "$ENCRYPT" == true ]]; then
+    check 'disco cifrato' "$(value crypt)" 1
+fi
 check 'voce della console (espeakup)' "$(value speech)" active
 check 'schermata di accesso (GDM)' "$(value gdm)" active
-check "scelta della voce all'avvio" "$(value voiceselect)" success
+check 'solo eSpeak NG, Kokoro non installato (ADR-0026)' "$(value kokoro)" 0
 check 'benvenuto concluso e segnato' "$(value welcome | tr -s ' ')" "inactive done"
 check "scelte dell'installazione salvate" "$(value choices)" "vabaxos.a11y=high-contrast,large-text vabaxos.rate=5 vabaxos.lang=en"
 check 'alto contrasto dal benvenuto prima di installare' "$(value contrast)" true
@@ -241,6 +278,7 @@ stop_vm
 LOG="$OUT/logs/test-install-$STAMP-second-start.log"
 start_vm "$LOG" --silent-audio --memory 4096 --cpus 2 --disk "$DISK" --from-disk --no-network
 printf 'INFO: secondo avvio, senza rete (log: %s)\n' "$LOG"
+unlock " senza rete" unlock-offline
 login || exit 1
 ask welcome2 'systemctl show -p ConditionResult --value vabaxos-welcome'
 ask speech2 'systemctl is-active espeakup'

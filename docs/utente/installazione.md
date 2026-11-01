@@ -36,6 +36,19 @@ VabaxOS risponde da solo alle domande che non servono a chi installa: il nome de
 
 Con la voce K del menu di avvio (alto contrasto) anche il sistema installato parte con l'alto contrasto.
 
+## Il disco cifrato
+
+Con un disco cifrato, chi prende il computer non può leggere i tuoi file senza la password del disco. Nell'installer, alla domanda sul metodo di partizionamento, scegli **«Guidato - usa l'intero disco e imposta LVM cifrato»**. L'installer chiede la password del disco due volte: sceglila bene e non dimenticarla, perché senza di essa i dati non si possono più leggere.
+
+A ogni avvio, prima di tutto il resto, il computer chiede quella password. VabaxOS lo fa con la voce ([ADR-0021](../decisions/0021-firewall-e-cifratura.md)):
+
+- due note che salgono, poi «Il disco è cifrato. Scrivi la password del disco, poi premi Invio»;
+- puoi cominciare a scrivere subito, anche mentre la voce parla;
+- se la password è sbagliata senti «Password sbagliata. Riprova»;
+- quando il disco si apre, «Disco aperto. VabaxOS si avvia».
+
+La voce usa la lingua e la velocità scelte nell'installazione. Su alcuni portatili molto recenti la scheda audio non è pronta così presto: allora si sente almeno il segnale dell'altoparlante del computer, se c'è. La cifratura è ancora in prova: per ora non è la scelta consigliata.
+
 ## Attenzione
 
 - L'installazione può cancellare i dati del disco scelto. L'installer chiede sempre conferma prima di scrivere.

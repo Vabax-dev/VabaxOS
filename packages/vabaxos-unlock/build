@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""Called by scripts/build-packages.sh with the package tree: makes the two
+tones played when the computer waits for the password of the disk
+(usr/lib/vabaxos/unlock/ready.wav). Rising, A then D, different from the
+two equal beeps of the boot menu."""
+
+import math
+import os
+import struct
+import sys
+import wave
+
+RATE = 22050
+
+
+def tone(freq, seconds, volume=0.5):
+    count = int(RATE * seconds)
+    fade = int(RATE * 0.01)
+    samples = []
+    for i in range(count):
+        envelope = min(1.0, i / fade, (count - i) / fade)
+        samples.append(int(32767 * volume * envelope * math.sin(2 * math.pi * freq * i / RATE)))
+    return samples
+
+
+def main(tree):
+    path = os.path.join(tree, "usr", "lib", "vabaxos", "unlock", "ready.wav")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    samples = tone(880, 0.15) + [0] * int(RATE * 0.06) + tone(1175, 0.22)
+    with wave.open(path, "wb") as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(RATE)
+        out.writeframes(struct.pack(f"<{len(samples)}h", *samples))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
