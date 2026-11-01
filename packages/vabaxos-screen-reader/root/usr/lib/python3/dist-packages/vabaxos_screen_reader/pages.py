@@ -10,6 +10,12 @@ the voice used for capital letters. Labels are English; gettext translates
 them (N_ marks them for xgettext).
 """
 
+import os
+
+# The natural voice is offered only when its package is installed: for now
+# the ISO has only eSpeak NG (ADR-0026).
+KOKORO_MODULE = "/usr/lib/speech-dispatcher-modules/sd_kokoro"
+
 
 def N_(text):
     return text
@@ -25,10 +31,11 @@ PROGRESS_CHOICES = [(N_("Every program"), "all"), (N_("Only the program in use")
 # Each page: (id, title, icon, description, [(group title, [rows])]).
 PAGES = [
     ("voice", N_("Voice"), "audio-speakers-symbolic", N_("How the screen reader sounds"), [
-        (N_("Voice"), [
+        (N_("Voice"), ([
             ("choice", SPEAK, "synthesizer", N_("Kind of voice"),
              N_("eSpeak NG answers at once; the natural voice sounds human but needs a fast computer"),
              [(N_("eSpeak NG, the default"), ""), (N_("Natural voice (Kokoro)"), "kokoro")]),
+        ] if os.path.exists(KOKORO_MODULE) else []) + [
             ("number", VOICE, "rate", N_("Speed"), N_("From 0, slowest, to 100, fastest"), (0, 100, 5, 0)),
             ("number", VOICE, "pitch", N_("Pitch"), N_("From 0, lowest, to 10, highest"), (0, 10, 0.5, 1)),
             ("number", VOICE, "volume", N_("Volume"), N_("From 0, silent, to 10, loudest"), (0, 10, 0.5, 1)),

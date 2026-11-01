@@ -1,5 +1,7 @@
 # La voce del desktop
 
+**Per ora VabaxOS parla solo con eSpeak NG** ([ADR-0026](../decisions/0026-solo-espeak.md)): la voce naturale Kokoro tornerà quando sarà abbastanza rapida per un lettore di schermo. Il resto di questa pagina vale per un sistema in cui il pacchetto `vabaxos-voice` è installato a mano.
+
 VabaxOS ha due voci per il desktop, cioè per Orca e per ogni programma che parla ([ADR-0019](../decisions/0019-voce-naturale-kokoro.md), [ADR-0024](../decisions/0024-espeak-predefinito.md)):
 
 - **la voce naturale, Kokoro:** sembra una persona che parla. Per l'italiano ci sono Nicola, voce maschile, e Sara, voce femminile;
@@ -18,7 +20,7 @@ Kokoro si sceglie a mano nella [configurazione iniziale](configurazione.md), al 
 
 La scelta vale dal prossimo avvio del lettore di schermo: Super+Alt+S due volte. Da allora, a ogni accesso VabaxOS prepara Kokoro in anticipo, così la prima frase non aspetta. Kokoro va bene sui computer recenti con almeno 8 GB di memoria.
 
-Il [lettore di documenti](lettore.md) usa sempre Kokoro.
+Il [lettore di documenti](lettore.md) offre anche le voci di Kokoro.
 
 ## Cosa aspettarsi
 

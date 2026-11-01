@@ -1,6 +1,6 @@
 # ADR-0024: eSpeak NG voce predefinita, Kokoro a scelta dell'utente
 
-- **Stato:** Accettata (Vabax, 2026-09-25)
+- **Stato:** Accettata (Vabax, 2026-09-25); sospesa da [ADR-0026](0026-solo-espeak.md) (2026-11-01)
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead, responsabile accessibilità), Principal Software Engineer
 - **Modifica:** ADR-0019 (voce naturale Kokoro per il desktop): cambia solo chi sceglie la voce

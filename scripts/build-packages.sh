@@ -12,6 +12,9 @@
 #   build             a program run with the package tree, to make files
 #                     (optional; REPO is set, for example the HTML help)
 #   po/*.po           translations of the domain <name> (optional)
+#   not-in-iso        the package is kept in Git and built for the tests,
+#                     but not put in the ISO (VABAXOS_ISO=1); the file says
+#                     why (optional, for example vabaxos-voice, ADR-0026)
 # No root needed: files belong to root:root inside the package.
 set -euo pipefail
 
@@ -39,6 +42,10 @@ export SOURCE_DATE_EPOCH
 for dir in "$REPO"/packages/*/; do
     name="$(basename "$dir")"
     [[ -f "$dir/control" ]] || continue
+    if [[ "${VABAXOS_ISO:-}" == 1 && -f "$dir/not-in-iso" ]]; then
+        printf 'Escluso dalla ISO: %s (%s)\n' "$name" "$(head -1 "$dir/not-in-iso")"
+        continue
+    fi
     tree="$TMP/$name"
     mkdir -p "$tree/DEBIAN"
     cp -a "$dir/root/." "$tree/"

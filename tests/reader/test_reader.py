@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Tests for vabaxos-reader: documents, reading position, and the window.
 
-The window runs on a hidden Broadway display; with the Kokoro model
-(VABAXOS_KOKORO_DIR) it also reads the first sentence, into a file
-(VABAXOS_VOICE_RECORD), so nothing is heard.
+The window runs on a hidden Broadway display; with eSpeak NG (and with the
+Kokoro model, VABAXOS_KOKORO_DIR, when it is there) it also reads the first
+sentence, into a file (VABAXOS_VOICE_RECORD), so nothing is heard.
 
     python3 tests/reader/test_reader.py
 """
@@ -25,6 +25,7 @@ PROGRAM = os.path.join(ROOT, "usr", "bin", "vabaxos-reader")
 DATA = os.environ.get("VABAXOS_KOKORO_DIR", "")
 sys.path.insert(0, LIB)
 
+from vabaxos_reader import speech  # noqa: E402
 from vabaxos_reader.document import Document, ReadingState, read_paragraphs  # noqa: E402
 
 TEXT = "Primo paragrafo. Seconda frase del primo paragrafo.\n\nSecondo paragrafo, una sola frase.\n"
@@ -141,6 +142,38 @@ class DocumentTest(unittest.TestCase):
             read_paragraphs(self.path("a.xyz"))
 
 
+class SpeechTest(unittest.TestCase):
+
+    def test_speed_in_words_a_minute(self):
+        engine = speech.Espeak.__new__(speech.Espeak)
+        self.assertEqual(engine.wpm(1.0), 175)
+        self.assertEqual(engine.wpm(0.1), speech.ESPEAK_MIN_WPM)
+        self.assertEqual(engine.wpm(3.0), speech.ESPEAK_MAX_WPM)
+
+    def test_default_voice_follows_the_language(self):
+        voices = [speech.Voice(None, "it", "it", "a"), speech.Voice(None, "en-us", "en", "b")]
+        self.assertEqual(speech.default_index(voices, "en"), 1)
+        self.assertEqual(speech.default_index(voices, "it"), 0)
+        self.assertEqual(speech.default_index(voices, "fr"), 0)
+
+    @unittest.skipUnless(shutil.which("espeak-ng"), "espeak-ng is not installed")
+    def test_espeak_speaks_and_stops(self):
+        engine = speech.Espeak()
+        voice = engine.voices()[0]
+        pcm = engine.synthesize("Prova della voce.", voice)
+        self.assertGreater(len(pcm), engine.rate // 2, "less than a quarter of a second of speech")
+        self.assertEqual(len(pcm) % 2, 0)
+        faster = engine.synthesize("Prova della voce.", voice, speed=2.0)
+        self.assertLess(len(faster), len(pcm))
+        engine.stop()  # nothing running: no error
+
+    def test_without_kokoro_only_espeak(self):
+        if speech.Kokoro.available():
+            self.skipTest("Kokoro is installed here")
+        kinds = {engine.kind for engine in speech.engines()}
+        self.assertNotIn("kokoro", kinds)
+
+
 CHILD = r'''
 import importlib.machinery, importlib.util, sys, time
 loader = importlib.machinery.SourceFileLoader("reader", sys.argv[1])
@@ -170,7 +203,7 @@ def check(app):
     window.open_path(sys.argv[2])
     print("SENTENCES:%d" % len(window.document.sentences), flush=True)
     def wait_voice():
-        if window.reader.kokoro is None and sys.argv[3] == "voice":
+        if window.selected_voice() is None and sys.argv[3] == "voice":
             return True
         if sys.argv[3] == "voice":
             window.toggle()
@@ -210,7 +243,7 @@ class WindowTest(unittest.TestCase):
             with open(doc, "w", encoding="utf-8") as f:
                 f.write(TEXT)
             record = os.path.join(tmp, "audio.raw")
-            voice = "voice" if DATA and os.path.exists(os.path.join(DATA, "kokoro-v1.0.onnx")) else "novoice"
+            voice = "voice" if shutil.which("espeak-ng") else "novoice"
             env = dict(os.environ, GDK_BACKEND="broadway", BROADWAY_DISPLAY=f":{display}",
                        GSETTINGS_BACKEND="memory", XDG_DATA_HOME=tmp, NO_AT_BRIDGE="1",
                        PYTHONPATH=f"{LIB}:{VOICE_LIB}", VABAXOS_VOICE_RECORD=record,
@@ -223,7 +256,7 @@ class WindowTest(unittest.TestCase):
             self.assertEqual(out.get("UNNAMED"), "", result.stderr[-2000:])
             self.assertEqual(out.get("SENTENCES"), "3", result.stderr[-2000:])
             if voice == "voice":
-                self.assertGreater(os.path.getsize(record), 24000, "no speech recorded")
+                self.assertGreater(os.path.getsize(record), 22050, "no speech recorded")
                 # Position saved at pause.
                 self.assertTrue(os.path.exists(os.path.join(tmp, "vabaxos-reader", "state.json")))
 

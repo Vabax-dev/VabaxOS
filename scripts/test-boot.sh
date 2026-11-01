@@ -380,11 +380,25 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'tasti del mouse: GNOME Shell' "$(value mousekeys)" stabile
 fi
 
-# Desktop voice (ADR-0019, ADR-0024): the service must succeed and write
-# eSpeak NG as the default module. Then Kokoro is chosen the way a user
-# does in vabaxos-setup (Orca's synthesizer): the module must load the
-# model in advance and Orca must still speak.
+# Desktop voice (ADR-0026): for now the ISO speaks only with eSpeak NG and
+# vabaxos-voice (Kokoro) is not installed. If an ISO has it again (ADR-0019,
+# ADR-0024), the service must succeed and write eSpeak NG as the default
+# module; then Kokoro is chosen the way a user does in vabaxos-setup (Orca's
+# synthesizer): the module must load the model in advance and Orca must
+# still speak.
+HAVE_KOKORO=no
 if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask havekokoro 'test -x /usr/lib/speech-dispatcher-modules/sd_kokoro && echo yes || echo no' || exit 1
+    HAVE_KOKORO="$(value havekokoro)"
+    printf 'INFO: Kokoro nella ISO: %s\n' "$HAVE_KOKORO"
+fi
+if [[ "$WANT_DESKTOP" == yes && "$HAVE_KOKORO" == no ]]; then
+    # No DefaultModule other than espeak-ng anywhere (none set: espeak-ng,
+    # the first module Debian installs).
+    ask voicemodule 'm=$(grep -rhs "^ *DefaultModule" /etc/speech-dispatcher/ | awk "{print \$2}" | sort -u | tr "\n" " "); m=${m% }; echo "${m:-espeak-ng}"' || exit 1
+    check 'voce del desktop (eSpeak NG)' "$(value voicemodule)" espeak-ng
+fi
+if [[ "$WANT_DESKTOP" == yes && "$HAVE_KOKORO" == yes ]]; then
     ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select' || exit 1
     ask voicemodule 'sed -n "s/^DefaultModule //p" /etc/speech-dispatcher/clients/zz-vabaxos-voice.conf' || exit 1
     ask voicereason 'grep "^#" /var/lib/vabaxos/voice.conf | tr -d "#"' || exit 1
@@ -392,7 +406,7 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     check 'voce predefinita del desktop (eSpeak NG)' "$(value voicemodule)" espeak-ng
     printf 'INFO: voce del desktop: %s (%s)\n' "$(value voicemodule)" "$(value voicereason)"
 fi
-if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
+if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes && "$HAVE_KOKORO" == yes ]]; then
     ask forcekokoro "env $BUS gsettings set org.gnome.Orca.Speech:/org/gnome/orca/default/speech/ synthesizer kokoro; pkill -u user -x speech-dispatch; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled false; sleep 2; env $BUS gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; echo fatto" || exit 1
     ask orcaback 'for i in $(seq 60); do pgrep -u user -x orca >/dev/null && break; sleep 1; done; sleep 15; pgrep -u user -x orca >/dev/null && echo yes || echo no' || exit 1
     # The module loads the model in the background when Orca uses Kokoro

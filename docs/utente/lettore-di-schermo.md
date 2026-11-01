@@ -11,7 +11,7 @@ La finestra **Impostazioni del lettore di schermo** raccoglie tutte le impostazi
 
 ## Le pagine
 
-- **Voce:** tipo di voce (eSpeak NG o la voce naturale Kokoro), velocità, tono, volume, il tono delle lettere maiuscole, le pause, il cambio di lingua automatico, il dizionario di pronuncia.
+- **Voce:** velocità, tono, volume, il tono delle lettere maiuscole, le pause, il cambio di lingua automatico, il dizionario di pronuncia.
 - **Lettura:** quanto dice Orca (breve o dettagliato), la punteggiatura, le maiuscole, i suggerimenti d'uso, le descrizioni, la posizione negli elenchi («3 di 10»), i numeri cifra per cifra, le righe vuote, il rientro.
 - **Scrittura:** l'eco di tasti, caratteri, parole e frasi, e quali tasti vengono detti.
 - **Documenti e web:** lettura automatica della pagina, riassunto, modalità navigazione e modalità focus, tasti rapidi (H titoli, K collegamenti e gli altri), lettura continua, punti di riferimento, elenchi, tabelle, moduli.

@@ -28,9 +28,10 @@ console-setup
 
 # Speech (ADR-0005, ADR-0006). The VabaxOS packages (vabaxos-accessibility, vabaxos-apps,
 # vabaxos-branding, vabaxos-reader, vabaxos-screen-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds, vabaxos-start,
-# vabaxos-update, vabaxos-voice, vabaxos-welcome)
+# vabaxos-update, vabaxos-welcome)
 # are built from packages/ by
 # scripts/build-packages.sh and installed by live-build automatically.
+# vabaxos-voice (Kokoro) stays out of the ISO for now: only eSpeak NG (ADR-0026).
 espeakup
 espeak-ng
 speech-dispatcher-espeak-ng

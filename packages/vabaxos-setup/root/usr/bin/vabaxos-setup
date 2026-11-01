@@ -39,6 +39,7 @@ gettext.textdomain(DOMAIN)
 _ = gettext.gettext
 
 ORCA_VOICE_PATH = "/org/gnome/orca/default/voices/default/"
+KOKORO_MODULE = "/usr/lib/speech-dispatcher-modules/sd_kokoro"
 ORCA_SPEECH_PATH = "/org/gnome/orca/default/speech/"
 LAYOUTS = [("it", "Italiano"), ("us", "English (US)")]
 
@@ -195,18 +196,7 @@ def voice_page(rows):
                         "org.gnome.desktop.a11y.applications", "screen-reader-enabled"),
             all_settings_row(),
         ]),
-        group(_("Voice"), _("Changes apply to the next sentences."), [
-            rows.choice(_("Kind of voice"),
-                        _("eSpeak NG answers at once on every computer; the natural voice "
-                          "sounds human but needs a fast computer"),
-                        "org.gnome.Orca.Speech", "synthesizer",
-                        [(_("eSpeak NG, the default"), ""), (_("Natural voice (Kokoro)"), "kokoro")],
-                        path=ORCA_SPEECH_PATH),
-            rows.choice(_("Natural voice"), _("Automatic: Nicola in Italian, Heart in English"),
-                        voice, "family-name",
-                        [(_("Automatic"), ""), (_("Nicola, male, Italian"), "im_nicola"),
-                         (_("Sara, female, Italian"), "if_sara"), (_("Heart, female, English"), "af_heart"),
-                         (_("Michael, male, English"), "am_michael")], path=ORCA_VOICE_PATH),
+        group(_("Voice"), _("Changes apply to the next sentences."), natural_voice_rows(rows) + [
             rows.number(_("Speed"), _("From 0, slowest, to 100, fastest"), voice, "rate", 0, 100, 5,
                         path=ORCA_VOICE_PATH),
             rows.number(_("Pitch"), _("From 0, lowest, to 10, highest"), voice, "pitch", 0, 10, 0.5,
@@ -214,6 +204,27 @@ def voice_page(rows):
             rows.number(_("Volume"), _("From 0, silent, to 10, loudest"), voice, "volume", 0, 10, 0.5,
                         digits=1, path=ORCA_VOICE_PATH),
         ]),
+    ]
+
+
+def natural_voice_rows(rows):
+    """The choice of Kokoro, only when it is installed: for now the ISO
+    speaks only with eSpeak NG (ADR-0026)."""
+    if not os.path.exists(KOKORO_MODULE):
+        return []
+    voice = "org.gnome.Orca.Voice"
+    return [
+        rows.choice(_("Kind of voice"),
+                    _("eSpeak NG answers at once on every computer; the natural voice "
+                      "sounds human but needs a fast computer"),
+                    "org.gnome.Orca.Speech", "synthesizer",
+                    [(_("eSpeak NG, the default"), ""), (_("Natural voice (Kokoro)"), "kokoro")],
+                    path=ORCA_SPEECH_PATH),
+        rows.choice(_("Natural voice"), _("Automatic: Nicola in Italian, Heart in English"),
+                    voice, "family-name",
+                    [(_("Automatic"), ""), (_("Nicola, male, Italian"), "im_nicola"),
+                     (_("Sara, female, Italian"), "if_sara"), (_("Heart, female, English"), "af_heart"),
+                     (_("Michael, male, English"), "am_michael")], path=ORCA_VOICE_PATH),
     ]
 
 

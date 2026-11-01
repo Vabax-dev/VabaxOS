@@ -45,5 +45,6 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0021](0021-firewall-e-cifratura.md) | Firewall e cifratura del disco | Proposta |
 | [0022](0022-nomi-dei-pulsanti-di-gnome-shell.md) | Nomi dei pulsanti di GNOME Shell, corretti da VabaxOS | Accettata |
 | [0023](0023-installare-dal-benvenuto.md) | Installare dal benvenuto, con le scelte di accessibilità | Accettata |
-| [0024](0024-espeak-predefinito.md) | eSpeak NG voce predefinita, Kokoro a scelta dell'utente | Accettata |
+| [0024](0024-espeak-predefinito.md) | eSpeak NG voce predefinita, Kokoro a scelta dell'utente | Sospesa da 0026 |
 | [0025](0025-menu-start-vabaxos.md) | Il menu Start di VabaxOS, con ricerca e categorie ad albero | Proposta |
+| [0026](0026-solo-espeak.md) | Per ora solo eSpeak NG, Kokoro fuori dalla ISO | Accettata |
