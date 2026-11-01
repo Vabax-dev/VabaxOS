@@ -122,12 +122,13 @@ class ModelTest(unittest.TestCase):
     def test_verdict(self):
         self.assertEqual([model.verdict(ms) for ms in (150, 300, 450, 601)], ["fast", "fast", "slow", "too-slow"])
 
-    def test_pinned_files_match_the_build(self):
-        """The same files and SHA-256 as packages/vabaxos-voice/fetch."""
-        with open(os.path.join(REPO, "packages", "vabaxos-voice", "fetch"), encoding="utf-8") as f:
-            fetched = {line.split()[0].rsplit("/", 1)[-1]: line.split()[1] for line in f
-                       if line.strip() and not line.startswith("#")}
-        self.assertEqual({name: sha for name, sha, _size in self.saved[0]}, fetched)
+    def test_pinned_files_match_the_ci(self):
+        """The same files and SHA-256 as the CI downloads for the tests."""
+        with open(os.path.join(REPO, ".github", "workflows", "checks.yml"), encoding="utf-8") as f:
+            workflow = f.read()
+        for name, sha, _size in self.saved[0]:
+            self.assertIn(f"{sha}  {name}", workflow)
+            self.assertIn(name, workflow)
 
     @unittest.skipUnless(os.environ.get("VABAXOS_KOKORO_DIR"), "no Kokoro model")
     def test_measure_the_real_model(self):

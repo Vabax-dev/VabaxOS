@@ -1,6 +1,6 @@
 # La voce del desktop
 
-**VabaxOS parla con eSpeak NG** ([ADR-0026](../decisions/0026-solo-espeak.md)). La voce naturale Kokoro si scarica a richiesta con il programma **Voce naturale** ([ADR-0030](../decisions/0030-voce-naturale-su-richiesta.md), proposta: finché Vabax non la approva, il programma c'è solo dove il pacchetto `vabaxos-voice` è installato a mano).
+**VabaxOS parla con eSpeak NG** ([ADR-0026](../decisions/0026-solo-espeak.md)). La voce naturale Kokoro si scarica a richiesta con il programma **Voce naturale**, nel menu Start ([ADR-0030](../decisions/0030-voce-naturale-su-richiesta.md)).
 
 VabaxOS ha due voci per il desktop, cioè per Orca e per ogni programma che parla ([ADR-0019](../decisions/0019-voce-naturale-kokoro.md), [ADR-0024](../decisions/0024-espeak-predefinito.md)):
 

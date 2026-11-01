@@ -242,6 +242,7 @@ ask live 'dpkg-query -W -f "\${db:Status-Abbrev}\${Package} " live-boot live-con
 ask speech 'systemctl is-active espeakup'
 ask gdm 'systemctl is-active gdm'
 ask kokoro 'dpkg-query -W -f "\${db:Status-Abbrev}" vabaxos-voice 2>/dev/null | grep -c "^ii" || true'
+ask kokoromodel 'test -e /usr/share/vabaxos/kokoro/kokoro-v1.0.onnx && echo yes || echo no'
 ask user 'id -un'
 ask crypt 'lsblk -n -o TYPE | grep -c crypt'
 ask brlapi 'id -nG | tr " " "\n" | grep -c "^brlapi$"'
@@ -262,7 +263,7 @@ if [[ "$ENCRYPT" == true ]]; then
 fi
 check 'voce della console (espeakup)' "$(value speech)" active
 check 'schermata di accesso (GDM)' "$(value gdm)" active
-check 'solo eSpeak NG, Kokoro non installato (ADR-0026)' "$(value kokoro)" 0
+check 'voce naturale installata senza il modello (ADR-0030)' "$(value kokoro) $(value kokoromodel)" "1 no"
 check 'benvenuto concluso e segnato' "$(value welcome | tr -s ' ')" "inactive done"
 check "scelte dell'installazione salvate" "$(value choices)" "vabaxos.a11y=high-contrast,large-text vabaxos.rate=5 vabaxos.lang=en"
 check 'alto contrasto dal benvenuto prima di installare' "$(value contrast)" true

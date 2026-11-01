@@ -47,9 +47,9 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0023](0023-installare-dal-benvenuto.md) | Installare dal benvenuto, con le scelte di accessibilità | Accettata |
 | [0024](0024-espeak-predefinito.md) | eSpeak NG voce predefinita, Kokoro a scelta dell'utente | Sospesa da 0026 |
 | [0025](0025-menu-start-vabaxos.md) | Il menu Start di VabaxOS, con ricerca e categorie ad albero | Accettata |
-| [0026](0026-solo-espeak.md) | Per ora solo eSpeak NG, Kokoro fuori dalla ISO | Accettata |
+| [0026](0026-solo-espeak.md) | Per ora solo eSpeak NG, Kokoro fuori dalla ISO | Accettata, punto 2 cambiato da 0030 |
 | [0027](0027-ripristino-del-sistema.md) | Ripristino del sistema: Timeshift ora, Btrfs nella v1.5 | Accettata |
 | [0028](0028-prima-uscita-1-0.md) | La prima versione pubblica è la 1.0 | Accettata |
 | [0029](0029-descrizione-delle-immagini.md) | Descrizione delle immagini senza Internet | Accettata |
-| [0030](0030-voce-naturale-su-richiesta.md) | La voce naturale su richiesta, più rapida | Proposta |
+| [0030](0030-voce-naturale-su-richiesta.md) | La voce naturale su richiesta, più rapida | Accettata |
 | [0031](0031-orca-51.md) | Orca 51, con un'istantanea di Debian più recente | Proposta |

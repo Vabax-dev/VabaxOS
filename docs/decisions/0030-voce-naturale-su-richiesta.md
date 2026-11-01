@@ -1,6 +1,6 @@
 # ADR-0030: La voce naturale su richiesta, più rapida
 
-- **Stato:** Proposta (la scelta di fondo è di Vabax, 2026-11-02: «Kokoro più veloce», eSpeak NG predefinita e Kokoro scelto nelle impostazioni, con VabaxOS che dice se il computer è abbastanza veloce; da approvare il modo di farlo arrivare sul computer)
+- **Stato:** Accettata (Vabax, 2026-11-02: «approvo il programma che fa provare e testa la voce naturale»)
 - **Data:** 2026-11-02
 - **Responsabile:** Vabax (Project Lead, responsabile accessibilità), Principal Software Engineer
 - **Modifica:** ADR-0026 (Kokoro fuori dalla ISO), punto 2
@@ -23,7 +23,7 @@ Misure del 2026-11-02 (CPU Xeon a 4 core, 2,1 GHz, più lenta di un portatile re
    - fino a 0,6: «un po' in ritardo per il lettore di schermo, va bene per leggere i documenti»;
    - oltre: «troppo lento per il lettore di schermo; Orca resta con eSpeak NG».
    Un interruttore la usa per Orca; il lettore di documenti la offre da solo. Eliminarla riporta Orca a eSpeak NG.
-3. **Da approvare:** `vabaxos-voice` torna nella ISO **senza il modello** (si toglie il file `fetch` e `not-in-iso`): nella ISO entrano solo il programma, `python3-onnxruntime` e `python3-numpy` (alcune decine di MB invece di circa 1 GB). Finché Vabax non approva, il pacchetto resta fuori dalla ISO come dice ADR-0026, e il codice è pronto.
+3. `vabaxos-voice` torna nella ISO **senza il modello** (tolti i file `fetch` e `not-in-iso`): nella ISO entrano solo il programma, `python3-onnxruntime` e `python3-numpy` (alcune decine di MB invece di circa 1 GB). La CI scarica il modello per le sue prove, con le stesse impronte SHA-256 del programma.
 
 ## Alternative considerate
 

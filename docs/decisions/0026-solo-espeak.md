@@ -1,6 +1,6 @@
 # ADR-0026: Per ora solo eSpeak NG, Kokoro fuori dalla ISO
 
-- **Stato:** Accettata (Vabax, 2026-11-01)
+- **Stato:** Accettata (Vabax, 2026-11-01); il punto 2 è cambiato da [ADR-0030](0030-voce-naturale-su-richiesta.md): `vabaxos-voice` è nella ISO senza il modello
 - **Data:** 2026-11-01
 - **Responsabile:** Vabax (Project Lead, responsabile accessibilità), Principal Software Engineer
 - **Modifica:** ADR-0024 (Kokoro a scelta dell'utente) e ADR-0019 (voce naturale Kokoro): sospese finché Kokoro non è più rapido

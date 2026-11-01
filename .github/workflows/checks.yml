@@ -70,11 +70,17 @@ jobs:
             tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng fonts-dejavu-core \
             python3-dbusmock dbus-daemon gir1.2-ecal-2.0 gir1.2-edataserver-1.2 evolution-data-server
       - uses: actions/checkout@v7
-      # Large files of the packages (the Kokoro model), downloaded once.
+      # Large files of the packages (the dictation model), downloaded once.
       - uses: actions/cache@v4
         with:
           path: cache/downloads
           key: downloads-${{ hashFiles('packages/*/fetch') }}
+      # The Kokoro model is not in the package (ADR-0030): the tests download
+      # it as the program Natural voice does, with the same SHA-256.
+      - uses: actions/cache@v4
+        with:
+          path: cache/kokoro
+          key: kokoro-v1.0
       - name: Trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Translations compiler tests (contexts, plurals, without msgfmt)
@@ -105,8 +111,18 @@ jobs:
         run: python3 tests/update/test_update.py
       - name: Voice tests (Kokoro module, audio to a file)
         run: |
-          dpkg-deb -x /tmp/packages/vabaxos-voice_*.deb /tmp/voice
-          export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
+          mkdir -p cache/kokoro
+          for f in kokoro-v1.0.onnx voices-v1.0.bin; do
+            [ -f "cache/kokoro/$f" ] || curl -sSLf -o "cache/kokoro/$f" \
+              "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/$f"
+          done
+          (cd cache/kokoro && sha256sum -c - <<'SUMS'
+          7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5  kokoro-v1.0.onnx
+          bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d  voices-v1.0.bin
+          SUMS
+          )
+          cp packages/vabaxos-voice/root/usr/share/vabaxos/kokoro/vocab.json cache/kokoro/
+          export VABAXOS_KOKORO_DIR="$PWD/cache/kokoro"
           python3 tests/voice/test_module.py
           python3 tests/voice/test_natural_voice.py
       - name: Dictation tests (text cleaning, silence, made-up recorder and whisper.cpp)
@@ -174,7 +190,7 @@ jobs:
         run: python3 tests/ocr/test_ocr.py
       - name: Reader tests (documents; the window reads into a file)
         run: |
-          export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
+          export VABAXOS_KOKORO_DIR="$PWD/cache/kokoro"
           python3 tests/reader/test_reader.py
 
   shell-extension:
