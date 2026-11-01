@@ -1,0 +1,9 @@
+[Unit]
+Description=VabaxOS weekly copy of the system (ADR-0027)
+ConditionKernelCommandLine=!boot=live
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/vabaxos/restore/helper create "" --weekly
+Nice=19
+IOSchedulingClass=idle

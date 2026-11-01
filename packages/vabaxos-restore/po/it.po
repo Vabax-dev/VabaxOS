@@ -1,0 +1,185 @@
+# Italian translation of vabaxos-restore.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-restore\n"
+"PO-Revision-Date: 2026-11-01 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "the administrator password was not given"
+msgstr "la password di amministratore non è stata data"
+
+msgid "unknown error"
+msgstr "errore sconosciuto"
+
+msgid "System restore"
+msgstr "Ripristino del sistema"
+
+msgid "Make a copy now"
+msgstr "Crea una copia ora"
+
+msgid "A copy of the system as it is now (Ctrl+N)"
+msgstr "Una copia del sistema com'è adesso (Ctrl+N)"
+
+msgid "Copies of the system"
+msgstr "Copie del sistema"
+
+msgid ""
+"Made before every update and once a week. Documents and personal folders are"
+" not in the copies and do not change."
+msgstr ""
+"Fatte prima di ogni aggiornamento e una volta alla settimana. Documenti e "
+"cartelle personali non sono nelle copie e non cambiano."
+
+msgid "unexpected answer"
+msgstr "risposta inattesa"
+
+msgid "The copies cannot be read: {error}"
+msgstr "Le copie non si possono leggere: {error}"
+
+msgid ""
+"No copy yet. The first one is made at the next update, or now with Make a "
+"copy now."
+msgstr ""
+"Nessuna copia per ora. La prima si fa al prossimo aggiornamento, oppure "
+"subito con Crea una copia ora."
+
+msgid "{count} copy of the system."
+msgid_plural "{count} copies of the system."
+msgstr[0] "{count} copia del sistema."
+msgstr[1] "{count} copie del sistema."
+
+msgid "Reading the copies of the system."
+msgstr "Leggo le copie del sistema."
+
+msgid "Restore"
+msgstr "Ripristina"
+
+msgid "Restore: {copy}"
+msgstr "Ripristina: {copy}"
+
+msgid "Delete"
+msgstr "Elimina"
+
+msgid "Delete: {copy}"
+msgstr "Elimina: {copy}"
+
+msgid "Made by hand"
+msgstr "Fatta a mano"
+
+msgid "Copy made."
+msgstr "Copia fatta."
+
+msgid "Making a copy of the system: it takes some minutes."
+msgstr "Faccio una copia del sistema: ci vuole qualche minuto."
+
+msgid "Copy deleted."
+msgstr "Copia eliminata."
+
+msgid "Deleting the copy."
+msgstr "Elimino la copia."
+
+msgid "It did not work: {error}"
+msgstr "Non è riuscito: {error}"
+
+msgid "Restore the system?"
+msgstr "Ripristinare il sistema?"
+
+msgid ""
+"The system goes back to: {copy}. Programs and settings installed after it "
+"are undone; documents and personal folders do not change. Then the computer "
+"restarts: save your work first."
+msgstr ""
+"Il sistema torna a: {copy}. Programmi e impostazioni installati dopo vengono"
+" tolti; documenti e cartelle personali non cambiano. Poi il computer si "
+"riavvia: prima salva il tuo lavoro."
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Restore and restart"
+msgstr "Ripristina e riavvia"
+
+msgid "Restored."
+msgstr "Ripristinato."
+
+msgid "Restoring: some minutes, then the computer restarts."
+msgstr "Ripristino in corso: qualche minuto, poi il computer si riavvia."
+
+msgid "not enough free space on the disk"
+msgstr "non c'è abbastanza spazio libero sul disco"
+
+msgid "VabaxOS: copy of the system before installing, it takes a few minutes."
+msgstr ""
+"VabaxOS: copia del sistema prima di installare, ci vuole qualche minuto."
+
+msgid "{day}/{month}/{year} at {time}"
+msgstr "{day}/{month}/{year} alle {time}"
+
+msgid "weekly copy"
+msgstr "copia settimanale"
+
+msgid "copy"
+msgstr "copia"
+
+msgid "the disk of the system was not found"
+msgstr "il disco del sistema non è stato trovato"
+
+msgid "Before installing"
+msgstr "Prima di installare"
+
+msgid "Before installing {name}"
+msgstr "Prima di installare {name}"
+
+msgid "Before installing {count} packages: {names}"
+msgstr "Prima di installare {count} pacchetti: {names}"
+
+msgid "Type the number and press Enter. 0 to go out."
+msgstr "Scrivi il numero e premi Invio. 0 per uscire."
+
+msgid "The disk {disk} is encrypted. Type its password, then press Enter."
+msgstr "Il disco {disk} è cifrato. Scrivi la sua password, poi premi Invio."
+
+msgid "VabaxOS system restore."
+msgstr "Ripristino del sistema di VabaxOS."
+
+msgid "It needs the administrator: write sudo ripristino, then press Enter."
+msgstr "Serve l'amministratore: scrivi sudo ripristino, poi premi Invio."
+
+msgid "No copy of the system was found."
+msgstr "Non ho trovato copie del sistema."
+
+msgid "Copies were found on more disks. Which one?"
+msgstr "Ho trovato copie su più dischi. Quale?"
+
+msgid "Copies of the system, the newest last:"
+msgstr "Copie del sistema, la più recente per ultima:"
+
+msgid "Nothing changed."
+msgstr "Non è cambiato niente."
+
+msgid "The system goes back to: {copy}."
+msgstr "Il sistema torna a: {copy}."
+
+msgid ""
+"Documents and personal folders do not change. Then the computer restarts."
+msgstr ""
+"Documenti e cartelle personali non cambiano. Poi il computer si riavvia."
+
+msgid "Type yes and press Enter to restore, anything else to go out."
+msgstr ""
+"Scrivi sì e premi Invio per ripristinare, qualsiasi altra cosa per uscire."
+
+msgid "Restoring. It takes some minutes; do not turn the computer off."
+msgstr ""
+"Ripristino in corso. Ci vuole qualche minuto: non spegnere il computer."
+
+msgid "The restore failed."
+msgstr "Il ripristino non è riuscito."

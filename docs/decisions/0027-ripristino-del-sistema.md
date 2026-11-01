@@ -1,6 +1,6 @@
 # ADR-0027: Ripristino del sistema
 
-- **Stato:** Proposta
+- **Stato:** Accettata (Vabax, 2026-11-01: «A ora, B nella v1.5»)
 - **Data:** 2026-11-01
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
 - **Sostituisce / Sostituita da:** — (anticipa il ripristino previsto per la v1.5 in ADR-0009 e ADR-0020)
@@ -32,7 +32,7 @@ ADR-0009 sceglie ext4, senza istantanee del disco, e rimanda Btrfs alla v1.5. Ci
 
 1. **Timeshift (rsync)** nel sistema installato, configurato da VabaxOS: copia del sistema **prima di ogni aggiornamento** fatto con «Aggiorna VabaxOS», e una alla settimana. Ne tiene 5, cioè le 3 più recenti più 2 settimanali.
 2. **«Ripristino del sistema»**, una finestra VabaxOS (GTK 4, come le altre), con l'elenco delle copie e la loro causa, per esempio «Prima dell'aggiornamento del 1 novembre, 12 pacchetti». Ci sono tre comandi: Crea ora, Ripristina, Elimina. Per ripristinare chiede conferma, avvisa che il computer si riavvierà, dice il risultato a voce al riavvio.
-3. **Ripristino anche quando il desktop non parte**: nella modalità di recupero con voce (R nel menu di avvio), un menu parlato nella console dice le copie e ne ripristina una con i tasti. Nessun avvio da istantanea dal menu di GRUB.
+3. **Ripristino anche quando il desktop non parte**: dalla chiavetta di VabaxOS, modalità di recupero con voce (R nel menu di avvio), si scrive `ripristino`: un menu parlato nella console (Speakup) trova le copie sul disco del computer e ne ripristina una con i numeri. Lo stesso menu c'è nel sistema installato, dalla console di testo (Ctrl+Alt+F3). Nessun avvio da istantanea dal menu di GRUB.
 4. Spazio: se il disco ha meno del 10% libero, la copia non si fa e VabaxOS lo dice.
 
 ## Alternative considerate

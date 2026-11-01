@@ -1,0 +1,119 @@
+#!/usr/bin/python3
+"""The part of the system restore that runs as administrator (ADR-0027).
+
+    helper list [--device DEV]               the copies, as JSON
+    helper create COMMENT [--weekly]         a copy of the system now
+    helper restore NAME [--device DEV]       back to that copy, then restart
+    helper delete NAME                       deletes a copy
+    helper before-install                    APT's hook: a copy before the
+                                             packages read on standard input
+
+The window runs it with pkexec (the administrator password, asked by
+GNOME and read by Orca); APT runs before-install as root. Timeshift does
+the work, in rsync mode, without its own schedule: the weekly copy comes
+from vabaxos-restore-weekly.timer.
+"""
+
+import json
+import os
+import subprocess
+import sys
+import time
+
+import vabaxos_restore as vr
+
+STATE = os.environ.get("VABAXOS_RESTORE_STATE", "/var/lib/vabaxos/restore-last")
+TIMESHIFT = os.environ.get("VABAXOS_TIMESHIFT", "timeshift")
+
+
+def timeshift(*args, device=None, capture=True):
+    command = [TIMESHIFT, *args, "--scripted"]
+    if device:
+        command += ["--snapshot-device", device]
+    result = subprocess.run(command, capture_output=capture, text=True, check=False)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip().splitlines() if capture else []
+        raise RuntimeError(detail[-1] if detail else "timeshift failed")
+    return result.stdout if capture else ""
+
+
+def copies(device=None):
+    return vr.parse_list(timeshift("--list", device=device))
+
+
+def prune():
+    for copy in vr.to_delete(copies()):
+        timeshift("--delete", "--snapshot", copy.name)
+
+
+def create(comment, weekly=False):
+    if vr.free_percent() < vr.MIN_FREE_PERCENT:
+        raise RuntimeError(vr._("not enough free space on the disk"))
+    vr.ensure_config()
+    timeshift("--create", "--comments", comment, "--tags", "W" if weekly else "O")
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    with open(STATE, "w", encoding="utf-8") as f:
+        f.write(str(int(time.time())))
+    prune()
+
+
+def last_copy_time():
+    try:
+        with open(STATE, encoding="utf-8") as f:
+            return int(f.read().strip())
+    except (OSError, ValueError):
+        return 0
+
+
+def before_install(stdin):
+    packages = [line.strip() for line in stdin if line.strip().endswith(".deb")]
+    ok, why = vr.should_copy_before_install(last_copy_time(), time.time(), vr.live_system(),
+                                            vr.free_percent())
+    if not ok:
+        print(f"vabaxos-restore: no copy ({why})", file=sys.stderr)
+        return 0
+    print(vr._("VabaxOS: copy of the system before installing, it takes a few minutes."), file=sys.stderr)
+    try:
+        create(vr.before_install_comment(packages))
+    except Exception as error:  # noqa: BLE001 - an update never stops for this
+        print(f"vabaxos-restore: {error}", file=sys.stderr)
+    return 0
+
+
+def main(argv):
+    if not argv:
+        print(__doc__)
+        return 2
+    command, args = argv[0], argv[1:]
+    device = None
+    if "--device" in args:
+        device = args[args.index("--device") + 1]
+        args = [a for i, a in enumerate(args) if a != "--device" and (i == 0 or args[i - 1] != "--device")]
+    try:
+        if command == "list":
+            if not device:
+                vr.ensure_config()
+            print(json.dumps([{"name": c.name, "tags": c.tags, "comment": c.comment, "title": c.title()}
+                              for c in copies(device)]))
+        elif command == "create" and args:
+            create(args[0], weekly="--weekly" in args)
+        elif command == "restore" and args:
+            extra = ["--target-device", device] if device else []
+            # Timeshift restarts the computer at the end.
+            timeshift("--restore", "--snapshot", args[0], "--yes", "--skip-grub", *extra, device=device,
+                      capture=False)
+        elif command == "delete" and args:
+            timeshift("--delete", "--snapshot", args[0])
+        elif command == "before-install":
+            return before_install(sys.stdin)
+        else:
+            print(__doc__)
+            return 2
+    except RuntimeError as error:
+        print(str(error), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

@@ -109,6 +109,8 @@ jobs:
           python3 tests/dictation/test_captions.py
       - name: Firefox and Thunderbird settings for Orca
         run: python3 tests/firefox/test_policies.py
+      - name: System restore tests (made-up Timeshift, the console menu, the window)
+        run: python3 tests/restore/test_restore.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

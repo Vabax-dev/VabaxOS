@@ -21,6 +21,8 @@ Se fra gli aggiornamenti ci sono parti che fanno funzionare il desktop o la voce
 
 La password di amministratore la chiede la finestra di GNOME, che Orca legge.
 
+Prima di installare, VabaxOS fa una copia del sistema: se l'aggiornamento rompe qualcosa, si torna indietro con il [ripristino del sistema](ripristino.md).
+
 ### Cronologia
 
 Cosa è stato installato, aggiornato e rimosso, dal più recente: per esempio «2026-10-30 10:01:02: 35 aggiornati, 1 installati». Ogni voce si apre con Invio e dice i nomi dei pacchetti.

@@ -1,0 +1,5 @@
+// VabaxOS (ADR-0027): a copy of the system before packages are installed,
+// so an update that breaks something can be undone ("Ripristino del
+// sistema"). At most one an hour; never in the live system; never on an
+// almost full disk. The update goes on even if the copy fails.
+DPkg::Pre-Install-Pkgs { "/usr/lib/vabaxos/restore/helper before-install || true"; };
