@@ -63,6 +63,7 @@ Funzionano come su Windows in tutti i programmi: **Ctrl+C** copia, **Ctrl+X** ta
 
 - **Super+Alt+S** oppure **Super+Ctrl+Invio**: accende e spegne Orca (su Windows, Super+Ctrl+Invio accende l'Assistente vocale).
 - **Super+Alt+8**: accende e spegne l'ingrandimento.
+- **Super+più** e **Super+meno**: ingrandisce e rimpicciolisce, come su Windows; **Super+Ctrl+C** alto contrasto; **Super+Ctrl+più** e **Super+Ctrl+meno** grandezza del testo. Vedi [Ingrandimento e contrasto](ingrandimento.md).
 - I tasti di Orca, come NVDA o JAWS, sono nella guida [I tasti di Orca](tasti-orca.md). **Super+Alt+O** apre le impostazioni del lettore di schermo.
 
 ## Cosa manca rispetto a Windows

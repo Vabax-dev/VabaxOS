@@ -157,6 +157,8 @@ jobs:
         run: python3 tests/radio/test_radio.py
       - name: Books tests (Gutendex and LibriVox answers, download, podcasts, the window)
         run: python3 tests/books/test_books.py
+      - name: Zoom and contrast tests (GNOME settings in memory, the keys in dconf, the window)
+        run: python3 tests/vision/test_vision.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

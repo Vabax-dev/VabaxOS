@@ -7,6 +7,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-accessibility` | Voce della console (Speakup con eSpeak NG) nella lingua del sistema, Orca attivo di default, «senza voce» che spegne entrambi, nomi dei pulsanti di GNOME Shell con la sola icona (ADR-0022), `vabaxos-a11y-check`, `vabaxos-status`, `vabaxos-report` |
 | `vabaxos-apps` | La finestra «Programmi»: avvio automatico, disinstalla |
 | `vabaxos-branding` | Nome, logo, sfondi, font Atkinson Hyperlegible Next |
+| `vabaxos-vision` | Ingrandimento e contrasto con un tasto, detti a voce: Super+più e meno, Super+Ctrl+C, testo grande; colori invertiti, bianco e nero, mirino |
 | `vabaxos-books` | Libri e audiolibri gratuiti: Project Gutenberg nel lettore, LibriVox in Notizie e podcast, Liber Liber nel browser |
 | `vabaxos-radio` | Radio via Internet da tastiera (Radio Browser): ricerca per nome o genere, preferite, brano in onda con Ctrl+I |
 | `vabaxos-orca-sounds` | Suoni del lettore di schermo: un suono breve al posto di «pulsante», «collegamento» e degli altri ruoli, con un'estensione di Orca 51 approvata su richiesta; impara i suoni |

@@ -1,0 +1,177 @@
+#!/usr/bin/python3
+"""Zoom and contrast: see the screen better, with one key.
+
+    vabaxos-vision                 the window, with every option
+    vabaxos-vision COMMAND         one change, said aloud:
+        zoom-in, zoom-out, zoom    (Super+Plus, Super+Minus; Super+Alt+8)
+        contrast                   (Super+Ctrl+C)
+        text-bigger, text-smaller  (Super+Ctrl+Plus, Super+Ctrl+Minus)
+        pointer, invert, grey, crosshairs, status
+
+The keys are those of Windows where Windows has them: Win+Plus and
+Win+Minus for the magnifier, Win+Ctrl+C for the colour filters.
+"""
+
+import gettext
+import subprocess
+import sys
+
+from vabaxos_vision import Vision
+
+gettext.textdomain("vabaxos-vision")
+_ = gettext.gettext
+
+COMMANDS = {
+    "zoom-in": Vision.zoom_in, "zoom-out": Vision.zoom_out, "zoom": Vision.zoom_toggle,
+    "contrast": Vision.contrast, "text-bigger": lambda v: v.text(True), "text-smaller": lambda v: v.text(False),
+    "pointer": Vision.pointer, "invert": Vision.invert, "grey": Vision.greyscale,
+    "crosshairs": Vision.crosshairs, "status": Vision.status,
+}
+
+
+def present(text):
+    """Orca says it; without Orca (people who see a little), a short
+    notification that GNOME shows."""
+    print(text, flush=True)
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - no Orca
+        subprocess.run(["notify-send", "--app-name=VabaxOS", "--expire-time=2500", "--transient", text],
+                       check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def window_classes(speak=present, vision=None):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, GLib, Gtk
+
+    from vabaxos_vision import A11Y, APPLICATIONS, INTERFACE, MAGNIFIER
+    vision = vision or Vision()
+
+    class VisionWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Zoom and contrast"))
+            self.set_default_size(620, 720)
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+            self.updating = False
+            self.rows = {}
+
+            zoom = Adw.PreferencesGroup(title=_("Zoom"), description=_(
+                "Super+Plus enlarges, Super+Minus makes smaller, Super+Alt+8 turns the zoom on and off."))
+            self.switch(zoom, "zoom", _("Zoom"), _("Enlarges around the focus and the pointer"),
+                        APPLICATIONS, "screen-magnifier-enabled")
+            self.factor = Adw.SpinRow.new_with_range(1.0, 16.0, 0.5)
+            self.factor.set_title(_("How much"))
+            self.factor.set_digits(1)
+            self.factor.set_value(float(vision.get(MAGNIFIER, "mag-factor", 2.0)))
+            self.factor.connect("notify::value", lambda *_a: self.updating or vision.set(
+                MAGNIFIER, "mag-factor", self.factor.get_value()))
+            zoom.add(self.factor)
+            self.follow = Adw.ComboRow(title=_("The zoom follows the focus"),
+                                       model=Gtk.StringList.new([_("Keeping it in the middle"),
+                                                                 _("Moving only when needed"),
+                                                                 _("Pushed by the focus at the edge")]))
+            values = ["centered", "proportional", "push"]
+            current = vision.get(MAGNIFIER, "focus-tracking", "proportional")
+            self.follow.set_selected(values.index(current) if current in values else 1)
+            self.follow.connect("notify::selected", lambda *_a: [
+                vision.set(MAGNIFIER, key, values[self.follow.get_selected()])
+                for key in ("focus-tracking", "caret-tracking")])
+            zoom.add(self.follow)
+            self.switch(zoom, "crosshairs", _("Cross-hairs"), _("Two lines that cross where the pointer is"),
+                        MAGNIFIER, "show-cross-hairs")
+            page.add(zoom)
+
+            colours = Adw.PreferencesGroup(title=_("Contrast and colours"), description=_(
+                "Super+Ctrl+C turns high contrast on and off."))
+            self.switch(colours, "contrast", _("High contrast"), _("Strong colours and clear borders"),
+                        A11Y, "high-contrast")
+            self.switch(colours, "invert", _("Inverted colours"), _("Light letters on a dark background"),
+                        MAGNIFIER, "invert-lightness", action=vision.invert)
+            grey = Adw.SwitchRow(title=_("Black and white"), subtitle=_("Without colours"))
+            grey.set_active(float(vision.get(MAGNIFIER, "color-saturation", 1.0)) == 0.0)
+            grey.connect("notify::active", lambda *_a: self.updating or self.say(vision.greyscale()))
+            colours.add(grey)
+            page.add(colours)
+
+            sizes = Adw.PreferencesGroup(title=_("Text and pointer"), description=_(
+                "Super+Ctrl+Plus and Super+Ctrl+Minus change the size of the text."))
+            self.text = Adw.SpinRow.new_with_range(1.0, 3.0, 0.25)
+            self.text.set_title(_("Size of the text"))
+            self.text.set_subtitle(_("1 is normal, 2 is twice as big"))
+            self.text.set_digits(2)
+            self.text.set_value(float(vision.get(INTERFACE, "text-scaling-factor", 1.0)))
+            self.text.connect("notify::value", lambda *_a: self.updating or vision.set(
+                INTERFACE, "text-scaling-factor", self.text.get_value()))
+            sizes.add(self.text)
+            self.pointer = Adw.ComboRow(title=_("Size of the pointer"),
+                                        model=Gtk.StringList.new([_("Normal"), _("Twice as big"),
+                                                                  _("Almost three times"), _("Four times")]))
+            pointers = [24, 48, 64, 96]
+            size = int(vision.get(INTERFACE, "cursor-size", 24))
+            self.pointer.set_selected(pointers.index(size) if size in pointers else 0)
+            self.pointer.connect("notify::selected", lambda *_a: vision.set(
+                INTERFACE, "cursor-size", pointers[self.pointer.get_selected()]))
+            sizes.add(self.pointer)
+            self.switch(sizes, "motion", _("Reduce motion"), _("Fewer animations"), A11Y, "reduced-motion")
+            page.add(sizes)
+
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            GLib.idle_add(lambda: self.rows["zoom"].grab_focus() and False)
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        def switch(self, group, name, title, subtitle, schema, key, action=None):
+            row = Adw.SwitchRow(title=title, subtitle=subtitle)
+            row.set_active(bool(vision.get(schema, key, False)))
+
+            def changed(*_args):
+                if self.updating:
+                    return
+                if action is not None:
+                    self.say(action())
+                else:
+                    vision.set(schema, key, row.get_active())
+            row.connect("notify::active", changed)
+            group.add(row)
+            self.rows[name] = row
+            return row
+
+    class VisionApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Vision")
+            self.connect("activate", lambda app: (app.get_active_window() or VisionWindow(app)).present())
+
+    return VisionApp, VisionWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    if len(argv) > 1:
+        command = COMMANDS.get(argv[1])
+        if command is None:
+            print(__doc__)
+            return 2
+        present(command(Vision()))
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

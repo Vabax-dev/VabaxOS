@@ -1,0 +1,160 @@
+# Italian translation of vabaxos-vision.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-vision\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Zoom and contrast"
+msgstr "Ingrandimento e contrasto"
+
+msgid "Zoom"
+msgstr "Ingrandimento"
+
+msgid ""
+"Super+Plus enlarges, Super+Minus makes smaller, Super+Alt+8 turns the zoom "
+"on and off."
+msgstr ""
+"Super+più ingrandisce, Super+meno rimpicciolisce, Super+Alt+8 accende e "
+"spegne l'ingrandimento."
+
+msgid "Enlarges around the focus and the pointer"
+msgstr "Ingrandisce intorno al cursore e al puntatore"
+
+msgid "How much"
+msgstr "Quanto"
+
+msgid "The zoom follows the focus"
+msgstr "L'ingrandimento segue il cursore"
+
+msgid "Keeping it in the middle"
+msgstr "Tenendolo al centro"
+
+msgid "Moving only when needed"
+msgstr "Spostandosi solo quando serve"
+
+msgid "Pushed by the focus at the edge"
+msgstr "Spinto dal cursore al bordo"
+
+msgid "Cross-hairs"
+msgstr "Mirino"
+
+msgid "Two lines that cross where the pointer is"
+msgstr "Due linee che si incrociano dove c'è il puntatore"
+
+msgid "Contrast and colours"
+msgstr "Contrasto e colori"
+
+msgid "Super+Ctrl+C turns high contrast on and off."
+msgstr "Super+Ctrl+C accende e spegne l'alto contrasto."
+
+msgid "High contrast"
+msgstr "Alto contrasto"
+
+msgid "Strong colours and clear borders"
+msgstr "Colori forti e bordi netti"
+
+msgid "Inverted colours"
+msgstr "Colori invertiti"
+
+msgid "Light letters on a dark background"
+msgstr "Lettere chiare su sfondo scuro"
+
+msgid "Black and white"
+msgstr "Bianco e nero"
+
+msgid "Without colours"
+msgstr "Senza colori"
+
+msgid "Text and pointer"
+msgstr "Testo e puntatore"
+
+msgid "Super+Ctrl+Plus and Super+Ctrl+Minus change the size of the text."
+msgstr "Super+Ctrl+più e Super+Ctrl+meno cambiano la grandezza del testo."
+
+msgid "Size of the text"
+msgstr "Grandezza del testo"
+
+msgid "1 is normal, 2 is twice as big"
+msgstr "1 è normale, 2 è grande il doppio"
+
+msgid "Size of the pointer"
+msgstr "Grandezza del puntatore"
+
+msgid "Normal"
+msgstr "Normale"
+
+msgid "Twice as big"
+msgstr "Il doppio"
+
+msgid "Almost three times"
+msgstr "Quasi il triplo"
+
+msgid "Four times"
+msgstr "Quattro volte"
+
+msgid "Reduce motion"
+msgstr "Meno movimento"
+
+msgid "Fewer animations"
+msgstr "Meno animazioni"
+
+msgctxt "decimal separator"
+msgid "."
+msgstr ","
+
+msgid "Zoom {factor} times."
+msgstr "Ingrandimento {factor} volte."
+
+msgid "Zoom is off."
+msgstr "L'ingrandimento è spento."
+
+msgid "Zoom off."
+msgstr "Ingrandimento spento."
+
+msgid "This setting is not on this system."
+msgstr "Questa impostazione non c'è in questo sistema."
+
+msgid "High contrast on."
+msgstr "Alto contrasto acceso."
+
+msgid "High contrast off."
+msgstr "Alto contrasto spento."
+
+msgid "Text of normal size."
+msgstr "Testo di grandezza normale."
+
+msgid "Text {size} times bigger."
+msgstr "Testo {size} volte più grande."
+
+msgid "Normal pointer."
+msgstr "Puntatore normale."
+
+msgid "Pointer {times} times bigger."
+msgstr "Puntatore {times} volte più grande."
+
+msgid "Colours inverted."
+msgstr "Colori invertiti."
+
+msgid "Colours normal."
+msgstr "Colori normali."
+
+msgid "Black and white."
+msgstr "Bianco e nero."
+
+msgid "Colours back."
+msgstr "Colori di nuovo."
+
+msgid "Cross-hairs on."
+msgstr "Mirino acceso."
+
+msgid "Cross-hairs off."
+msgstr "Mirino spento."
