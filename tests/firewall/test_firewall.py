@@ -147,8 +147,11 @@ class ZoneTest(unittest.TestCase):
 
     def test_private_finds_things_public_lets_nothing_in(self):
         private = zone_services(fw.PRIVATE)
-        for service in ("mdns", "samba-client", "kdeconnect", "ipp-client"):
+        for service in ("mdns", "samba-client", "kdeconnect"):
             self.assertIn(service, private)
+        # UDP 631, the old CUPS browsing attacked through cups-browsed
+        # (CVE-2024-47176): printers are found through mDNS instead.
+        self.assertNotIn("ipp-client", private)
         self.assertEqual(zone_services(fw.PUBLIC), ["dhcpv6-client"])
         # Nothing that serves others is open by default, as in Windows.
         for service in fw.APP_SERVICES:

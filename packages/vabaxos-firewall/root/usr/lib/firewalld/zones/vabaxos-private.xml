@@ -2,7 +2,8 @@
 <!-- VabaxOS: a private network (home, work), like the private profile of
      Windows (ADR-0021). Nothing comes in unless asked, except what a
      person uses at home: finding printers and other devices (mDNS, LLMNR,
-     UPnP, printers), shared folders of Windows and Mac computers, the
+     UPnP; printers are found through mDNS: UDP 631, the old CUPS browsing
+     of CVE-2024-47176, stays closed), shared folders of Windows and Mac computers, the
      phone link (KDE Connect, GSConnect). The programs allowed in the VabaxOS
      setup (file sharing, remote desktop, SSH) are added here. -->
 <zone>
@@ -12,7 +13,6 @@
   <service name="mdns"/>
   <service name="llmnr"/>
   <service name="upnp-client"/>
-  <service name="ipp-client"/>
   <service name="samba-client"/>
   <service name="kdeconnect"/>
   <forward/>

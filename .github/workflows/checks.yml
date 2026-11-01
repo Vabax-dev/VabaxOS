@@ -29,7 +29,7 @@ jobs:
       - name: ShellCheck
         run: |
           find scripts -name '*.sh' -print0 | xargs -0 shellcheck
-          shellcheck image/auto/config
+          shellcheck image/auto/config image/config/hooks/normal/8400-vabaxos-no-cups-browsed.hook.chroot
           shellcheck packages/*/postinst packages/*/postrm packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
           for f in packages/*/build; do head -1 "$f" | grep -q python || shellcheck "$f"; done
           shellcheck -s sh packages/vabaxos-unlock/root/usr/share/initramfs-tools/hooks/* \
@@ -119,6 +119,8 @@ jobs:
         run: python3 tests/lessons/test_lessons.py
       - name: Reminders tests (sentences, the list, the timekeeper, the window)
         run: python3 tests/reminders/test_reminders.py
+      - name: Printers and scanners tests (CUPS and SANE answers, the window)
+        run: python3 tests/print/test_print.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

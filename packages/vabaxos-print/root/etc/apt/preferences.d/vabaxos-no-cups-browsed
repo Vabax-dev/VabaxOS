@@ -1,0 +1,6 @@
+# VabaxOS (vabaxos-print): cups-browsed is never installed. Its old printer
+# browsing on UDP 631 was the door of CVE-2024-47176, and CUPS finds
+# network printers through mDNS without it.
+Package: cups-browsed
+Pin: release *
+Pin-Priority: -1
