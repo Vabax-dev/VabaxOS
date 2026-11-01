@@ -29,7 +29,7 @@ jobs:
       - name: ShellCheck
         run: |
           find scripts -name '*.sh' -print0 | xargs -0 shellcheck
-          shellcheck image/auto/config image/config/hooks/normal/8400-vabaxos-no-cups-browsed.hook.chroot
+          shellcheck image/auto/config image/config/hooks/normal/8400-vabaxos-no-cups-browsed.hook.chroot image/config/hooks/normal/8410-vabaxos-orca-gpaste.hook.chroot
           shellcheck packages/*/postinst packages/*/postrm packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
           for f in packages/*/build; do head -1 "$f" | grep -q python || shellcheck "$f"; done
           shellcheck -s sh packages/vabaxos-unlock/root/usr/share/initramfs-tools/hooks/* \
@@ -168,6 +168,11 @@ jobs:
         run: python3 tests/checkup/test_checkup.py
       - name: Camera reading tests (pictures read by tesseract, the sides, a made-up webcam)
         run: python3 tests/camera/test_camera.py
+      - name: Orca 50 keeps speaking with an empty GPaste history (image hook, against Orca 50.3 and 51.0)
+        run: |
+          git clone -q --depth 1 --branch 50.3 https://github.com/GNOME/orca.git /tmp/orca-50
+          git clone -q --depth 1 --branch 51.0 https://github.com/GNOME/orca.git /tmp/orca-51-gpaste
+          ORCA_50=/tmp/orca-50 ORCA_51=/tmp/orca-51-gpaste python3 tests/orca-gpaste/test_orca_gpaste.py
       - name: Screen reader sounds tests (the Orca 51.0 extension API, the sounds, the window)
         run: |
           git clone -q --depth 1 --branch 51.0 https://github.com/GNOME/orca.git /tmp/orca-51

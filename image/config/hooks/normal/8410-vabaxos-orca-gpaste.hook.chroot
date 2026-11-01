@@ -1,0 +1,40 @@
+#!/bin/sh
+# VabaxOS: Orca 50 falls silent with an empty GPaste history.
+#
+# Orca reads the clipboard through GPaste (the clipboard history of the
+# desktop, block 8). When the history is empty, GPaste answers
+# GetElementAtIndex(0) with the D-Bus error "invalid index received", and
+# Orca 50 does not catch it: in the CI (2026-11-01) Orca was still running
+# afterwards but said nothing more, not even notifications. Orca 51 catches
+# the error and takes the clipboard as empty (src/orca/clipboard.py, 51.0);
+# this hook makes the same change in Orca 50, and does nothing once Orca
+# has it (ADR-0031). An upgrade of the orca package brings back Debian's
+# file: that is Orca 51 or later in forky.
+set -e
+CLIPBOARD="${ORCA_CLIPBOARD:-/usr/lib/python3/dist-packages/orca/clipboard.py}"
+[ -e "$CLIPBOARD" ] || exit 0
+python3 - "$CLIPBOARD" <<'EOF'
+import py_compile
+import sys
+
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+if "GPaste: Could not get clipboard contents" in text or "GPASTE: Could not get clipboard contents" in text:
+    print("Orca already takes an empty GPaste history as an empty clipboard.")
+    sys.exit(0)
+old = "        result = self._gpaste_proxy.GetElementAtIndex(0)[1]\n"
+new = ("        try:\n"
+       "            result = self._gpaste_proxy.GetElementAtIndex(0)[1]\n"
+       "        except DBusError as error:\n"
+       "            # VabaxOS: an empty GPaste history (as in Orca 51).\n"
+       "            msg = f\"GPaste: Could not get clipboard contents: {error}\"\n"
+       "            debug.print_message(debug.LEVEL_INFO, msg, True)\n"
+       "            return \"\"\n")
+if text.count(old) != 1 or "from dasbus.error import DBusError" not in text:
+    print(f"{path}: Orca's GPaste code is not the expected one: check the hook.", file=sys.stderr)
+    sys.exit(1)
+with open(path, "w", encoding="utf-8") as f:
+    f.write(text.replace(old, new))
+py_compile.compile(path, doraise=True)
+print("Orca: an empty GPaste history no longer silences Orca.")
+EOF

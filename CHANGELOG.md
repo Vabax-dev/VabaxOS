@@ -88,3 +88,8 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Per ora solo eSpeak NG (ADR-0026): Kokoro esce dalla ISO (circa 1 GB in meno); il lettore di documenti legge con eSpeak NG.
 - Menu Start (ADR-0025 accettata): il pulsante Start sulla barra apre il menu di VabaxOS; ArcMenu non è più installato.
 - GNOME Software non cerca e non installa più aggiornamenti da solo: c'è un solo programma per gli aggiornamenti.
+
+### Corretto
+
+- Orca 50 non diventa più muto quando la cronologia degli appunti (GPaste) è vuota: la ISO applica la correzione che Orca 51 ha già (`8410-vabaxos-orca-gpaste.hook.chroot`).
+- La ISO si costruisce di nuovo dall'istantanea del 2026-09-24, i cui file Release sono scaduti (opzioni di APT di live-build).
