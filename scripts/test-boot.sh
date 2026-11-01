@@ -502,6 +502,18 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y programs vabaxos-apps vabaxos-apps
 fi
 
+# Text recognition for the screen reader: Super+Alt+R over the Programs
+# window takes its picture in GNOME Shell (vabaxos-keys) and vabaxos-ocr
+# opens the recognized text, a window with its name and the focus.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    send "env $DESKTOP_ENV vabaxos-apps >/dev/null 2>&1 &"
+    sleep 8
+    press meta_l-alt-r
+    ask ocrwindow "env $BUS vabaxos-a11y-check --wait 40 vabaxos-ocr > /tmp/ocr.txt 2>&1; tail -1 /tmp/ocr.txt" || exit 1
+    send "sed 's/^/A11Y-ocr: /' /tmp/ocr.txt; pkill -u user -f 'bin/vabaxos-ocr'; pkill -u user -f 'bin/vabaxos-apps'"
+    check 'OCR (Super+Alt+R): finestra del testo riconosciuto' "$(value ocrwindow)" "vabaxos-ocr: 0 controls without a name"
+fi
+
 # The keys of Windows (block 8): Super+T and Super+B move the focus to the
 # taskbar and to the notification area (what Orca would read there is in
 # the log), copy, cut and paste work in a program, Alt+F4 closes a window

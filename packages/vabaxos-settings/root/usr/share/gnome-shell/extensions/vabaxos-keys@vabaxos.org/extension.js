@@ -15,6 +15,11 @@
 //               any other window is minimized
 //   Super+Alt+D where am I: program, window, desktop, open windows (said
 //               by Orca through its D-Bus service, or a notification)
+//   Super+Alt+R the text of the window in use, recognized (OCR) by
+//               vabaxos-ocr and shown as plain text for Orca, like NVDA+R;
+//               Super+Alt+Shift+R the whole screen. The picture can only
+//               be taken here: GNOME Shell refuses its screenshot service
+//               to other programs.
 //   Alt+F4      closes the window; on the desktop or the taskbar asks to
 //               shut down, as in Windows (the desktop takes the focus when
 //               the last window closes)
@@ -90,7 +95,11 @@ class StartButton extends PanelMenu.Button {
     }
 });
 
-const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i'];
+const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i',
+    'recognize-window', 'recognize-screen'];
+
+Gio._promisify(Shell.Screenshot.prototype, 'screenshot');
+Gio._promisify(Shell.Screenshot.prototype, 'screenshot_window');
 const NEW_WINDOW_MS = 8000;
 
 export default class VabaxOSKeys extends Extension {
@@ -102,6 +111,8 @@ export default class VabaxOSKeys extends Extension {
             'open-start-menu': () => this._toggleStart(),
             'minimize-or-restore': () => this._minimizeOrRestore(),
             'where-am-i': () => this._whereAmI(),
+            'recognize-window': () => this._recognize(false),
+            'recognize-screen': () => this._recognize(true),
         };
         for (const key of KEYS) {
             Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE,
@@ -276,6 +287,35 @@ export default class VabaxOSKeys extends Extension {
         const windows = global.display.get_tab_list(Meta.TabList.NORMAL, null).filter(w => !this._isDesktop(w));
         parts.push(windows.length === 1 ? _('1 window open') : _('%d windows open').format(windows.length));
         this._speak(parts.filter(p => p).join('. '));
+    }
+
+    // A picture of the window in use, or of the screen, for vabaxos-ocr.
+    async _recognize(wholeScreen) {
+        const _ = this.gettext.bind(this);
+        if (!GLib.find_program_in_path('vabaxos-ocr')) {
+            this._speak(_('Text recognition is not installed.'));
+            return;
+        }
+        const window = global.display.focus_window;
+        const useWindow = !wholeScreen && window && !this._isDesktop(window);
+        this._speak(_('Recognizing the text.'));
+        try {
+            const dir = GLib.build_filenamev([GLib.get_user_runtime_dir(), 'vabaxos-ocr']);
+            GLib.mkdir_with_parents(dir, 0o700);
+            const path = GLib.build_filenamev([dir, `${GLib.get_monotonic_time()}.png`]);
+            const stream = Gio.File.new_for_path(path).replace(null, false, Gio.FileCreateFlags.PRIVATE, null);
+            const shooter = new Shell.Screenshot();
+            if (useWindow)
+                await shooter.screenshot_window(false, false, stream);
+            else
+                await shooter.screenshot(false, stream);
+            stream.close(null);
+            const title = useWindow ? window.get_title() ?? '' : _('Screen');
+            Util.spawn(['vabaxos-ocr', '--title', title, path]);
+        } catch (e) {
+            logError(e, 'vabaxos-keys: text recognition');
+            this._speak(_('Text recognition failed.'));
+        }
     }
 
     // Orca says it at once; without Orca, a notification.

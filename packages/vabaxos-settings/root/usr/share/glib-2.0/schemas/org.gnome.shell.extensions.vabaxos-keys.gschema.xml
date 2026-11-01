@@ -23,5 +23,13 @@
       <default><![CDATA[['<Super><Alt>d']]]></default>
       <summary>Say the program, window, desktop and open windows</summary>
     </key>
+    <key name="recognize-window" type="as">
+      <default><![CDATA[['<Super><Alt>r']]]></default>
+      <summary>Recognize the text of the window in use (OCR) and show it as plain text</summary>
+    </key>
+    <key name="recognize-screen" type="as">
+      <default><![CDATA[['<Super><Alt><Shift>r']]]></default>
+      <summary>Recognize the text of the whole screen (OCR) and show it as plain text</summary>
+    </key>
   </schema>
 </schemalist>

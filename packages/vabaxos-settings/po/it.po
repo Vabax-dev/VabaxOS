@@ -20,3 +20,18 @@ msgstr "%d finestre aperte"
 
 msgid "Where am I"
 msgstr "Dove sono"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Text recognition is not installed."
+msgstr "Il riconoscimento del testo non è installato."
+
+msgid "Recognizing the text."
+msgstr "Riconosco il testo."
+
+msgid "Screen"
+msgstr "Schermo"
+
+msgid "Text recognition failed."
+msgstr "Il riconoscimento del testo non è riuscito."

@@ -4,18 +4,28 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 
 | Pacchetto | Cosa fa |
 |---|---|
-| `vabaxos-accessibility` | Voce della console (Speakup con eSpeak NG) nella lingua del sistema, Orca attivo di default, «senza voce» che spegne entrambi, nomi dei pulsanti di GNOME Shell con la sola icona (ADR-0022) |
-| `vabaxos-settings` | Impostazioni di GNOME: niente tour, niente sospensione automatica, niente blocco dello schermo con password |
-| `vabaxos-welcome` | Il [benvenuto parlato](../docs/utente/benvenuto.md) prima del desktop (ADR-0016) |
-
-Previsto per la v0.1: `vabaxos-branding` (nome, logo, sfondo, suoni).
+| `vabaxos-accessibility` | Voce della console (Speakup con eSpeak NG) nella lingua del sistema, Orca attivo di default, «senza voce» che spegne entrambi, nomi dei pulsanti di GNOME Shell con la sola icona (ADR-0022), `vabaxos-a11y-check`, `vabaxos-status`, `vabaxos-report` |
+| `vabaxos-apps` | La finestra «Programmi»: avvio automatico, disinstalla |
+| `vabaxos-branding` | Nome, logo, sfondi, font Atkinson Hyperlegible Next |
+| `vabaxos-help` | L'aiuto di VabaxOS: le guide di `docs/utente` in HTML |
+| `vabaxos-ocr` | Il testo dello schermo riconosciuto per il lettore di schermo (Super+Alt+R) |
+| `vabaxos-reader` | Il [lettore di documenti](../docs/utente/lettore.md) |
+| `vabaxos-screen-reader` | Le impostazioni e i tasti di Orca (blocchi 9 e 10) |
+| `vabaxos-settings` | Impostazioni di GNOME: niente tour, niente sospensione automatica, niente blocco dello schermo con password, tasti di Windows e pulsante Start (`vabaxos-keys@vabaxos.org`) |
+| `vabaxos-setup` | La configurazione iniziale: vista, voce, tastiera, rete |
+| `vabaxos-sounds` | I suoni di sistema |
+| `vabaxos-start` | Il [menu Start](../docs/utente/menu-start.md) (ADR-0025) |
+| `vabaxos-update` | Gli aggiornamenti a voce (ADR-0020) |
+| `vabaxos-voice` | La voce naturale Kokoro per speech-dispatcher (ADR-0019); per ora **fuori dalla ISO** (ADR-0026, file `not-in-iso`) |
+| `vabaxos-welcome` | Il [benvenuto parlato](../docs/utente/benvenuto.md) prima del desktop (ADR-0016) e «Installa ora» (ADR-0023) |
 
 ## Com'è fatta una cartella
 
 - `control`: il file `DEBIAN/control`, senza la riga `Version` (la aggiunge lo script);
 - `root/`: i file da installare, nella posizione che avranno nel sistema;
 - `postinst`, `postrm`: script del pacchetto, facoltativi;
-- `po/*.po`: traduzioni gettext del programma, facoltative.
+- `po/*.po`: traduzioni gettext del programma, facoltative;
+- `not-in-iso`: il pacchetto si costruisce per i test ma non entra nella ISO; il file dice perché.
 
 `scripts/build-packages.sh CARTELLA` costruisce tutti i pacchetti senza privilegi di root. `scripts/build.sh` lo chiama da solo e mette i pacchetti nella ISO.
 

@@ -63,7 +63,7 @@ jobs:
             python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas libglib2.0-bin \
             python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0 \
             python3-docx python3-ebooklib python3-pil poppler-utils \
-            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng
+            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng fonts-dejavu-core
       - uses: actions/checkout@v7
       # Large files of the packages (the Kokoro model), downloaded once.
       - uses: actions/cache@v4
@@ -99,6 +99,8 @@ jobs:
           dpkg-deb -x /tmp/packages/vabaxos-voice_*.deb /tmp/voice
           export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
           python3 tests/voice/test_module.py
+      - name: Text recognition tests (screen-like pictures, the result window)
+        run: python3 tests/ocr/test_ocr.py
       - name: Reader tests (documents; the window reads into a file)
         run: |
           export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro

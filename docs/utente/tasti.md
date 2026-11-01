@@ -38,6 +38,7 @@ Il tasto **Super** è il tasto con il logo, quello che su Windows si chiama tast
 - **Super+Spazio**: cambia la lingua della tastiera.
 - **Super+Alt+I**: VabaxOS dice lo stato del computer: ora, batteria, rete, Bluetooth, volume.
 - **Super+Alt+D**: dove sei: il programma e la finestra, l'area di lavoro, quante finestre sono aperte. Vedi [Muoversi con la tastiera](navigazione.md).
+- **Super+Alt+R**: legge il testo della finestra in uso anche dove Orca non trova niente; **Super+Alt+Maiusc+R** di tutto lo schermo. Vedi [Leggere il testo dello schermo](riconoscimento-del-testo.md).
 
 ## Copia, taglia e incolla
 

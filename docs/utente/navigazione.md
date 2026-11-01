@@ -17,6 +17,7 @@ In VabaxOS ci si muove come in Windows. Questa guida raccoglie i tasti per spost
 - **Ins+T:** il titolo della finestra.
 - **Super+Alt+D:** dove sei: il programma e la finestra, l'area di lavoro, quante finestre sono aperte.
 - **Super+Alt+I:** lo stato del computer (ora, batteria, rete, volume).
+- **Super+Alt+R:** il testo della finestra riconosciuto dall'immagine, quando Orca non trova niente: vedi [Leggere il testo dello schermo](riconoscimento-del-testo.md).
 
 ## Fra le finestre
 

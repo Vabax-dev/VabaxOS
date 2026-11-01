@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Recognize text
+Name[it]=Riconosci il testo
+Comment=Read the text of a picture, line by line (Super+Alt+R reads the window in use)
+Comment[it]=Leggi il testo di un'immagine, riga per riga (Super+Alt+R legge la finestra in uso)
+Exec=vabaxos-ocr --keep %f
+Icon=accessories-text-editor
+Terminal=false
+NoDisplay=true
+MimeType=image/png;image/jpeg;image/tiff;image/bmp;image/webp;
+Categories=Utility;Accessibility;
