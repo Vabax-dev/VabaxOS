@@ -2,4 +2,6 @@
 set -e
 if [ "$1" = configure ]; then
     deb-systemd-helper enable vabaxos-voice-off.service >/dev/null || true
+    # The brlapi group (sysusers.d), before any user is added to it.
+    systemd-sysusers vabaxos-brlapi.conf >/dev/null 2>&1 || true
 fi

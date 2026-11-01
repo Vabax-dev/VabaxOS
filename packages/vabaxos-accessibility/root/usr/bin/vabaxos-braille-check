@@ -8,9 +8,10 @@
                                    asked), brltty started again
 
 Orca writes to braille displays through BRLTTY and its BrlAPI (Debian
-accessibility wiki): brltty must run, /etc/brlapi.key must exist and be
-readable, the user must be in the brlapi group, and braille must be on in
-Orca. USB displays are found by themselves; Bluetooth ones are paired in
+accessibility wiki): brltty must run, /etc/brlapi.key must exist (readable
+by root only: polkit lets in the user of the active session and the
+members of brlapi), the user should be in the brlapi group, and braille
+must be on in Orca. USB displays are found by themselves; Bluetooth ones are paired in
 the Bluetooth settings first.
 """
 
@@ -51,6 +52,16 @@ def _exists(gid):
         return False
 
 
+def key_present():
+    """The BrlAPI key exists. Debian keeps it readable by root only: the
+    user of the active session, and the members of brlapi, are let in by
+    polkit (org.a11y.brlapi.write-display), not by reading the key."""
+    try:
+        return os.path.getsize(KEY) > 0
+    except OSError:
+        return False
+
+
 def display():
     """(driver, columns) of the display BRLTTY has, or None."""
     try:
@@ -75,7 +86,7 @@ def checks(probe=None):
     probe = probe or {
         "brltty": lambda: shutil.which("brltty") is not None,
         "running": lambda: bool(output("systemctl", "list-units", "brltty*", "--state=active", "--no-legend").strip()),
-        "key": lambda: os.access(KEY, os.R_OK) and os.path.getsize(KEY) > 0,
+        "key": key_present,
         "group": lambda: "brlapi" in user_groups(),
         "display": display,
         "orca": orca_braille_on,
@@ -87,7 +98,7 @@ def checks(probe=None):
                     else _("BRLTTY is not running. Connect the display, or use --fix to start it.")))
     key = probe["key"]()
     results.append((key, _("The BrlAPI key is there.") if key
-                    else _("The BrlAPI key {key} is missing or cannot be read.").format(key=KEY)))
+                    else _("The BrlAPI key {key} is missing.").format(key=KEY)))
     group = probe["group"]()
     results.append((group, _("You are in the brlapi group.") if group
                     else _("You are not in the brlapi group: --fix adds you, then log out and in again.")))

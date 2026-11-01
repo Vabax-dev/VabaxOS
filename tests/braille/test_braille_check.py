@@ -52,6 +52,29 @@ class CheckTest(unittest.TestCase):
         line = next(l for l in open(preseed, encoding="utf-8") if "user-default-groups" in l)
         self.assertIn("brlapi", line.split())
 
+    def test_key_present_even_if_readable_by_root_only(self):
+        import tempfile
+        folder = tempfile.mkdtemp()
+        key = os.path.join(folder, "brlapi.key")
+        old = check.KEY
+        self.addCleanup(setattr, check, "KEY", old)
+        check.KEY = key
+        self.assertFalse(check.key_present())
+        with open(key, "w", encoding="utf-8") as f:
+            f.write("0123456789abcdef\n")
+        os.chmod(key, 0o600)
+        self.assertTrue(check.key_present())
+        os.remove(key)
+        os.rmdir(folder)
+
+    def test_group_created_by_the_package(self):
+        package = os.path.join(REPO, "packages", "vabaxos-accessibility")
+        sysusers = open(os.path.join(package, "root", "usr", "lib", "sysusers.d", "vabaxos-brlapi.conf"),
+                        encoding="utf-8").read()
+        self.assertIn("g brlapi -", [line.strip() for line in sysusers.splitlines()])
+        postinst = open(os.path.join(package, "postinst"), encoding="utf-8").read()
+        self.assertIn("systemd-sysusers vabaxos-brlapi.conf", postinst)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

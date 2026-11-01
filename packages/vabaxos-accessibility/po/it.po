@@ -185,8 +185,8 @@ msgstr ""
 msgid "The BrlAPI key is there."
 msgstr "La chiave di BrlAPI c'è."
 
-msgid "The BrlAPI key {key} is missing or cannot be read."
-msgstr "La chiave di BrlAPI {key} manca o non si può leggere."
+msgid "The BrlAPI key {key} is missing."
+msgstr "La chiave di BrlAPI {key} manca."
 
 msgid "You are in the brlapi group."
 msgstr "Sei nel gruppo brlapi."
