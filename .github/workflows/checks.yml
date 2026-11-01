@@ -153,6 +153,8 @@ jobs:
         run: |
           git clone -q --depth 1 --branch 51.0 https://github.com/GNOME/orca.git /tmp/orca-51
           ORCA_SOURCE=/tmp/orca-51 python3 tests/orca-sounds/test_orca_sounds.py
+      - name: Radio tests (the catalog's answers, servers in turn, favourites, the window)
+        run: python3 tests/radio/test_radio.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)
