@@ -547,7 +547,9 @@ fi
 # System tuning (vabaxos-tuning): compressed memory (zram) is the swap;
 # one program for the updates: GNOME Software does not update by itself.
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    ask zram 'swapon --noheadings --show=NAME | grep -c zram' || exit 1
+    # /proc/swaps, not swapon: the user's PATH has no /usr/sbin (the check
+    # read 0 while zram0 was on, CI 2026-11-01).
+    ask zram 'grep -c "^/dev/zram" /proc/swaps' || exit 1
     check 'memoria compressa (zram)' "$(value zram)" 1
     if [[ "$(value zram)" != 1 ]]; then
         ask zraminfo '( dpkg-query -W -f="\${Package} \${Status}\n" systemd-zram-generator vabaxos-tuning; ls /dev/zram* /run/systemd/generator/*zram*; systemctl is-active systemd-zram-setup@zram0 dev-zram0.swap; sudo -n journalctl -b --no-pager -o cat | grep -i zram | tail -4 ) 2>&1 </dev/null | tr "\n" "|"' || exit 1
@@ -658,7 +660,17 @@ fi
 if [[ "$WANT_ORCA" == yes ]]; then
     sleep 3
     press insert-f12
-    check 'Ins+F12: Orca dice l'"'"'ora' "$(record orca-f12 5)" "$WANT_SOUND"
+    F12_HEARD="$(record orca-f12 5)"
+    check 'Ins+F12: Orca dice l'"'"'ora' "$F12_HEARD" "$WANT_SOUND"
+    # Orca fell silent here once in four runs (CI, 2026-11-01, Secure Boot),
+    # right after the speed was changed: is Orca alive, does it still read
+    # a notification, and what did Orca and speech-dispatcher log?
+    if [[ "$F12_HEARD" != "$WANT_SOUND" ]]; then
+        ask orcaalive 'printf "orca %s, speech-dispatcher %s, moduli %s" "$(pgrep -u user -x orca >/dev/null && echo yes || echo no)" "$(pgrep -u user -x speech-dispatch >/dev/null && echo yes || echo no)" "$(pgrep -u user -l sd_ | awk "{print \$2}" | tr "\n" " ")"' || exit 1
+        printf 'INFO: Orca muto dopo Ins+F12: %s; notifica letta: %s\n' "$(value orcaalive)" "$(orca_speaks orca-after-f12)"
+        ask orcalog 'sudo -n journalctl -b --no-pager -o cat _COMM=orca _COMM=speech-dispatch _COMM=sd_espeak-ng _COMM=pipewire _COMM=wireplumber 2>&1 </dev/null | tail -15 | tr "\n" "|"' || exit 1
+        printf 'INFO: registro di Orca: %s\n' "$(value orcalog)"
+    fi
 fi
 
 # Navigation and Tab (block 11). Tab is pressed many times in a program
