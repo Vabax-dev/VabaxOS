@@ -2,9 +2,9 @@
 Type=Application
 Name=Update VabaxOS
 Name[it]=Aggiorna VabaxOS
-Comment=Checks for updates and installs them, saying every step aloud
-Comment[it]=Cerca gli aggiornamenti e li installa, annunciando ogni passo
-Exec=vabaxos-update --now
+Comment=Security, system, applications and firmware updates, with every step said aloud
+Comment[it]=Aggiornamenti di sicurezza, del sistema, delle applicazioni e del firmware, con ogni passo annunciato
+Exec=vabaxos-update --window
 Icon=vabaxos-logo
 Terminal=false
 Categories=System;Settings;
