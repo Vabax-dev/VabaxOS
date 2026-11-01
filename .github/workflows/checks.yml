@@ -147,6 +147,8 @@ jobs:
         run: python3 tests/store/test_store.py
       - name: Check of the computer tests (made-up hardware, the summary, the window)
         run: python3 tests/checkup/test_checkup.py
+      - name: Camera reading tests (pictures read by tesseract, the sides, a made-up webcam)
+        run: python3 tests/camera/test_camera.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)
