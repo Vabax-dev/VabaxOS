@@ -97,6 +97,29 @@ Aggiornato al 2026-11-01.
 - Da decidere con Vabax: come ufficializzare la 0.1 (ADR-0015 chiede la firma di `SHA256SUMS` con una chiave OpenPGP del progetto e la ROADMAP una prova su PC fisico: A, chiave e mini PC prima; B, `v0.1.0-alpha.1` subito con un ADR che rimanda la firma); ADR-0020 (aggiornamenti: il programma c'è, manca la decisione sulle istantanee controllate); se segnalare a Debian e GNOME i difetti trovati.
 - Prossimo: ascolto di Vabax dei blocchi 3-12 e merge in ordine (#8 → #17); prova su PC fisico; repository APT VabaxOS (v0.2).
 
+Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
+
+1. **Dettatura** senza Internet (priorità di Vabax), e con lo stesso motore i **sottotitoli in tempo reale**; prima le licenze dei modelli italiani.
+2. **Firefox pronto per Orca**, con la verifica del problema noto di GNOME 50 (Orca legge solo le etichette).
+3. **Ripristino del sistema** adesso (Btrfs e istantanee): ADR **Proposta**, Vabax approva prima del codice che cambia il disco.
+4. **Lezioni dei tasti** al primo avvio: esercizi, «premi il tasto», VabaxOS dice se è giusto.
+5. **Notifiche:** cronologia da riascoltare con un tasto e «non disturbare» con un tasto.
+6. **Dizionario di pronuncia** pronto (sigle come txt, PDF, nomi stranieri) e modificabile.
+7. **«VabaxOS è pronto»**, frase breve all'avvio del desktop.
+8. **Batteria:** un solo avviso a voce al 10%.
+9. **Promemoria e sveglie** a voce, programma VabaxOS.
+10. **Stampante e scanner** guidati a voce; scansione letta con l'OCR.
+11. **Braille:** Vabax ha un display, prova con lui.
+12. **Descrizione delle immagini** senza Internet.
+13. **Matematica:** formule lette bene e calcolatrice parlante.
+14. **Lettore di documenti:** più formati (HTML salvato, ODT, RTF, DAISY) e indice dei capitoli.
+15. **Notizie e podcast**, programma VabaxOS.
+16. **Videochiamate** (programma consigliato e provato con Orca), **WhatsApp** (web) e **Telegram** provati con Orca.
+17. **Giochi audio** con licenza libera.
+18. **«Qualcosa non va»:** rapporto dei registri (senza aiuto remoto).
+
+No di Vabax: impostazioni rapide VabaxOS, lettura della selezione senza Orca, programmi precaricati, collegamento con il telefono, annuncio delle chiavette, backup guidato (va bene Déjà Dup), antivirus, gestore di password nuovo, altre lingue ora (solo su richiesta). Firewall: reti nuove private, confermato.
+
 Piano dei blocchi 9-12, deciso con Vabax il 2026-09-25 (lavoro autonomo come nella notte del 24; niente merge su `main` prima del suo ascolto). Richiesta di Vabax: «voglio le impostazioni di Orca più personalizzabili, le scorciatoie di Orca, più praticità quando si naviga in generale; il Tab deve funzionare meglio».
 
 - **Prima: chiudere il blocco 8.** GNOME Shell a volte si blocca all'avvio del desktop (niente estensioni, bus di accessibilità e notifiche che non rispondono): CI del ramo `claude/confident-archimedes-bnn3x7` (run 36133674296, modalità voce) e `test-boot.sh --entry novoice` in locale (2026-09-25 11:09); non sempre. Trovare la causa (estensioni del blocco 8: Dash to Panel, DING, GPaste, Tiling Assistant, AppIndicator, `vabaxos-keys`, `button-names`) con il registro di GNOME Shell, correggerla, provarla più volte. Poi le prove ancora rosse: prima copia nell'editor, Alt+F4 sul desktop (correzione pronta: il desktop prende il focus). CI di #8-#13 verde.
