@@ -272,7 +272,17 @@ check 'testo grande dal benvenuto prima di installare' "$(value textsize)" 1.5
 press tab
 check 'schermata di accesso udibile' "$(record greeter 8)" yes
 press ctrl-alt-f3
-check 'voce della console udibile' "$(record console 10)" yes
+# Orca of the login screen has just spoken through the PipeWire of the
+# login screen, which may keep the sound card a few seconds after it is no
+# longer the active session (2026-11-01, CI): if the first words of the
+# console are lost, Enter makes the console speak again.
+CONSOLE_SPEECH="$(record console 10)"
+if [[ "$CONSOLE_SPEECH" != yes ]]; then
+    press ret
+    CONSOLE_SPEECH="$(record console-again 10)"
+    printf 'INFO: voce della console dopo la schermata di accesso: le prime parole perse, dopo Invio: %s\n' "$CONSOLE_SPEECH"
+fi
+check 'voce della console udibile' "$CONSOLE_SPEECH" yes
 send 'echo test | sudo -S poweroff'
 for _ in $(seq 120); do kill -0 "$QEMU_WRAPPER" 2>/dev/null || break; sleep 1; done
 stop_vm
