@@ -53,3 +53,6 @@ msgstr "Non disturbare attivo. Le notifiche aspettano nell'elenco, Super+N."
 
 msgid "Do not disturb off."
 msgstr "Non disturbare disattivato."
+
+msgid "The description of pictures is not installed."
+msgstr "La descrizione delle immagini non è installata."

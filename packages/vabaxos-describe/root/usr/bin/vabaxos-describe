@@ -1,0 +1,149 @@
+#!/usr/bin/python3
+"""Describes a picture without Internet (ADR-0029, proposed).
+
+    vabaxos-describe [--title TITLE] [--keep] PICTURE
+
+Super+Alt+P describes the window in use, Super+Alt+Shift+P the whole
+screen: the extension vabaxos-keys takes the picture in GNOME Shell, as for
+the text recognition. The description (and the text recognized in the
+picture, when there is some) opens in a plain window: Orca reads it line
+by line, Escape closes. "Open With" on a picture file works the same way.
+It takes from some seconds to a minute or more: VabaxOS says it is
+working. The picture is deleted at the end unless --keep is given.
+"""
+
+import gettext
+import os
+import sys
+import threading
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
+
+import vabaxos_describe as vd  # noqa: E402
+
+gettext.textdomain("vabaxos-describe")
+_ = gettext.gettext
+
+
+def speak(text):
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except GLib.Error:
+        print(text, flush=True)
+
+
+def language():
+    for name in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        value = os.environ.get(name, "")
+        if value and value not in ("C", "POSIX") and not value.startswith("C."):
+            return value.split(":")[0][:2]
+    return "en"
+
+
+def recognized_text(path):
+    """The text written in the picture, if text recognition is installed."""
+    try:
+        from vabaxos_ocr import recognize
+        return "\n".join(line for line in recognize.recognize(path) if line)
+    except Exception:  # noqa: BLE001 - optional
+        return ""
+
+
+def result_text(description, text):
+    parts = [description]
+    if text:
+        parts += ["", _("Text in the picture:"), text]
+    return "\n".join(parts)
+
+
+class ResultWindow(Adw.ApplicationWindow):
+
+    def __init__(self, app, title, text):
+        super().__init__(application=app, title=_("Description: {title}").format(title=title) if title
+                         else _("Description"))
+        self.set_default_size(700, 480)
+        view = Adw.ToolbarView()
+        view.add_top_bar(Adw.HeaderBar())
+        self.view = Gtk.TextView(editable=False, cursor_visible=True, wrap_mode=Gtk.WrapMode.WORD_CHAR,
+                                 left_margin=18, right_margin=18, top_margin=12, bottom_margin=12)
+        self.view.update_property([Gtk.AccessibleProperty.LABEL], [_("Description")])
+        self.view.get_buffer().set_text(text)
+        self.view.get_buffer().place_cursor(self.view.get_buffer().get_start_iter())
+        scroll = Gtk.ScrolledWindow(vexpand=True)
+        scroll.set_child(self.view)
+        view.set_content(scroll)
+        self.set_content(view)
+        controller = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+        controller.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("Escape"),
+                                                 Gtk.CallbackAction.new(lambda *_a: self.close() or True)))
+        self.add_controller(controller)
+        self.view.grab_focus()
+
+
+class DescribeApp(Adw.Application):
+
+    def __init__(self, title, keep, path):
+        super().__init__(application_id="org.vabaxos.Describe", flags=Gio.ApplicationFlags.NON_UNIQUE)
+        self.title, self.keep, self.path = title, keep, path
+        self.connect("activate", self.on_activate)
+
+    def on_activate(self, _app):
+        if not self.path or not os.path.exists(self.path):
+            speak(_("No picture to describe."))
+            return
+        if not vd.available():
+            speak(_("The description of pictures is not installed yet."))
+            return
+        speak(_("Describing the picture: it can take a minute."))
+        self.hold()
+        threading.Thread(target=self.work, daemon=True).start()
+
+    def work(self):
+        try:
+            description = vd.describe(self.path, language())
+            text = recognized_text(self.path)
+            error = None
+        except Exception as problem:  # noqa: BLE001 - said to the user
+            description, text, error = "", "", problem
+        finally:
+            if not self.keep:
+                try:
+                    os.remove(self.path)
+                except OSError:
+                    pass
+        GLib.idle_add(self.show, description, text, error)
+
+    def show(self, description, text, error):
+        self.release()
+        if error is not None or not description:
+            speak(_("The description failed: {error}").format(error=error or _("no answer")))
+            return False
+        ResultWindow(self, self.title, result_text(description, text)).present()
+        return False
+
+
+def main(argv):
+    title, keep, path = "", False, None
+    args = list(argv[1:])
+    while args:
+        arg = args.pop(0)
+        if arg == "--title" and args:
+            title = args.pop(0)
+        elif arg == "--keep":
+            keep = True
+        elif arg in ("-h", "--help"):
+            print(__doc__)
+            return 0
+        else:
+            path = arg
+    return DescribeApp(title, keep, path).run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

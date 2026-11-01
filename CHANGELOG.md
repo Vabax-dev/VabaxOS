@@ -62,6 +62,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Promemoria e sveglie (`vabaxos-reminders`): si scrivono come si dicono («alle 15 chiama Marco», «tra 10 minuti», «domani alle 7 sveglia», «ogni giorno alle 8»); all'ora giusta Orca li dice, la notifica resta, la sveglia suona finché si ferma.
 - Stampanti e scanner (`vabaxos-print`): stampanti senza driver trovate da sole, stampa di prova, predefinita; «Scansiona e leggi» salva il foglio e lo fa leggere dal lettore; niente cups-browsed (CVE-2024-47176) e porta UDP 631 chiusa nel firewall.
 - Braille: l'utente della live e quello installato sono nel gruppo `brlapi`, senza il quale Orca non raggiunge il display; `vabaxos-braille-check` dice a voce cosa manca e `--fix` lo sistema; guida «Il Braille».
+- Descrizione delle immagini senza Internet (`vabaxos-describe`, ADR-0029 proposta): Super+Alt+P la finestra, Super+Alt+Maiusc+P lo schermo, con llama.cpp; pronta tranne il modello, che sceglie Vabax.
 - Firewall come quello di Windows (`vabaxos-firewall`, ADR-0021): firewalld con reti private (si trovano stampanti, dispositivi, cartelle condivise, telefono) e pubbliche (non entra niente); le reti nuove sono private; tipo di rete e programmi consentiti nella configurazione, pagina Rete; Super+Alt+I dice «Firewall attivo»; guida «Il firewall».
 
 ### Cambiato

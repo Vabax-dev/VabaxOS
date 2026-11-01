@@ -20,6 +20,8 @@
 //               Super+Alt+Shift+R the whole screen. The picture can only
 //               be taken here: GNOME Shell refuses its screenshot service
 //               to other programs.
+//   Super+Alt+P a description of the window in use (vabaxos-describe,
+//               without Internet), Super+Alt+Shift+P of the whole screen
 //   Super+Alt+N do not disturb on and off (GNOME's show-banners): no
 //               banner, so Orca stays quiet; the notifications wait in the
 //               list of Super+N; said aloud
@@ -103,7 +105,8 @@ class StartButton extends PanelMenu.Button {
 });
 
 const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i',
-    'recognize-window', 'recognize-screen', 'dictation', 'do-not-disturb'];
+    'recognize-window', 'recognize-screen', 'dictation', 'do-not-disturb', 'describe-window',
+    'describe-screen'];
 
 Gio._promisify(Shell.Screenshot.prototype, 'screenshot');
 Gio._promisify(Shell.Screenshot.prototype, 'screenshot_window');
@@ -120,6 +123,8 @@ export default class VabaxOSKeys extends Extension {
             'where-am-i': () => this._whereAmI(),
             'recognize-window': () => this._recognize(false),
             'recognize-screen': () => this._recognize(true),
+            'describe-window': () => this._recognize(false, 'vabaxos-describe'),
+            'describe-screen': () => this._recognize(true, 'vabaxos-describe'),
             'dictation': () => this._dictation(),
             'do-not-disturb': () => this._doNotDisturb(),
         };
@@ -304,15 +309,20 @@ export default class VabaxOSKeys extends Extension {
     }
 
     // A picture of the window in use, or of the screen, for vabaxos-ocr.
-    async _recognize(wholeScreen) {
+    // program: vabaxos-ocr (the text) or vabaxos-describe (a description).
+    async _recognize(wholeScreen, program = 'vabaxos-ocr') {
         const _ = this.gettext.bind(this);
-        if (!GLib.find_program_in_path('vabaxos-ocr')) {
-            this._speak(_('Text recognition is not installed.'));
+        const describe = program === 'vabaxos-describe';
+        if (!GLib.find_program_in_path(program)) {
+            this._speak(describe ? _('The description of pictures is not installed.')
+                : _('Text recognition is not installed.'));
             return;
         }
         const window = global.display.focus_window;
         const useWindow = !wholeScreen && window && !this._isDesktop(window);
-        this._speak(_('Recognizing the text.'));
+        // vabaxos-describe says itself that it is working.
+        if (!describe)
+            this._speak(_('Recognizing the text.'));
         try {
             const dir = GLib.build_filenamev([GLib.get_user_runtime_dir(), 'vabaxos-ocr']);
             GLib.mkdir_with_parents(dir, 0o700);
@@ -325,7 +335,7 @@ export default class VabaxOSKeys extends Extension {
                 await shooter.screenshot(false, stream);
             stream.close(null);
             const title = useWindow ? window.get_title() ?? '' : _('Screen');
-            Util.spawn(['vabaxos-ocr', '--title', title, path]);
+            Util.spawn([program, '--title', title, path]);
         } catch (e) {
             logError(e, 'vabaxos-keys: text recognition');
             this._speak(_('Text recognition failed.'));
