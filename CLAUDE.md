@@ -120,6 +120,16 @@ Aggiornato al 2026-11-01 (piano delle 18 funzioni completo).
 - **Punti 17 e 18 fatti: il piano delle 18 funzioni è completo** (2026-11-01). `vabaxos-games` (memory dei suoni con 1-4, indovina il numero, tris con il tastierino, R legge la griglia; regole in `vabaxos_games`, suoni WAV generati); `vabaxos-trouble` «Qualcosa non va» (primi controlli detti a voce: servizi falliti, audio muto o assente, Orca spento, rete, spazio, `dpkg --audit`; rapporto in Documenti con dati personali nascosti, registro del sistema con pkexec solo se chiesto; niente invio, niente aiuto remoto; sostituisce la voce «Esporta il rapporto di sistema»; `vabaxos-report -` scrive sullo standard output). Test: giochi 6, «Qualcosa non va» 10. Lezione: nei test non forzare `LANGUAGE=C` per tutti, i test dello sblocco del disco leggono la lingua da lì.
 - **Prossimo passo: la fase delle prove** (decisione di Vabax: prima le funzionalità, poi tutte le prove insieme, poi la ISO). Da verificare sulla postazione o nella CI: llama.cpp di forky con Qwen3.5 e `PINNED` di `vabaxos_describe/model.py`; nome del comando di whisper.cpp; percorso dconf del dizionario di pronuncia di Orca; `passwd/user-default-groups` e le chiavi partman-crypto con i modelli dell'installer; `UPower.conf.d`; Braille con il display di Vabax; WhatsApp Web, Telegram Web e Jitsi con Orca; AccessGram da valutare.
 
+Piano delle prossime funzioni, scelto da Vabax il 2026-11-02 (stessa regola: un commit per funzione, test unitari, prove e ISO alla fine; PR bozza #22 con le prime 18 funzioni, da non unire prima delle prove). Primi 5 punti, in ordine:
+
+1. **Wi-Fi e Bluetooth** a voce: finestra semplice, reti, password, cuffie e altoparlanti.
+2. **Negozio di programmi** VabaxOS per Orca: Debian e Flathub (segnati «da Flathub»).
+3. **Kokoro più veloce**: sotto circa 0,3 s per frase; eSpeak resta predefinita, Kokoro si sceglie nelle impostazioni e VabaxOS dice se il computer è abbastanza veloce (cambia ADR-0026: nuovo ADR «Proposta»).
+4. **Controllo del computer** al primo avvio: scheda audio, Wi-Fi, batteria, Braille, detto a voce.
+5. **Fotocamera che legge**: webcam con guida a voce per inquadrare, lettura del testo e anche descrizione con Qwen3.5.
+
+Dopo: suoni di Orca (al posto di «pulsante», «collegamento»), calendario e agenda (con promemoria, Google e Outlook), radio via Internet, libri e biblioteche (LibriVox, Liber Liber, Gutenberg), traduzione senza Internet, Telegram per Orca (AccessGram), ingranditore e contrasto.
+
 Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
 
 1. **Dettatura** senza Internet (priorità di Vabax), e con lo stesso motore i **sottotitoli in tempo reale**; prima le licenze dei modelli italiani.
