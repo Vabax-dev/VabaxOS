@@ -1,6 +1,6 @@
 # ADR-0015: Versioni, canali e nomi degli artefatti
 
-- **Stato:** Accettata
+- **Stato:** Accettata; niente versioni 0.x pubbliche da [ADR-0028](0028-prima-uscita-1-0.md) (2026-11-01)
 - **Data:** 2026-09-24
 - **Responsabile:** Vabax (Project Lead)
 

@@ -4,6 +4,8 @@ Questa è la roadmap operativa. La versione originale completa, con tutti i requ
 
 **Nessuna data è promessa.** Una versione esce quando supera i suoi criteri.
 
+**La prima versione pubblica è la 1.0** ([ADR-0028](docs/decisions/0028-prima-uscita-1-0.md), decisione di Vabax del 2026-11-01): le versioni 0.x qui sotto sono traguardi interni, non rilasci.
+
 ## Traguardi
 
 | Versione | Nome | Obiettivo |
