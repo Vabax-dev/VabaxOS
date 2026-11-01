@@ -68,7 +68,7 @@ jobs:
             python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0 \
             python3-docx python3-ebooklib python3-pil poppler-utils \
             tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng fonts-dejavu-core \
-            python3-dbusmock dbus-daemon
+            python3-dbusmock dbus-daemon gir1.2-ecal-2.0 gir1.2-edataserver-1.2 evolution-data-server
       - uses: actions/checkout@v7
       # Large files of the packages (the Kokoro model), downloaded once.
       - uses: actions/cache@v4
@@ -161,6 +161,8 @@ jobs:
         run: python3 tests/vision/test_vision.py
       - name: Translator tests (texts cut, the request, a made-up llama-server, the window)
         run: python3 tests/translate/test_translate.py
+      - name: Agenda tests (sentences, a real Evolution Data Server on a private bus, the window)
+        run: python3 tests/agenda/test_agenda.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

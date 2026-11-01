@@ -12,7 +12,8 @@ Write as you would say it: "alle 15 chiama Marco", "tra 10 minuti scola la
 pasta", "domani alle 7 sveglia", "ogni giorno alle 8 medicine". Enter adds
 it and VabaxOS says when it will ring. The list below: Delete on each.
 An alarm rings for a minute, or until Stop in its notification (or the
-notification is closed).
+notification is closed). With the agenda (vabaxos-agenda), the part that
+keeps time also says each appointment of the calendars 15 minutes before.
 """
 
 import datetime
@@ -53,6 +54,8 @@ class Daemon:
         self.Gio, self.GLib = Gio, GLib
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         self.ringing = {}   # notification id -> seconds left
+        self.announced = set()  # the appointments already said
+        self.calendars = None
         self.bus.signal_subscribe("org.freedesktop.Notifications", "org.freedesktop.Notifications",
                                   "ActionInvoked", "/org/freedesktop/Notifications", None,
                                   Gio.DBusSignalFlags.NONE, self.action, None)
@@ -107,6 +110,25 @@ class Daemon:
             vr.save(keep)
         return True
 
+    def agenda(self):
+        """The appointments of the calendars, 15 minutes before."""
+        try:
+            import vabaxos_agenda as va
+            from vabaxos_agenda.calendars import Calendars
+        except ImportError:
+            return False        # no agenda: never again
+        try:
+            if self.calendars is None:
+                self.calendars = Calendars()
+            events = self.calendars.events(1)
+        except Exception:  # noqa: BLE001 - calendars not ready yet: the next minute
+            return True
+        for _event, sentence in va.due_announcements(events, datetime.datetime.now().astimezone(), self.announced):
+            self.say(sentence)
+            self.notify(_("Appointment"), sentence, False)
+            play(BELL_SOUND)
+        return True
+
     def ring(self):
         for ident in list(self.ringing):
             self.ringing[ident] -= 3
@@ -127,7 +149,9 @@ class Daemon:
     def run(self):
         self.GLib.timeout_add_seconds(15, self.tick)
         self.GLib.timeout_add_seconds(3, self.ring)
+        self.GLib.timeout_add_seconds(60, self.agenda)
         self.tick()
+        self.agenda()
         self.GLib.MainLoop().run()
 
 

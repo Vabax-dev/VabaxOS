@@ -83,3 +83,6 @@ msgstr "sveglia"
 
 msgid "reminder"
 msgstr "promemoria"
+
+msgid "Appointment"
+msgstr "Appuntamento"

@@ -7,6 +7,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-accessibility` | Voce della console (Speakup con eSpeak NG) nella lingua del sistema, Orca attivo di default, «senza voce» che spegne entrambi, nomi dei pulsanti di GNOME Shell con la sola icona (ADR-0022), `vabaxos-a11y-check`, `vabaxos-status`, `vabaxos-report` |
 | `vabaxos-apps` | La finestra «Programmi»: avvio automatico, disinstalla |
 | `vabaxos-branding` | Nome, logo, sfondi, font Atkinson Hyperlegible Next |
+| `vabaxos-agenda` | Agenda a frasi dai calendari di GNOME (anche Google e Outlook), nuovi appuntamenti scritti come si dicono, Super+Alt+A, avviso 15 minuti prima |
 | `vabaxos-translate` | Traduttore senza Internet con il modello della descrizione delle immagini (Qwen3.5); Super+Alt+T traduce il testo copiato |
 | `vabaxos-vision` | Ingrandimento e contrasto con un tasto, detti a voce: Super+più e meno, Super+Ctrl+C, testo grande; colori invertiti, bianco e nero, mirino |
 | `vabaxos-books` | Libri e audiolibri gratuiti: Project Gutenberg nel lettore, LibriVox in Notizie e podcast, Liber Liber nel browser |
