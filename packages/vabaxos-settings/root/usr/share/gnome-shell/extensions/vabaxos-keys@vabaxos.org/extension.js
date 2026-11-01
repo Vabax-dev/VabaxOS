@@ -450,7 +450,7 @@ export default class VabaxOSKeys extends Extension {
 
     // Orca says it at once; without Orca, a notification.
     _speak(text) {
-        Gio.DBus.session.call('org.gnome.Orca.Service', '/org/gnome/Orca/Service', 'org.gnome.Orca.Service',
+        Gio.DBus.session.call('org.gnome.Orca1.Service', '/org/gnome/Orca1/Service', 'org.gnome.Orca1.Service',
             'PresentMessage', new GLib.Variant('(s)', [text]), null, Gio.DBusCallFlags.NONE, 2000, null,
             (connection, result) => {
                 try {

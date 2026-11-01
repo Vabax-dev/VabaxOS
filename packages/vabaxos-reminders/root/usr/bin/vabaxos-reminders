@@ -66,7 +66,7 @@ class Daemon:
     def say(self, text):
         GLib = self.GLib
         try:
-            self.bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+            self.bus.call_sync("org.gnome.Orca1.Service", "/org/gnome/Orca1/Service", "org.gnome.Orca1.Service",
                                "PresentMessage", GLib.Variant("(s)", (text,)), None,
                                self.Gio.DBusCallFlags.NONE, 2000, None)
         except GLib.Error:

@@ -39,7 +39,7 @@ def present(text):
     """Orca says it at once; the window shows it too."""
     try:
         bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
-        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+        bus.call_sync("org.gnome.Orca1.Service", "/org/gnome/Orca1/Service", "org.gnome.Orca1.Service",
                       "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
         return True
     except GLib.Error:

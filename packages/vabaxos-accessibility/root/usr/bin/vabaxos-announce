@@ -19,7 +19,7 @@ import time
 gettext.textdomain("vabaxos-accessibility")
 _ = gettext.gettext
 
-ORCA = ("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service")
+ORCA = ("org.gnome.Orca1.Service", "/org/gnome/Orca1/Service", "org.gnome.Orca1.Service")
 LOW = 10          # percent: the warning
 RESET = 15        # percent: above this, the warning can come again
 DISCHARGING = 2   # UPower's state

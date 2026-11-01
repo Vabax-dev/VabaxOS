@@ -469,12 +469,8 @@ def command_line(args):
     """--status and --set, without a window; the exit status says if it worked."""
     settings = store.Store()
     if args[0] == "--status":
-        rate_path = settings.orca.setters().get("Rate", [None])[0]
-        rate = None
-        if rate_path:
-            reply = settings.orca._call(rate_path, "org.gnome.Orca.Module", "ExecuteRuntimeGetter",
-                                        GLib.Variant("(s)", ("Rate",)), "(v)")
-            rate = reply[0] if reply else None
+        rate = settings.orca.get_property("Rate", "Speech")
+        rate_path = bool(settings.orca.setters().get("Rate"))
         print(f"orca-service: {'yes' if rate_path else 'no'}")
         print(f"rate: {rate}")
         print("profiles: " + ", ".join(internal for _d, internal in store.list_profiles()))
