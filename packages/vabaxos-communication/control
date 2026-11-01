@@ -3,8 +3,12 @@ Architecture: all
 Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
 Section: net
 Priority: optional
-Depends: firefox-esr
+Depends: firefox-esr, python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, python3-telethon, gir1.2-gstreamer-1.0, gstreamer1.0-plugins-good
+Recommends: gstreamer1.0-plugins-bad
 Description: WhatsApp, Telegram and video calls, in the Start menu
  WhatsApp Web, Telegram Web and Jitsi Meet, each in its own Firefox window,
  the versions that work best with the screen reader on Linux; the guide
- "Messaggi e videochiamate" gives their keys.
+ "Messaggi e videochiamate" gives their keys. "Telegram for Orca"
+ downloads on request AccessGram, a Telegram program made for screen
+ readers (MIT), in the version VabaxOS has checked, and runs it with
+ Telethon from Debian.

@@ -19,7 +19,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-connections` | Wi-Fi e Bluetooth a voce: reti con protezione e segnale a parole, password, abbinamento con il codice detto cifra per cifra; Super+K |
 | `vabaxos-trouble` | «Qualcosa non va»: primi controlli detti a voce e rapporto dei registri con i dati personali nascosti, da allegare; niente invio, niente aiuto remoto |
 | `vabaxos-games` | Giochi audio: memory dei suoni, indovina il numero, tris contro il computer; tutto a voce e da tastiera |
-| `vabaxos-communication` | WhatsApp, Telegram e videochiamata (Jitsi Meet) nel menu Start, nelle finestre di Firefox |
+| `vabaxos-communication` | WhatsApp, Telegram e videochiamata (Jitsi Meet) nel menu Start, nelle finestre di Firefox; «Telegram per Orca» installa AccessGram a richiesta, verificato |
 | `vabaxos-describe` | Descrizione delle immagini senza Internet (Super+Alt+P); il modello (Qwen3.5 0,8B) si scarica a richiesta (ADR-0029) |
 | `vabaxos-dictation` | La dettatura senza Internet (Super+H), con whisper.cpp |
 | `vabaxos-firewall` | Il firewall come quello di Windows: reti private e pubbliche (ADR-0021) |

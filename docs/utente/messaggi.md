@@ -19,7 +19,16 @@ Alcuni tasti di WhatsApp Web (l'elenco completo è nelle impostazioni di WhatsAp
 
 ## Telegram
 
-Telegram Web: si accede con il numero di telefono e il codice che arriva sul telefono. Esiste anche AccessGram, un programma per Telegram fatto apposta per Orca: VabaxOS lo valuterà per includerlo.
+Telegram Web: si accede con il numero di telefono e il codice che arriva sul telefono.
+
+### Telegram per Orca (AccessGram)
+
+**Telegram per Orca**, nel menu Start, installa a richiesta **AccessGram**, un programma per Telegram fatto apposta per i lettori di schermo (licenza MIT). È giovane e in inglese, e non è fatto da VabaxOS: per questo non è già installato.
+
+- **Scarica e installa:** circa 1 MB da GitHub. VabaxOS scarica la versione che ha controllato e verifica il suo contenuto: se è diverso, non installa niente. Poi AccessGram è anche nel menu Start.
+- **La prima volta** AccessGram chiede un «API ID» e un «API hash»: Telegram li dà a ogni persona. **Apri my.telegram.org**, entra con il tuo numero di telefono e il codice che Telegram ti manda, scegli «API development tools», compila il modulo (un nome qualsiasi per l'applicazione), poi copia i due valori in AccessGram. Poi AccessGram chiede il numero di telefono e il codice, come Telegram Web.
+- I tasti di AccessGram: **Ctrl+N** cerca, **Ctrl+F** filtra le chat, **Invio** manda il messaggio, **Maiusc+Invio** va a capo, **Ctrl+Maiusc+R** registra un messaggio vocale, **Pagina su** carica i messaggi più vecchi, **Esc** torna indietro.
+- **Rimuovi** toglie il programma; la tua sessione di Telegram resta nella cartella di AccessGram.
 
 ## Videochiamata (Jitsi Meet)
 

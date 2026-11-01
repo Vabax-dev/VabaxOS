@@ -135,8 +135,11 @@ jobs:
         run: python3 tests/math/test_math.py
       - name: News and podcasts tests (RSS, Atom, the feed of a site, the window)
         run: python3 tests/news/test_news.py
-      - name: Messages and video calls entries tests
-        run: python3 tests/communication/test_communication.py
+      - name: Messages and video calls tests (entries, AccessGram checked against its real code, the window)
+        run: |
+          git clone -q https://github.com/destructatron/AccessGram.git /tmp/accessgram
+          git -C /tmp/accessgram checkout -q feb0d887026175da832ca0d5e6bbb6237725962c
+          ACCESSGRAM_SOURCE=/tmp/accessgram python3 tests/communication/test_communication.py
       - name: Audio games tests (the rules, the sounds, a game of each in the window)
         run: python3 tests/games/test_games.py
       - name: Something is wrong tests (made-up checks, personal data hidden, the report, the window)
