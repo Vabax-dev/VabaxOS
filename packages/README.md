@@ -15,6 +15,8 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-setup` | La configurazione iniziale: vista, voce, tastiera, rete |
 | `vabaxos-sounds` | I suoni di sistema |
 | `vabaxos-start` | Il [menu Start](../docs/utente/menu-start.md) (ADR-0025) |
+| `vabaxos-tuning` | Ottimizzazioni del sistema: memoria compressa (zram) prima del disco |
+| `vabaxos-unlock` | La voce quando all'avvio si chiede la password del disco cifrato (ADR-0021) |
 | `vabaxos-update` | Gli aggiornamenti a voce (ADR-0020) |
 | `vabaxos-voice` | La voce naturale Kokoro per speech-dispatcher (ADR-0019); per ora **fuori dalla ISO** (ADR-0026, file `not-in-iso`) |
 | `vabaxos-welcome` | Il [benvenuto parlato](../docs/utente/benvenuto.md) prima del desktop (ADR-0016) e «Installa ora» (ADR-0023) |

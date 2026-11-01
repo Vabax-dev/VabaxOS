@@ -502,6 +502,15 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y programs vabaxos-apps vabaxos-apps
 fi
 
+# System tuning (vabaxos-tuning): compressed memory (zram) is the swap;
+# one program for the updates: GNOME Software does not update by itself.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask zram 'swapon --noheadings --show=NAME | grep -c zram' || exit 1
+    check 'memoria compressa (zram)' "$(value zram)" 1
+    ask gsupdates "env $BUS gsettings get org.gnome.software allow-updates" || exit 1
+    check 'GNOME Software non aggiorna da solo' "$(value gsupdates)" false
+fi
+
 # Text recognition for the screen reader: Super+Alt+R over the Programs
 # window takes its picture in GNOME Shell (vabaxos-keys) and vabaxos-ocr
 # opens the recognized text, a window with its name and the focus.
