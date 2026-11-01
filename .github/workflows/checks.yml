@@ -142,6 +142,8 @@ jobs:
         run: python3 tests/trouble/test_trouble.py
       - name: Wi-Fi and Bluetooth tests (made-up NetworkManager and BlueZ, the pairing agent, the window)
         run: python3 tests/connections/test_connections.py
+      - name: Program store tests (appstreamcli and flatpak answers, made-up PackageKit, the window)
+        run: python3 tests/store/test_store.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

@@ -1,0 +1,341 @@
+#!/usr/bin/python3
+"""The program store: search, install, open and remove programs.
+
+    vabaxos-store [WORDS]      the window, searching WORDS if given
+
+Write in the search field: the programs arrive while you write, and the
+voice says how many. Down arrow goes to the results; Enter on a program
+gives its description and Install, or Open and Remove. Escape clears the
+search, a second Escape closes. "Also Flathub" adds the programs of
+Flathub (for example Spotify or Zoom), installed for you only.
+Debian programs ask the administrator password, in a GNOME window that
+Orca reads.
+"""
+
+import gettext
+import sys
+import threading
+
+import vabaxos_store as store
+
+gettext.textdomain("vabaxos-store")
+_ = gettext.gettext
+
+DESCRIPTION_LIMIT = 700
+
+
+def present(text):
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - shown in the window anyway
+        pass
+
+
+def short(text, limit=DESCRIPTION_LIMIT):
+    text = " ".join((text or "").split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(". ", 1)[0]
+    return cut + ("." if not cut.endswith(".") else "") + " …"
+
+
+def window_classes(speak=present, searcher=store.search, actions_class=None, settings_path=None,
+                   flathub_enabler=store.enable_flathub, catalog_ready=store.catalog_ready):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gdk, GLib, Gtk
+
+    if actions_class is None:
+        from vabaxos_store.actions import Actions as actions_class
+
+    def run(work, done):
+        def thread():
+            try:
+                result = work()
+            except Exception as error:  # noqa: BLE001 - said to the user
+                result = error
+            GLib.idle_add(lambda: done(result) and False)
+        threading.Thread(target=thread, daemon=True).start()
+
+    class StoreWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app, query=""):
+            super().__init__(application=app, title=_("Program store"))
+            self.set_default_size(720, 680)
+            self.actions = actions_class()
+            self.settings = store.load_settings(settings_path)
+            self.apps = []
+            self.rows = []
+            self.generation = 0
+            self.pending = None
+            self.busy = False
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+
+            top = Adw.PreferencesGroup(description=_("Write the name of a program or what it does, for example "
+                                                     "\"audio editor\". Down arrow goes to the results."))
+            self.entry = Gtk.SearchEntry(placeholder_text=_("Search a program"), hexpand=True)
+            self.entry.update_property([Gtk.AccessibleProperty.LABEL], [_("Search a program")])
+            self.entry.set_search_delay(500)
+            self.entry.connect("search-changed", lambda *_a: self.search())
+            self.entry.connect("activate", lambda *_a: self.first_result())
+            keys = Gtk.EventControllerKey()
+            keys.connect("key-pressed", self.entry_key)
+            self.entry.add_controller(keys)
+            top.add(self.entry)
+            self.flathub = Adw.SwitchRow(title=_("Also Flathub"),
+                                         subtitle=_("More programs, for example Spotify or Zoom; not checked by "
+                                                    "Debian, installed for you only"),
+                                         active=bool(self.settings.get("flathub")))
+            self.flathub.connect("notify::active", lambda *_a: self.toggle_flathub())
+            top.add(self.flathub)
+            page.add(top)
+
+            self.results = Adw.PreferencesGroup(title=_("Results"))
+            page.add(self.results)
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+
+            escape = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            escape.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("Escape"),
+                                                 Gtk.CallbackAction.new(lambda *_a: self.escape() or True)))
+            escape.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("<Control>f"),
+                                                 Gtk.CallbackAction.new(lambda *_a: self.entry.grab_focus() or True)))
+            self.add_controller(escape)
+            self.Gdk = Gdk
+            self.show_hint()
+            if query:
+                self.entry.set_text(query)
+            GLib.idle_add(lambda: self.entry.grab_focus() and False)
+            if not catalog_ready():
+                GLib.idle_add(self.download_catalog)
+
+        def download_catalog(self):
+            self.say(_("Downloading the list of programs: it can take a minute."))
+
+            def done(result):
+                if isinstance(result, Exception):
+                    self.say(_("The list of programs was not downloaded: is Internet connected? "
+                               "Only the installed programs are found."))
+                else:
+                    self.say(_("List of programs ready."))
+                    self.search()
+            run(self.actions.refresh, done)
+            return False
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        # -- searching -----------------------------------------------------
+
+        def clear_rows(self):
+            for row in self.rows:
+                self.results.remove(row)
+            self.rows = []
+
+        def show_hint(self):
+            self.clear_rows()
+            self.results.set_description(_("The programs appear here while you write."))
+
+        def search(self):
+            query = self.entry.get_text().strip()
+            self.generation += 1
+            generation = self.generation
+            if len(query) < 2:
+                self.apps = []
+                self.show_hint()
+                return
+            flathub = self.flathub.get_active()
+            self.results.set_description(_("Searching…"))
+            run(lambda: searcher(query, flathub), lambda apps: self.show_results(apps, generation, query))
+
+        def show_results(self, apps, generation, query):
+            if generation != self.generation:
+                return      # an older search: the user has written more since
+            if isinstance(apps, Exception):
+                self.say(_("The search did not work: {error}").format(error=apps))
+                return
+            self.apps = apps
+            self.clear_rows()
+            for app in apps:
+                rest = app.describe()[len(app.name) + 2:]
+                row = Adw.ActionRow(title=app.name, subtitle=rest, activatable=True, subtitle_lines=2)
+                row.connect("activated", lambda *_a, a=app: self.details(a))
+                self.results.add(row)
+                self.rows.append(row)
+            if apps:
+                text = gettext.ngettext("{count} program found.", "{count} programs found.",
+                                        len(apps)).format(count=len(apps))
+            else:
+                text = _("No program found for \"{query}\".").format(query=query)
+            self.results.set_description(text)
+            self.say(text)
+
+        def first_result(self):
+            if self.rows:
+                self.rows[0].grab_focus()
+
+        def entry_key(self, _controller, keyval, _code, _state):
+            if keyval == self.Gdk.KEY_Down and self.rows:
+                self.rows[0].grab_focus()
+                return True
+            return False
+
+        def escape(self):
+            if self.entry.get_text():
+                self.entry.set_text("")
+                self.entry.grab_focus()
+            else:
+                self.close()
+
+        # -- Flathub -------------------------------------------------------
+
+        def toggle_flathub(self):
+            on = self.flathub.get_active()
+            self.settings["flathub"] = on
+            store.save_settings(self.settings, settings_path)
+            if not on:
+                self.say(_("Only programs from Debian."))
+                self.search()
+                return
+            self.say(_("Adding Flathub: it can take a minute."))
+
+            def done(result):
+                if isinstance(result, Exception):
+                    self.say(_("Flathub could not be added: is Internet connected? {error}").format(error=result))
+                    self.flathub.set_active(False)
+                    return
+                self.say(_("Flathub added: its programs are marked \"from Flathub\"."))
+                self.search()
+            run(flathub_enabler, done)
+
+        # -- a program -----------------------------------------------------
+
+        def details(self, app):
+            body = [app.summary.rstrip(".") + "." if app.summary else ""]
+            description = short(app.extra.get("description", ""))
+            if description:
+                body.append(description)
+            body.append(_("From Flathub: not checked by Debian.") if app.source == "flathub"
+                        else _("From Debian."))
+            if app.extra.get("license"):
+                body.append(_("License: {license}.").format(license=app.extra["license"]))
+            if app.installed:
+                body.append(_("Installed."))
+            dialog = Adw.AlertDialog(heading=app.name, body="\n\n".join(b for b in body if b))
+            dialog.add_response("close", _("Close"))
+            if app.installed:
+                if not app.protected:
+                    dialog.add_response("remove", _("Remove"))
+                    dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+                dialog.add_response("open", _("Open"))
+                dialog.set_default_response("open")
+            else:
+                dialog.add_response("install", _("Install"))
+                dialog.set_response_appearance("install", Adw.ResponseAppearance.SUGGESTED)
+                dialog.set_default_response("install")
+            dialog.set_close_response("close")
+            dialog.connect("response", lambda _d, response: self.respond(app, response))
+            dialog.present(self)
+            self.dialog = dialog
+
+        def respond(self, app, response):
+            if response == "open":
+                if not self.actions.open(app):
+                    self.say(_("{program} has no window: it is used from the Terminal.").format(program=app.name))
+            elif response == "install":
+                self.work(app, "install")
+            elif response == "remove":
+                self.confirm_remove(app)
+
+        def confirm_remove(self, app):
+            dialog = Adw.AlertDialog(heading=_("Remove {program}?").format(program=app.name),
+                                     body=_("Your documents stay; the program goes away."))
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("remove", _("Remove"))
+            dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+            dialog.connect("response", lambda _d, r: r == "remove" and self.work(app, "remove"))
+            dialog.present(self)
+            self.dialog = dialog
+
+        def work(self, app, what):
+            if self.busy:
+                self.say(_("Wait: another program is being installed or removed."))
+                return
+            self.busy = True
+            if what == "install":
+                self.say(_("Installing {program}. It can take some minutes.").format(program=app.name))
+            else:
+                self.say(_("Removing {program}.").format(program=app.name))
+
+            def progress(percent):
+                GLib.idle_add(lambda: self.say(_("{percent} percent.").format(percent=percent)))
+
+            def done(result):
+                self.busy = False
+                if isinstance(result, Exception):
+                    if what == "install":
+                        self.say(_("{program} was not installed. {error}").format(program=app.name,
+                                                                                  error=explain(result)))
+                    else:
+                        self.say(_("{program} was not removed. {error}").format(program=app.name,
+                                                                                error=explain(result)))
+                    return
+                app.installed = what == "install"
+                if app.installed:
+                    self.say(_("{program} installed. You find it in the Start menu.").format(program=app.name))
+                else:
+                    self.say(_("{program} removed.").format(program=app.name))
+                self.refresh_row(app)
+            action = self.actions.install if what == "install" else self.actions.remove
+            run(lambda: action(app, progress), done)
+
+        def refresh_row(self, app):
+            for row, shown in zip(self.rows, self.apps):
+                if shown is app:
+                    row.set_subtitle(app.describe()[len(app.name) + 2:])
+                    row.grab_focus()
+
+    def explain(error):
+        text = getattr(error, "message", None) or str(error)
+        lowered = text.lower()
+        if "not authorized" in lowered or "authentication" in lowered or "dismissed" in lowered:
+            return _("The password was not given.")
+        if "depend" in lowered or "required by" in lowered:
+            return _("Other programs need it.")
+        if "network" in lowered or "resolve" in lowered or "could not" in lowered and "download" in lowered:
+            return _("Internet does not answer.")
+        if text == "protected":
+            return _("VabaxOS needs it to speak and to work.")
+        return text
+
+    class StoreApp(Adw.Application):
+        def __init__(self, query=""):
+            super().__init__(application_id="org.vabaxos.Store")
+            self.query = query
+            self.connect("activate", lambda app: (app.get_active_window() or StoreWindow(app, self.query)).present())
+
+    return StoreApp, StoreWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_classes()
+    return app_class(" ".join(argv[1:])).run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
