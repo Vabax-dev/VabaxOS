@@ -115,6 +115,8 @@ Aggiornato al 2026-11-01.
 
 - Punti 13 e 14 fatti: `vabaxos-math` (calcolatrice con albero sicuro, formule LaTeX, MathML e semplici a parole, Super+Alt+M dagli appunti); lettore con `read_structure()` (titoli con livello da Markdown, HTML, Word, EPUB, ODT, DAISY 3; RTF senza titoli), Ctrl+T indice (Adw.Dialog), Alt+Pagina giù e su. **Restano i punti 15-18** (notizie e podcast, videochiamate e messaggi, giochi audio, «Qualcosa non va»). ADR-0029 (modello per descrivere le immagini) in attesa di Vabax.
 
+- Punti 15 e 16 fatti: `vabaxos-news` (RSS e Atom, feed trovato dalla pagina del sito, podcast con GStreamer); `vabaxos-communication` (WhatsApp Web, Telegram Web, Jitsi Meet in Firefox; guida). Da valutare: **AccessGram** (github.com/destructatron/AccessGram, MIT, GTK 4 e Python, Telegram per Orca; serve Telethon e credenziali API dell'utente da my.telegram.org) e la prova con Orca di WhatsApp Web e Jitsi nella fase delle prove.
+
 Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
 
 1. **Dettatura** senza Internet (priorità di Vabax), e con lo stesso motore i **sottotitoli in tempo reale**; prima le licenze dei modelli italiani.

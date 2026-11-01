@@ -66,6 +66,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Matematica (`vabaxos-math`): calcolatrice parlante che accetta i calcoli scritti come sulla carta; Super+Alt+M dice a parole la formula copiata (LaTeX, MathML, scrittura semplice); guida «La matematica».
 - Lettore di documenti: formati ODT, RTF, DAISY con testo e pagine web salvate; indice dei capitoli (Ctrl+T) e capitolo successivo e precedente (Alt+Pagina giù e su), dai titoli di Markdown, HTML, Word, EPUB, ODT e DAISY.
 - Notizie e podcast (`vabaxos-news`): fonti RSS e Atom aggiunte anche solo con l'indirizzo del sito; notizie dalla più recente con riassunto e browser; podcast con pausa, salti di 30 secondi e velocità; guida «Notizie e podcast».
+- Messaggi e videochiamate (`vabaxos-communication`): WhatsApp Web, Telegram Web e Jitsi Meet nel menu Start; guida «Messaggi e videochiamate» con i tasti e la modalità focus di Orca.
 - Firewall come quello di Windows (`vabaxos-firewall`, ADR-0021): firewalld con reti private (si trovano stampanti, dispositivi, cartelle condivise, telefono) e pubbliche (non entra niente); le reti nuove sono private; tipo di rete e programmi consentiti nella configurazione, pagina Rete; Super+Alt+I dice «Firewall attivo»; guida «Il firewall».
 
 ### Cambiato
