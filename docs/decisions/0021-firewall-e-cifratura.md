@@ -1,6 +1,6 @@
 # ADR-0021: Firewall e cifratura del disco
 
-- **Stato:** Cifratura: Accettata (Vabax, 2026-11-01: «devi mettere la cifratura»), fatta in `vabaxos-unlock`; firewall: Proposta
+- **Stato:** Accettata. Cifratura: Vabax, 2026-11-01 («devi mettere la cifratura»), fatta in `vabaxos-unlock`. Firewall: Vabax, 2026-11-01 («il firewall sì, ma come quello di Windows, cioè non troppo limitante»), con firewalld al posto di ufw, fatto in `vabaxos-firewall`
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead), Principal Software Engineer
 - **Sostituisce / Sostituita da:** — (completa ADR-0009 per la cifratura)
@@ -12,14 +12,21 @@ Nel blocco 7 Vabax ha chiesto un sistema completo, e sicuro. Due funzioni che Wi
 - **Firewall.** Debian non ne attiva uno, GNOME non ha una pagina nelle Impostazioni. VabaxOS non apre servizi di rete per default, ma una persona può installare un programma che lo fa (condivisione di file, desktop remoto).
 - **Cifratura del disco.** L'installer di Debian sa cifrare il disco (LUKS2). ADR-0009 la lascia spenta e non consigliata finché non è provata con la voce: la password si chiede all'avvio, **prima** che la voce della console parta. Chi non vede sente solo silenzio e non sa che il computer sta aspettando.
 
-## Decisione proposta
+## Decisione
 
 ### Firewall
 
-1. **ufw attivo per default** nel sistema installato: tutto il traffico in entrata bloccato, quello in uscita permesso. È la stessa scelta di Ubuntu, ma già accesa.
-2. Le app che hanno bisogno di ricevere connessioni si aprono con un comando o dalla configurazione VabaxOS, che lo annuncia a voce. Niente finestre in più per chi non le usa.
-3. `vabaxos-status` (Super+Alt+I) dice anche «Firewall attivo».
-4. Nel sistema live il firewall è attivo allo stesso modo.
+Vabax (2026-11-01): «il firewall sì, ma come quello di Windows, cioè non troppo limitante». Per questo **firewalld** e non ufw, come proposto all'inizio: firewalld ha le zone, che NetworkManager assegna a ogni rete come i profili di Windows; i programmi possono aprire una porta via D-Bus; con ufw ci sono segnalazioni di KDE Connect bloccato.
+
+1. **firewalld attivo**, nel sistema live e in quello installato. In uscita tutto è permesso, come in Windows.
+2. **Due tipi di rete, come in Windows** (pacchetto `vabaxos-firewall`):
+   - **privata** (casa, lavoro; zona `vabaxos-private`): entrano solo le risposte che servono a trovare dispositivi e stampanti (mDNS, LLMNR, UPnP, stampanti), le cartelle condivise degli altri computer e il collegamento con il telefono (KDE Connect, GSConnect);
+   - **pubblica** (bar, albergo, treno; zona `vabaxos-public`): non entra niente, il computer non si mostra agli altri.
+3. **Le reti nuove sono private** (zona predefinita `vabaxos-private`): «non troppo limitante». Windows chiede alla prima connessione; VabaxOS lo fa scegliere nella configurazione, pagina Rete («Tipo di rete»), e con `vabaxos-firewall public`.
+4. **Programmi consentiti**, spenti all'inizio come in Windows, solo nelle reti private: condivisione dei file (Samba), desktop remoto (RDP), terminale remoto (SSH). Si accendono nella configurazione, pagina Rete, o con `vabaxos-firewall allow`; la password di amministratore la chiede polkit, che Orca legge.
+5. `vabaxos-status` (Super+Alt+I) dice «Firewall attivo».
+
+Non c'è, per ora, la finestra di Windows «Consentire a questo programma di comunicare?»: firewalld non avvisa quando un programma vuole ricevere connessioni.
 
 ### Cifratura del disco
 
@@ -49,10 +56,11 @@ Il piano iniziale:
 
 ## Conseguenze
 
-- Si aggiunge `ufw` ai pacchetti e un servizio che lo attiva al primo avvio.
+- Si aggiungono firewalld e `vabaxos-firewall` (le due zone, il comando, il gruppo Firewall nella configurazione). firewalld è un servizio in Python: qualche decina di MB di memoria.
 - Per la cifratura serve un hook dell'initramfs VabaxOS (voce e segnale), qualche MB in più nell'initramfs, e la prova automatica con registrazione.
 
 ## Riesame
 
 - Quando la prova della cifratura con voce passa e Vabax l'ha ascoltata: la cifratura diventa consigliata nell'installer.
-- Se ufw blocca qualcosa che le persone usano spesso (stampanti di rete, condivisione): si valuta firewalld con le zone.
+- Se la rete privata blocca qualcosa che le persone usano spesso: si aggiunge il servizio alla zona `vabaxos-private`.
+- Se serve l'avviso di Windows quando un programma vuole ricevere connessioni.

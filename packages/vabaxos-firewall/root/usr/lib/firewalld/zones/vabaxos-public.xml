@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- VabaxOS: a public network (café, hotel, train), like the public
+     profile of Windows (ADR-0021): nothing comes in, the computer is not
+     shown to the others; everything going out is allowed. -->
+<zone>
+  <short>VabaxOS public network</short>
+  <description>Café, hotel, train: the computer is not shown to the others and no incoming connection is accepted; everything going out is allowed.</description>
+  <service name="dhcpv6-client"/>
+  <forward/>
+</zone>

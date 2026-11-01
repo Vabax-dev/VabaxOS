@@ -502,6 +502,17 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y programs vabaxos-apps vabaxos-apps
 fi
 
+# Firewall (ADR-0021): firewalld on, new networks private, and the status
+# says it.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask firewall 'systemctl is-active firewalld' || exit 1
+    check 'firewall attivo' "$(value firewall)" active
+    ask fwzone 'firewall-cmd --get-default-zone' || exit 1
+    check 'firewall: reti nuove private' "$(value fwzone)" vabaxos-private
+    ask fwstatus "env $BUS vabaxos-firewall" || exit 1
+    printf 'INFO: %s\n' "$(value fwstatus)"
+fi
+
 # System tuning (vabaxos-tuning): compressed memory (zram) is the swap;
 # one program for the updates: GNOME Software does not update by itself.
 if [[ "$WANT_DESKTOP" == yes ]]; then

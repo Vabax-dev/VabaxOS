@@ -31,6 +31,11 @@ try:
 except (ValueError, ImportError):
     NM = None
 
+try:
+    from vabaxos_firewall.page import FirewallGroup  # noqa: E402
+except (ValueError, ImportError):
+    FirewallGroup = None
+
 APP_ID = "org.vabaxos.Setup"
 DOMAIN = "vabaxos-setup"
 LOCALE_DIR = os.environ.get("VABAXOS_SETUP_LOCALE_DIR", "/usr/share/locale")
@@ -391,6 +396,9 @@ class NetworkGroup:
             except GLib.Error:
                 self.window.announce_message(_("Could not connect to {name}. Check the password.").format(name=ssid))
             self.refresh()
+            # A new network: its kind (private or public) in the firewall group.
+            if getattr(self.window, "firewall", None):
+                self.window.firewall.refresh()
 
         self.client.add_and_activate_connection_async(connection, device, ap.get_path(), None, done)
 
@@ -401,6 +409,11 @@ class SetupWindow(Adw.ApplicationWindow):
         self.set_default_size(720, 640)
         rows = Rows()
         self.network = NetworkGroup(self)
+        network_groups = [self.network.box]
+        # The firewall (ADR-0021), when vabaxos-firewall is installed.
+        self.firewall = FirewallGroup(self.announce_message) if FirewallGroup else None
+        if self.firewall:
+            network_groups.append(self.firewall.box)
         intro = group(_("Welcome"), _("A few settings to use VabaxOS comfortably. Use Tab to move, "
                                       "Space to change a setting, and the Next button to go on. "
                                       "Everything can be changed again later."), [])
@@ -410,7 +423,7 @@ class SetupWindow(Adw.ApplicationWindow):
             (_("View"), [intro] + view_page(rows)),
             (_("Voice"), voice_page(rows)),
             (_("Keyboard and movement"), keyboard_page(rows)),
-            (_("Network"), [self.network.box]),
+            (_("Network"), network_groups),
             (_("Finish"), [finish]),
         ]
         self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.NONE)

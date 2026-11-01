@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+# The first time only: new networks are private networks (Vabax: "like
+# Windows, not too strict"). Later the choice of the administrator stays.
+if [ "$1" = configure ] && [ -z "$2" ] && command -v firewall-offline-cmd >/dev/null; then
+    firewall-offline-cmd --set-default-zone=vabaxos-private >/dev/null 2>&1 || true
+    if command -v systemctl >/dev/null && systemctl is-active -q firewalld 2>/dev/null; then
+        firewall-cmd --reload >/dev/null 2>&1 || true
+    fi
+fi
