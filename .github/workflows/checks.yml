@@ -115,6 +115,8 @@ jobs:
         run: python3 tests/restore/test_restore.py
       - name: Spoken messages tests (ready, battery at 10 percent)
         run: python3 tests/announce/test_announce.py
+      - name: Lessons of the keys tests (exercises, key checks, a lesson in the window)
+        run: python3 tests/lessons/test_lessons.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

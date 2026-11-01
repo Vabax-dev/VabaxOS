@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Learn the keys
+Name[it]=Impara i tasti
+Comment=Short lessons: press the keys, VabaxOS says whether they are right
+Comment[it]=Lezioni brevi: premi i tasti, VabaxOS dice se sono giusti
+Exec=vabaxos-lessons
+Icon=input-keyboard-symbolic
+Terminal=false
+Categories=Education;Accessibility;
+Keywords=keys;keyboard;lessons;tutorial;tasti;tastiera;lezioni;

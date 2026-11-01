@@ -1,0 +1,220 @@
+#!/usr/bin/python3
+"""Learn the keys: short lessons where you press the keys and VabaxOS says
+whether they are right.
+
+    vabaxos-lessons               the lessons
+    vabaxos-lessons --first-run   the same, once, at the first login of the
+                                  installed system (nothing in the live one)
+
+The list of lessons: arrows and Enter open one. In an exercise, press the
+key it asks: "Right!" and the next one; another key: VabaxOS says which
+key you pressed. Keys that the desktop or the screen reader take for
+themselves (Super, Alt+Tab, Insert+T...) are tried: their effect is the
+answer, then Enter goes on. Escape goes back to the list, except when the
+exercise asks for Escape.
+"""
+
+import gettext
+import os
+import sys
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
+
+import vabaxos_lessons as lessons  # noqa: E402
+
+gettext.textdomain("vabaxos-lessons")
+_ = gettext.gettext
+
+MODIFIER_KEYS = {"Shift_L", "Shift_R", "Control_L", "Control_R", "Alt_L", "Alt_R", "Super_L", "Super_R",
+                 "Meta_L", "Meta_R", "ISO_Level3_Shift", "Caps_Lock", "Num_Lock", "Insert", "KP_Insert"}
+
+
+def present(text):
+    """Orca says it at once; the window shows it too."""
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+        return True
+    except GLib.Error:
+        return False
+
+
+def modifiers(state):
+    mods = set()
+    for mask, name in ((Gdk.ModifierType.CONTROL_MASK, "Control"), (Gdk.ModifierType.SHIFT_MASK, "Shift"),
+                       (Gdk.ModifierType.ALT_MASK, "Alt"), (Gdk.ModifierType.SUPER_MASK, "Super")):
+        if state & mask:
+            mods.add(name)
+    return mods
+
+
+class LessonsWindow(Adw.ApplicationWindow):
+
+    def __init__(self, app, speak=present):
+        super().__init__(application=app, title=_("Learn the keys"))
+        self.set_default_size(720, 520)
+        self.speak = speak
+        self.lesson = None
+        self.index = 0
+        self.wrong = 0
+        self.toasts = Adw.ToastOverlay()
+        view = Adw.ToolbarView()
+        view.add_top_bar(Adw.HeaderBar())
+        self.stack = Gtk.Stack()
+
+        page = Adw.PreferencesPage()
+        group = Adw.PreferencesGroup(title=_("Lessons"),
+                                     description=_("Arrows to choose, Enter to start. Escape closes."))
+        self.lesson_rows = []
+        for number, (title, exercises) in enumerate(lessons.LESSONS):
+            row = Adw.ActionRow(title=_(title), activatable=True,
+                                subtitle=_("{count} exercises").format(count=len(exercises)))
+            row.connect("activated", lambda *_a, n=number: self.start(n))
+            group.add(row)
+            self.lesson_rows.append(row)
+        page.add(group)
+        self.stack.add_named(page, "list")
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18, margin_start=32, margin_end=32,
+                      margin_top=32, margin_bottom=32, valign=Gtk.Align.CENTER)
+        self.progress = Gtk.Label(xalign=0)
+        self.progress.add_css_class("dim-label")
+        self.instruction = Gtk.Label(xalign=0, wrap=True, selectable=True)
+        self.instruction.add_css_class("title-2")
+        self.feedback = Gtk.Label(xalign=0, wrap=True)
+        for widget in (self.progress, self.instruction, self.feedback):
+            box.append(widget)
+        self.stack.add_named(box, "exercise")
+
+        view.set_content(self.stack)
+        self.toasts.set_child(view)
+        self.set_content(self.toasts)
+        keys = Gtk.EventControllerKey()
+        keys.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+        keys.connect("key-pressed", self.key_pressed)
+        self.add_controller(keys)
+
+    def say(self, text):
+        self.feedback.set_text(text)
+        if not self.speak(text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+
+    # -- lessons ---------------------------------------------------------------
+
+    def start(self, number):
+        self.lesson = number
+        self.index = 0
+        self.stack.set_visible_child_name("exercise")
+        self.show_exercise(first=True)
+
+    def exercise(self):
+        return lessons.LESSONS[self.lesson][1][self.index]
+
+    def show_exercise(self, first=False):
+        title, exercises = lessons.LESSONS[self.lesson]
+        self.wrong = 0
+        self.progress.set_text(_("{lesson}: exercise {number} of {count}").format(
+            lesson=_(title), number=self.index + 1, count=len(exercises)))
+        self.instruction.set_text(self.exercise().instruction())
+        self.feedback.set_text("")
+        self.instruction.grab_focus()
+        text = self.exercise().instruction()
+        if first:
+            text = _("Lesson: {lesson}.").format(lesson=_(title)) + " " + text
+        self.speak(text)
+
+    def next(self, praise):
+        exercises = lessons.LESSONS[self.lesson][1]
+        if self.index + 1 < len(exercises):
+            self.index += 1
+            self.speak(praise)
+            GLib.timeout_add(700, lambda: self.show_exercise() or False)
+            return
+        self.say(_("Well done, the lesson is over! Escape goes back to the lessons."))
+        self.index = len(exercises)
+
+    def back_to_list(self):
+        number = self.lesson
+        self.lesson = None
+        self.stack.set_visible_child_name("list")
+        if number is not None:
+            self.lesson_rows[number].grab_focus()
+        self.speak(_("Lessons."))
+
+    # -- keys ------------------------------------------------------------------
+
+    def key_pressed(self, _controller, keyval, _keycode, state):
+        if self.lesson is None:
+            return False
+        name = Gdk.keyval_name(keyval) or ""
+        if name in MODIFIER_KEYS:
+            return False
+        mods = modifiers(state)
+        exercises = lessons.LESSONS[self.lesson][1]
+        if self.index >= len(exercises):
+            if name == "Escape":
+                self.back_to_list()
+            return True
+        return self.answer(name, mods)
+
+    def answer(self, name, mods):
+        exercise = self.exercise()
+        if name == "Escape" and exercise.key != "Escape":
+            self.back_to_list()
+            return True
+        if exercise.kind == "try":
+            if name in ("Return", "KP_Enter"):
+                self.next(_("Good."))
+            return True
+        if lessons.matches(exercise, name, mods):
+            self.next(_("Right!"))
+            return True
+        self.wrong += 1
+        text = _("That was {pressed}.").format(pressed=lessons.said(name, mods))
+        if self.wrong >= 2:
+            text += " " + _("The key is {key}.").format(key=_(exercise.name))
+        else:
+            text += " " + _("Try again.")
+        self.say(text)
+        return True
+
+
+class LessonsApp(Adw.Application):
+    def __init__(self):
+        super().__init__(application_id="org.vabaxos.Lessons")
+        self.connect("activate", lambda app: (app.get_active_window() or LessonsWindow(app)).present())
+
+
+def first_run_marker():
+    base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+    return os.path.join(base, "vabaxos", "lessons-offered")
+
+
+def live_system():
+    try:
+        with open("/proc/cmdline", encoding="utf-8") as f:
+            return "boot=live" in f.read().split()
+    except OSError:
+        return False
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    if "--first-run" in argv:
+        marker = first_run_marker()
+        if live_system() or os.path.exists(marker):
+            return 0
+        os.makedirs(os.path.dirname(marker), exist_ok=True)
+        open(marker, "w").close()
+    return LessonsApp().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

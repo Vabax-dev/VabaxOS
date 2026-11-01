@@ -105,6 +105,8 @@ Aggiornato al 2026-11-01.
 
 - Punti 5 e 6 fatti: Super+Alt+N non disturbare (`show-banners`), guida «Le notifiche» (cronologia di Orca Ins+Ctrl+Maiusc+N); dizionario di pronuncia (`vabaxos_screen_reader.pronunciation`, dconf `45-orca-pronunciations` su `/org/gnome/orca/default/pronunciations/` **da verificare con Orca vero**: percorso e chiavi minuscole; finestra `vabaxos-pronunciation`).
 
+- Punto 4 fatto: `vabaxos-lessons` (esercizi «press» controllati con un EventControllerKey in fase di cattura, esercizi «try» per i tasti presi da GNOME Shell e Orca, prima volta con `--first-run` non nella live). Restano i punti 9-18.
+
 Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
 
 1. **Dettatura** senza Internet (priorità di Vabax), e con lo stesso motore i **sottotitoli in tempo reale**; prima le licenze dei modelli italiani.

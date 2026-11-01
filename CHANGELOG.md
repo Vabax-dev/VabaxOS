@@ -58,6 +58,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - «VabaxOS è pronto» detto da Orca all'avvio del desktop; un solo avviso a voce quando la batteria scende al 10 per cento (`vabaxos-announce`).
 - Notifiche: Super+Alt+N accende e spegne il non disturbare, detto a voce; guida «Le notifiche» con la cronologia di Orca (Ins+Ctrl+Maiusc+N) e l'ultima notifica (Ins+Maiusc+N).
 - Dizionario di pronuncia: VabaxOS parte con le sigle lette lettera per lettera (txt, PDF, USB...) e la finestra «Pronuncia del lettore di schermo» aggiunge, ascolta ed elimina parole.
+- Impara i tasti (`vabaxos-lessons`): sei lezioni con esercizi; la voce dice «Giusto!» o quale tasto hai premuto; si apre da sola al primo accesso del sistema installato; guida «Impara i tasti».
 - Firewall come quello di Windows (`vabaxos-firewall`, ADR-0021): firewalld con reti private (si trovano stampanti, dispositivi, cartelle condivise, telefono) e pubbliche (non entra niente); le reti nuove sono private; tipo di rete e programmi consentiti nella configurazione, pagina Rete; Super+Alt+I dice «Firewall attivo»; guida «Il firewall».
 
 ### Cambiato
