@@ -47,3 +47,13 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Menu Start di VabaxOS (`vabaxos-start`, blocco 12, proposta ADR-0025): Super apre il menu con il focus nella ricerca (risultati mentre si scrive: programmi, impostazioni, cartelle, file, comandi), Tab va alle categorie ad albero (Preferiti, Programmi divisi come in Windows, Strumenti di VabaxOS, Impostazioni, Cartelle, File recenti, Spegni o esci): Freccia destra apre, Freccia sinistra torna, le lettere saltano. ArcMenu resta sulla barra per il mouse.
 - Installazione dal benvenuto (ADR-0023): «Installa ora» riparte subito nell'installer con la voce (`vabaxos-install`, kexec), nella lingua e alla velocità scelte; le impostazioni di accessibilità passano al sistema installato; l'installer non chiede più nome del computer, dominio, password di root, altri dischi, paese del mirror, mirror e proxy. `test-install.sh` nella CI.
 - Estensione `button-names@vabaxos.org` (ADR-0022): dà un nome ai pulsanti di GNOME Shell con la sola icona, come Chiudi ed Espandi nelle notifiche, che GNOME 50 lascia senza nome; prova con GNOME Shell senza schermo nella CI.
+- Lettura del testo dello schermo (OCR, `vabaxos-ocr`): Super+Alt+R riconosce il testo della finestra in uso, Super+Alt+Maiusc+R di tutto lo schermo, come NVDA+R; il testo si apre in una finestra che Orca legge riga per riga; guida «Leggere il testo dello schermo».
+- Programma degli aggiornamenti: «Aggiorna VabaxOS» è una finestra con tre schede (Aggiornamenti: sicurezza, sistema, applicazioni Flatpak, firmware, aggiorna ora o al riavvio, avanzamento detto ogni 25%; Cronologia; Impostazioni del controllo automatico); gli aggiornamenti che toccano desktop o voce sono consigliati al riavvio.
+- Disco cifrato con la voce (`vabaxos-unlock`, ADR-0021): all'avvio due note e «Scrivi la password del disco», «Password sbagliata», «Disco aperto»; `test-install.sh --encrypt`.
+- Ottimizzazioni (`vabaxos-tuning`): memoria compressa (zram) prima del disco.
+
+### Cambiato
+
+- Per ora solo eSpeak NG (ADR-0026): Kokoro esce dalla ISO (circa 1 GB in meno); il lettore di documenti legge con eSpeak NG.
+- Menu Start (ADR-0025 accettata): il pulsante Start sulla barra apre il menu di VabaxOS; ArcMenu non è più installato.
+- GNOME Software non cerca e non installa più aggiornamenti da solo: c'è un solo programma per gli aggiornamenti.
