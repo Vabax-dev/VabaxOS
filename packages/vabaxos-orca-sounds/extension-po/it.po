@@ -1,0 +1,24 @@
+# Italian translation of vabaxos_sounds.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos_sounds\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VabaxOS sounds"
+msgstr "Suoni di VabaxOS"
+
+msgid ""
+"A short sound instead of the names of buttons, links, check boxes and other "
+"controls."
+msgstr ""
+"Un suono breve al posto dei nomi di pulsanti, collegamenti, caselle di "
+"controllo e altri comandi."

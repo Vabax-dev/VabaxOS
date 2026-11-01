@@ -1,0 +1,13 @@
+Package: vabaxos-orca-sounds
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, orca
+Description: Sounds of the screen reader: a sound instead of "button"
+ A short sound instead of the names of buttons, links, check boxes,
+ combo boxes, text fields, menus, tabs and other controls, for shorter
+ readings. It works through an Orca user extension (Orca 51 and later),
+ installed and approved only when the user turns the sounds on; a window
+ plays every sound with its name, to learn them first. If a name is not
+ recognized, Orca says it as always.

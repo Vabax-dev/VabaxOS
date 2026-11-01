@@ -7,6 +7,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-accessibility` | Voce della console (Speakup con eSpeak NG) nella lingua del sistema, Orca attivo di default, «senza voce» che spegne entrambi, nomi dei pulsanti di GNOME Shell con la sola icona (ADR-0022), `vabaxos-a11y-check`, `vabaxos-status`, `vabaxos-report` |
 | `vabaxos-apps` | La finestra «Programmi»: avvio automatico, disinstalla |
 | `vabaxos-branding` | Nome, logo, sfondi, font Atkinson Hyperlegible Next |
+| `vabaxos-orca-sounds` | Suoni del lettore di schermo: un suono breve al posto di «pulsante», «collegamento» e degli altri ruoli, con un'estensione di Orca 51 approvata su richiesta; impara i suoni |
 | `vabaxos-camera` | Leggi con la fotocamera: la voce guida il foglio davanti alla webcam (luce, lati, distanza), scatta da sola e legge con l'OCR; Ctrl+D descrive |
 | `vabaxos-checkup` | Controllo del computer a voce: audio, rete, batteria e usura, Braille, Bluetooth, microfono, fotocamera, memoria, disco; al primo accesso, poi le lezioni dei tasti |
 | `vabaxos-store` | Negozio dei programmi per Orca: ricerca mentre si scrive, Installa, Apri, Rimuovi; Debian con PackageKit e, su richiesta, Flathub per l'utente |

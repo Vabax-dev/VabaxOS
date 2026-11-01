@@ -149,6 +149,10 @@ jobs:
         run: python3 tests/checkup/test_checkup.py
       - name: Camera reading tests (pictures read by tesseract, the sides, a made-up webcam)
         run: python3 tests/camera/test_camera.py
+      - name: Screen reader sounds tests (the Orca 51.0 extension API, the sounds, the window)
+        run: |
+          git clone -q --depth 1 --branch 51.0 https://github.com/GNOME/orca.git /tmp/orca-51
+          ORCA_SOURCE=/tmp/orca-51 python3 tests/orca-sounds/test_orca_sounds.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)
