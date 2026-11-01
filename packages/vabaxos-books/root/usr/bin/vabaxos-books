@@ -1,0 +1,229 @@
+#!/usr/bin/python3
+"""Free books and audiobooks.
+
+    vabaxos-books [WORDS]
+
+Write a title or an author: the books to read (Project Gutenberg) and the
+audiobooks (LibriVox, read by volunteers) arrive, and the voice says how
+many. Enter on a book downloads it in Documents, folder Libri, and opens
+it in the document reader; on an audiobook it adds it to News and
+podcasts, where its chapters play with pause, jumps and speed. "Search
+also on Liber Liber" opens the Italian library Liber Liber in the browser.
+"Only in Italian" is on at the start. Escape clears the search, then
+closes.
+"""
+
+import gettext
+import shutil
+import subprocess
+import sys
+import threading
+
+import vabaxos_books as vb
+
+gettext.textdomain("vabaxos-books")
+_ = gettext.gettext
+
+
+def present(text):
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - shown in the window anyway
+        pass
+
+
+def launch(*command):
+    if shutil.which(command[0]):
+        subprocess.Popen(list(command), start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    return False
+
+
+def open_url(url):
+    from gi.repository import Gio
+    Gio.AppInfo.launch_default_for_uri(url, None)
+
+
+def window_classes(speak=present, catalog=vb, launcher=launch, browser=open_url):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gdk, GLib, Gtk
+
+    def run(work, done):
+        def thread():
+            try:
+                result = work()
+            except Exception as error:  # noqa: BLE001 - said to the user
+                result = error
+            GLib.idle_add(lambda: done(result) and False)
+        threading.Thread(target=thread, daemon=True).start()
+
+    class BooksWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app, query=""):
+            super().__init__(application=app, title=_("Books and audiobooks"))
+            self.set_default_size(680, 680)
+            self.generation = 0
+            self.rows = []
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+            top = Adw.PreferencesGroup(description=_("Free books, public domain. Write a title or an author; Down "
+                                                     "arrow goes to the results."))
+            self.entry = Gtk.SearchEntry(placeholder_text=_("Search a book"))
+            self.entry.update_property([Gtk.AccessibleProperty.LABEL], [_("Search a book")])
+            self.entry.set_search_delay(700)
+            self.entry.connect("search-changed", lambda *_a: self.search())
+            keys = Gtk.EventControllerKey()
+            keys.connect("key-pressed", self.entry_key)
+            self.entry.add_controller(keys)
+            top.add(self.entry)
+            self.italian = Adw.SwitchRow(title=_("Only in Italian"), active=True)
+            self.italian.connect("notify::active", lambda *_a: self.search())
+            top.add(self.italian)
+            liber = Gtk.Button(label=_("Search also on Liber Liber"), margin_top=8)
+            liber.set_tooltip_text(_("The Italian library Liber Liber, in the browser"))
+            liber.connect("clicked", lambda *_a: self.liber_liber())
+            top.add(liber)
+            page.add(top)
+            self.books = Adw.PreferencesGroup(title=_("Books to read"), description=_("From Project Gutenberg."))
+            self.audio = Adw.PreferencesGroup(title=_("Audiobooks"), description=_("From LibriVox, read by "
+                                                                                   "volunteers."))
+            page.add(self.books)
+            page.add(self.audio)
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            esc = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            esc.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("Escape"),
+                                              Gtk.CallbackAction.new(lambda *_a: self.escape() or True)))
+            esc.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("<Control>f"),
+                                              Gtk.CallbackAction.new(lambda *_a: self.entry.grab_focus() or True)))
+            self.add_controller(esc)
+            self.Gdk = Gdk
+            if query:
+                self.entry.set_text(query)
+            GLib.idle_add(lambda: self.entry.grab_focus() and False)
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        # -- searching -----------------------------------------------------
+
+        def search(self):
+            words = self.entry.get_text().strip()
+            self.generation += 1
+            generation = self.generation
+            for group, row in self.rows:
+                group.remove(row)
+            self.rows = []
+            if len(words) < 3:
+                return
+            italian = self.italian.get_active()
+            self.books.set_description(_("Searching…"))
+            self.audio.set_description(_("Searching…"))
+
+            def work():
+                results = {}
+                for key, function in (("books", catalog.search_books), ("audio", catalog.search_audiobooks)):
+                    try:
+                        results[key] = function(words, italian)
+                    except Exception as error:  # noqa: BLE001 - the other catalog still counts
+                        results[key] = error
+                return results
+            run(work, lambda results: self.show(results, generation, words))
+
+        def show(self, results, generation, words):
+            if generation != self.generation:
+                return
+            counts = []
+            for key, group, source in (("books", self.books, _("From Project Gutenberg.")),
+                                       ("audio", self.audio, _("From LibriVox, read by volunteers."))):
+                found = results.get(key)
+                if isinstance(found, Exception):
+                    group.set_description(_("{source} It does not answer: is Internet connected?").format(
+                        source=source))
+                    counts.append(0)
+                    continue
+                for book in found:
+                    rest = book.describe()[len(book.title) + 2:]
+                    row = Adw.ActionRow(title=book.title, subtitle=rest, activatable=True, subtitle_lines=2)
+                    row.connect("activated", lambda *_a, b=book: self.choose(b))
+                    group.add(row)
+                    self.rows.append((group, row))
+                group.set_description(source + " " + gettext.ngettext("{count} found.", "{count} found.",
+                                                                      len(found)).format(count=len(found)))
+                counts.append(len(found))
+            if not any(counts):
+                self.say(_("Nothing found for \"{words}\": try Liber Liber, or turn off Only in Italian.").format(
+                    words=words))
+            else:
+                self.say(_("Books: {books}. Audiobooks: {audio}.").format(books=counts[0], audio=counts[1]))
+
+        def entry_key(self, _controller, keyval, _code, _state):
+            if keyval == self.Gdk.KEY_Down and self.rows:
+                self.rows[0][1].grab_focus()
+                return True
+            return False
+
+        def escape(self):
+            if self.entry.get_text():
+                self.entry.set_text("")
+                self.entry.grab_focus()
+            else:
+                self.close()
+
+        def liber_liber(self):
+            browser(catalog.liberliber_url(self.entry.get_text() or ""))
+            self.say(_("Liber Liber opens in the browser."))
+
+        # -- a book ----------------------------------------------------------
+
+        def choose(self, book):
+            if book.kind == "audio":
+                try:
+                    catalog.add_to_podcasts(book)
+                except Exception as error:  # noqa: BLE001
+                    self.say(_("The audiobook was not added: {error}").format(error=error))
+                    return
+                launcher("vabaxos-news")
+                self.say(_("{title} added to News and podcasts: open it there; its chapters are the "
+                           "episodes.").format(title=book.title))
+                return
+            self.say(_("Downloading {title}.").format(title=book.title))
+
+            def done(path):
+                if isinstance(path, Exception):
+                    self.say(_("{title} was not downloaded: is Internet connected?").format(title=book.title))
+                    return
+                launcher("vabaxos-reader", path)
+                self.say(_("{title} is in Documents, folder Libri: it opens in the document reader.").format(
+                    title=book.title))
+            run(lambda: catalog.download(book), done)
+
+    class BooksApp(Adw.Application):
+        def __init__(self, query=""):
+            super().__init__(application_id="org.vabaxos.Books")
+            self.query = query
+            self.connect("activate", lambda app: (app.get_active_window() or BooksWindow(app, self.query)).present())
+
+    return BooksApp, BooksWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_classes()
+    return app_class(" ".join(argv[1:])).run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
