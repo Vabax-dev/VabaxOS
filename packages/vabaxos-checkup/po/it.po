@@ -1,0 +1,190 @@
+# Italian translation of vabaxos-checkup.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-checkup\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Check of the computer"
+msgstr "Controllo del computer"
+
+msgid "To look at"
+msgstr "Da guardare"
+
+msgid "What the computer has"
+msgstr "Cosa ha il computer"
+
+msgid "Check again"
+msgstr "Controlla di nuovo"
+
+msgid "Check the computer again (F5)"
+msgstr "Controlla di nuovo il computer (F5)"
+
+msgid "Copy the result"
+msgstr "Copia il risultato"
+
+msgid "Copy the result, to send it to whoever helps you (Ctrl+C)"
+msgstr "Copia il risultato, per mandarlo a chi ti aiuta (Ctrl+C)"
+
+msgid "What this computer has, and whether it works for VabaxOS."
+msgstr "Cosa ha questo computer, e se funziona per VabaxOS."
+
+msgid "Checking the computer."
+msgstr "Controllo il computer."
+
+msgid "Check"
+msgstr "Controllo"
+
+msgid "Result copied: paste it with Ctrl+V."
+msgstr "Risultato copiato: incollalo con Ctrl+V."
+
+msgid "Sound"
+msgstr "Audio"
+
+msgid "the sound server does not answer: speech may be silent."
+msgstr "il server audio non risponde: la voce potrebbe tacere."
+
+msgid "no sound card found: VabaxOS cannot speak from the desktop."
+msgstr "nessuna scheda audio trovata: VabaxOS non può parlare dal desktop."
+
+msgid "{card}, but muted."
+msgstr "{card}, ma muto."
+
+msgid "{card}, volume very low: {volume} percent."
+msgstr "{card}, volume molto basso: {volume} per cento."
+
+msgid "{card}, it works."
+msgstr "{card}, funziona."
+
+msgid "Microphone"
+msgstr "Microfono"
+
+msgid "cannot be read."
+msgstr "non si riesce a leggere."
+
+msgid "none: dictation and video calls need one."
+msgstr "nessuno: serve per la dettatura e le videochiamate."
+
+msgid "Network"
+msgstr "Rete"
+
+msgid "NetworkManager does not answer."
+msgstr "NetworkManager non risponde."
+
+msgid "Wi-Fi connected to {network}."
+msgstr "Wi-Fi collegato a {network}."
+
+msgid " There is Wi-Fi too."
+msgstr " C'è anche il Wi-Fi."
+
+msgid "connected by cable."
+msgstr "collegata con il cavo."
+
+msgid ""
+"Wi-Fi present, not connected: open Wi-Fi and Bluetooth in the Start menu."
+msgstr "Wi-Fi presente, non collegato: apri Wi-Fi e Bluetooth nel menu Start."
+
+msgid "only a cable socket, no Wi-Fi card: connect the cable."
+msgstr "solo la presa per il cavo, nessuna scheda Wi-Fi: collega il cavo."
+
+msgid "no network card found."
+msgstr "nessuna scheda di rete trovata."
+
+msgid "Bluetooth"
+msgstr "Bluetooth"
+
+msgid "none."
+msgstr "nessuno."
+
+msgid "present and on: Super+K pairs headphones and Braille displays."
+msgstr "presente e acceso: Super+K abbina cuffie e display Braille."
+
+msgid "present, off: Super+K turns it on."
+msgstr "presente, spento: Super+K lo accende."
+
+msgid "Battery"
+msgstr "Batteria"
+
+msgid "none: a desktop computer, on mains power."
+msgstr "nessuna: un computer fisso, alimentato dalla presa."
+
+msgid "charging"
+msgstr "in carica"
+
+msgid "on battery"
+msgstr "a batteria"
+
+msgid "full"
+msgstr "carica"
+
+msgid "plugged in, not charging"
+msgstr "collegata, non in carica"
+
+msgid "{level} percent, {state}."
+msgstr "{level} per cento, {state}."
+
+msgid "It is worn: it holds {health} percent of the charge it held when new."
+msgstr ""
+"È consumata: tiene il {health} per cento della carica di quando era nuova."
+
+msgid "It holds {health} percent of the charge it held when new."
+msgstr "Tiene il {health} per cento della carica di quando era nuova."
+
+msgid "Braille"
+msgstr "Braille"
+
+msgid "display connected, {cells} cells ({driver})."
+msgstr "display collegato, {cells} celle ({driver})."
+
+msgid ""
+"no display connected. If you have one: connect it by USB, or pair it with "
+"Super+K; then the command vabaxos-braille-check."
+msgstr ""
+"nessun display collegato. Se ne hai uno: collegalo con il cavo USB, oppure "
+"abbinalo con Super+K; poi il comando vabaxos-braille-check."
+
+msgid "Camera"
+msgstr "Fotocamera"
+
+msgid "none: reading with the camera needs a webcam."
+msgstr "nessuna: per leggere con la fotocamera serve una webcam."
+
+msgid "Memory"
+msgstr "Memoria"
+
+msgid "{gb} GB: few, the desktop may be slow."
+msgstr "{gb} GB: poca, il desktop può essere lento."
+
+msgid ""
+"{gb} GB: enough; the natural voice and the descriptions of pictures want 8."
+msgstr ""
+"{gb} GB: basta; la voce naturale e la descrizione delle immagini ne vogliono"
+" 8."
+
+msgid "{gb} GB."
+msgstr "{gb} GB."
+
+msgid "Disk"
+msgstr "Disco"
+
+msgid "only {gb} GB free."
+msgstr "solo {gb} GB liberi."
+
+msgid "{gb} GB free."
+msgstr "{gb} GB liberi."
+
+msgid "Check of the computer: everything is fine."
+msgstr "Controllo del computer: tutto a posto."
+
+msgid "Check of the computer: one thing to look at."
+msgid_plural "Check of the computer: {count} things to look at."
+msgstr[0] "Controllo del computer: una cosa da guardare."
+msgstr[1] "Controllo del computer: {count} cose da guardare."

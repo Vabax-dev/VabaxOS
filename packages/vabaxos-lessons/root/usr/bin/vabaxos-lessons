@@ -4,7 +4,9 @@ whether they are right.
 
     vabaxos-lessons               the lessons
     vabaxos-lessons --first-run   the same, once, at the first login of the
-                                  installed system (nothing in the live one)
+                                  installed system, started by the check of
+                                  the computer when it closes (nothing in
+                                  the live one)
 
 The list of lessons: arrows and Enter open one. In an exercise, press the
 key it asks: "Right!" and the next one; another key: VabaxOS says which

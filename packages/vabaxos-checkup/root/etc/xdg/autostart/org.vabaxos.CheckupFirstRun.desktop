@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Check of the computer, at the first login
+Name[it]=Controllo del computer, al primo accesso
+Exec=vabaxos-checkup --first-run
+NoDisplay=true
+OnlyShowIn=GNOME;
+X-GNOME-Autostart-Phase=Applications
+X-GNOME-Autostart-Delay=8

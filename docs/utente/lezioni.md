@@ -1,6 +1,6 @@
 # Impara i tasti
 
-**Impara i tasti**, nel menu Start, è una serie di lezioni brevi per imparare i tasti di VabaxOS facendoli. Si apre da sola al primo accesso del sistema installato.
+**Impara i tasti**, nel menu Start, è una serie di lezioni brevi per imparare i tasti di VabaxOS facendoli. Si apre da sola al primo accesso del sistema installato, dopo il [controllo del computer](controllo.md).
 
 ## Le lezioni
 

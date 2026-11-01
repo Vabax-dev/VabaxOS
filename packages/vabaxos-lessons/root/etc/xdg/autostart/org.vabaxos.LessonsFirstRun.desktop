@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Learn the keys, at the first login
-Name[it]=Impara i tasti, al primo accesso
-Exec=vabaxos-lessons --first-run
-NoDisplay=true
-OnlyShowIn=GNOME;
-X-GNOME-Autostart-Phase=Applications
-X-GNOME-Autostart-Delay=8

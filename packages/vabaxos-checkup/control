@@ -1,0 +1,13 @@
+Package: vabaxos-checkup
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: admin
+Priority: optional
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, pulseaudio-utils, network-manager
+Recommends: python3-brlapi, bluez
+Description: Check of the computer, said aloud
+ What this computer has and whether it works for VabaxOS: sound card,
+ network and Wi-Fi, battery and its wear, Braille display, Bluetooth,
+ microphone, camera, memory and disk. At the first login of the installed
+ system the window opens by itself and says what to look at; then the
+ lessons of the keys start. vabaxos-checkup --say says the summary only.
