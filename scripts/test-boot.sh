@@ -341,6 +341,13 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes ]]; then
 fi
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ORCA_HEARD="$(orca_speaks orca)"
+    # Orca 51 may need a few more seconds after its start to read the first
+    # notification (CI, 2026-11-01, Secure Boot): one more try, said so.
+    if [[ "$ORCA_HEARD" != "$WANT_SOUND" ]]; then
+        sleep 10
+        ORCA_HEARD="$(orca_speaks orca-again)"
+        printf 'INFO: Orca non ha letto la prima notifica; la seconda, 10 secondi dopo: %s\n' "$ORCA_HEARD"
+    fi
     check 'Orca udibile nel desktop' "$ORCA_HEARD" "$WANT_SOUND"
     # Orca silent: GNOME Shell's and Orca's messages go to the serial log,
     # to see whether the desktop is stuck (CI, 2026-09-25: GNOME Shell did
