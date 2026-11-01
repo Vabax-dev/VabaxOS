@@ -1,0 +1,183 @@
+# Italian translation of vabaxos-trouble.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-trouble\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Speech or screen reader"
+msgstr "La voce o il lettore di schermo"
+
+msgid "Sound"
+msgstr "L'audio"
+
+msgid "Keyboard"
+msgstr "La tastiera"
+
+msgid "Network or Internet"
+msgstr "La rete o Internet"
+
+msgid "A program"
+msgstr "Un programma"
+
+msgid "Start or shutdown"
+msgstr "L'avvio o lo spegnimento"
+
+msgid "Printer, scanner or Braille"
+msgstr "Stampante, scanner o Braille"
+
+msgid "Something else"
+msgstr "Altro"
+
+msgid "Something is wrong"
+msgstr "Qualcosa non va"
+
+msgid "First checks"
+msgstr "Primi controlli"
+
+msgid "Checking…"
+msgstr "Controllo in corso…"
+
+msgid "The report"
+msgstr "Il rapporto"
+
+msgid ""
+"VabaxOS writes a text file to attach to a message or to a bug report. It "
+"sends nothing by itself."
+msgstr ""
+"VabaxOS scrive un file di testo da allegare a un messaggio o a una "
+"segnalazione. Non invia niente da solo."
+
+msgid "What is wrong"
+msgstr "Cosa non va"
+
+msgid "What happened, in your words"
+msgstr "Cosa è successo, con parole tue"
+
+msgid "Hide my personal data"
+msgstr "Nascondi i miei dati personali"
+
+msgid "Names of the user, of the computer and of the networks, addresses"
+msgstr "Nomi dell'utente, del computer e delle reti, indirizzi"
+
+msgid "Add the whole system log"
+msgstr "Aggiungi tutto il registro del sistema"
+
+msgid "More useful to find the problem; asks the password"
+msgstr "Più utile per trovare il problema; chiede la password"
+
+msgid "Create the report"
+msgstr "Crea il rapporto"
+
+msgid "Saved"
+msgstr "Salvato"
+
+msgid "Report"
+msgstr "Rapporto"
+
+msgid "Open the report"
+msgstr "Apri il rapporto"
+
+msgid "Open the folder"
+msgstr "Apri la cartella"
+
+msgid "Copy the report"
+msgstr "Copia il rapporto"
+
+msgid "No problem found by the first checks."
+msgstr "Nessun problema trovato dai primi controlli."
+
+msgid ""
+"No problem found by the first checks. Choose what is wrong, then create the "
+"report."
+msgstr ""
+"Nessun problema trovato dai primi controlli. Scegli cosa non va, poi crea il"
+" rapporto."
+
+msgid "{count} problem found."
+msgid_plural "{count} problems found."
+msgstr[0] "{count} problema trovato."
+msgstr[1] "{count} problemi trovati."
+
+msgid "{count} problem found: {list}"
+msgid_plural "{count} problems found: {list}"
+msgstr[0] "{count} problema trovato: {list}"
+msgstr[1] "{count} problemi trovati: {list}"
+
+msgid "Creating the report: it can take a minute."
+msgstr "Creo il rapporto: può servire un minuto."
+
+msgid "The report could not be saved: {error}"
+msgstr "Non è stato possibile salvare il rapporto: {error}"
+
+msgid "Report saved in {path}. Attach it to a message or to a bug report."
+msgstr ""
+"Rapporto salvato in {path}. Allegalo a un messaggio o a una segnalazione."
+
+msgid "Report copied: paste it with Ctrl+V."
+msgstr "Rapporto copiato: incollalo con Ctrl+V."
+
+msgid "A system service did not start: {units}."
+msgid_plural "Some system services did not start: {units}."
+msgstr[0] "Un servizio del sistema non è partito: {units}."
+msgstr[1] "Alcuni servizi del sistema non sono partiti: {units}."
+
+msgid "A service of your session did not start: {units}."
+msgid_plural "Some services of your session did not start: {units}."
+msgstr[0] "Un servizio della tua sessione non è partito: {units}."
+msgstr[1] "Alcuni servizi della tua sessione non sono partiti: {units}."
+
+msgid "No sound output: the sound card is not seen."
+msgstr "Nessuna uscita audio: la scheda audio non è vista."
+
+msgid "The sound is muted."
+msgstr "L'audio è muto."
+
+msgid "The volume is very low: {level}%."
+msgstr "Il volume è molto basso: {level}%."
+
+msgid "The sound server of the session does not answer."
+msgstr "Il server audio della sessione non risponde."
+
+msgid "Orca, the screen reader, is not running: Super+Alt+S starts it."
+msgstr "Orca, il lettore di schermo, non è attivo: Super+Alt+S lo avvia."
+
+msgid "The computer is not connected to a network."
+msgstr "Il computer non è collegato a una rete."
+
+msgid "The network is connected, but Internet is not reached."
+msgstr "La rete è collegata, ma Internet non si raggiunge."
+
+msgid "the system"
+msgstr "il sistema"
+
+msgid "your personal folder"
+msgstr "la tua cartella personale"
+
+msgid "Little free space for {place}: {free}."
+msgstr "Poco spazio libero per {place}: {free}."
+
+msgid "Some programs were installed only in part: the report says which."
+msgstr ""
+"Alcuni programmi sono installati solo in parte: il rapporto dice quali."
+
+msgid "Area"
+msgstr "Ambito"
+
+msgid "What happened"
+msgstr "Cosa è successo"
+
+msgid "No problem found."
+msgstr "Nessun problema trovato."
+
+msgid "The system log was not added: the password was not given."
+msgstr ""
+"Il registro del sistema non è stato aggiunto: la password non è stata data."

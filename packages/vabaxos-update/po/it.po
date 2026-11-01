@@ -4,46 +4,264 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: vabaxos-update\n"
-"PO-Revision-Date: 2026-09-25 00:00+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-01 00:53+0000\n"
+"PO-Revision-Date: 2026-11-01 00:00+0100\n"
 "Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
 "Language-Team: Italian\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Updates"
 msgstr "Aggiornamenti"
 
+#, python-brace-format
 msgid "Updating: {percent} percent."
 msgstr "Aggiornamento: {percent} per cento."
+
+#, python-brace-format
+msgid "{count} update"
+msgid_plural "{count} updates"
+msgstr[0] "{count} aggiornamento"
+msgstr[1] "{count} aggiornamenti"
+
+#, python-brace-format
+msgid "{count} for security"
+msgid_plural "{count} for security"
+msgstr[0] "{count} di sicurezza"
+msgstr[1] "{count} di sicurezza"
+
+#, python-brace-format
+msgid "{count} application"
+msgid_plural "{count} applications"
+msgstr[0] "{count} applicazione"
+msgstr[1] "{count} applicazioni"
+
+#, python-brace-format
+msgid "{count} firmware"
+msgid_plural "{count} firmware"
+msgstr[0] "{count} firmware"
+msgstr[1] "{count} firmware"
 
 msgid "Looking for updates. Please wait."
 msgstr "Cerco gli aggiornamenti. Attendi."
 
+#, python-brace-format
 msgid "Cannot look for updates: {error}. Check the network and try again."
-msgstr "Non riesco a cercare gli aggiornamenti: {error}. Controlla la rete e riprova."
+msgstr ""
+"Non riesco a cercare gli aggiornamenti: {error}. Controlla la rete e "
+"riprova."
 
-msgid "{count} security updates are ready. Open Update VabaxOS to install them."
-msgstr "Ci sono {count} aggiornamenti di sicurezza. Apri Aggiorna VabaxOS per installarli."
+#, python-brace-format
+msgid ""
+"{count} security updates are ready. Open Update VabaxOS to install them."
+msgstr ""
+"Ci sono {count} aggiornamenti di sicurezza. Apri Aggiorna VabaxOS per "
+"installarli."
+
+#, python-brace-format
+msgid "{count} updates are ready. Open Update VabaxOS to install them."
+msgstr "Ci sono {count} aggiornamenti. Apri Aggiorna VabaxOS per installarli."
 
 msgid "VabaxOS is up to date."
 msgstr "VabaxOS è aggiornato."
 
-msgid "{count} updates, {security} for security; {apps} applications."
-msgstr "{count} aggiornamenti, di cui {security} di sicurezza; {apps} applicazioni."
-
-msgid "Note: in this test version updates come straight from Debian testing, not yet checked by VabaxOS."
-msgstr "Nota: in questa versione di prova gli aggiornamenti arrivano direttamente da Debian testing, non ancora controllati da VabaxOS."
+msgid ""
+"Note: in this test version updates come straight from Debian testing, not "
+"yet checked by VabaxOS."
+msgstr ""
+"Nota: in questa versione di prova gli aggiornamenti arrivano direttamente da"
+" Debian testing, non ancora controllati da VabaxOS."
 
 msgid "To install: vabaxos-update --now, or --at-restart."
 msgstr "Per installarli: vabaxos-update --now, oppure --at-restart."
 
+#, python-brace-format
 msgid "The update stopped: {error}."
 msgstr "L'aggiornamento si è fermato: {error}."
 
 msgid "Ready. The updates will be installed at the next start."
 msgstr "Pronto. Gli aggiornamenti verranno installati al prossimo avvio."
 
+msgid "Update finished. Restart the computer to complete it."
+msgstr "Aggiornamento finito. Riavvia il computer per completarlo."
+
 msgid "Update finished."
 msgstr "Aggiornamento concluso."
+
+msgid "Security"
+msgstr "Sicurezza"
+
+msgid "System"
+msgstr "Sistema"
+
+msgid "Applications"
+msgstr "Applicazioni"
+
+msgid "Firmware"
+msgstr "Firmware"
+
+msgid "Every day"
+msgstr "Ogni giorno"
+
+msgid "Every week"
+msgstr "Ogni settimana"
+
+msgid "Never"
+msgstr "Mai"
+
+msgid "Only security updates"
+msgstr "Solo gli aggiornamenti di sicurezza"
+
+msgid "All updates"
+msgstr "Tutti gli aggiornamenti"
+
+msgid "never"
+msgstr "mai"
+
+#, python-brace-format
+msgid "today at {time}"
+msgstr "oggi alle {time}"
+
+msgid "updated"
+msgstr "aggiornati"
+
+msgid "installed"
+msgstr "installati"
+
+msgid "removed"
+msgstr "rimossi"
+
+msgid "downgraded"
+msgstr "riportati indietro"
+
+msgid "no packages"
+msgstr "nessun pacchetto"
+
+msgid "Update VabaxOS"
+msgstr "Aggiorna VabaxOS"
+
+msgid "History"
+msgstr "Cronologia"
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "State"
+msgstr "Stato"
+
+msgid "Not checked yet"
+msgstr "Non ancora controllato"
+
+msgid "Test version"
+msgstr "Versione di prova"
+
+msgid "Updates come straight from Debian testing, not yet checked by VabaxOS."
+msgstr ""
+"Gli aggiornamenti arrivano direttamente da Debian testing, non ancora "
+"controllati da VabaxOS."
+
+msgid "Check"
+msgstr "Controlla"
+
+msgid "Look for updates (F5)"
+msgstr "Cerca gli aggiornamenti (F5)"
+
+msgid "Update now"
+msgstr "Aggiorna ora"
+
+msgid "Download and install now"
+msgstr "Scarica e installa adesso"
+
+msgid "Update at restart"
+msgstr "Aggiorna al riavvio"
+
+msgid "Download now, install at the next start: the safest way"
+msgstr "Scarica ora, installa al prossimo avvio: il modo più sicuro"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Stop the check or the download"
+msgstr "Ferma il controllo o lo scaricamento"
+
+msgid "Progress"
+msgstr "Avanzamento"
+
+msgid "What there is to update"
+msgstr "Cosa c'è da aggiornare"
+
+msgid "What was installed, updated and removed, newest first."
+msgstr "Cosa è stato installato, aggiornato e rimosso, dal più recente."
+
+msgid "Automatic check"
+msgstr "Controllo automatico"
+
+msgid ""
+"VabaxOS looks for updates by itself, in silence, and never installs anything"
+" without asking."
+msgstr ""
+"VabaxOS cerca gli aggiornamenti da solo, in silenzio, e non installa mai "
+"niente senza chiedere."
+
+msgid "Check for updates"
+msgstr "Cerca gli aggiornamenti"
+
+msgid "Announce"
+msgstr "Avvisa per"
+
+#, python-brace-format
+msgid "Last check: {when}"
+msgstr "Ultimo controllo: {when}"
+
+msgid "Nothing to update"
+msgstr "Niente da aggiornare"
+
+msgid "No updates installed yet"
+msgstr "Nessun aggiornamento installato finora"
+
+msgid "Updated"
+msgstr "Aggiornati"
+
+msgid "Installed"
+msgstr "Installati"
+
+msgid "Removed"
+msgstr "Rimossi"
+
+msgid "Downgraded"
+msgstr "Riportati indietro"
+
+msgid "Stopping."
+msgstr "Mi fermo."
+
+msgid "Better at the next start"
+msgstr "Meglio al prossimo avvio"
+
+#, python-brace-format
+msgid ""
+"These updates change the desktop or the voice: {names}. Installed now, they "
+"can stop the voice until the computer restarts. Install them at the next "
+"start?"
+msgstr ""
+"Questi aggiornamenti cambiano il desktop o la voce: {names}. Installati "
+"adesso, possono fermare la voce fino al riavvio del computer. Installarli al"
+" prossimo avvio?"
+
+msgid "Now anyway"
+msgstr "Adesso comunque"
+
+msgid "At the next start"
+msgstr "Al prossimo avvio"
+
+msgid "Downloading the updates."
+msgstr "Scarico gli aggiornamenti."
+
+msgid "Updating. Please wait."
+msgstr "Aggiornamento in corso. Attendi."
+
+msgid "Update finished. Log out and in again to complete it."
+msgstr "Aggiornamento finito. Esci e rientra per completarlo."

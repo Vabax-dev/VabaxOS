@@ -1,0 +1,169 @@
+#!/usr/bin/python3
+"""Text recognition for the screen reader (OCR), like NVDA+R in NVDA.
+
+    vabaxos-ocr [--title TITLE] [--keep] PICTURE
+
+Super+Alt+R takes a picture of the window in use (Super+Alt+Shift+R: of the
+whole screen) through the extension vabaxos-keys@vabaxos.org, inside GNOME
+Shell, the only place allowed to take it without asking; then this
+program recognizes the text, with tesseract, and shows it in a window of
+plain text: the focus is on the first line, Orca reads it, the arrows move
+line by line and word by word, Ctrl+C copies, Escape closes and the focus
+goes back to the window of before. Useful where Orca finds nothing: a
+program without accessibility, a picture, a video, a remote desktop.
+
+The picture is deleted at the end unless --keep is given. A picture file
+opened from Files ("Open With") works the same way.
+"""
+
+import gettext
+import os
+import sys
+import threading
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
+
+from vabaxos_ocr import recognize  # noqa: E402
+
+gettext.textdomain("vabaxos-ocr")
+_ = gettext.gettext
+
+
+def speak(text):
+    """Orca says it at once; without Orca, a notification."""
+    try:
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca1.Service", "/org/gnome/Orca1/Service", "org.gnome.Orca1.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+        return
+    except GLib.Error:
+        pass
+    notification = Gio.Notification.new(_("Text recognition"))
+    notification.set_body(text)
+    app = Gio.Application.get_default()
+    if app is not None:
+        app.send_notification("ocr", notification)
+    else:
+        print(text, flush=True)
+
+
+def parse(argv):
+    title, keep, path = "", False, None
+    args = list(argv)
+    while args:
+        arg = args.pop(0)
+        if arg == "--title" and args:
+            title = args.pop(0)
+        elif arg == "--keep":
+            keep = True
+        elif arg in ("-h", "--help"):
+            print(__doc__)
+            sys.exit(0)
+        else:
+            path = arg
+    return title, keep, path
+
+
+def window_title(title, count):
+    lines = _("1 line") if count == 1 else _("{count} lines").format(count=count)
+    if title:
+        return _("Recognized text, {lines}: {title}").format(lines=lines, title=title)
+    return _("Recognized text, {lines}").format(lines=lines)
+
+
+class ResultWindow(Adw.ApplicationWindow):
+
+    def __init__(self, app, title, lines):
+        count = sum(1 for line in lines if line)
+        super().__init__(application=app, title=window_title(title, count))
+        self.set_default_size(700, 500)
+        self.toasts = Adw.ToastOverlay()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        header = Adw.HeaderBar()
+        copy = Gtk.Button(label=_("Copy all"))
+        copy.set_tooltip_text(_("Copy all the text (Ctrl+Shift+C)"))
+        copy.connect("clicked", lambda *_a: self.copy_all())
+        header.pack_start(copy)
+        box.append(header)
+
+        self.view = Gtk.TextView(editable=False, cursor_visible=True, wrap_mode=Gtk.WrapMode.WORD_CHAR,
+                                 left_margin=18, right_margin=18, top_margin=12, bottom_margin=12,
+                                 monospace=False)
+        self.view.update_property([Gtk.AccessibleProperty.LABEL], [_("Recognized text")])
+        self.buffer = self.view.get_buffer()
+        self.buffer.set_text("\n".join(lines))
+        self.buffer.place_cursor(self.buffer.get_start_iter())
+        scroll = Gtk.ScrolledWindow(vexpand=True)
+        scroll.set_child(self.view)
+        box.append(scroll)
+        self.toasts.set_child(box)
+        self.set_content(self.toasts)
+
+        controller = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+        for accel, action in (("Escape", self.close), ("<Control>w", self.close),
+                              ("<Control><Shift>c", self.copy_all)):
+            callback = Gtk.CallbackAction.new(lambda *_a, act=action: act() or True)
+            controller.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(accel), callback))
+        self.add_controller(controller)
+        self.view.grab_focus()
+
+    def text(self):
+        return self.buffer.get_text(self.buffer.get_start_iter(), self.buffer.get_end_iter(), False)
+
+    def copy_all(self):
+        self.get_clipboard().set(self.text())
+        self.toasts.add_toast(Adw.Toast.new(_("Text copied.")))
+
+
+class OcrApp(Adw.Application):
+
+    def __init__(self, argv):
+        # NON_UNIQUE: every recognition is its own window, even while one is open.
+        super().__init__(application_id="org.vabaxos.Ocr", flags=Gio.ApplicationFlags.NON_UNIQUE)
+        self.title, self.keep, self.path = parse(argv)
+        self.connect("activate", self.on_activate)
+
+    def on_activate(self, _app):
+        if not self.path or not os.path.exists(self.path):
+            speak(_("No picture to recognize."))
+            return
+        self.hold()
+        threading.Thread(target=self.work, daemon=True).start()
+
+    def work(self):
+        try:
+            lines = recognize.recognize(self.path)
+            error = None
+        except Exception as problem:  # noqa: BLE001 - said to the user
+            lines, error = [], problem
+        finally:
+            if not self.keep:
+                try:
+                    os.remove(self.path)
+                except OSError:
+                    pass
+        GLib.idle_add(self.show, lines, error)
+
+    def show(self, lines, error):
+        self.release()
+        if error is not None:
+            speak(_("Text recognition failed: {error}").format(error=error))
+            return False
+        if not any(lines):
+            speak(_("No text found."))
+            return False
+        ResultWindow(self, self.title, lines).present()
+        return False
+
+
+def main(argv):
+    app = OcrApp(argv[1:])
+    return app.run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

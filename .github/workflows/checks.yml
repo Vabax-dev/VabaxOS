@@ -29,8 +29,12 @@ jobs:
       - name: ShellCheck
         run: |
           find scripts -name '*.sh' -print0 | xargs -0 shellcheck
-          shellcheck image/auto/config
-          shellcheck packages/*/postinst packages/*/postrm packages/*/build packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
+          shellcheck image/auto/config image/config/hooks/normal/8400-vabaxos-no-cups-browsed.hook.chroot image/config/hooks/normal/8410-vabaxos-orca-gpaste.hook.chroot
+          shellcheck packages/*/postinst packages/*/postrm packages/*/root/usr/libexec/vabaxos/* packages/vabaxos-accessibility/root/usr/bin/vabaxos-report
+          for f in packages/*/build; do head -1 "$f" | grep -q python || shellcheck "$f"; done
+          shellcheck -s sh packages/vabaxos-unlock/root/usr/share/initramfs-tools/hooks/* \
+            packages/vabaxos-unlock/root/usr/share/initramfs-tools/scripts/*/* \
+            packages/vabaxos-unlock/root/usr/lib/vabaxos/unlock/askpass packages/vabaxos-unlock/root/usr/lib/vabaxos/unlock/speech
       - name: Every workstation package exists in Debian trixie
         run: |
           grep -Ev '^[[:space:]]*(#|$)' scripts/postazione/pacchetti-debian.txt \
@@ -63,15 +67,24 @@ jobs:
             python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 libgtk-4-bin gsettings-desktop-schemas libglib2.0-bin \
             python3-numpy python3-onnxruntime libespeak-ng1 espeak-ng libsonic0 libpulse0 \
             python3-docx python3-ebooklib python3-pil poppler-utils \
-            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng
+            tesseract-ocr tesseract-ocr-ita tesseract-ocr-eng fonts-dejavu-core \
+            python3-dbusmock dbus-daemon gir1.2-ecal-2.0 gir1.2-edataserver-1.2 evolution-data-server
       - uses: actions/checkout@v7
-      # Large files of the packages (the Kokoro model), downloaded once.
+      # Large files of the packages (the dictation model), downloaded once.
       - uses: actions/cache@v4
         with:
           path: cache/downloads
           key: downloads-${{ hashFiles('packages/*/fetch') }}
+      # The Kokoro model is not in the package (ADR-0030): the tests download
+      # it as the program Natural voice does, with the same SHA-256.
+      - uses: actions/cache@v4
+        with:
+          path: cache/kokoro
+          key: kokoro-v1.0
       - name: Trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Translations compiler tests (contexts, plurals, without msgfmt)
+        run: python3 tests/po2mo/test_po2mo.py
       - name: Build the packages
         run: ./scripts/build-packages.sh /tmp/packages
       - name: Python programs compile
@@ -89,19 +102,102 @@ jobs:
       - name: Screen reader settings tests (hidden Broadway display, Orca's schema in memory)
         run: python3 tests/screen-reader/test_screen_reader.py
       - name: Orca key schemes tests (NVDA, JAWS, no conflicts, the guide in sync)
-        run: python3 tests/screen-reader/test_keys.py
+        run: |
+          python3 tests/screen-reader/test_keys.py
+          python3 tests/screen-reader/test_pronunciation.py
+      - name: Orca 51's D-Bus service from the screen reader settings (a made-up Orca on a private bus)
+        run: python3 tests/screen-reader/test_orca_service.py
       - name: Start menu tests (hidden Broadway display, made-up programs)
         run: python3 tests/start/test_start.py
       - name: Update tests (fake PackageKit)
         run: python3 tests/update/test_update.py
       - name: Voice tests (Kokoro module, audio to a file)
         run: |
-          dpkg-deb -x /tmp/packages/vabaxos-voice_*.deb /tmp/voice
-          export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
+          mkdir -p cache/kokoro
+          for f in kokoro-v1.0.onnx voices-v1.0.bin; do
+            [ -f "cache/kokoro/$f" ] || curl -sSLf -o "cache/kokoro/$f" \
+              "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/$f"
+          done
+          (cd cache/kokoro && sha256sum -c - <<'SUMS'
+          7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5  kokoro-v1.0.onnx
+          bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d  voices-v1.0.bin
+          SUMS
+          )
+          cp packages/vabaxos-voice/root/usr/share/vabaxos/kokoro/vocab.json cache/kokoro/
+          export VABAXOS_KOKORO_DIR="$PWD/cache/kokoro"
           python3 tests/voice/test_module.py
+          python3 tests/voice/test_natural_voice.py
+      - name: Dictation tests (text cleaning, silence, made-up recorder and whisper.cpp)
+        run: |
+          python3 tests/dictation/test_dictation.py
+          python3 tests/dictation/test_captions.py
+      - name: Firefox and Thunderbird settings for Orca
+        run: python3 tests/firefox/test_policies.py
+      - name: System restore tests (made-up Timeshift, the console menu, the window)
+        run: python3 tests/restore/test_restore.py
+      - name: Spoken messages tests (ready, battery at 10 percent)
+        run: python3 tests/announce/test_announce.py
+      - name: Lessons of the keys tests (exercises, key checks, a lesson in the window)
+        run: python3 tests/lessons/test_lessons.py
+      - name: Reminders tests (sentences, the list, the timekeeper, the window)
+        run: python3 tests/reminders/test_reminders.py
+      - name: Printers and scanners tests (CUPS and SANE answers, the window)
+        run: python3 tests/print/test_print.py
+      - name: Braille check tests (made-up BRLTTY states, the groups of the user)
+        run: python3 tests/braille/test_braille_check.py
+      - name: Picture description tests (the request, a made-up llama-server)
+        run: |
+          python3 tests/describe/test_describe.py
+          python3 tests/describe/test_model.py
+      - name: Mathematics tests (calculator, formulas in words, the window)
+        run: python3 tests/math/test_math.py
+      - name: News and podcasts tests (RSS, Atom, the feed of a site, the window)
+        run: python3 tests/news/test_news.py
+      - name: Messages and video calls tests (entries, AccessGram checked against its real code, the window)
+        run: |
+          git clone -q https://github.com/destructatron/AccessGram.git /tmp/accessgram
+          git -C /tmp/accessgram checkout -q feb0d887026175da832ca0d5e6bbb6237725962c
+          ACCESSGRAM_SOURCE=/tmp/accessgram python3 tests/communication/test_communication.py
+      - name: Audio games tests (the rules, the sounds, a game of each in the window)
+        run: python3 tests/games/test_games.py
+      - name: Something is wrong tests (made-up checks, personal data hidden, the report, the window)
+        run: python3 tests/trouble/test_trouble.py
+      - name: Wi-Fi and Bluetooth tests (made-up NetworkManager and BlueZ, the pairing agent, the window)
+        run: python3 tests/connections/test_connections.py
+      - name: Program store tests (appstreamcli and flatpak answers, made-up PackageKit, the window)
+        run: python3 tests/store/test_store.py
+      - name: Check of the computer tests (made-up hardware, the summary, the window)
+        run: python3 tests/checkup/test_checkup.py
+      - name: Camera reading tests (pictures read by tesseract, the sides, a made-up webcam)
+        run: python3 tests/camera/test_camera.py
+      - name: Orca 50 keeps speaking with an empty GPaste history (image hook, against Orca 50.3 and 51.0)
+        run: |
+          git clone -q --depth 1 --branch 50.3 https://github.com/GNOME/orca.git /tmp/orca-50
+          git clone -q --depth 1 --branch 51.0 https://github.com/GNOME/orca.git /tmp/orca-51-gpaste
+          ORCA_50=/tmp/orca-50 ORCA_51=/tmp/orca-51-gpaste python3 tests/orca-gpaste/test_orca_gpaste.py
+      - name: Screen reader sounds tests (the Orca 51.0 extension API, the sounds, the window)
+        run: |
+          git clone -q --depth 1 --branch 51.0 https://github.com/GNOME/orca.git /tmp/orca-51
+          ORCA_SOURCE=/tmp/orca-51 python3 tests/orca-sounds/test_orca_sounds.py
+      - name: Radio tests (the catalog's answers, servers in turn, favourites, the window)
+        run: python3 tests/radio/test_radio.py
+      - name: Books tests (Gutendex and LibriVox answers, download, podcasts, the window)
+        run: python3 tests/books/test_books.py
+      - name: Zoom and contrast tests (GNOME settings in memory, the keys in dconf, the window)
+        run: python3 tests/vision/test_vision.py
+      - name: Translator tests (texts cut, the request, a made-up llama-server, the window)
+        run: python3 tests/translate/test_translate.py
+      - name: Agenda tests (sentences, a real Evolution Data Server on a private bus, the window)
+        run: python3 tests/agenda/test_agenda.py
+      - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
+        run: python3 tests/firewall/test_firewall.py
+      - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)
+        run: python3 tests/unlock/test_unlock.py
+      - name: Text recognition tests (screen-like pictures, the result window)
+        run: python3 tests/ocr/test_ocr.py
       - name: Reader tests (documents; the window reads into a file)
         run: |
-          export VABAXOS_KOKORO_DIR=/tmp/voice/usr/share/vabaxos/kokoro
+          export VABAXOS_KOKORO_DIR="$PWD/cache/kokoro"
           python3 tests/reader/test_reader.py
 
   shell-extension:

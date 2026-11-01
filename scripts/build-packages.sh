@@ -7,11 +7,16 @@
 #   postinst, postrm  maintainer scripts (optional)
 #   triggers          dpkg triggers (optional)
 #   fetch             large files downloaded at build time, one per line:
-#                     URL SHA256 PATH (optional; kept in cache/downloads)
+#                     URL SHA PATH (optional; kept in cache/downloads); SHA
+#                     is a SHA-256, or a SHA-1 when upstream publishes only
+#                     that (the whisper.cpp models)
 #   copyright         licence of the contents (optional, default GPL-3.0+)
 #   build             a program run with the package tree, to make files
 #                     (optional; REPO is set, for example the HTML help)
 #   po/*.po           translations of the domain <name> (optional)
+#   not-in-iso        the package is kept in Git and built for the tests,
+#                     but not put in the ISO (VABAXOS_ISO=1); the file says
+#                     why (optional, for example vabaxos-voice, ADR-0026)
 # No root needed: files belong to root:root inside the package.
 set -euo pipefail
 
@@ -39,6 +44,10 @@ export SOURCE_DATE_EPOCH
 for dir in "$REPO"/packages/*/; do
     name="$(basename "$dir")"
     [[ -f "$dir/control" ]] || continue
+    if [[ "${VABAXOS_ISO:-}" == 1 && -f "$dir/not-in-iso" ]]; then
+        printf 'Escluso dalla ISO: %s (%s)\n' "$name" "$(head -1 "$dir/not-in-iso")"
+        continue
+    fi
     tree="$TMP/$name"
     mkdir -p "$tree/DEBIAN"
     cp -a "$dir/root/." "$tree/"
@@ -60,7 +69,9 @@ for dir in "$REPO"/packages/*/; do
                 curl -fsSL --retry 3 -o "$file.part" "$url"
                 mv "$file.part" "$file"
             fi
-            if ! printf '%s  %s\n' "$sha" "$file" | sha256sum -c --quiet; then
+            sum=sha256sum
+            [[ ${#sha} -eq 40 ]] && sum=sha1sum
+            if ! printf '%s  %s\n' "$sha" "$file" | "$sum" -c --quiet; then
                 rm -f "$file"
                 printf 'ERRORE: %s non corrisponde all'\''impronta attesa.\n' "$url" >&2
                 exit 1

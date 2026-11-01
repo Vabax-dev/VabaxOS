@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Radio
+Name[it]=Radio
+Comment=Radio stations over the Internet, from the keyboard
+Comment[it]=Le radio via Internet, da tastiera
+Exec=vabaxos-radio
+Icon=audio-x-generic-symbolic
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+Keywords=radio;stream;music;news;stazioni;musica;notizie;

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Live captions
+Name[it]=Sottotitoli dal vivo
+Comment=The words of what the computer plays or of the microphone, in large letters (Super+Ctrl+L)
+Comment[it]=Le parole di ciò che il computer riproduce o del microfono, a caratteri grandi (Super+Ctrl+L)
+Exec=vabaxos-captions
+Icon=media-view-subtitles-symbolic
+Terminal=false
+Categories=Utility;Accessibility;
+Keywords=captions;subtitles;deaf;hearing;sottotitoli;sordi;udito;

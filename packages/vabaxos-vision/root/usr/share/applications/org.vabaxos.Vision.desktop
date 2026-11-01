@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Zoom and contrast
+Name[it]=Ingrandimento e contrasto
+Comment=See the screen better: zoom, high contrast, large text and pointer, colours
+Comment[it]=Vedere meglio lo schermo: ingrandimento, alto contrasto, testo e puntatore grandi, colori
+Exec=vabaxos-vision
+Icon=zoom-in-symbolic
+Terminal=false
+Categories=Settings;Accessibility;
+Keywords=zoom;magnifier;contrast;low vision;ingrandimento;lente;contrasto;ipovisione;colori;

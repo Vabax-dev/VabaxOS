@@ -1,0 +1,14 @@
+Package: vabaxos-camera
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: graphics
+Priority: optional
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-gstreamer-1.0, gstreamer1.0-plugins-good, python3-pil, tesseract-ocr, tesseract-ocr-ita, tesseract-ocr-eng, vabaxos-ocr
+Recommends: vabaxos-describe
+Description: Read with the camera, guided by the voice
+ Hold a letter, a bill or a label in front of the webcam: about every
+ second the voice says what to do (more light, nearer, farther, a little
+ to the left or to the right, said as the user sees it). When the text is
+ all in the picture it takes the picture by itself and opens the text in
+ the window of the screen reader's text recognition. Describe sends the
+ picture to the description of pictures, without Internet.

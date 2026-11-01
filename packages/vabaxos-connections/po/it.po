@@ -1,0 +1,417 @@
+# Italian translation of vabaxos-connections.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-connections\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Wi-Fi and Bluetooth"
+msgstr "Wi-Fi e Bluetooth"
+
+msgid "Wi-Fi"
+msgstr "Wi-Fi"
+
+msgid "Bluetooth"
+msgstr "Bluetooth"
+
+msgid "Checking…"
+msgstr "Controllo in corso…"
+
+msgid "Networks"
+msgstr "Reti"
+
+msgid "Enter connects; F5 searches again."
+msgstr "Invio collega; F5 cerca di nuovo."
+
+msgid "Search again"
+msgstr "Cerca di nuovo"
+
+msgid "Search the networks again (F5)"
+msgstr "Cerca di nuovo le reti (F5)"
+
+msgid "Hidden network"
+msgstr "Rete nascosta"
+
+msgid "Connect to a network that does not show its name"
+msgstr "Collegati a una rete che non mostra il nome"
+
+msgid "Wi-Fi cannot be read: NetworkManager does not answer."
+msgstr "Non riesco a leggere il Wi-Fi: NetworkManager non risponde."
+
+msgid "No network found: F5 searches again."
+msgstr "Nessuna rete trovata: F5 cerca di nuovo."
+
+msgid "{count} network. Enter connects; F5 searches again."
+msgid_plural "{count} networks. Enter connects; F5 searches again."
+msgstr[0] "{count} rete. Invio collega; F5 cerca di nuovo."
+msgstr[1] "{count} reti. Invio collega; F5 cerca di nuovo."
+
+msgid "Wi-Fi did not change: {error}"
+msgstr "Il Wi-Fi non è cambiato: {error}"
+
+msgid "Wi-Fi on: searching the networks."
+msgstr "Wi-Fi acceso: cerco le reti."
+
+msgid "Wi-Fi off."
+msgstr "Wi-Fi spento."
+
+msgid "Searching the networks."
+msgstr "Cerco le reti."
+
+msgid "{count} network found."
+msgid_plural "{count} networks found."
+msgstr[0] "{count} rete trovata."
+msgstr[1] "{count} reti trovate."
+
+msgid "{network} is open: what you do on it can be seen by others."
+msgstr "{network} è aperta: chi è vicino può vedere cosa fai."
+
+msgid ""
+"This network needs a user name: connect it once from the GNOME Settings, Wi-"
+"Fi page."
+msgstr ""
+"Questa rete chiede un nome utente: collegala una volta dalle Impostazioni di"
+" GNOME, pagina Wi-Fi."
+
+msgid "Password of {network}"
+msgstr "Password di {network}"
+
+msgid "The password was not right. Write it again."
+msgstr "La password non era giusta. Scrivila di nuovo."
+
+msgid "Write the password of the network, then Enter."
+msgstr "Scrivi la password della rete, poi Invio."
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Connect"
+msgstr "Collega"
+
+msgid ""
+"Write the name of the network and its password. Leave the password empty for"
+" an open network."
+msgstr ""
+"Scrivi il nome della rete e la sua password. Lascia vuota la password per "
+"una rete aperta."
+
+msgid "Name of the network"
+msgstr "Nome della rete"
+
+msgid "Connecting to {network}."
+msgstr "Mi collego a {network}."
+
+msgid "Not connected: {error}"
+msgstr "Non collegato: {error}"
+
+msgid "Connected to {network}."
+msgstr "Collegato a {network}."
+
+msgid ""
+"Not connected to {network}: the password may be wrong, or the network is too"
+" far."
+msgstr ""
+"Non collegato a {network}: la password forse è sbagliata, o la rete è troppo"
+" lontana."
+
+msgid "Not connected to {network}: the network is too far or does not answer."
+msgstr "Non collegato a {network}: la rete è troppo lontana o non risponde."
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Forget"
+msgstr "Dimentica"
+
+msgid "Disconnect"
+msgstr "Scollega"
+
+msgid "Disconnected from {network}."
+msgstr "Scollegato da {network}."
+
+msgid "{network} forgotten: the password is no longer saved."
+msgstr "{network} dimenticata: la password non è più salvata."
+
+msgid "My devices"
+msgstr "I miei dispositivi"
+
+msgid "Enter connects or disconnects."
+msgstr "Invio collega o scollega."
+
+msgid "New devices"
+msgstr "Dispositivi nuovi"
+
+msgid "Put the device in pairing mode, then Search for devices."
+msgstr ""
+"Metti il dispositivo in modalità di abbinamento, poi Cerca dispositivi."
+
+msgid "Search for devices"
+msgstr "Cerca dispositivi"
+
+msgid "Search for new devices for 30 seconds (F5)"
+msgstr "Cerca dispositivi nuovi per 30 secondi (F5)"
+
+msgid "Bluetooth cannot be read: the Bluetooth service does not answer."
+msgstr ""
+"Non riesco a leggere il Bluetooth: il servizio Bluetooth non risponde."
+
+msgid "No device paired yet."
+msgstr "Ancora nessun dispositivo abbinato."
+
+msgid "Bluetooth did not change: {error}"
+msgstr "Il Bluetooth non è cambiato: {error}"
+
+msgid "Bluetooth on."
+msgstr "Bluetooth acceso."
+
+msgid "Bluetooth off."
+msgstr "Bluetooth spento."
+
+msgid "Turn Bluetooth on first."
+msgstr "Prima accendi il Bluetooth."
+
+msgid "Searching for devices for 30 seconds. Put the device in pairing mode."
+msgstr ""
+"Cerco dispositivi per 30 secondi. Metti il dispositivo in modalità di "
+"abbinamento."
+
+msgid "Found: {devices}."
+msgstr "Trovato: {devices}."
+
+msgid "Search finished: {count} new device."
+msgid_plural "Search finished: {count} new devices."
+msgstr[0] "Ricerca finita: {count} dispositivo nuovo."
+msgstr[1] "Ricerca finita: {count} dispositivi nuovi."
+
+msgid "Pairing {device}."
+msgstr "Abbino {device}."
+
+msgid "{device} not paired. {error}"
+msgstr "{device} non abbinato. {error}"
+
+msgid "{device} paired and connected."
+msgstr "{device} abbinato e collegato."
+
+msgid "Remove"
+msgstr "Rimuovi"
+
+msgid "{device} removed."
+msgstr "{device} rimosso."
+
+msgid "Connecting {device}."
+msgstr "Collego {device}."
+
+msgid "Disconnecting {device}."
+msgstr "Scollego {device}."
+
+msgid "{device} connected."
+msgstr "{device} collegato."
+
+msgid "{device} disconnected."
+msgstr "{device} scollegato."
+
+msgid "Same code?"
+msgstr "Stesso codice?"
+
+msgid ""
+"{device} shows the code {code}? If it is the same, choose Yes, then confirm "
+"on the device too."
+msgstr ""
+"{device} mostra il codice {code}? Se è lo stesso, scegli Sì, poi conferma "
+"anche sul dispositivo."
+
+msgid "No"
+msgstr "No"
+
+msgid "Yes"
+msgstr "Sì"
+
+msgid "Code of {device}"
+msgstr "Codice di {device}"
+
+msgid ""
+"Write the code of the device, often 0000 or 1234, or the one written in its "
+"manual."
+msgstr ""
+"Scrivi il codice del dispositivo, spesso 0000 o 1234, oppure quello scritto "
+"nel manuale."
+
+msgid "Code"
+msgstr "Codice"
+
+msgid "Pair"
+msgstr "Abbina"
+
+msgid "Type {code} on {device}, then Enter."
+msgstr "Scrivi {code} sulla tastiera {device}, poi Invio."
+
+msgid "The pairing was cancelled."
+msgstr "L'abbinamento è stato annullato."
+
+msgid "excellent signal"
+msgstr "segnale ottimo"
+
+msgid "good signal"
+msgstr "segnale buono"
+
+msgid "fair signal"
+msgstr "segnale discreto"
+
+msgid "weak signal"
+msgstr "segnale debole"
+
+msgid "headset"
+msgstr "cuffie con microfono"
+
+msgid "headphones"
+msgstr "cuffie"
+
+msgid "speaker"
+msgstr "altoparlante"
+
+msgid "keyboard"
+msgstr "tastiera"
+
+msgid "mouse"
+msgstr "mouse"
+
+msgid "graphics tablet"
+msgstr "tavoletta grafica"
+
+msgid "game controller"
+msgstr "controller di gioco"
+
+msgid "phone"
+msgstr "telefono"
+
+msgid "computer"
+msgstr "computer"
+
+msgid "printer"
+msgstr "stampante"
+
+msgid "camera"
+msgstr "fotocamera"
+
+msgid "music player"
+msgstr "lettore musicale"
+
+msgid "screen"
+msgstr "schermo"
+
+msgid "Braille display"
+msgstr "display Braille"
+
+msgid "device"
+msgstr "dispositivo"
+
+msgid "connected"
+msgstr "collegato"
+
+msgid "paired, not connected"
+msgstr "abbinato, non collegato"
+
+msgid "new"
+msgstr "nuovo"
+
+msgid "battery {percent}%"
+msgstr "batteria {percent}%"
+
+msgid "There is no Bluetooth in this computer."
+msgstr "Questo computer non ha il Bluetooth."
+
+msgid "Bluetooth is off."
+msgstr "Bluetooth spento."
+
+msgid "Bluetooth is on, nothing connected."
+msgstr "Bluetooth acceso, niente collegato."
+
+msgid "Bluetooth is on, connected: {devices}."
+msgstr "Bluetooth acceso, collegato: {devices}."
+
+msgid "The pairing failed: the code was wrong or not confirmed."
+msgstr ""
+"L'abbinamento non è riuscito: il codice era sbagliato o non confermato."
+
+msgid "The device refused the pairing."
+msgstr "Il dispositivo ha rifiutato l'abbinamento."
+
+msgid ""
+"The device did not answer in time: put it in pairing mode and try again."
+msgstr ""
+"Il dispositivo non ha risposto in tempo: mettilo in modalità di abbinamento "
+"e riprova."
+
+msgid "The device cannot be reached: is it on and near?"
+msgstr "Il dispositivo non si raggiunge: è acceso e vicino?"
+
+msgid "The device is already paired."
+msgstr "Il dispositivo è già abbinato."
+
+msgid "Wait: the device is already connecting."
+msgstr "Aspetta: il dispositivo si sta già collegando."
+
+msgid "Bluetooth is not ready: turn it on."
+msgstr "Il Bluetooth non è pronto: accendilo."
+
+msgid ""
+"The device did not connect: is it on, near, and not connected to another "
+"device?"
+msgstr ""
+"Il dispositivo non si è collegato: è acceso, vicino, e non collegato a un "
+"altro apparecchio?"
+
+msgid "Refused"
+msgstr "Rifiutato"
+
+msgid "Cancelled"
+msgstr "Annullato"
+
+msgctxt "network"
+msgid "connected"
+msgstr "in uso"
+
+msgctxt "network"
+msgid "saved"
+msgstr "salvata"
+
+msgid "open, not protected"
+msgstr "aperta, non protetta"
+
+msgid "open, encrypted"
+msgstr "aperta, cifrata"
+
+msgid "old protection (WEP)"
+msgstr "protezione vecchia (WEP)"
+
+msgid "protected with a user name"
+msgstr "protetta con nome utente"
+
+msgid "protected"
+msgstr "protetta"
+
+msgid "There is no Wi-Fi card."
+msgstr "Non c'è una scheda Wi-Fi."
+
+msgid "Wi-Fi is turned off by a switch or by the airplane mode."
+msgstr "Il Wi-Fi è spento da un interruttore o dalla modalità aereo."
+
+msgid "Wi-Fi is off."
+msgstr "Wi-Fi spento."
+
+msgid "Connected to {network}, {signal}."
+msgstr "Collegato a {network}, {signal}."
+
+msgid "Wi-Fi is on, not connected."
+msgstr "Wi-Fi acceso, non collegato."

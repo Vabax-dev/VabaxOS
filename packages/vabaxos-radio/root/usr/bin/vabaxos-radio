@@ -1,0 +1,299 @@
+#!/usr/bin/python3
+"""Radio over the Internet, from the keyboard.
+
+    vabaxos-radio
+
+At the start: your favourite stations, then the most listened in Italy.
+Write in the search field a name (Radio Deejay) or a kind (jazz, news):
+the stations arrive and the voice says how many; "All the world" searches
+everywhere. Enter plays a station. While it plays: Ctrl+P stops and plays
+again, Ctrl+I says the song on air (when the station sends it), Ctrl+Up
+and Ctrl+Down change the volume, Ctrl+D adds or removes the favourite.
+Escape clears the search, then closes.
+"""
+
+import gettext
+import sys
+import threading
+
+import vabaxos_radio as vr
+
+gettext.textdomain("vabaxos-radio")
+_ = gettext.gettext
+
+VOLUME_STEP = 0.1
+
+
+def present(text):
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca1.Service", "/org/gnome/Orca1/Service", "org.gnome.Orca1.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - shown in the window anyway
+        pass
+
+
+class Player:
+    """GStreamer's playbin for a live stream: play, stop, volume, the song
+    on air from the stream's tags, errors."""
+
+    def __init__(self, on_error=None):
+        import gi
+        gi.require_version("Gst", "1.0")
+        from gi.repository import Gst
+        Gst.init(None)
+        self.Gst = Gst
+        self.bin = Gst.ElementFactory.make("playbin", "vabaxos-radio")
+        self.playing = False
+        self.title = ""
+        self.on_error = on_error
+        bus = self.bin.get_bus()
+        bus.add_signal_watch()
+        bus.connect("message", self._message)
+
+    def _message(self, _bus, message):
+        Gst = self.Gst
+        if message.type == Gst.MessageType.TAG:
+            ok, title = message.parse_tag().get_string(Gst.TAG_TITLE)
+            if ok and title:
+                self.title = title
+        elif message.type == Gst.MessageType.ERROR:
+            self.stop()
+            if self.on_error:
+                self.on_error(message.parse_error()[0].message)
+
+    def play(self, url):
+        self.bin.set_state(self.Gst.State.NULL)
+        self.title = ""
+        self.bin.set_property("uri", url)
+        self.bin.set_state(self.Gst.State.PLAYING)
+        self.playing = True
+
+    def stop(self):
+        self.bin.set_state(self.Gst.State.NULL)
+        self.playing = False
+
+    @property
+    def volume(self):
+        return self.bin.get_property("volume")
+
+    @volume.setter
+    def volume(self, value):
+        self.bin.set_property("volume", max(0.0, min(1.5, value)))
+
+
+def window_classes(speak=present, catalog=vr, player_class=Player, favourites_path=None):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gdk, GLib, Gtk
+
+    def run(work, done):
+        def thread():
+            try:
+                result = work()
+            except Exception as error:  # noqa: BLE001 - said to the user
+                result = error
+            GLib.idle_add(lambda: done(result) and False)
+        threading.Thread(target=thread, daemon=True).start()
+
+    class RadioWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Radio"))
+            self.set_default_size(680, 680)
+            self.player = None
+            self.current = None
+            self.generation = 0
+            self.favourites = catalog.load(favourites_path)
+            self.results, self.rows = [], []
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+            top = Adw.PreferencesGroup(description=_("Write a name or a kind, for example jazz or news. Down arrow "
+                                                     "goes to the stations, Enter plays."))
+            self.entry = Gtk.SearchEntry(placeholder_text=_("Search a station"))
+            self.entry.update_property([Gtk.AccessibleProperty.LABEL], [_("Search a station")])
+            self.entry.set_search_delay(600)
+            self.entry.connect("search-changed", lambda *_a: self.search())
+            keys = Gtk.EventControllerKey()
+            keys.connect("key-pressed", self.entry_key)
+            self.entry.add_controller(keys)
+            top.add(self.entry)
+            self.world = Adw.SwitchRow(title=_("All the world"), subtitle=_("Off: only Italian stations"))
+            self.world.connect("notify::active", lambda *_a: self.search())
+            top.add(self.world)
+            self.now = Adw.ActionRow(title=_("Nothing playing."), title_lines=0)
+            self.now.set_focusable(True)
+            top.add(self.now)
+            page.add(top)
+            self.fav_group = Adw.PreferencesGroup(title=_("Favourites"),
+                                                  description=_("Ctrl+D adds the station playing."))
+            page.add(self.fav_group)
+            self.list_group = Adw.PreferencesGroup(title=_("Stations"))
+            page.add(self.list_group)
+            self.fav_rows = []
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            shortcuts = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            for accel, action in (("<Control>p", self.toggle), ("<Control>i", self.say_title),
+                                  ("<Control>Up", lambda: self.change_volume(1)),
+                                  ("<Control>Down", lambda: self.change_volume(-1)),
+                                  ("<Control>d", self.toggle_favourite), ("<Control>f", self.entry.grab_focus),
+                                  ("Escape", self.escape)):
+                shortcuts.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(accel),
+                                                        Gtk.CallbackAction.new(lambda *_a, a=action: a() or True)))
+            self.add_controller(shortcuts)
+            self.connect("close-request", lambda *_a: self.player and self.player.stop() or False)
+            self.Gdk = Gdk
+            self.fill_favourites()
+            self.search()
+            GLib.idle_add(lambda: self.entry.grab_focus() and False)
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        def country(self):
+            return "" if self.world.get_active() else "IT"
+
+        # -- lists -------------------------------------------------------------
+
+        def station_row(self, station, group):
+            row = Adw.ActionRow(title=station.name, subtitle=station.describe()[len(station.name) + 2:],
+                                activatable=True)
+            row.connect("activated", lambda *_a, s=station: self.play(s))
+            group.add(row)
+            return row
+
+        def fill_favourites(self):
+            for row in self.fav_rows:
+                self.fav_group.remove(row)
+            self.fav_rows = [self.station_row(s, self.fav_group) for s in self.favourites]
+            self.fav_group.set_visible(bool(self.favourites))
+
+        def search(self):
+            self.generation += 1
+            generation = self.generation
+            words, country = self.entry.get_text(), self.country()
+            self.list_group.set_description(_("Searching…"))
+            run(lambda: catalog.search(words, country), lambda found: self.show(found, generation, words))
+
+        def show(self, found, generation, words):
+            if generation != self.generation:
+                return
+            for row in self.rows:
+                self.list_group.remove(row)
+            self.rows = []
+            if isinstance(found, Exception):
+                self.list_group.set_description(_("The catalog of the stations does not answer: is Internet "
+                                                  "connected?"))
+                self.say(self.list_group.get_description())
+                return
+            self.results = found
+            self.rows = [self.station_row(s, self.list_group) for s in found]
+            if not words.strip():
+                text = _("The most listened stations.") if self.world.get_active() else \
+                    _("The most listened Italian stations.")
+                self.list_group.set_description(text)
+                return
+            text = gettext.ngettext("{count} station found.", "{count} stations found.",
+                                    len(found)).format(count=len(found)) if found else \
+                _("No station found for \"{words}\".").format(words=words.strip())
+            self.list_group.set_description(text)
+            self.say(text)
+
+        def entry_key(self, _controller, keyval, _code, _state):
+            if keyval == self.Gdk.KEY_Down:
+                rows = self.fav_rows + self.rows if not self.entry.get_text() else self.rows
+                if rows:
+                    rows[0].grab_focus()
+                    return True
+            return False
+
+        def escape(self):
+            if self.entry.get_text():
+                self.entry.set_text("")
+                self.entry.grab_focus()
+            else:
+                self.close()
+
+        # -- playing -------------------------------------------------------
+
+        def play(self, station):
+            if self.player is None:
+                self.player = player_class(on_error=lambda message: GLib.idle_add(self.failed, message))
+            self.player.play(station.url)
+            self.current = station
+            self.now.set_title(_("Playing: {station}").format(station=station.name))
+            self.say(_("{station}.").format(station=station.name))
+            threading.Thread(target=catalog.clicked, args=(station,), daemon=True).start()
+
+        def failed(self, message):
+            name = self.current.name if self.current else ""
+            self.now.set_title(_("Nothing playing."))
+            self.say(_("{station} does not answer: try another station.").format(station=name))
+            return False
+
+        def toggle(self):
+            if self.current is None or self.player is None:
+                self.say(_("Choose a station first."))
+                return
+            if self.player.playing:
+                self.player.stop()
+                self.now.set_title(_("Stopped: {station}").format(station=self.current.name))
+                self.say(_("Stopped."))
+            else:
+                self.play(self.current)
+
+        def say_title(self):
+            if self.current is None or self.player is None or not self.player.playing:
+                self.say(_("Nothing playing."))
+            elif self.player.title:
+                self.say(_("On air: {title}").format(title=self.player.title))
+            else:
+                self.say(_("{station} does not say the song on air.").format(station=self.current.name))
+
+        def change_volume(self, step):
+            if self.player is None:
+                return
+            self.player.volume = self.player.volume + step * VOLUME_STEP
+            self.say(_("Volume {percent} percent.").format(percent=round(self.player.volume * 100)))
+
+        def toggle_favourite(self):
+            if self.current is None:
+                self.say(_("Choose a station first."))
+                return
+            uuids = [s.uuid for s in self.favourites]
+            if self.current.uuid in uuids:
+                self.favourites = [s for s in self.favourites if s.uuid != self.current.uuid]
+                text = _("{station} removed from the favourites.")
+            else:
+                self.favourites.append(self.current)
+                text = _("{station} added to the favourites.")
+            catalog.save(self.favourites, favourites_path)
+            self.fill_favourites()
+            self.say(text.format(station=self.current.name))
+
+    class RadioApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Radio")
+            self.connect("activate", lambda app: (app.get_active_window() or RadioWindow(app)).present())
+
+    return RadioApp, RadioWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

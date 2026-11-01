@@ -1,0 +1,137 @@
+# Italian translation of vabaxos-games.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-games\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Audio games"
+msgstr "Giochi audio"
+
+msgid "Games"
+msgstr "Giochi"
+
+msgid "Arrows to choose, Enter to play."
+msgstr "Frecce per scegliere, Invio per giocare."
+
+msgid "Sound memory"
+msgstr "Memory dei suoni"
+
+msgid "Repeat the notes with the keys 1 to 4"
+msgstr "Ripeti le note con i tasti da 1 a 4"
+
+msgid "Guess the number"
+msgstr "Indovina il numero"
+
+msgid "From 1 to 100: higher or lower"
+msgstr "Da 1 a 100: più alto o più basso"
+
+msgid "Tic-tac-toe"
+msgstr "Tris"
+
+msgid "Against the computer, keys 1 to 9"
+msgstr "Contro il computer, tasti da 1 a 9"
+
+msgid "Your number"
+msgstr "Il tuo numero"
+
+msgid ""
+"Sound memory. The notes are 1, 2, 3, 4, from low to high. Press Enter to "
+"start."
+msgstr ""
+"Memory dei suoni. Le note sono 1, 2, 3, 4, dalla più bassa alla più alta. "
+"Premi Invio per cominciare."
+
+msgid "I thought of a number from 1 to 100. Write a number, then Enter."
+msgstr "Ho pensato un numero da 1 a 100. Scrivi un numero, poi Invio."
+
+msgid ""
+"Tic-tac-toe. You are X. Keys 1 to 9 as on the number pad: 7, 8, 9 the top "
+"row. R reads the board."
+msgstr ""
+"Tris. Tu sei X. Tasti da 1 a 9 come sul tastierino numerico: 7, 8, 9 la riga"
+" in alto. R legge la griglia."
+
+msgid "Games."
+msgstr "Giochi."
+
+msgid "Round {number}: listen."
+msgstr "Turno {number}: ascolta."
+
+msgid "Wrong. You remembered {score} note. Enter plays again."
+msgid_plural "Wrong. You remembered {score} notes. Enter plays again."
+msgstr[0] "Sbagliato. Hai ricordato {score} nota. Invio per giocare ancora."
+msgstr[1] "Sbagliato. Hai ricordato {score} note. Invio per giocare ancora."
+
+msgid "Write a number from 1 to 100."
+msgstr "Scrivi un numero da 1 a 100."
+
+msgid "{number}: higher."
+msgstr "{number}: più alto."
+
+msgid "{number}: lower."
+msgstr "{number}: più basso."
+
+msgid "Right, it is {number}! {tries} try. Write a number to play again."
+msgid_plural ""
+"Right, it is {number}! {tries} tries. Write a number to play again."
+msgstr[0] ""
+"Giusto, è {number}! {tries} tentativo. Scrivi un numero per giocare ancora."
+msgstr[1] ""
+"Giusto, è {number}! {tries} tentativi. Scrivi un numero per giocare ancora."
+
+msgid "top left"
+msgstr "in alto a sinistra"
+
+msgid "top centre"
+msgstr "in alto al centro"
+
+msgid "top right"
+msgstr "in alto a destra"
+
+msgid "middle left"
+msgstr "al centro a sinistra"
+
+msgid "centre"
+msgstr "al centro"
+
+msgid "middle right"
+msgstr "al centro a destra"
+
+msgid "bottom left"
+msgstr "in basso a sinistra"
+
+msgid "bottom centre"
+msgstr "in basso al centro"
+
+msgid "bottom right"
+msgstr "in basso a destra"
+
+msgid "Taken: {cell}."
+msgstr "Occupata: {cell}."
+
+msgid "X {cell}."
+msgstr "X {cell}."
+
+msgid "O {cell}."
+msgstr "O {cell}."
+
+msgid "You win! N plays again."
+msgstr "Hai vinto! N per giocare ancora."
+
+msgid "The computer wins. N plays again."
+msgstr "Vince il computer. N per giocare ancora."
+
+msgid "A draw. N plays again."
+msgstr "Pareggio. N per giocare ancora."
+
+msgid "empty"
+msgstr "vuota"

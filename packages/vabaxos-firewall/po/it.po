@@ -1,0 +1,92 @@
+# Italian translation of vabaxos-firewall.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-firewall\n"
+"PO-Revision-Date: 2026-11-01 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "No network in use."
+msgstr "Nessuna rete in uso."
+
+msgid "Not changed: {errors}"
+msgstr "Non cambiato: {errors}"
+
+msgid "{program} allowed in private networks."
+msgstr "{program} consentito nelle reti private."
+
+msgid "{program} blocked."
+msgstr "{program} bloccato."
+
+msgid "File sharing"
+msgstr "Condivisione dei file"
+
+msgid "Other computers open the folders you share (Windows and Mac too)"
+msgstr ""
+"Gli altri computer aprono le cartelle che condividi (anche Windows e Mac)"
+
+msgid "Remote desktop"
+msgstr "Desktop remoto"
+
+msgid "Someone you trust uses this computer from another one, to help you"
+msgstr "Una persona di fiducia usa questo computer da un altro, per aiutarti"
+
+msgid "Remote terminal (SSH)"
+msgstr "Terminale remoto (SSH)"
+
+msgid "Commands from another computer, for those who know them"
+msgstr "Comandi da un altro computer, per chi li conosce"
+
+msgid "Firewall off."
+msgstr "Firewall spento."
+
+msgid "Firewall on."
+msgstr "Firewall attivo."
+
+msgid "{name} is a public network"
+msgstr "{name} è una rete pubblica"
+
+msgid "{name} is a private network"
+msgstr "{name} è una rete privata"
+
+msgid "Private: home or work"
+msgstr "Privata: casa o lavoro"
+
+msgid "Public: café, hotel, train"
+msgstr "Pubblica: bar, albergo, treno"
+
+msgid "Firewall"
+msgstr "Firewall"
+
+msgid ""
+"Like in Windows: everything going out is allowed. In a private network "
+"devices, printers, shared folders and the phone are found; in a public one "
+"nothing comes in."
+msgstr ""
+"Come in Windows: tutto quello che esce è permesso. In una rete privata si "
+"trovano dispositivi, stampanti, cartelle condivise e il telefono; in una "
+"rete pubblica non entra niente."
+
+msgid "Kind of network: {name}"
+msgstr "Tipo di rete: {name}"
+
+msgid "Choose Public in places you do not know"
+msgstr "Scegli Pubblica nei luoghi che non conosci"
+
+msgid "{name} is now a public network."
+msgstr "{name} ora è una rete pubblica."
+
+msgid "{name} is now a private network."
+msgstr "{name} ora è una rete privata."
+
+msgid "The kind of network did not change: {error}"
+msgstr "Il tipo di rete non è cambiato: {error}"
+
+msgid "{program} did not change: {error}"
+msgstr "{program} non è cambiato: {error}"

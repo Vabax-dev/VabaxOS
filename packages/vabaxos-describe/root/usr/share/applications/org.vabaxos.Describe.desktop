@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Describe the picture
+Name[it]=Descrivi l'immagine
+Comment=What a picture shows, said without Internet (Super+Alt+P describes the window in use)
+Comment[it]=Cosa mostra un'immagine, detto senza Internet (Super+Alt+P descrive la finestra in uso)
+Exec=vabaxos-describe --keep %f
+Icon=image-x-generic-symbolic
+Terminal=false
+NoDisplay=true
+MimeType=image/png;image/jpeg;image/webp;image/gif;image/bmp;
+Categories=Utility;Accessibility;

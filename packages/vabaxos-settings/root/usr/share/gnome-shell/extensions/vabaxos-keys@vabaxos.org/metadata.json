@@ -1,7 +1,7 @@
 {
   "uuid": "vabaxos-keys@vabaxos.org",
   "name": "VabaxOS keys",
-  "description": "The Windows keys GNOME does not have: Super+T taskbar, Super+B notification area, Super+S Start menu, Super+Down minimize or restore, Super+Alt+D where am I, Alt+F4 on the desktop to shut down; new windows take the focus.",
+  "description": "The Start button of the taskbar, and the Windows keys GNOME does not have: Super+T taskbar, Super+B notification area, Super+S Start menu, Super+Down minimize or restore, Super+Alt+D where am I, Alt+F4 on the desktop to shut down; new windows take the focus.",
   "shell-version": [
     "50"
   ],

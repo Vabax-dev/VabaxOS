@@ -1,0 +1,70 @@
+# VabaxOS: speech in the initramfs, while the disk is locked (ADR-0021).
+# Sourced by askpass and by the local-bottom script; busybox sh.
+#
+# /etc/vabaxos-unlock.conf (written by the hook) sets VOICE, RATE and the
+# messages in the language of the system. The sound card is the first one
+# that is not HDMI; its volume comes from the state saved by the system
+# (alsactl), or from alsactl's defaults.
+
+ROOT="${VABAXOS_UNLOCK_ROOT:-}"
+# shellcheck source=/dev/null
+[ -r "$ROOT/etc/vabaxos-unlock.conf" ] && . "$ROOT/etc/vabaxos-unlock.conf"
+VOICE="${VOICE:-en}"
+RATE="${RATE:-175}"
+RUN="${VABAXOS_UNLOCK_RUN:-/run/vabaxos-unlock}"
+
+# The first playback device that is not HDMI, as plughw:CARD,DEVICE.
+# /proc/asound/pcm: "00-00: ALC257 Analog : ALC257 Analog : playback 1 : capture 1"
+vabaxos_device() {
+    pcm="${VABAXOS_UNLOCK_PCM:-/proc/asound/pcm}"
+    [ -r "$pcm" ] || return 1
+    line="$(grep 'playback' "$pcm" | grep -v -i 'hdmi\|displayport' | head -n 1)"
+    [ -n "$line" ] || line="$(grep 'playback' "$pcm" | head -n 1)"
+    [ -n "$line" ] || return 1
+    id="${line%%:*}"
+    card="${id%%-*}"
+    device="${id#*-}"
+    # Without leading zeros: "00" is 0, "08" is 8.
+    card="${card#"${card%%[!0]*}"}"
+    device="${device#"${device%%[!0]*}"}"
+    echo "plughw:${card:-0},${device:-0}"
+}
+
+# Sound drivers load by themselves (udev); the card can take a second or
+# two. Done once: the volumes are set, the device remembered.
+vabaxos_sound() {
+    mkdir -p "$RUN"
+    if [ -s "$RUN/device" ]; then
+        cat "$RUN/device"
+        return 0
+    fi
+    modprobe -q pcspkr 2>/dev/null || true
+    i=0
+    while ! device="$(vabaxos_device)"; do
+        i=$((i + 1))
+        [ "$i" -gt "${VABAXOS_UNLOCK_TRIES:-50}" ] && return 1
+        sleep 0.1
+    done
+    if [ -r "$ROOT/etc/vabaxos-unlock-asound.state" ]; then
+        alsactl -f "$ROOT/etc/vabaxos-unlock-asound.state" restore >/dev/null 2>&1 || alsactl init >/dev/null 2>&1
+    else
+        alsactl init >/dev/null 2>&1 || true
+    fi
+    echo "$device" > "$RUN/device"
+    echo "$device"
+}
+
+# Two short tones that say "the computer waits for you", different from the
+# beeps of the boot menu; the console bell too, for the PC speaker.
+vabaxos_beep() {
+    printf '\007' > "${VABAXOS_UNLOCK_CONSOLE:-/dev/console}" 2>/dev/null || true
+    [ -n "$1" ] && [ -r "$ROOT/usr/lib/vabaxos/unlock/ready.wav" ] &&
+        aplay -q -D "$1" "$ROOT/usr/lib/vabaxos/unlock/ready.wav" 2>/dev/null
+    return 0
+}
+
+vabaxos_say() {
+    [ -n "$1" ] || return 0
+    espeak-ng -v "$VOICE" -s "$RATE" --stdout -- "$2" 2>/dev/null | aplay -q -D "$1" 2>/dev/null
+    return 0
+}

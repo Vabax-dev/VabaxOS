@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Printers and scanners
+Name[it]=Stampanti e scanner
+Comment=Choose a printer, print a test page, scan a page and hear it read
+Comment[it]=Scegli una stampante, stampa una prova, scansiona un foglio e ascoltalo
+Exec=vabaxos-print
+Icon=printer-symbolic
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=printer;scanner;scan;print;stampante;scansione;stampa;

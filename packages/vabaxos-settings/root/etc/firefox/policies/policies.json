@@ -1,0 +1,45 @@
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "DontCheckDefaultBrowser": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "UserMessaging": {
+      "WhatsNew": false,
+      "ExtensionRecommendations": false,
+      "FeatureRecommendations": false,
+      "UrlbarInterventions": false,
+      "SkipOnboarding": true,
+      "MoreFromMozilla": false,
+      "Locked": false
+    },
+    "Permissions": {
+      "Autoplay": {
+        "Default": "block-audio",
+        "Locked": false
+      }
+    },
+    "Preferences": {
+      "accessibility.force_disabled": {
+        "Value": -1,
+        "Status": "default"
+      },
+      "accessibility.typeaheadfind.enablesound": {
+        "Value": false,
+        "Status": "default"
+      },
+      "browser.aboutwelcome.enabled": {
+        "Value": false,
+        "Status": "default"
+      },
+      "browser.tabs.warnOnClose": {
+        "Value": true,
+        "Status": "default"
+      },
+      "ui.prefersReducedMotion": {
+        "Value": 1,
+        "Status": "default"
+      }
+    }
+  }
+}

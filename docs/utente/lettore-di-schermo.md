@@ -11,7 +11,7 @@ La finestra **Impostazioni del lettore di schermo** raccoglie tutte le impostazi
 
 ## Le pagine
 
-- **Voce:** tipo di voce (eSpeak NG o la voce naturale Kokoro), velocità, tono, volume, il tono delle lettere maiuscole, le pause, il cambio di lingua automatico, il dizionario di pronuncia.
+- **Voce:** velocità, tono, volume, il tono delle lettere maiuscole, le pause, il cambio di lingua automatico, il dizionario di pronuncia.
 - **Lettura:** quanto dice Orca (breve o dettagliato), la punteggiatura, le maiuscole, i suggerimenti d'uso, le descrizioni, la posizione negli elenchi («3 di 10»), i numeri cifra per cifra, le righe vuote, il rientro.
 - **Scrittura:** l'eco di tasti, caratteri, parole e frasi, e quali tasti vengono detti.
 - **Documenti e web:** lettura automatica della pagina, riassunto, modalità navigazione e modalità focus, tasti rapidi (H titoli, K collegamenti e gli altri), lettura continua, punti di riferimento, elenchi, tabelle, moduli.
@@ -37,3 +37,12 @@ Con **Impostazioni per** scegli un programma, per esempio il Terminale: da quel 
 ## Portare le impostazioni su un altro computer
 
 Nel menu della finestra: **Esporta le impostazioni su un file** e **Importa le impostazioni da un file**. Il file contiene tutti i profili e le impostazioni per programma.
+
+## La pronuncia
+
+Alcune parole il lettore di schermo le legge male: sigle, nomi stranieri. **Pronuncia del lettore di schermo**, nel menu Start, ha l'elenco delle parole con come si dicono:
+
+- su ogni parola, **Ascolta** e **Elimina**;
+- in alto, **Parola** e **Come si dice**, poi **Aggiungi** (o Invio nel secondo campo).
+
+Le modifiche valgono subito. VabaxOS parte con le sigle più comuni lette lettera per lettera: txt, PDF, USB, HTML, CPU e altre. Le sigle che in italiano si dicono come una parola, come IVA, SPID e ZIP, restano come sono.

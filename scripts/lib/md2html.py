@@ -16,8 +16,8 @@ import os
 import re
 import sys
 
-ORDER = ["menu-di-avvio", "benvenuto", "voce", "lettore-di-schermo", "configurazione", "desktop", "tasti", "tasti-orca", "navigazione", "menu-start",
-         "lettore", "installazione", "aggiornamenti"]
+ORDER = ["menu-di-avvio", "benvenuto", "voce", "lettore-di-schermo", "configurazione", "desktop", "tasti", "lezioni", "tasti-orca", "navigazione", "notifiche", "riconoscimento-del-testo", "immagini", "braille", "dettatura", "menu-start",
+         "lettore", "libri", "traduzione", "fotocamera", "notizie", "radio", "matematica", "stampa", "wifi-bluetooth", "negozio", "suoni-lettore", "ingrandimento", "promemoria", "agenda", "internet", "messaggi", "giochi", "installazione", "aggiornamenti", "ripristino", "controllo", "qualcosa-non-va", "firewall"]
 REPO_URL = "https://github.com/Vabax-dev/VabaxOS/blob/main/"
 STYLE = """body { font-family: "Atkinson Hyperlegible Next", sans-serif; font-size: 1.15rem;
   line-height: 1.6; max-width: 46rem; margin: 2rem auto; padding: 0 1rem;

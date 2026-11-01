@@ -63,3 +63,8 @@ La sezione **Programmi di Windows** installa Bottles, che fa funzionare molti pr
 - Wi-Fi e Bluetooth si gestiscono nelle Impostazioni (Wi-Fi, Bluetooth), che si aprono dal menu Start. Da terminale, per il Wi-Fi: `nmtui`, letto da Orca.
 - Le cuffie e gli altoparlanti Bluetooth funzionano come quelli con il cavo: il suono, e quindi la voce, passa a loro quando si collegano.
 - Nel sistema live la sospensione automatica è spenta: la voce deve restare sempre disponibile.
+
+## Messaggi a voce
+
+- Quando il desktop è pronto e il lettore di schermo parla, VabaxOS dice **«VabaxOS è pronto»**. Se il lettore di schermo è spento, non dice niente.
+- Sul portatile, quando la batteria scende al **10 per cento**, VabaxOS lo dice una volta: «Batteria al 10 per cento. Collega il caricatore». L'avviso torna solo dopo aver ricaricato.

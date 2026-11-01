@@ -40,7 +40,14 @@ printf 'export SOURCE_DATE_EPOCH=%s\n' "$SOURCE_DATE_EPOCH" > config/all
 #   Speakup reads and the spoken welcome uses (ADR-0016).
 # - systemd.show_status=error: on the console only failures, no "start job
 #   is running" lines over the welcome; failures are still read aloud.
+#
+# APT options: the Release files of a snapshot expire about a week after
+# its date. config/archives/snapshot.conf.chroot covers the chroot, but the
+# installer step lists the udebs with an APT configuration of its own
+# (APT_CONFIG in "localArchive"), which reads only these options; the
+# first two are live-build's defaults.
 lb config noauto \
+    --apt-options "--yes -o Acquire::Retries=5 -o Acquire::Check-Valid-Until=false" \
     --mode debian \
     --distribution "$VABAXOS_DISTRIBUTION" \
     --architecture amd64 \

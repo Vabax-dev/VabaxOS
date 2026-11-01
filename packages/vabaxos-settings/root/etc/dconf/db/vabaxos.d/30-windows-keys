@@ -17,6 +17,8 @@ switch-windows-backward=['<Shift><Alt>Tab']
 switch-applications=@as []
 switch-applications-backward=@as []
 show-desktop=['<Super>d', '<Super>m']
+# Super+H is dictation, as in Windows (vabaxos-keys); Super+Down minimizes.
+minimize=@as []
 panel-run-dialog=['<Alt>F2', '<Super>r']
 switch-to-workspace-left=['<Super><Control>Left', '<Super>Page_Up', '<Control><Alt>Left']
 switch-to-workspace-right=['<Super><Control>Right', '<Super>Page_Down', '<Control><Alt>Right']

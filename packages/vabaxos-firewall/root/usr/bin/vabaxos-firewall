@@ -1,0 +1,94 @@
+#!/usr/bin/python3
+"""The VabaxOS firewall, from the terminal (ADR-0021).
+
+    vabaxos-firewall                  the state: on or off, and the kind of
+                                      each network in use
+    vabaxos-firewall --short          only on or off (vabaxos-status)
+    vabaxos-firewall private          the networks in use are private
+                                      (home, work)
+    vabaxos-firewall public           the networks in use are public
+                                      (café, hotel, train)
+    vabaxos-firewall allow PROGRAM    allow a program in private networks:
+    vabaxos-firewall block PROGRAM    samba (file sharing), rdp (remote
+                                      desktop), ssh (remote terminal)
+
+The same choices are in the VabaxOS setup, Network page. Like Windows:
+everything going out is allowed; coming in, a private network lets
+devices, printers, shared folders and the phone be found, a public one
+lets nothing in.
+"""
+
+import gettext
+import sys
+
+gettext.textdomain("vabaxos-firewall")
+_ = gettext.gettext
+
+import vabaxos_firewall as fw  # noqa: E402
+
+
+def state(firewall=None, networks=None):
+    firewall = firewall or fw.Firewall()
+    running = firewall.running()
+    default = firewall.default_zone() if running else fw.DEFAULT_ZONE
+    try:
+        networks = networks or fw.Networks()
+        kinds = networks.kinds(default)
+    except Exception:  # noqa: BLE001 - no NetworkManager
+        kinds = []
+    return fw.describe(running, kinds)
+
+
+def main(argv, firewall=None, networks=None):
+    if argv == ["--short"]:
+        firewall = firewall or fw.Firewall()
+        print(fw.describe(firewall.running(), []))
+        return 0
+    if not argv or argv[0] == "status":
+        print(state(firewall, networks))
+        return 0
+    command = argv[0]
+    if command in ("-h", "--help"):
+        print(__doc__)
+        return 0
+    if command in ("private", "public"):
+        networks = networks or fw.Networks()
+        active = networks.active()
+        if not active:
+            print(_("No network in use."))
+            return 1
+        from gi.repository import GLib
+        loop = GLib.MainLoop()
+        pending = [len(active)]
+        failed = []
+
+        def done(ok, error, name):
+            if not ok:
+                failed.append(f"{name}: {error}")
+            pending[0] -= 1
+            if pending[0] == 0:
+                loop.quit()
+        for connection, name, _zone in active:
+            networks.set_kind(connection, command, lambda ok, error, n=name: done(ok, error, n))
+        if pending[0]:
+            loop.run()
+        if failed:
+            print(_("Not changed: {errors}").format(errors="; ".join(failed)))
+            return 1
+        print(state(firewall, networks))
+        return 0
+    if command in ("allow", "block") and len(argv) > 1 and argv[1] in fw.APP_SERVICES:
+        firewall = firewall or fw.Firewall()
+        firewall.set_allowed(argv[1], command == "allow")
+        names = {service: title() for service, title, _d in fw.APPS}
+        if command == "allow":
+            print(_("{program} allowed in private networks.").format(program=names[argv[1]]))
+        else:
+            print(_("{program} blocked.").format(program=names[argv[1]]))
+        return 0
+    print(__doc__)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

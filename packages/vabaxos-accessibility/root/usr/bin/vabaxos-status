@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-"""Says the state of the computer: time, battery, network, Bluetooth, volume.
+"""Says the state of the computer: time, battery, network, firewall, Bluetooth, volume.
 
-    vabaxos-status [all|time|battery|network|bluetooth|volume]
+    vabaxos-status [all|time|battery|network|firewall|bluetooth|volume]
 
 Bound to Super+Alt+I in the desktop (vabaxos-settings). The answer is a
 desktop notification, which Orca reads wherever the focus is, and is also
@@ -93,8 +93,13 @@ def volume_text():
     return _("Volume {level} percent.").format(level=level)
 
 
+def firewall_text():
+    """On or off (vabaxos-firewall, ADR-0021); nothing without it."""
+    return output("vabaxos-firewall", "--short").strip()
+
+
 PARTS = {"time": time_text, "battery": battery_text, "network": network_text,
-         "bluetooth": bluetooth_text, "volume": volume_text}
+         "firewall": firewall_text, "bluetooth": bluetooth_text, "volume": volume_text}
 
 
 def notify(text):

@@ -6,8 +6,10 @@ Priority: optional
 Depends: python3, python3-numpy, python3-onnxruntime, libespeak-ng1, libsonic0, libpulse0, espeak-ng, speech-dispatcher, speech-dispatcher-espeak-ng, init-system-helpers
 Description: Natural voices for VabaxOS (Kokoro)
  Kokoro, a natural-sounding neural voice, for Orca and every program that
- speaks through Speech Dispatcher (ADR-0019). At boot vabaxos-voice-select
- measures the computer: if it is fast enough, Kokoro becomes the desktop
- voice, with the fastest voice of each language; otherwise eSpeak NG stays.
- Speed comes from Sonic, so words stay clear when speaking fast. Phrases
- already said are cached, and speech stops at once on every key.
+ speaks through Speech Dispatcher (ADR-0019), chosen by the user (ADR-0030):
+ the program Natural voice downloads the model (about 350 MB, checked with
+ SHA-256), plays an example, measures this computer and says whether it is
+ fast enough, and turns it on for Orca. eSpeak NG stays the desktop voice;
+ without the model Kokoro's module speaks with eSpeak NG. Speed comes from
+ Sonic, the first words of long sentences start at once, phrases already
+ said are cached, and speech stops at once on every key.

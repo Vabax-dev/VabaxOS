@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=System restore
+Name[it]=Ripristino del sistema
+Comment=Back to how the system was before an update that broke something
+Comment[it]=Torna a com'era il sistema prima di un aggiornamento che ha rotto qualcosa
+Exec=vabaxos-restore
+Icon=document-revert-symbolic
+Terminal=false
+Categories=System;Settings;
+Keywords=restore;backup;snapshot;timeshift;ripristino;copia;

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Audio games
+Name[it]=Giochi audio
+Comment=Sound memory, guess the number and tic-tac-toe, with the keyboard and the voice
+Comment[it]=Memory dei suoni, indovina il numero e tris, con la tastiera e la voce
+Exec=vabaxos-games
+Icon=applications-games-symbolic
+Terminal=false
+Categories=Game;
+Keywords=games;audio;memory;tic-tac-toe;giochi;tris;

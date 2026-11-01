@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""Called by scripts/build-packages.sh with the package tree: the tones of
+dictation, usr/share/vabaxos/dictation/start.wav (rising: speak now) and
+stop.wav (falling: writing)."""
+
+import math
+import os
+import struct
+import sys
+import wave
+
+RATE = 22050
+
+
+def tone(freq, seconds, volume=0.4):
+    count = int(RATE * seconds)
+    fade = int(RATE * 0.01)
+    return [int(32767 * volume * min(1.0, i / fade, (count - i) / fade) * math.sin(2 * math.pi * freq * i / RATE))
+            for i in range(count)]
+
+
+def save(path, samples):
+    with wave.open(path, "wb") as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(RATE)
+        out.writeframes(struct.pack(f"<{len(samples)}h", *samples))
+
+
+def main(tree):
+    folder = os.path.join(tree, "usr", "share", "vabaxos", "dictation")
+    os.makedirs(folder, exist_ok=True)
+    gap = [0] * int(RATE * 0.03)
+    save(os.path.join(folder, "start.wav"), tone(660, 0.08) + gap + tone(990, 0.1))
+    save(os.path.join(folder, "stop.wav"), tone(990, 0.08) + gap + tone(660, 0.1))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])

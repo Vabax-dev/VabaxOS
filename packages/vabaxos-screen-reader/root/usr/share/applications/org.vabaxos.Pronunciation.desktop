@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Screen reader pronunciation
+Name[it]=Pronuncia del lettore di schermo
+Comment=Words the screen reader reads badly, and how to say them
+Comment[it]=Le parole che il lettore di schermo legge male, e come dirle
+Exec=vabaxos-pronunciation
+Icon=preferences-desktop-accessibility-symbolic
+Terminal=false
+Categories=Settings;Accessibility;
+Keywords=pronunciation;dictionary;orca;pronuncia;dizionario;

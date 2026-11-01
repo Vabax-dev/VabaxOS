@@ -36,8 +36,17 @@ Il tasto **Super** è il tasto con il logo, quello che su Windows si chiama tast
 - **Super+L**: blocca lo schermo.
 - **Super+P**: gli schermi, per esempio un proiettore.
 - **Super+Spazio**: cambia la lingua della tastiera.
-- **Super+Alt+I**: VabaxOS dice lo stato del computer: ora, batteria, rete, Bluetooth, volume.
+- **Super+K**: Bluetooth: abbina e collega cuffie, altoparlanti, tastiere, display Braille. Vedi [Wi-Fi e Bluetooth](wifi-bluetooth.md).
+- **Super+Alt+I**: VabaxOS dice lo stato del computer: ora, batteria, rete, firewall, Bluetooth, volume.
 - **Super+Alt+D**: dove sei: il programma e la finestra, l'area di lavoro, quante finestre sono aperte. Vedi [Muoversi con la tastiera](navigazione.md).
+- **Super+Alt+N**: non disturbare, acceso o spento. Vedi [Le notifiche](notifiche.md).
+- **Super+Alt+A**: gli appuntamenti di oggi e di domani. Vedi [L'agenda](agenda.md).
+- **Super+Alt+T**: traduce il testo copiato con Ctrl+C, senza Internet. Vedi [Tradurre senza Internet](traduzione.md).
+- **Super+Alt+M**: dice a parole la formula copiata con Ctrl+C. Vedi [La matematica](matematica.md).
+- **Super+Alt+P**: descrive l'immagine della finestra in uso, senza Internet. Vedi [Descrivere le immagini](immagini.md).
+- **Super+H**: dettatura: parli e VabaxOS scrive dove c'è il cursore; di nuovo Super+H per finire. Vedi [La dettatura](dettatura.md).
+- **Super+Ctrl+L**: sottotitoli dal vivo di quello che il computer riproduce, per chi sente poco. Vedi [La dettatura](dettatura.md).
+- **Super+Alt+R**: legge il testo della finestra in uso anche dove Orca non trova niente; **Super+Alt+Maiusc+R** di tutto lo schermo. Vedi [Leggere il testo dello schermo](riconoscimento-del-testo.md).
 
 ## Copia, taglia e incolla
 
@@ -56,11 +65,12 @@ Funzionano come su Windows in tutti i programmi: **Ctrl+C** copia, **Ctrl+X** ta
 
 - **Super+Alt+S** oppure **Super+Ctrl+Invio**: accende e spegne Orca (su Windows, Super+Ctrl+Invio accende l'Assistente vocale).
 - **Super+Alt+8**: accende e spegne l'ingrandimento.
+- **Super+più** e **Super+meno**: ingrandisce e rimpicciolisce, come su Windows; **Super+Ctrl+C** alto contrasto; **Super+Ctrl+più** e **Super+Ctrl+meno** grandezza del testo. Vedi [Ingrandimento e contrasto](ingrandimento.md).
 - I tasti di Orca, come NVDA o JAWS, sono nella guida [I tasti di Orca](tasti-orca.md). **Super+Alt+O** apre le impostazioni del lettore di schermo.
 
 ## Cosa manca rispetto a Windows
 
-- La dettatura (Super+H su Windows), la trasmissione a uno schermo (Super+K), i widget (Super+W) e il menu dei collegamenti rapidi (Super+X) non ci sono ancora.
-- In VabaxOS **Super+H** riduce a icona la finestra, come in GNOME.
+- La trasmissione a uno schermo senza fili, i widget (Super+W) e il menu dei collegamenti rapidi (Super+X) non ci sono ancora.
+- **Super+K** apre il Bluetooth: su Windows apre anche la trasmissione a uno schermo.
 
 Tutti i tasti si possono cambiare in Impostazioni, Tastiera, Scorciatoie da tastiera.

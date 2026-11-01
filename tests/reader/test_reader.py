@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Tests for vabaxos-reader: documents, reading position, and the window.
 
-The window runs on a hidden Broadway display; with the Kokoro model
-(VABAXOS_KOKORO_DIR) it also reads the first sentence, into a file
-(VABAXOS_VOICE_RECORD), so nothing is heard.
+The window runs on a hidden Broadway display; with eSpeak NG (and with the
+Kokoro model, VABAXOS_KOKORO_DIR, when it is there) it also reads the first
+sentence, into a file (VABAXOS_VOICE_RECORD), so nothing is heard.
 
     python3 tests/reader/test_reader.py
 """
@@ -25,6 +25,7 @@ PROGRAM = os.path.join(ROOT, "usr", "bin", "vabaxos-reader")
 DATA = os.environ.get("VABAXOS_KOKORO_DIR", "")
 sys.path.insert(0, LIB)
 
+from vabaxos_reader import speech  # noqa: E402
 from vabaxos_reader.document import Document, ReadingState, read_paragraphs  # noqa: E402
 
 TEXT = "Primo paragrafo. Seconda frase del primo paragrafo.\n\nSecondo paragrafo, una sola frase.\n"
@@ -134,11 +135,88 @@ class DocumentTest(unittest.TestCase):
         self.assertEqual(again.position("/doc.txt"), 5)
         self.assertEqual([m["index"] for m in again.bookmarks("/doc.txt")], [3, 9])
 
+    def test_headings_markdown_html(self):
+        with open(self.path("a.md"), "w", encoding="utf-8") as f:
+            f.write("# Capitolo uno\nTesto del primo.\n\n## Sezione\nAltro testo.\n")
+        doc = Document.open(self.path("a.md"))
+        self.assertEqual(doc.headings, [(0, 1, "Capitolo uno"), (2, 2, "Sezione")])
+        self.assertEqual(doc.next_heading(0, 1), (2, 2, "Sezione"))
+        self.assertIsNone(doc.next_heading(0, -1))
+        with open(self.path("a.html"), "w", encoding="utf-8") as f:
+            f.write("<body><nav><a>indice</a></nav><h1>Titolo</h1><p>Uno. Due.</p><h2>Sotto</h2><p>Tre.</p></body>")
+        doc = Document.open(self.path("a.html"))
+        self.assertEqual(doc.paragraphs, ["Titolo", "Uno. Due.", "Sotto", "Tre."])
+        self.assertEqual(doc.heading_sentence(doc.headings[1]), 2)  # "Uno. Due." is one sentence
+
+    def test_odt(self):
+        import zipfile
+        content = ('<?xml version="1.0"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:'
+                   'xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"><office:body>'
+                   '<office:text><text:h text:outline-level="1">Introduzione</text:h><text:p>Primo.</text:p>'
+                   '<text:list><text:list-item><text:p>Voce</text:p></text:list-item></text:list>'
+                   '<text:h text:outline-level="2">Dettagli</text:h><text:p>Fine.</text:p></office:text>'
+                   '</office:body></office:document-content>')
+        with zipfile.ZipFile(self.path("a.odt"), "w") as archive:
+            archive.writestr("content.xml", content)
+        doc = Document.open(self.path("a.odt"))
+        self.assertEqual(doc.paragraphs, ["Introduzione", "Primo.", "Voce", "Dettagli", "Fine."])
+        self.assertEqual(doc.headings, [(0, 1, "Introduzione"), (3, 2, "Dettagli")])
+
+    def test_rtf(self):
+        with open(self.path("a.rtf"), "wb") as f:
+            f.write(b"{\\rtf1\\ansi{\\fonttbl{\\f0 Arial;}}{\\colortbl;\\red0\\green0\\blue0;}\\f0 "
+                    b"Citt\\'e0 di Roma.\\par Seconda riga \\u8364? euro.\\par}")
+        self.assertEqual(Document.open(self.path("a.rtf")).paragraphs, ["Città di Roma.", "Seconda riga € euro."])
+
+    def test_daisy(self):
+        with open(self.path("book.xml"), "w", encoding="utf-8") as f:
+            f.write('<?xml version="1.0"?><dtbook xmlns="http://www.daisy.org/z3986/2005/dtbook/"><book>'
+                    '<bodymatter><level1><h1>Capitolo 1</h1><p>Era una notte.</p><level2><h2>Parte A</h2>'
+                    '<p>Testo.</p></level2></level1></bodymatter></book></dtbook>')
+        doc = Document.open(self.path("book.xml"))
+        self.assertEqual(doc.headings, [(0, 1, "Capitolo 1"), (2, 2, "Parte A")])
+        with open(self.path("other.xml"), "w", encoding="utf-8") as f:
+            f.write("<note>x</note>")
+        with self.assertRaises(ValueError):
+            Document.open(self.path("other.xml"))
+
     def test_unsupported(self):
         with open(self.path("a.xyz"), "w", encoding="utf-8") as f:
             f.write("x")
         with self.assertRaises(ValueError):
             read_paragraphs(self.path("a.xyz"))
+
+
+class SpeechTest(unittest.TestCase):
+
+    def test_speed_in_words_a_minute(self):
+        engine = speech.Espeak.__new__(speech.Espeak)
+        self.assertEqual(engine.wpm(1.0), 175)
+        self.assertEqual(engine.wpm(0.1), speech.ESPEAK_MIN_WPM)
+        self.assertEqual(engine.wpm(3.0), speech.ESPEAK_MAX_WPM)
+
+    def test_default_voice_follows_the_language(self):
+        voices = [speech.Voice(None, "it", "it", "a"), speech.Voice(None, "en-us", "en", "b")]
+        self.assertEqual(speech.default_index(voices, "en"), 1)
+        self.assertEqual(speech.default_index(voices, "it"), 0)
+        self.assertEqual(speech.default_index(voices, "fr"), 0)
+
+    @unittest.skipUnless(shutil.which("espeak-ng"), "espeak-ng is not installed")
+    def test_espeak_speaks_and_stops(self):
+        engine = speech.Espeak()
+        voice = engine.voices()[0]
+        pcm = engine.synthesize("Prova della voce.", voice)
+        self.assertGreater(len(pcm), engine.rate // 2, "less than a quarter of a second of speech")
+        self.assertEqual(len(pcm) % 2, 0)
+        faster = engine.synthesize("Prova della voce.", voice, speed=2.0)
+        self.assertLess(len(faster), len(pcm))
+        engine.stop()  # nothing running: no error
+
+    def test_without_kokoro_only_espeak(self):
+        if speech.Kokoro.available():
+            self.skipTest("Kokoro is installed here")
+        kinds = {engine.kind for engine in speech.engines()}
+        self.assertNotIn("kokoro", kinds)
 
 
 CHILD = r'''
@@ -170,7 +248,7 @@ def check(app):
     window.open_path(sys.argv[2])
     print("SENTENCES:%d" % len(window.document.sentences), flush=True)
     def wait_voice():
-        if window.reader.kokoro is None and sys.argv[3] == "voice":
+        if window.selected_voice() is None and sys.argv[3] == "voice":
             return True
         if sys.argv[3] == "voice":
             window.toggle()
@@ -210,7 +288,7 @@ class WindowTest(unittest.TestCase):
             with open(doc, "w", encoding="utf-8") as f:
                 f.write(TEXT)
             record = os.path.join(tmp, "audio.raw")
-            voice = "voice" if DATA and os.path.exists(os.path.join(DATA, "kokoro-v1.0.onnx")) else "novoice"
+            voice = "voice" if shutil.which("espeak-ng") else "novoice"
             env = dict(os.environ, GDK_BACKEND="broadway", BROADWAY_DISPLAY=f":{display}",
                        GSETTINGS_BACKEND="memory", XDG_DATA_HOME=tmp, NO_AT_BRIDGE="1",
                        PYTHONPATH=f"{LIB}:{VOICE_LIB}", VABAXOS_VOICE_RECORD=record,
@@ -223,9 +301,65 @@ class WindowTest(unittest.TestCase):
             self.assertEqual(out.get("UNNAMED"), "", result.stderr[-2000:])
             self.assertEqual(out.get("SENTENCES"), "3", result.stderr[-2000:])
             if voice == "voice":
-                self.assertGreater(os.path.getsize(record), 24000, "no speech recorded")
+                self.assertGreater(os.path.getsize(record), 22050, "no speech recorded")
                 # Position saved at pause.
                 self.assertTrue(os.path.exists(os.path.join(tmp, "vabaxos-reader", "state.json")))
+
+
+
+INDEX_CHILD = r'''
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("reader", sys.argv[1])
+spec = importlib.util.spec_from_loader("reader", loader)
+reader = importlib.util.module_from_spec(spec)
+loader.exec_module(reader)
+from gi.repository import Adw, GLib, Gtk
+app = reader.ReaderApp()
+def check(app):
+    window = reader.ReaderWindow(app)
+    window.present()
+    window.open_path(sys.argv[2])
+    window.move_heading(1)
+    print("AFTER:%d" % window.index, flush=True)
+    window.show_index()
+    rows = []
+    child = window.index_dialog.get_child()
+    def walk(w):
+        yield w
+        c = w.get_first_child()
+        while c is not None:
+            yield from walk(c)
+            c = c.get_next_sibling()
+    rows = [w for w in walk(window.index_dialog) if isinstance(w, Gtk.ListBoxRow)]
+    print("ROWS:%d" % len(rows), flush=True)
+    app.quit()
+app.connect("activate", check)
+app.run([])
+'''
+
+
+@unittest.skipUnless(shutil.which("gtk4-broadwayd"), "gtk4-broadwayd (libgtk-4-bin) is not installed")
+class IndexWindowTest(unittest.TestCase):
+
+    def test_chapters(self):
+        display = free_display()
+        broadway = subprocess.Popen(["gtk4-broadwayd", f":{display}"], stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL)
+        time.sleep(1)
+        with tempfile.TemporaryDirectory() as tmp:
+            doc = os.path.join(tmp, "a.md")
+            with open(doc, "w", encoding="utf-8") as f:
+                f.write("# Uno\nPrimo capitolo.\n\n# Due\nSecondo capitolo.\n\n## Due e mezzo\nAncora.\n")
+            env = dict(os.environ, GDK_BACKEND="broadway", BROADWAY_DISPLAY=f":{display}",
+                       GSETTINGS_BACKEND="memory", XDG_DATA_HOME=tmp, NO_AT_BRIDGE="1", PYTHONPATH=LIB,
+                       LANGUAGE="C", LANG="C.UTF-8", PYTHONDONTWRITEBYTECODE="1", VABAXOS_VOICE_RECORD=os.devnull)
+            result = subprocess.run([sys.executable, "-c", INDEX_CHILD, PROGRAM, doc], env=env,
+                                    capture_output=True, text=True, timeout=60)
+            broadway.terminate()
+            broadway.wait()
+        out = dict(line.split(":", 1) for line in result.stdout.splitlines() if ":" in line)
+        self.assertEqual(out.get("AFTER"), "2", result.stderr[-2000:])
+        self.assertEqual(out.get("ROWS"), "3", result.stderr[-2000:])
 
 
 if __name__ == "__main__":

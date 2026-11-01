@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS is ready
+Name[it]=VabaxOS è pronto
+Comment=Says that the desktop is ready, once the screen reader speaks
+Exec=vabaxos-announce ready
+NoDisplay=true
+OnlyShowIn=GNOME;
+X-GNOME-Autostart-Phase=Applications

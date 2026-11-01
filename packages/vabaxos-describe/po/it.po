@@ -1,0 +1,89 @@
+# Italian translation of vabaxos-describe.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-describe\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Text in the picture:"
+msgstr "Testo nell'immagine:"
+
+msgid "Description: {title}"
+msgstr "Descrizione: {title}"
+
+msgid "Description"
+msgstr "Descrizione"
+
+msgid "No picture to describe."
+msgstr "Nessuna immagine da descrivere."
+
+msgid "The description of pictures is not installed yet."
+msgstr "La descrizione delle immagini non è ancora installata."
+
+msgid "Describing the picture: it can take a minute."
+msgstr "Descrivo l'immagine: può volerci un minuto."
+
+msgid "The description failed: {error}"
+msgstr "La descrizione non è riuscita: {error}"
+
+msgid "no answer"
+msgstr "nessuna risposta"
+
+msgid "Describe pictures"
+msgstr "Descrizione delle immagini"
+
+msgid "Download"
+msgstr "Scarica"
+
+msgid "Delete the model"
+msgstr "Elimina il modello"
+
+msgid "Not now"
+msgstr "Non ora"
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "The engine of the descriptions (llama.cpp) is not installed."
+msgstr "Il motore delle descrizioni (llama.cpp) non è installato."
+
+msgid ""
+"The model is ready: Super+Alt+P describes the window in use, "
+"Super+Alt+Shift+P the screen."
+msgstr ""
+"Il modello è pronto: Super+Alt+P descrive la finestra in uso, "
+"Super+Alt+Maiusc+P lo schermo."
+
+msgid ""
+"To describe pictures without Internet, VabaxOS needs a model of about 1 GB, "
+"downloaded once. It stays on this computer; pictures never leave it. "
+"Download it now?"
+msgstr ""
+"Per descrivere le immagini senza Internet, VabaxOS ha bisogno di un modello "
+"di circa 1 GB, da scaricare una volta sola. Resta su questo computer; le "
+"immagini non escono mai. Scaricarlo adesso?"
+
+msgid "Downloading the model. The progress is said every 25 percent."
+msgstr "Scarico il modello. Dico l'avanzamento ogni 25 per cento."
+
+msgid "Downloaded {percent} percent."
+msgstr "Scaricato il {percent} per cento."
+
+msgid "The download stopped: {error}"
+msgstr "Lo scaricamento si è fermato: {error}"
+
+msgid "The model is ready."
+msgstr "Il modello è pronto."
+
+msgid "Model deleted."
+msgstr "Modello eliminato."

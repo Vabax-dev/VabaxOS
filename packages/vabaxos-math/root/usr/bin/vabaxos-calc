@@ -1,0 +1,139 @@
+#!/usr/bin/python3
+"""Talking calculator, and formulas said in words.
+
+    vabaxos-calc                 the calculator
+    vabaxos-calc --say FORMULA   says a formula in words (Super+Alt+M says
+                                 the formula copied with Ctrl+C: LaTeX,
+                                 MathML or plain writing such as x^2)
+
+Write the calculation as you would on paper: 3+4*2, 2,5 × 4, 2^10,
+radice di 2, 20% di 150, sin(30) in degrees. Enter: the result is said
+and written in the list below, newest first. Up and Down in the list
+read the calculations; Ctrl+C on one copies its result. Escape clears.
+"""
+
+import gettext
+import os
+import sys
+
+from vabaxos_math import calc, speech
+
+gettext.textdomain("vabaxos-math")
+_ = gettext.gettext
+
+
+def language():
+    for name in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        value = os.environ.get(name, "")
+        if value and value not in ("C", "POSIX") and not value.startswith("C."):
+            return value.split(":")[0][:2]
+    return "en"
+
+
+def present(text):
+    """Orca says it; printed too."""
+    print(text, flush=True)
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca1.Service", "/org/gnome/Orca1/Service", "org.gnome.Orca1.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+        return True
+    except Exception:  # noqa: BLE001 - no Orca
+        return False
+
+
+def answer(expression):
+    """(ok, the result as written, the sentence said)."""
+    try:
+        result = calc.format_number(calc.evaluate(expression), "," if language() == "it" else ".")
+    except calc.CalcError:
+        return False, "", _("I cannot calculate this. Write for example 3+4*2.")
+    return True, result, _("{expression} is {result}").format(expression=expression.strip(), result=result)
+
+
+def window_classes(speak=present):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gdk, Gtk
+
+    class CalcWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Calculator"))
+            self.set_default_size(560, 520)
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+            top = Adw.PreferencesGroup(description=_("Write the calculation, then Enter: 3+4*2, 2,5 × 4, 2^10, "
+                                                     "radice di 2, 20% di 150."))
+            self.entry = Adw.EntryRow(title=_("Calculation"))
+            self.entry.connect("entry-activated", lambda *_a: self.calculate())
+            top.add(self.entry)
+            self.history = Adw.PreferencesGroup(title=_("Results"))
+            self.rows = []
+            page.add(top)
+            page.add(self.history)
+            view.set_content(page)
+            self.set_content(view)
+            controller = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            controller.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("Escape"),
+                                                     Gtk.CallbackAction.new(lambda *_a: self.clear() or True)))
+            self.add_controller(controller)
+            self.Gdk = Gdk
+
+        def clear(self):
+            self.entry.set_text("")
+            self.entry.grab_focus()
+
+        def calculate(self):
+            expression = self.entry.get_text()
+            ok, result, sentence = answer(expression)
+            speak(sentence)
+            if not ok:
+                return
+            row = Adw.ActionRow(title=f"{expression.strip()} = {result}")
+            row.set_focusable(True)
+            keys = Gtk.ShortcutController()
+            keys.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("<Control>c"),
+                                               Gtk.CallbackAction.new(lambda *_a, r=result: self.copy(r) or True)))
+            row.add_controller(keys)
+            self.history.add(row)
+            self.rows.insert(0, row)
+            # Newest first: move the new row to the top.
+            for old in self.rows[1:]:
+                self.history.remove(old)
+                self.history.add(old)
+            self.entry.set_text(result)
+            self.entry.set_position(-1)
+
+        def copy(self, result):
+            self.get_clipboard().set(result)
+            speak(_("Copied: {result}").format(result=result))
+
+    class CalcApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Calculator")
+            self.connect("activate", lambda app: (app.get_active_window() or CalcWindow(app)).present())
+
+    return CalcApp, CalcWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    if len(argv) > 1 and argv[1] == "--say":
+        formula = " ".join(argv[2:]).strip()
+        if not formula:
+            present(_("No formula: copy one with Ctrl+C, then Super+Alt+M."))
+            return 1
+        present(speech.say(formula, language()) or _("No formula: copy one with Ctrl+C, then Super+Alt+M."))
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

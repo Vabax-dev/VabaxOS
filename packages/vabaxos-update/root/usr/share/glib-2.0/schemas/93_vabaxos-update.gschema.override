@@ -1,0 +1,10 @@
+# One program for the updates, Update VabaxOS (ADR-0020): GNOME Software
+# stays the place to find new programs, but does not look for updates,
+# download them or install Flatpak updates in the background by itself, and
+# sends no notifications of its own. Nothing is installed without asking,
+# in the 0.x series; two update programs announcing the same updates would
+# only confuse the user.
+[org.gnome.software]
+allow-updates=false
+download-updates=false
+download-updates-notify=false

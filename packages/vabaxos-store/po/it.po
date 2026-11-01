@@ -1,0 +1,164 @@
+# Italian translation of vabaxos-store.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-store\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Program store"
+msgstr "Negozio dei programmi"
+
+msgid ""
+"Write the name of a program or what it does, for example \"audio editor\". "
+"Down arrow goes to the results."
+msgstr ""
+"Scrivi il nome di un programma o cosa fa, per esempio «editor audio». "
+"Freccia giù va ai risultati."
+
+msgid "Search a program"
+msgstr "Cerca un programma"
+
+msgid "Also Flathub"
+msgstr "Anche Flathub"
+
+msgid ""
+"More programs, for example Spotify or Zoom; not checked by Debian, installed"
+" for you only"
+msgstr ""
+"Più programmi, per esempio Spotify o Zoom; non controllati da Debian, "
+"installati solo per te"
+
+msgid "Results"
+msgstr "Risultati"
+
+msgid "Downloading the list of programs: it can take a minute."
+msgstr "Scarico l'elenco dei programmi: può servire un minuto."
+
+msgid ""
+"The list of programs was not downloaded: is Internet connected? Only the "
+"installed programs are found."
+msgstr ""
+"L'elenco dei programmi non è stato scaricato: Internet è collegato? Si "
+"trovano solo i programmi installati."
+
+msgid "List of programs ready."
+msgstr "Elenco dei programmi pronto."
+
+msgid "The programs appear here while you write."
+msgstr "I programmi compaiono qui mentre scrivi."
+
+msgid "Searching…"
+msgstr "Cerco…"
+
+msgid "The search did not work: {error}"
+msgstr "La ricerca non ha funzionato: {error}"
+
+msgid "{count} program found."
+msgid_plural "{count} programs found."
+msgstr[0] "{count} programma trovato."
+msgstr[1] "{count} programmi trovati."
+
+msgid "No program found for \"{query}\"."
+msgstr "Nessun programma trovato per «{query}»."
+
+msgid "Only programs from Debian."
+msgstr "Solo programmi di Debian."
+
+msgid "Adding Flathub: it can take a minute."
+msgstr "Aggiungo Flathub: può servire un minuto."
+
+msgid "Flathub could not be added: is Internet connected? {error}"
+msgstr ""
+"Non è stato possibile aggiungere Flathub: Internet è collegato? {error}"
+
+msgid "Flathub added: its programs are marked \"from Flathub\"."
+msgstr "Flathub aggiunto: i suoi programmi sono segnati «da Flathub»."
+
+msgid "From Flathub: not checked by Debian."
+msgstr "Da Flathub: non controllato da Debian."
+
+msgid "From Debian."
+msgstr "Da Debian."
+
+msgid "License: {license}."
+msgstr "Licenza: {license}."
+
+msgid "Installed."
+msgstr "Installato."
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Remove"
+msgstr "Rimuovi"
+
+msgid "Open"
+msgstr "Apri"
+
+msgid "Install"
+msgstr "Installa"
+
+msgid "{program} has no window: it is used from the Terminal."
+msgstr "{program} non ha una finestra: si usa dal Terminale."
+
+msgid "Remove {program}?"
+msgstr "Rimuovere {program}?"
+
+msgid "Your documents stay; the program goes away."
+msgstr "I tuoi documenti restano; se ne va solo il programma."
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Wait: another program is being installed or removed."
+msgstr "Aspetta: si sta già installando o rimuovendo un altro programma."
+
+msgid "Installing {program}. It can take some minutes."
+msgstr "Installo {program}. Possono servire alcuni minuti."
+
+msgid "Removing {program}."
+msgstr "Rimuovo {program}."
+
+msgid "{percent} percent."
+msgstr "{percent} per cento."
+
+msgid "{program} was not installed. {error}"
+msgstr "{program} non è stato installato. {error}"
+
+msgid "{program} was not removed. {error}"
+msgstr "{program} non è stato rimosso. {error}"
+
+msgid "{program} installed. You find it in the Start menu."
+msgstr "{program} installato. Lo trovi nel menu Start."
+
+msgid "{program} removed."
+msgstr "{program} rimosso."
+
+msgid "The password was not given."
+msgstr "La password non è stata data."
+
+msgid "Other programs need it."
+msgstr "Altri programmi ne hanno bisogno."
+
+msgid "Internet does not answer."
+msgstr "Internet non risponde."
+
+msgid "VabaxOS needs it to speak and to work."
+msgstr "Serve a VabaxOS per parlare e funzionare."
+
+msgid "from Flathub"
+msgstr "da Flathub"
+
+msgid "from Debian"
+msgstr "da Debian"
+
+msgid "installed"
+msgstr "installato"

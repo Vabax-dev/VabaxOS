@@ -198,6 +198,8 @@ class Module:
                     phrases = [line.strip() for line in f if line.strip() and not line.startswith("#")]
             except OSError:
                 continue
+            # The parts as speak() makes them: the cache is looked up per part.
+            phrases = [part for phrase in phrases for part in engine.split(phrase)]
             for phrase in phrases:
                 if self.cache.has_on_disk(voice, lang, phrase):
                     continue
@@ -286,7 +288,10 @@ class Module:
         try:
             self.last_speech = time.monotonic()
             lang = self.language()
-            voice = self.voice_for(lang) if lang in engine.VOICES else None
+            # Without the model (not downloaded, or deleted) eSpeak NG speaks:
+            # never silence for a screen reader.
+            has_model = self.kokoro is not None or engine.model_dir() is not None
+            voice = self.voice_for(lang) if lang in engine.VOICES and has_model else None
             if kind == "text":
                 items = parse_ssml(text)
             else:

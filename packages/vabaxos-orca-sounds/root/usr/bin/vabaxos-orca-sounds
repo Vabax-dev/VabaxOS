@@ -1,0 +1,222 @@
+#!/usr/bin/python3
+"""Sounds of the screen reader: a short sound instead of "button", "link",
+"check box" and the other kinds of control.
+
+    vabaxos-orca-sounds            the window: turn on or off, learn the sounds
+    vabaxos-orca-sounds on|off     turn on or off (Orca starts again)
+    vabaxos-orca-sounds status     says whether they are on
+
+It works through an Orca user extension (Orca 51 and later): this program
+installs it in ~/.local/share/orca/extensions and approves it with Orca's
+own command (orca --approve-extension), then starts Orca again. In the
+window every sound has a row: Enter plays it and says its name, to learn
+them before turning them on.
+"""
+
+import gettext
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+gettext.textdomain("vabaxos-orca-sounds")
+_ = gettext.gettext
+
+SOURCE = "/usr/share/vabaxos/orca-extensions/vabaxos_sounds"
+SOUNDS = "/usr/share/vabaxos/orca-sounds"
+NAME = "vabaxos_sounds"
+MIN_ORCA = 51
+
+
+def names():
+    """The sounds to learn, in the order of how often they are met."""
+    return [("push-button", _("Button")), ("link", _("Link")), ("check-box", _("Check box")),
+            ("radio-button", _("Radio button")), ("combo-box", _("Combo box")), ("entry", _("Text field")),
+            ("menu", _("Menu")), ("page-tab", _("Tab")), ("toggle-button", _("Toggle button, switch")),
+            ("slider", _("Slider")), ("spin-button", _("Spin button"))]
+
+
+def present(text):
+    print(text, flush=True)
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca1.Service", "/org/gnome/Orca1/Service", "org.gnome.Orca1.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - printed anyway
+        pass
+
+
+class Orca:
+    """Orca's own commands; replaced in the tests."""
+
+    def run(self, *args):
+        try:
+            return subprocess.run(["orca", *args], capture_output=True, text=True, timeout=30, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+
+    def version(self):
+        result = self.run("--version")
+        match = re.search(r"(\d+)\.(\d+)", result.stdout if result else "")
+        return (int(match.group(1)), int(match.group(2))) if match else None
+
+    def approve(self):
+        result = self.run("--approve-extension", NAME)
+        return result is not None and result.returncode == 0
+
+    def revoke(self):
+        self.run("--revoke-extension", NAME)
+
+    def restart(self):
+        try:
+            subprocess.Popen(["orca", "--replace"], start_new_session=True, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+        except OSError:
+            pass
+
+
+def extensions_dir():
+    base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    return os.path.join(base, "orca", "extensions")
+
+
+def supported(orca):
+    version = orca.version()
+    return version is not None and version[0] >= MIN_ORCA
+
+
+def turn_on(orca, source=SOURCE, folder=None):
+    """Copies, approves, starts Orca again. Returns a sentence to say."""
+    if not supported(orca):
+        return False, _("The sounds need Orca 51 or later; this VabaxOS has an older Orca.")
+    folder = folder or extensions_dir()
+    target = os.path.join(folder, NAME)
+    os.makedirs(folder, exist_ok=True)
+    if os.path.isdir(target):
+        shutil.rmtree(target)
+    shutil.copytree(source, target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    if not orca.approve():
+        return False, _("Orca did not approve the extension.")
+    orca.restart()
+    return True, _("Sounds on: Orca starts again.")
+
+
+def turn_off(orca, folder=None):
+    folder = folder or extensions_dir()
+    target = os.path.join(folder, NAME)
+    orca.revoke()
+    if os.path.isdir(target):
+        shutil.rmtree(target)
+    orca.restart()
+    return True, _("Sounds off: Orca says the kind of control again; it starts again.")
+
+
+def play(name):
+    path = os.path.join(SOUNDS, name + ".wav")
+    for player in ("pw-play", "paplay", "aplay"):
+        if shutil.which(player) and os.path.exists(path):
+            subprocess.Popen([player, path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return
+
+
+def window_classes(speak=present, orca=None, player=play, folder=None, source=SOURCE):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, GLib
+
+    orca = orca or Orca()
+
+    class SoundsWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Sounds of the screen reader"))
+            self.set_default_size(560, 640)
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+            top = Adw.PreferencesGroup(description=_(
+                "Orca plays a short sound instead of saying \"button\", \"link\", \"check box\" and the other "
+                "kinds of control: shorter readings. If a name is not recognized, Orca says it as always."))
+            self.switch = Adw.SwitchRow(title=_("Sounds instead of the kinds of control"))
+            self.switch.connect("notify::active", lambda *_a: self.toggle())
+            top.add(self.switch)
+            page.add(top)
+            learn = Adw.PreferencesGroup(title=_("Learn the sounds"),
+                                         description=_("Enter plays the sound and says its name."))
+            self.rows = []
+            for key, label in names():
+                row = Adw.ActionRow(title=label, activatable=True)
+                row.connect("activated", lambda *_a, k=key, n=label: self.listen(k, n))
+                learn.add(row)
+                self.rows.append(row)
+            page.add(learn)
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            self.updating = True
+            target = os.path.join(folder or extensions_dir(), NAME)
+            self.switch.set_active(os.path.isdir(target))
+            self.updating = False
+            if not supported(orca):
+                self.switch.set_sensitive(False)
+                self.switch.set_subtitle(_("Needs Orca 51 or later; this VabaxOS has an older Orca. The sounds "
+                                           "can be learnt already."))
+            GLib.idle_add(lambda: self.switch.grab_focus() and False)
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        def listen(self, key, label):
+            player(key)
+            self.say(label)
+
+        def toggle(self):
+            if self.updating:
+                return
+            if self.switch.get_active():
+                ok, sentence = turn_on(orca, source, folder)
+            else:
+                ok, sentence = turn_off(orca, folder)
+            self.say(sentence)
+            if not ok:
+                self.updating = True
+                self.switch.set_active(not self.switch.get_active())
+                self.updating = False
+
+    class SoundsApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.OrcaSounds")
+            self.connect("activate", lambda app: (app.get_active_window() or SoundsWindow(app)).present())
+
+    return SoundsApp, SoundsWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    command = argv[1] if len(argv) > 1 else ""
+    orca = Orca()
+    if command == "on":
+        ok, sentence = turn_on(orca)
+        present(sentence)
+        return 0 if ok else 1
+    if command == "off":
+        _ok, sentence = turn_off(orca)
+        present(sentence)
+        return 0
+    if command == "status":
+        present(_("Sounds on.") if os.path.isdir(os.path.join(extensions_dir(), NAME)) else _("Sounds off."))
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

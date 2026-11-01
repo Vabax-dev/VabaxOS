@@ -15,9 +15,29 @@
 //               any other window is minimized
 //   Super+Alt+D where am I: program, window, desktop, open windows (said
 //               by Orca through its D-Bus service, or a notification)
+//   Super+Alt+R the text of the window in use, recognized (OCR) by
+//               vabaxos-ocr and shown as plain text for Orca, like NVDA+R;
+//               Super+Alt+Shift+R the whole screen. The picture can only
+//               be taken here: GNOME Shell refuses its screenshot service
+//               to other programs.
+//   Super+Alt+P a description of the window in use (vabaxos-describe,
+//               without Internet), Super+Alt+Shift+P of the whole screen
+//   Super+Alt+M the formula copied with Ctrl+C, said in words (vabaxos-calc)
+//   Super+Alt+N do not disturb on and off (GNOME's show-banners): no
+//               banner, so Orca stays quiet; the notifications wait in the
+//               list of Super+N; said aloud
+//   Super+H     dictation, as in Windows: vabaxos-dictation listens; Super+H
+//               again, and the text is written where the cursor is, the way
+//               the screen keyboard of GNOME writes (the input method, or
+//               key presses for programs without one), then said aloud.
 //   Alt+F4      closes the window; on the desktop or the taskbar asks to
 //               shut down, as in Windows (the desktop takes the focus when
 //               the last window closes)
+//
+// The Start button on the taskbar (ADR-0025, accepted by Vabax on
+// 2026-11-01): the VabaxOS logo and the word "Start", at the left; a click,
+// Enter or Space opens the VabaxOS Start menu, as Super does. ArcMenu is no
+// longer installed.
 //
 // A new window takes the focus even when it was started without a GNOME
 // "activation token" (from a terminal, a script, a program that opens a
@@ -29,6 +49,7 @@
 // does, so Orca reads it; then the arrows move, Enter opens and Escape goes
 // back to the window.
 
+import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -38,10 +59,58 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i'];
+const LOGO = '/usr/share/icons/hicolor/scalable/apps/vabaxos-logo.svg';
+
+// A plain button, not a menu: Orca says "Start, button". The key and click
+// signals of the actor work with every GNOME Shell 50 version (the menu
+// gestures of PanelMenu.Button changed between versions).
+const StartButton = GObject.registerClass(
+class StartButton extends PanelMenu.Button {
+    _init(label, onActivate) {
+        super._init(0.0, label, true);
+        this.accessible_role = Atk.Role.PUSH_BUTTON;
+        this.accessible_name = label;
+        const box = new St.BoxLayout({style_class: 'panel-status-menu-box'});
+        if (GLib.file_test(LOGO, GLib.FileTest.EXISTS)) {
+            box.add_child(new St.Icon({
+                gicon: Gio.FileIcon.new(Gio.File.new_for_path(LOGO)),
+                style_class: 'system-status-icon',
+            }));
+        }
+        box.add_child(new St.Label({text: label, y_align: Clutter.ActorAlign.CENTER}));
+        this.add_child(box);
+        this.connect('button-release-event', (actor, event) => {
+            if (event.get_button() !== Clutter.BUTTON_PRIMARY)
+                return Clutter.EVENT_PROPAGATE;
+            onActivate();
+            return Clutter.EVENT_STOP;
+        });
+        this.connect('touch-event', (actor, event) => {
+            if (event.type() !== Clutter.EventType.TOUCH_END)
+                return Clutter.EVENT_PROPAGATE;
+            onActivate();
+            return Clutter.EVENT_STOP;
+        });
+        this.connect('key-press-event', (actor, event) => {
+            const key = event.get_key_symbol();
+            if (key !== Clutter.KEY_Return && key !== Clutter.KEY_KP_Enter && key !== Clutter.KEY_space)
+                return Clutter.EVENT_PROPAGATE;
+            onActivate();
+            return Clutter.EVENT_STOP;
+        });
+    }
+});
+
+const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i',
+    'recognize-window', 'recognize-screen', 'dictation', 'do-not-disturb', 'describe-window',
+    'describe-screen', 'say-formula'];
+
+Gio._promisify(Shell.Screenshot.prototype, 'screenshot');
+Gio._promisify(Shell.Screenshot.prototype, 'screenshot_window');
 const NEW_WINDOW_MS = 8000;
 
 export default class VabaxOSKeys extends Extension {
@@ -53,19 +122,28 @@ export default class VabaxOSKeys extends Extension {
             'open-start-menu': () => this._toggleStart(),
             'minimize-or-restore': () => this._minimizeOrRestore(),
             'where-am-i': () => this._whereAmI(),
+            'recognize-window': () => this._recognize(false),
+            'recognize-screen': () => this._recognize(true),
+            'describe-window': () => this._recognize(false, 'vabaxos-describe'),
+            'describe-screen': () => this._recognize(true, 'vabaxos-describe'),
+            'say-formula': () => this._sayFormula(),
+            'dictation': () => this._dictation(),
+            'do-not-disturb': () => this._doNotDisturb(),
         };
         for (const key of KEYS) {
             Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE,
                 Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW, handlers[key]);
         }
         // Super alone: GNOME's handler (the overview) is blocked, ours opens
-        // the Start menu, as ArcMenu does with its own.
+        // the Start menu.
         this._overlayDefault = GObject.signal_handler_find(global.display, {signalId: 'overlay-key'});
         if (this._overlayDefault)
             GObject.signal_handler_block(global.display, this._overlayDefault);
         this._overlayId = global.display.connect('overlay-key', () => this._toggleStart());
         Main.wm.allowKeybinding('overlay-key', Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW |
             Shell.ActionMode.POPUP);
+        this._startButton = new StartButton(this.gettext('Start'), () => this._toggleStart());
+        Main.panel.addToStatusArea('vabaxos-start', this._startButton, 0, 'left');
         Main.wm.setCustomKeybindingHandler('close', Shell.ActionMode.NORMAL,
             (display, window) => this._close(window));
         this._createdId = global.display.connect('window-created', (display, window) => {
@@ -94,6 +172,13 @@ export default class VabaxOSKeys extends Extension {
     disable() {
         for (const key of KEYS)
             Main.wm.removeKeybinding(key);
+        this._startButton?.destroy();
+        this._startButton = null;
+        if (this._dictating)
+            this._run(['vabaxos-dictation', 'cancel']);
+        this._dictating = false;
+        this._keyboard?.run_dispose();
+        this._keyboard = null;
         Meta.keybindings_set_custom_handler('close', null);
         global.display.disconnect(this._overlayId);
         if (this._overlayDefault)
@@ -225,9 +310,147 @@ export default class VabaxOSKeys extends Extension {
         this._speak(parts.filter(p => p).join('. '));
     }
 
+    // A picture of the window in use, or of the screen, for vabaxos-ocr.
+    // program: vabaxos-ocr (the text) or vabaxos-describe (a description).
+    async _recognize(wholeScreen, program = 'vabaxos-ocr') {
+        const _ = this.gettext.bind(this);
+        const describe = program === 'vabaxos-describe';
+        if (!GLib.find_program_in_path(program)) {
+            this._speak(describe ? _('The description of pictures is not installed.')
+                : _('Text recognition is not installed.'));
+            return;
+        }
+        const window = global.display.focus_window;
+        const useWindow = !wholeScreen && window && !this._isDesktop(window);
+        // vabaxos-describe says itself that it is working.
+        if (!describe)
+            this._speak(_('Recognizing the text.'));
+        try {
+            const dir = GLib.build_filenamev([GLib.get_user_runtime_dir(), 'vabaxos-ocr']);
+            GLib.mkdir_with_parents(dir, 0o700);
+            const path = GLib.build_filenamev([dir, `${GLib.get_monotonic_time()}.png`]);
+            const stream = Gio.File.new_for_path(path).replace(null, false, Gio.FileCreateFlags.PRIVATE, null);
+            const shooter = new Shell.Screenshot();
+            if (useWindow)
+                await shooter.screenshot_window(false, false, stream);
+            else
+                await shooter.screenshot(false, stream);
+            stream.close(null);
+            const title = useWindow ? window.get_title() ?? '' : _('Screen');
+            Util.spawn([program, '--title', title, path]);
+        } catch (e) {
+            logError(e, 'vabaxos-keys: text recognition');
+            this._speak(_('Text recognition failed.'));
+        }
+    }
+
+    _doNotDisturb() {
+        const _ = this.gettext.bind(this);
+        const settings = new Gio.Settings({schema_id: 'org.gnome.desktop.notifications'});
+        const quiet = settings.get_boolean('show-banners');
+        if (quiet) {
+            // Said before the banners stop, so it is heard.
+            this._speak(_('Do not disturb on. Notifications wait in the list, Super+N.'));
+            settings.set_boolean('show-banners', false);
+        } else {
+            settings.set_boolean('show-banners', true);
+            this._speak(_('Do not disturb off.'));
+        }
+    }
+
+    _sayFormula() {
+        if (!GLib.find_program_in_path('vabaxos-calc')) {
+            this._speak(this.gettext('Formulas are not installed.'));
+            return;
+        }
+        St.Clipboard.get_default().get_text(St.ClipboardType.CLIPBOARD, (clipboard, text) => {
+            Util.spawn(['vabaxos-calc', '--say', text ?? '']);
+        });
+    }
+
+    // Runs a program; resolves with [exit status, standard output].
+    _run(argv) {
+        return new Promise(resolve => {
+            try {
+                const process = Gio.Subprocess.new(argv,
+                    Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_SILENCE);
+                process.communicate_utf8_async(null, null, (proc, result) => {
+                    try {
+                        const [, stdout] = proc.communicate_utf8_finish(result);
+                        resolve([proc.get_exit_status(), stdout ?? '']);
+                    } catch {
+                        resolve([-1, '']);
+                    }
+                });
+            } catch {
+                resolve([-1, '']);
+            }
+        });
+    }
+
+    async _dictation() {
+        const _ = this.gettext.bind(this);
+        if (!GLib.find_program_in_path('vabaxos-dictation')) {
+            this._speak(_('Dictation is not installed.'));
+            return;
+        }
+        if (this._dictatingBusy)
+            return;
+        this._dictatingBusy = true;
+        try {
+            if (!this._dictating) {
+                const [status] = await this._run(['vabaxos-dictation', 'start']);
+                this._dictating = status === 0;
+                if (!this._dictating)
+                    this._speak(_('Dictation cannot start.'));
+                return;
+            }
+            this._dictating = false;
+            const [status, text] = await this._run(['vabaxos-dictation', 'stop']);
+            if (status === 3) {
+                this._speak(_('Nothing heard.'));
+            } else if (status !== 0 || !text.trim()) {
+                this._speak(_('Dictation failed.'));
+            } else {
+                this._type(text.replace(/\n$/, ''));
+                this._speak(text.trim());
+            }
+        } finally {
+            this._dictatingBusy = false;
+        }
+    }
+
+    // Writes text where the focus is, as GNOME's screen keyboard does: through
+    // the input method when the program has one, else with key presses.
+    _type(text) {
+        const lines = text.split('\n');
+        lines.forEach((line, i) => {
+            if (i > 0)
+                this._key(Clutter.KEY_Return);
+            if (!line)
+                return;
+            if (Main.inputMethod.currentFocus) {
+                Main.inputMethod.commit(line);
+            } else {
+                for (const char of line)
+                    this._key(Clutter.unicode_to_keysym(char.codePointAt(0)));
+            }
+        });
+    }
+
+    _key(keyval) {
+        if (!this._keyboard) {
+            const seat = Clutter.get_default_backend().get_default_seat();
+            this._keyboard = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+        }
+        const time = Clutter.get_current_event_time() * 1000;
+        this._keyboard.notify_keyval(time, keyval, Clutter.KeyState.PRESSED);
+        this._keyboard.notify_keyval(time, keyval, Clutter.KeyState.RELEASED);
+    }
+
     // Orca says it at once; without Orca, a notification.
     _speak(text) {
-        Gio.DBus.session.call('org.gnome.Orca.Service', '/org/gnome/Orca/Service', 'org.gnome.Orca.Service',
+        Gio.DBus.session.call('org.gnome.Orca1.Service', '/org/gnome/Orca1/Service', 'org.gnome.Orca1.Service',
             'PresentMessage', new GLib.Variant('(s)', [text]), null, Gio.DBusCallFlags.NONE, 2000, null,
             (connection, result) => {
                 try {

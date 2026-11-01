@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=WhatsApp
+Comment=WhatsApp in its own Firefox window (WhatsApp Web)
+Comment[it]=WhatsApp in una finestra di Firefox (WhatsApp Web)
+Exec=firefox-esr --new-window https://web.whatsapp.com/
+Icon=internet-chat-symbolic
+Terminal=false
+Categories=Network;Chat;InstantMessaging;
+Keywords=whatsapp;chat;messages;messaggi;

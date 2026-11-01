@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Read with the camera
+Name[it]=Leggi con la fotocamera
+Comment=The voice guides the paper in front of the webcam, then reads it
+Comment[it]=La voce guida il foglio davanti alla webcam, poi lo legge
+Exec=vabaxos-camera
+Icon=camera-photo-symbolic
+Terminal=false
+Categories=Utility;Accessibility;
+Keywords=camera;webcam;read;ocr;letter;fotocamera;leggi;lettera;bolletta;etichetta;

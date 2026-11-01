@@ -1,0 +1,95 @@
+# Italian translation of vabaxos-orca-sounds.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-orca-sounds\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Button"
+msgstr "Pulsante"
+
+msgid "Link"
+msgstr "Collegamento"
+
+msgid "Check box"
+msgstr "Casella di controllo"
+
+msgid "Radio button"
+msgstr "Pulsante di scelta"
+
+msgid "Combo box"
+msgstr "Casella combinata"
+
+msgid "Text field"
+msgstr "Campo di testo"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Tab"
+msgstr "Scheda"
+
+msgid "Toggle button, switch"
+msgstr "Pulsante a due stati, interruttore"
+
+msgid "Slider"
+msgstr "Cursore"
+
+msgid "Spin button"
+msgstr "Pulsante di selezione numerica"
+
+msgid "The sounds need Orca 51 or later; this VabaxOS has an older Orca."
+msgstr ""
+"I suoni chiedono Orca 51 o successivo; questo VabaxOS ha un Orca più "
+"vecchio."
+
+msgid "Orca did not approve the extension."
+msgstr "Orca non ha approvato l'estensione."
+
+msgid "Sounds on: Orca starts again."
+msgstr "Suoni accesi: Orca riparte."
+
+msgid "Sounds off: Orca says the kind of control again; it starts again."
+msgstr "Suoni spenti: Orca dice di nuovo il tipo di comando; riparte."
+
+msgid "Sounds of the screen reader"
+msgstr "Suoni del lettore di schermo"
+
+msgid ""
+"Orca plays a short sound instead of saying \"button\", \"link\", \"check "
+"box\" and the other kinds of control: shorter readings. If a name is not "
+"recognized, Orca says it as always."
+msgstr ""
+"Orca suona un suono breve invece di dire «pulsante», «collegamento», "
+"«casella di controllo» e gli altri tipi di comando: letture più brevi. Se un"
+" nome non viene riconosciuto, Orca lo dice come sempre."
+
+msgid "Sounds instead of the kinds of control"
+msgstr "Suoni al posto dei tipi di comando"
+
+msgid "Learn the sounds"
+msgstr "Impara i suoni"
+
+msgid "Enter plays the sound and says its name."
+msgstr "Invio suona il suono e dice il suo nome."
+
+msgid ""
+"Needs Orca 51 or later; this VabaxOS has an older Orca. The sounds can be "
+"learnt already."
+msgstr ""
+"Serve Orca 51 o successivo; questo VabaxOS ha un Orca più vecchio. I suoni "
+"si possono già imparare."
+
+msgid "Sounds on."
+msgstr "Suoni accesi."
+
+msgid "Sounds off."
+msgstr "Suoni spenti."

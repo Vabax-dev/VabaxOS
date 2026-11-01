@@ -162,3 +162,57 @@ msgstr "Cestino"
 
 msgid "Show Apps"
 msgstr "Mostra applicazioni"
+
+msgid "VabaxOS is ready."
+msgstr "VabaxOS è pronto."
+
+msgid "Battery at {percent} percent. Connect the charger."
+msgstr "Batteria al {percent} per cento. Collega il caricatore."
+
+msgid "Battery low"
+msgstr "Batteria scarica"
+
+msgid "BRLTTY is not installed: braille cannot work."
+msgstr "BRLTTY non è installato: il Braille non può funzionare."
+
+msgid "BRLTTY is running."
+msgstr "BRLTTY è attivo."
+
+msgid "BRLTTY is not running. Connect the display, or use --fix to start it."
+msgstr ""
+"BRLTTY non è attivo. Collega il display, oppure usa --fix per avviarlo."
+
+msgid "The BrlAPI key is there."
+msgstr "La chiave di BrlAPI c'è."
+
+msgid "The BrlAPI key {key} is missing."
+msgstr "La chiave di BrlAPI {key} manca."
+
+msgid "You are in the brlapi group."
+msgstr "Sei nel gruppo brlapi."
+
+msgid ""
+"You are not in the brlapi group: --fix adds you, then log out and in again."
+msgstr "Non sei nel gruppo brlapi: --fix ti aggiunge, poi esci e rientra."
+
+msgid "Display connected: {columns} cells ({driver})."
+msgstr "Display collegato: {columns} celle ({driver})."
+
+msgid ""
+"No display found. A USB display: connect it. A Bluetooth one: pair it in the"
+" Bluetooth settings, then turn it on."
+msgstr ""
+"Nessun display trovato. Un display USB: collegalo. Uno Bluetooth: associalo "
+"nelle impostazioni Bluetooth, poi accendilo."
+
+msgid "Braille is on in the screen reader."
+msgstr "Il Braille è acceso nel lettore di schermo."
+
+msgid "Braille is off in the screen reader: --fix turns it on."
+msgstr "Il Braille è spento nel lettore di schermo: --fix lo accende."
+
+msgid "Braille is ready."
+msgstr "Il Braille è pronto."
+
+msgid "Braille: {count} things to fix."
+msgstr "Braille: {count} cose da sistemare."

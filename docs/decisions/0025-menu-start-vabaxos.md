@@ -1,9 +1,9 @@
 # ADR-0025: Il menu Start di VabaxOS, con ricerca e categorie ad albero
 
-- **Stato:** Proposta
+- **Stato:** Accettata (Vabax, 2026-11-01), con il punto 5 cambiato: ArcMenu non resta
 - **Data:** 2026-09-25
 - **Responsabile:** Vabax (Project Lead, responsabile accessibilità), Principal Software Engineer
-- **Sostituisce / Sostituita da:** — (cambia ADR-0018 per il tasto Super; ArcMenu resta sulla barra)
+- **Sostituisce / Sostituita da:** sostituisce [ADR-0018](0018-menu-start.md)
 
 ## Contesto
 
@@ -19,7 +19,7 @@ ArcMenu ha una disposizione vicina a questa («Whisker»: categorie a sinistra, 
 2. Il menu si apre con il **focus nel campo di ricerca**. I risultati arrivano mentre si scrive: programmi (anche per parole chiave e descrizione, senza badare agli accenti), impostazioni, cartelle, file recenti, comandi (Blocca, Esci, Sospendi, Riavvia, Spegni). Orca dice quanti sono; Freccia giù va ai risultati, Invio apre il primo.
 3. Con il campo vuoto, **Tab va alle categorie**: Preferiti, Programmi (divisi come in Windows: Ufficio, Internet, Musica e video, Grafica, Accessibilità, Giochi, Istruzione, Sviluppo, Accessori, Sistema, Altri programmi), Strumenti di VabaxOS, Impostazioni, Cartelle, File recenti, Spegni o esci. Sono un **albero**: Freccia destra espande o entra, Freccia sinistra chiude o torna alla categoria che la contiene, le frecce scorrono, una lettera salta alla voce che comincia con quella lettera, Invio apre. Orca dice il nome, quanti elementi ha una categoria, se è espansa o compressa.
 4. Il menu resta aperto in memoria, nascosto (avviato all'accesso): si apre subito.
-5. **ArcMenu resta** installato, con il suo pulsante sulla barra delle applicazioni, per chi usa il mouse. Se Vabax preferisce ArcMenu anche per Super, basta rimettere le sue due impostazioni (`arcmenu-hotkey` e `arcmenu-hotkey-overlay-key-enabled` in `10-start-menu`).
+5. ~~ArcMenu resta installato, con il suo pulsante sulla barra delle applicazioni.~~ **Cambiato da Vabax il 2026-11-01:** «si userà il menu Start di VabaxOS, non quello di ArcMenu». ArcMenu non è più installato. Sulla barra delle applicazioni, a sinistra, c'è il pulsante **Start** (logo di VabaxOS e la parola «Start», ruolo pulsante per Orca) dell'estensione `vabaxos-keys@vabaxos.org`, che apre lo stesso menu; il pulsante «Mostra applicazioni» di Dash to Panel è nascosto, così il pulsante Start è uno solo.
 
 ## Alternative considerate
 

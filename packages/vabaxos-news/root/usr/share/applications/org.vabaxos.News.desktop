@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=News and podcasts
+Name[it]=Notizie e podcast
+Comment=Your news sites and podcasts, read and played from the keyboard
+Comment[it]=I tuoi siti di notizie e podcast, letti e ascoltati da tastiera
+Exec=vabaxos-news
+Icon=application-rss+xml-symbolic
+Terminal=false
+Categories=Network;News;AudioVideo;
+Keywords=news;rss;podcast;feed;notizie;

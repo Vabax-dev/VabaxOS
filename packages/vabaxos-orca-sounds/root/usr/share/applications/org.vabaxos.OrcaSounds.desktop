@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Sounds of the screen reader
+Name[it]=Suoni del lettore di schermo
+Comment=A short sound instead of "button", "link" and the other kinds of control
+Comment[it]=Un suono breve al posto di «pulsante», «collegamento» e degli altri tipi di comando
+Exec=vabaxos-orca-sounds
+Icon=audio-x-generic-symbolic
+Terminal=false
+Categories=Settings;Accessibility;
+Keywords=orca;sound;earcon;button;link;suoni;pulsante;collegamento;lettore di schermo;

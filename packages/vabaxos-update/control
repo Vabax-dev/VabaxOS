@@ -3,10 +3,14 @@ Architecture: all
 Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
 Section: admin
 Priority: optional
-Depends: python3, python3-gi, gir1.2-packagekitglib-1.0, packagekit, flatpak
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1 (>= 1.5), gir1.2-packagekitglib-1.0, packagekit, flatpak
+Recommends: fwupd
 Description: Update VabaxOS with every step said aloud
- vabaxos-update checks, downloads and installs updates of the system and
- of Flatpak applications through PackageKit, and says what happens:
- how many updates, how many for security, progress, whether a restart is
- needed (ADR-0020). Updates can be installed now or at the next start. A
- daily check speaks only when security updates are ready.
+ A window with what there is to update (security, system, Flatpak
+ applications, firmware), the history of the updates and the settings of
+ the automatic check. Updates are installed now or at the next start; the
+ progress is said every 25 percent. Updates that change the desktop or the
+ voice (GNOME Shell, Orca, PipeWire, the kernel) are advised at the next
+ start (ADR-0020). Also from the terminal: vabaxos-update --now. The
+ automatic check speaks only when security updates are ready, unless the
+ user asks for all of them.

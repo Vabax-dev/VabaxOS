@@ -1,0 +1,11 @@
+Package: vabaxos-tuning
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: admin
+Priority: optional
+Depends: systemd-zram-generator (>= 1.1)
+Description: VabaxOS system tuning: compressed memory before the disk
+ When memory runs short, VabaxOS swaps to compressed memory (zram, half of
+ the memory, at most 4 GB, zstd) before any swap partition, with the
+ kernel settings advised for it, so the desktop and the screen reader do
+ not freeze for seconds while the disk works.

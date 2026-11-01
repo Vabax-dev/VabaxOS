@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+# Back to Debian's default zone, so firewalld still starts without ours.
+if [ "$1" = remove ] && command -v firewall-offline-cmd >/dev/null; then
+    firewall-offline-cmd --set-default-zone=public >/dev/null 2>&1 || true
+fi

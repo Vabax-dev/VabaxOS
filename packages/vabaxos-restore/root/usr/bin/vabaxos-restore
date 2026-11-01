@@ -1,0 +1,198 @@
+#!/usr/bin/python3
+"""System restore (ADR-0027): back to how the system was before an update
+that broke something.
+
+    vabaxos-restore              the window
+    vabaxos-restore --console    the menu of the text console, for when the
+                                 desktop does not start (the command
+                                 "ripristino" does the same)
+
+VabaxOS copies the system before every installation of packages and once a
+week, with Timeshift. Documents and personal folders are never part of a
+copy and never change with a restore.
+
+The window lists the copies, newest first, with the reason of each one.
+Make a copy now (Ctrl+N); on a copy, Restore or Delete. Restoring asks
+for confirmation, then the computer restarts. The administrator password
+is asked by GNOME, which Orca reads.
+"""
+
+import gettext
+import json
+import os
+import subprocess
+import sys
+import threading
+
+gettext.textdomain("vabaxos-restore")
+_ = gettext.gettext
+
+HELPER = os.environ.get("VABAXOS_RESTORE_HELPER", "/usr/lib/vabaxos/restore/helper")
+
+
+def helper(*args):
+    """Runs the helper as administrator; returns (ok, output or error)."""
+    command = ([] if os.geteuid() == 0 else ["pkexec"]) + [HELPER, *args]
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    if result.returncode == 0:
+        return True, result.stdout
+    lines = (result.stderr or "").strip().splitlines()
+    if result.returncode in (126, 127) and not lines:
+        return False, _("the administrator password was not given")
+    return False, lines[-1] if lines else _("unknown error")
+
+
+def window_main(run_helper=helper):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, GLib, Gtk
+
+    class RestoreWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("System restore"))
+            self.set_default_size(720, 560)
+            self.busy = False
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            header = Adw.HeaderBar()
+            self.create_button = Gtk.Button(label=_("Make a copy now"))
+            self.create_button.set_tooltip_text(_("A copy of the system as it is now (Ctrl+N)"))
+            self.create_button.connect("clicked", lambda *_a: self.create())
+            header.pack_start(self.create_button)
+            view.add_top_bar(header)
+            page = Adw.PreferencesPage()
+            self.group = Adw.PreferencesGroup(
+                title=_("Copies of the system"),
+                description=_("Made before every update and once a week. Documents and personal folders "
+                              "are not in the copies and do not change."))
+            page.add(self.group)
+            self.rows = []
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            controller = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            controller.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("<Control>n"),
+                                                     Gtk.CallbackAction.new(lambda *_a: self.create() or True)))
+            self.add_controller(controller)
+            self.refresh()
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            return False
+
+        def work(self, args, done, message):
+            if self.busy:
+                return
+            self.busy = True
+            self.create_button.set_sensitive(False)
+            self.say(message)
+
+            def thread():
+                ok, output = run_helper(*args)
+                GLib.idle_add(finish, ok, output)
+
+            def finish(ok, output):
+                self.busy = False
+                self.create_button.set_sensitive(True)
+                done(ok, output)
+                return False
+            threading.Thread(target=thread, daemon=True).start()
+
+        def refresh(self):
+            def done(ok, output):
+                for row in self.rows:
+                    self.group.remove(row)
+                self.rows = []
+                copies = []
+                if ok:
+                    try:
+                        copies = list(reversed(json.loads(output)))
+                    except ValueError:
+                        ok, output = False, _("unexpected answer")
+                if not ok:
+                    self.add_info(_("The copies cannot be read: {error}").format(error=output))
+                    return
+                if not copies:
+                    self.add_info(_("No copy yet. The first one is made at the next update, or now with "
+                                    "Make a copy now."))
+                    return
+                for copy in copies:
+                    self.add_copy(copy)
+                self.say(ngettext("{count} copy of the system.", "{count} copies of the system.",
+                                  len(copies)).format(count=len(copies)))
+            self.work(["list"], done, _("Reading the copies of the system."))
+
+        def add_info(self, text):
+            row = Adw.ActionRow(title=text)
+            row.set_focusable(True)
+            self.group.add(row)
+            self.rows.append(row)
+
+        def add_copy(self, copy):
+            row = Adw.ActionRow(title=copy["title"])
+            restore = Gtk.Button(label=_("Restore"), valign=Gtk.Align.CENTER)
+            restore.update_property([Gtk.AccessibleProperty.LABEL],
+                                    [_("Restore: {copy}").format(copy=copy["title"])])
+            restore.connect("clicked", lambda *_a: self.confirm_restore(copy))
+            delete = Gtk.Button(label=_("Delete"), valign=Gtk.Align.CENTER)
+            delete.update_property([Gtk.AccessibleProperty.LABEL],
+                                   [_("Delete: {copy}").format(copy=copy["title"])])
+            delete.connect("clicked", lambda *_a: self.delete(copy))
+            row.add_suffix(restore)
+            row.add_suffix(delete)
+            self.group.add(row)
+            self.rows.append(row)
+
+        def create(self):
+            self.work(["create", _("Made by hand")], lambda ok, out: self.after(ok, out, _("Copy made.")),
+                      _("Making a copy of the system: it takes some minutes."))
+
+        def delete(self, copy):
+            self.work(["delete", copy["name"]], lambda ok, out: self.after(ok, out, _("Copy deleted.")),
+                      _("Deleting the copy."))
+
+        def after(self, ok, output, text):
+            self.say(text if ok else _("It did not work: {error}").format(error=output))
+            self.refresh()
+
+        def confirm_restore(self, copy):
+            dialog = Adw.AlertDialog(
+                heading=_("Restore the system?"),
+                body=_("The system goes back to: {copy}. Programs and settings installed after it are "
+                       "undone; documents and personal folders do not change. Then the computer "
+                       "restarts: save your work first.").format(copy=copy["title"]))
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("restore", _("Restore and restart"))
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+            dialog.set_response_appearance("restore", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.connect("response", lambda _d, r: r == "restore" and self.work(
+                ["restore", copy["name"]], lambda ok, out: self.after(ok, out, _("Restored.")),
+                _("Restoring: some minutes, then the computer restarts.")))
+            dialog.present(self)
+
+    ngettext = gettext.ngettext
+
+    class RestoreApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Restore")
+            self.connect("activate", lambda app: (app.get_active_window() or RestoreWindow(app)).present())
+
+    return RestoreApp, RestoreWindow
+
+
+def main(argv):
+    if "--console" in argv:
+        from vabaxos_restore import console
+        return console.main()
+    if "-h" in argv or "--help" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_main()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Program store
+Name[it]=Negozio dei programmi
+Comment=Search, install and remove programs
+Comment[it]=Cerca, installa e togli i programmi
+Exec=vabaxos-store %U
+Icon=system-software-install-symbolic
+Terminal=false
+Categories=System;PackageManager;
+Keywords=store;install;software;app;programs;negozio;installa;programmi;applicazioni;flathub;

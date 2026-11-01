@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Check of the computer
+Name[it]=Controllo del computer
+Comment=Sound, network, battery, Braille and the rest, said aloud
+Comment[it]=Audio, rete, batteria, Braille e il resto, detti a voce
+Exec=vabaxos-checkup
+Icon=computer-symbolic
+Terminal=false
+Categories=System;Utility;
+Keywords=check;hardware;sound;battery;braille;controllo;audio;batteria;computer;

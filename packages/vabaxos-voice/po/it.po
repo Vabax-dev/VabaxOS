@@ -1,0 +1,128 @@
+# Italian translation of vabaxos-voice.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-voice\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid ""
+"It answers in {seconds} seconds: fast enough for the screen reader too."
+msgstr ""
+"Risponde in {seconds} secondi: va bene anche per il lettore di schermo."
+
+msgid ""
+"It answers in {seconds} seconds: a little late for the screen reader; good "
+"for reading documents."
+msgstr ""
+"Risponde in {seconds} secondi: un po' in ritardo per il lettore di schermo; "
+"va bene per leggere i documenti."
+
+msgid ""
+"It answers in {seconds} seconds: too slow for the screen reader. Use it to "
+"read documents; Orca keeps eSpeak NG."
+msgstr ""
+"Risponde in {seconds} secondi: troppo lento per il lettore di schermo. Usala"
+" per leggere i documenti; Orca resta con eSpeak NG."
+
+msgid "Natural voice"
+msgstr "Voce naturale"
+
+msgid "Kokoro, the natural voice"
+msgstr "Kokoro, la voce naturale"
+
+msgid ""
+"A voice that sounds human, free (Apache-2.0), without Internet once "
+"downloaded. eSpeak NG stays the voice of VabaxOS; this one is your choice."
+msgstr ""
+"Una voce che sembra umana, libera (Apache-2.0), senza Internet una volta "
+"scaricata. eSpeak NG resta la voce di VabaxOS; questa la scegli tu."
+
+msgid "Use it for the screen reader"
+msgstr "Usala per il lettore di schermo"
+
+msgid "Orca speaks with the natural voice"
+msgstr "Orca parla con la voce naturale"
+
+msgid "Download"
+msgstr "Scarica"
+
+msgid "Listen to an example"
+msgstr "Ascolta un esempio"
+
+msgid "Measure the speed"
+msgstr "Misura la velocità"
+
+msgid "How quickly the natural voice answers on this computer"
+msgstr "Quanto in fretta risponde la voce naturale su questo computer"
+
+msgid "Downloaded."
+msgstr "Scaricata."
+
+msgid "Delete"
+msgstr "Elimina"
+
+msgid "Not downloaded: about {size} MB, from GitHub."
+msgstr "Non scaricata: circa {size} MB, da GitHub."
+
+msgid "Speed not measured yet."
+msgstr "Velocità non ancora misurata."
+
+msgid "Natural voice deleted. Orca speaks with eSpeak NG."
+msgstr "Voce naturale eliminata. Orca parla con eSpeak NG."
+
+msgid "Stop the download"
+msgstr "Ferma lo scaricamento"
+
+msgid "Downloading the natural voice: some minutes, depending on Internet."
+msgstr "Scarico la voce naturale: alcuni minuti, secondo Internet."
+
+msgid "{percent} percent."
+msgstr "{percent} per cento."
+
+msgid "Download stopped."
+msgstr "Scaricamento fermato."
+
+msgid "The file arrived damaged: try again."
+msgstr "Il file è arrivato rovinato: riprova."
+
+msgid "Download failed: is Internet connected? {error}"
+msgstr "Scaricamento non riuscito: Internet è collegato? {error}"
+
+msgid "Natural voice downloaded. Now I measure the speed of this computer."
+msgstr "Voce naturale scaricata. Ora misuro la velocità di questo computer."
+
+msgid "Example of the natural voice."
+msgstr "Esempio della voce naturale."
+
+msgid "The example did not play: {error}"
+msgstr "L'esempio non è partito: {error}"
+
+msgid "Measuring: about half a minute."
+msgstr "Misuro: circa mezzo minuto."
+
+msgid "The measurement did not work: {error}"
+msgstr "La misura non ha funzionato: {error}"
+
+msgid "Orca did not change: {error}"
+msgstr "Orca non è cambiato: {error}"
+
+msgid ""
+"Orca speaks with the natural voice, but on this computer it answers late. To"
+" go back, turn this off, or press Super+Alt+O."
+msgstr ""
+"Orca parla con la voce naturale, ma su questo computer risponde in ritardo. "
+"Per tornare indietro spegni questo interruttore, oppure premi Super+Alt+O."
+
+msgid "Orca speaks with the natural voice."
+msgstr "Orca parla con la voce naturale."
+
+msgid "Orca speaks with eSpeak NG."
+msgstr "Orca parla con eSpeak NG."

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Agenda
+Name[it]=Agenda
+Comment=Your appointments, said as sentences; Google and Outlook too
+Comment[it]=I tuoi appuntamenti, detti a frasi; anche Google e Outlook
+Exec=vabaxos-agenda
+Icon=x-office-calendar-symbolic
+Terminal=false
+Categories=Office;Calendar;
+Keywords=calendar;agenda;appointment;events;google;outlook;calendario;appuntamenti;impegni;

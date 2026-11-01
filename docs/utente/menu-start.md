@@ -1,6 +1,6 @@
 # Il menu Start
 
-**Super** (il tasto con il logo di Windows) apre il **menu Start** di VabaxOS ([ADR-0025](../decisions/0025-menu-start-vabaxos.md), proposta). Super di nuovo, oppure **Esc**, lo chiude, e il focus torna alla finestra in cui eri. Anche **Super+S** lo apre.
+**Super** (il tasto con il logo di Windows) apre il **menu Start** di VabaxOS ([ADR-0025](../decisions/0025-menu-start-vabaxos.md)). Super di nuovo, oppure **Esc**, lo chiude, e il focus torna alla finestra in cui eri. Anche **Super+S** lo apre.
 
 ## Cercare
 
@@ -33,8 +33,8 @@ Le categorie sono un albero, come le cartelle in Windows:
 
 Orca dice di ogni categoria quanti elementi ha e se è aperta o chiusa.
 
-## Con il mouse
+## Il pulsante Start
 
-Nella barra delle applicazioni, in basso a sinistra, il simbolo di VabaxOS apre il menu ArcMenu ([ADR-0018](../decisions/0018-menu-start.md)), con i programmi, le cartelle e i comandi di sistema.
+Nella barra delle applicazioni, in basso a sinistra, c'è il pulsante **Start**, con il logo di VabaxOS. Apre lo stesso menu con un clic, oppure con Invio o Spazio quando ha il focus. Orca lo legge «Start, pulsante». Da tastiera la via più rapida resta il tasto Super.
 
 La panoramica di GNOME, con tutte le finestre, è su **Super+Tab**.

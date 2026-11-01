@@ -20,3 +20,42 @@ msgstr "%d finestre aperte"
 
 msgid "Where am I"
 msgstr "Dove sono"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Text recognition is not installed."
+msgstr "Il riconoscimento del testo non è installato."
+
+msgid "Recognizing the text."
+msgstr "Riconosco il testo."
+
+msgid "Screen"
+msgstr "Schermo"
+
+msgid "Text recognition failed."
+msgstr "Il riconoscimento del testo non è riuscito."
+
+msgid "Dictation is not installed."
+msgstr "La dettatura non è installata."
+
+msgid "Dictation cannot start."
+msgstr "La dettatura non può partire."
+
+msgid "Nothing heard."
+msgstr "Non ho sentito niente."
+
+msgid "Dictation failed."
+msgstr "La dettatura non è riuscita."
+
+msgid "Do not disturb on. Notifications wait in the list, Super+N."
+msgstr "Non disturbare attivo. Le notifiche aspettano nell'elenco, Super+N."
+
+msgid "Do not disturb off."
+msgstr "Non disturbare disattivato."
+
+msgid "The description of pictures is not installed."
+msgstr "La descrizione delle immagini non è installata."
+
+msgid "Formulas are not installed."
+msgstr "Le formule non sono installate."

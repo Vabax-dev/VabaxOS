@@ -1,0 +1,14 @@
+Package: vabaxos-trouble
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: admin
+Priority: optional
+Depends: vabaxos-accessibility, python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, pkexec, procps
+Recommends: pulseaudio-utils, network-manager
+Description: Something is wrong: first checks and a report to ask for help
+ The window says at once what the first checks find: services that did
+ not start, no sound or muted, Orca off, no network, little free space,
+ programs installed only in part. Then it writes a text report of the
+ logs (vabaxos-report, also the whole system log with the password), with
+ the user's personal data hidden, to attach to a message or to a bug
+ report. Nothing is sent by VabaxOS and there is no remote help.

@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Orca's settings in dconf, as Orca 50 keeps them (block 9).
+"""Orca's settings in dconf, as Orca 50 and 51 keep them (block 9).
 
-Orca 50 stores every setting in dconf, one relocatable schema per group:
+Orca stores every setting in dconf, one relocatable schema per group:
 
     /org/gnome/orca/<profile>/<group>/                    a profile
     /org/gnome/orca/<profile>/voices/<type>/              its voices
@@ -11,7 +11,8 @@ Orca 50 stores every setting in dconf, one relocatable schema per group:
 A program's settings are only the keys set there; the others come from the
 profile. Orca reads dconf when it loads its settings; most speech and typing
 settings can also be changed while it runs, through its D-Bus service
-(org.gnome.Orca.Service), and a SIGHUP makes it reload the rest.
+(Orca 51: org.gnome.Orca1.Service, each module an object whose settings are
+D-Bus properties), and a SIGHUP makes it reload the rest.
 """
 
 import os
@@ -43,6 +44,7 @@ SCHEMAS = {
     "spellcheck": "org.gnome.Orca.Spellcheck",
     "flat-review": "org.gnome.Orca.FlatReview",
     "metadata": "org.gnome.Orca.ProfileMetadata",
+    "pronunciations": "org.gnome.Orca.Pronunciations",
 }
 
 
@@ -227,10 +229,15 @@ def camel(name):
 
 
 class OrcaService:
-    """Orca's D-Bus service: settings changed while it runs, profiles."""
+    """Orca's D-Bus service (Orca 51): settings changed while it runs,
+    profiles, messages. Each module (SpeechManager, TypingEchoPresenter,
+    ProfileManager...) is an object under PATH with the interface
+    org.gnome.Orca1.<module>; its settings are writable D-Bus properties
+    named like Orca's setters (set_rate: Rate)."""
 
-    NAME = "org.gnome.Orca.Service"
-    PATH = "/org/gnome/Orca/Service"
+    NAME = "org.gnome.Orca1.Service"
+    PATH = "/org/gnome/Orca1/Service"
+    PROPERTIES = "org.freedesktop.DBus.Properties"
 
     def __init__(self):
         self._setters = None
@@ -247,17 +254,68 @@ class OrcaService:
         except GLib.Error:
             return None
 
+    def _introspect(self, path):
+        reply = self._call(path, "org.freedesktop.DBus.Introspectable", "Introspect", reply="(s)")
+        if not reply:
+            return None
+        try:
+            return Gio.DBusNodeInfo.new_for_xml(reply[0])
+        except GLib.Error:
+            return None
+
     def setters(self):
-        """{camel setter name: [module paths]} of the running Orca, or {}."""
+        """{property name: [(module path, interface, D-Bus type)]} of the
+        writable settings of the running Orca, or {}."""
         if self._setters is None:
             self._setters = {}
-            modules = self._call(self.PATH, self.NAME, "ListModules", reply="(as)")
-            for module in (modules or ([],))[0]:
-                path = f"{self.PATH}/{module}"
-                found = self._call(path, "org.gnome.Orca.Module", "ListRuntimeSetters", reply="(a(ss))")
-                for name, _description in (found or ([],))[0]:
-                    self._setters.setdefault(name, []).append(path)
+            root = self._introspect(self.PATH)
+            for child in (root.nodes if root else []):
+                path = f"{self.PATH}/{child.path}"
+                node = self._introspect(path)
+                for interface in (node.interfaces if node else []):
+                    if not interface.name.startswith("org.gnome.Orca1."):
+                        continue
+                    for prop in interface.properties:
+                        if prop.flags & Gio.DBusPropertyInfoFlags.WRITABLE:
+                            self._setters.setdefault(prop.name, []).append((path, interface.name,
+                                                                            prop.signature))
         return self._setters
+
+    @staticmethod
+    def variant(signature, value):
+        """value as the D-Bus type Orca's property wants."""
+        if signature == "b":
+            return GLib.Variant("b", bool(value))
+        if signature in ("u", "i", "x", "t", "n", "q", "y"):
+            return GLib.Variant(signature, int(round(value)) if isinstance(value, float) else int(value))
+        if signature == "d":
+            return GLib.Variant("d", float(value))
+        return GLib.Variant("s", str(value))
+
+    def _choose(self, name, wanted=None):
+        found = self.setters().get(name, [])
+        if wanted:
+            for entry in found:
+                if wanted in entry[1].rsplit(".", 1)[-1]:
+                    return entry
+        return found[0] if len(found) == 1 else None
+
+    def set_property(self, name, value, wanted=None):
+        entry = self._choose(name, wanted)
+        if entry is None:
+            return False
+        path, interface, signature = entry
+        done = self._call(path, self.PROPERTIES, "Set",
+                          GLib.Variant("(ssv)", (interface, name, self.variant(signature, value))))
+        return done is not None
+
+    def get_property(self, name, wanted=None):
+        entry = self._choose(name, wanted)
+        if entry is None:
+            return None
+        path, interface, _signature = entry
+        reply = self._call(path, self.PROPERTIES, "Get", GLib.Variant("(ss)", (interface, name)), "(v)")
+        return reply[0] if reply else None
 
     @staticmethod
     def setter_name(group, key, sub=None):
@@ -281,26 +339,10 @@ class OrcaService:
         name = self.setter_name(group, key, sub)
         if name is None:
             return False
-        paths = self.setters().get(name, [])
-        wanted = "Typing" if group == "typing-echo" else "Speech"
-        path = next((p for p in paths if wanted in p.rsplit("/", 1)[-1]), paths[0] if len(paths) == 1 else None)
-        if path is None:
-            return False
-        variant = GLib.Variant("b", value) if isinstance(value, bool) else \
-            GLib.Variant("i", value) if isinstance(value, int) else \
-            GLib.Variant("d", value) if isinstance(value, float) else GLib.Variant("s", str(value))
-        done = self._call(path, "org.gnome.Orca.Module", "ExecuteRuntimeSetter",
-                          GLib.Variant("(sv)", (name, variant)), reply="(b)")
-        return bool(done and done[0])
+        return self.set_property(name, value, "Typing" if group == "typing-echo" else "Speech")
 
     def set_profile(self, internal):
-        paths = self.setters().get("ActiveProfile", [])
-        if not paths:
-            return False
-        path = paths[0]
-        done = self._call(path, "org.gnome.Orca.Module", "ExecuteRuntimeSetter",
-                          GLib.Variant("(sv)", ("ActiveProfile", GLib.Variant("s", internal))), reply="(b)")
-        return bool(done and done[0])
+        return self.set_property("ActiveProfile", internal)
 
     def present(self, message):
         return self._call(self.PATH, self.NAME, "PresentMessage", GLib.Variant("(s)", (message,)), "(b)")

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Books and audiobooks
+Name[it]=Libri e audiolibri
+Comment=Free books and audiobooks: Project Gutenberg, LibriVox, Liber Liber
+Comment[it]=Libri e audiolibri gratuiti: Project Gutenberg, LibriVox, Liber Liber
+Exec=vabaxos-books
+Icon=accessories-dictionary-symbolic
+Terminal=false
+Categories=Office;Education;Literature;
+Keywords=books;ebook;audiobook;library;gutenberg;librivox;libri;audiolibri;biblioteca;liber liber;

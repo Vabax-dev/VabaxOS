@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS battery warning
+Name[it]=Avviso della batteria di VabaxOS
+Comment=One spoken warning when the battery goes down to 10 percent
+Exec=vabaxos-announce battery
+NoDisplay=true
+OnlyShowIn=GNOME;
+X-GNOME-Autostart-Phase=Applications
+X-GNOME-AutoRestart=true

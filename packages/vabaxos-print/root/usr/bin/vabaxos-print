@@ -1,0 +1,201 @@
+#!/usr/bin/python3
+"""Printers and scanners, step by step and said aloud.
+
+    vabaxos-print
+
+Printers: the printers found (modern ones need nothing to install: turn
+them on, on the same network or with the USB cable), which one is the
+default; on each, Make default and Print a test page. Search again looks
+for them again; Other printers opens GNOME Settings for the older ones.
+
+Scanners: on each, Scan and read: a page at 300 dpi in grey, saved in
+Documents/Scans, then opened in the VabaxOS reader, which recognizes its
+text and reads it aloud.
+"""
+
+import gettext
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+
+import vabaxos_print as vp
+
+gettext.textdomain("vabaxos-print")
+_ = gettext.gettext
+
+
+def run(command):
+    """(ok, output) of a command; never raises."""
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, check=False, timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return False, str(error)
+    if result.returncode == 0:
+        return True, result.stdout
+    lines = (result.stderr or result.stdout).strip().splitlines()
+    return False, lines[-1] if lines else _("unknown error")
+
+
+def window_classes(runner=run, opener=subprocess.Popen):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, GLib, Gtk
+
+    class PrintWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Printers and scanners"))
+            self.set_default_size(700, 600)
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            header = Adw.HeaderBar()
+            search = Gtk.Button(label=_("Search again"))
+            search.set_tooltip_text(_("Look again for printers and scanners (F5)"))
+            search.connect("clicked", lambda *_a: self.refresh())
+            header.pack_start(search)
+            view.add_top_bar(header)
+            page = Adw.PreferencesPage()
+            self.printers = Adw.PreferencesGroup(
+                title=_("Printers"),
+                description=_("Modern printers need nothing to install: turn them on, on the same network "
+                              "as the computer or with the USB cable, then Search again."))
+            other = Gtk.Button(label=_("Other printers"))
+            other.set_tooltip_text(_("Older printers, in GNOME Settings"))
+            other.connect("clicked", lambda *_a: opener(["gnome-control-center", "printers"]))
+            self.printers.set_header_suffix(other)
+            self.scanners = Adw.PreferencesGroup(
+                title=_("Scanners"),
+                description=_("Scan and read: the page is saved in Documents, Scans, and read aloud."))
+            page.add(self.printers)
+            page.add(self.scanners)
+            self.rows = []
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            controller = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            controller.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string("F5"),
+                                                     Gtk.CallbackAction.new(lambda *_a: self.refresh() or True)))
+            self.add_controller(controller)
+            self.refresh()
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            return False
+
+        def background(self, work, done):
+            def thread():
+                result = work()
+                GLib.idle_add(lambda: done(result) or False)
+            threading.Thread(target=thread, daemon=True).start()
+
+        def clear(self):
+            for group, row in self.rows:
+                group.remove(row)
+            self.rows = []
+
+        def info(self, group, text):
+            row = Adw.ActionRow(title=text)
+            row.set_focusable(True)
+            group.add(row)
+            self.rows.append((group, row))
+
+        def button(self, row, label, accessible, action):
+            button = Gtk.Button(label=label, valign=Gtk.Align.CENTER)
+            button.update_property([Gtk.AccessibleProperty.LABEL], [accessible])
+            button.connect("clicked", lambda *_a: action())
+            row.add_suffix(button)
+
+        def refresh(self):
+            self.say(_("Looking for printers and scanners."))
+
+            def work():
+                ok, printers = runner(["lpstat", "-e"])
+                _ok, default = runner(["lpstat", "-d"])
+                found_ok, scanners = runner(["scanimage", "-L"])
+                return (vp.parse_destinations(printers) if ok else [], vp.parse_default(default or ""),
+                        vp.parse_scanners(scanners) if found_ok else [])
+            self.background(work, self.show)
+
+        def show(self, result):
+            printers, default, scanners = result
+            self.clear()
+            if not printers:
+                self.info(self.printers, _("No printer found."))
+            for name in printers:
+                title = vp.printer_title(name)
+                row = Adw.ActionRow(title=title, subtitle=_("default printer") if name == default else "")
+                self.button(row, _("Print a test page"), _("Print a test page on {printer}").format(printer=title),
+                            lambda n=name: self.test_page(n))
+                if name != default:
+                    self.button(row, _("Make default"), _("Make {printer} the default").format(printer=title),
+                                lambda n=name: self.make_default(n))
+                self.printers.add(row)
+                self.rows.append((self.printers, row))
+            if not scanners:
+                self.info(self.scanners, _("No scanner found."))
+            for device, description in scanners:
+                row = Adw.ActionRow(title=description)
+                self.button(row, _("Scan and read"), _("Scan and read with {scanner}").format(scanner=description),
+                            lambda d=device: self.scan(d))
+                self.scanners.add(row)
+                self.rows.append((self.scanners, row))
+            self.say(_("{printers} printers, {scanners} scanners.").format(printers=len(printers),
+                                                                         scanners=len(scanners)))
+
+        def test_page(self, printer):
+            def work():
+                with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
+                    f.write(vp.test_page_text())
+                try:
+                    return runner(vp.print_command(printer, f.name))
+                finally:
+                    os.remove(f.name)
+            self.say(_("Printing a test page."))
+            self.background(work, lambda r: self.say(_("Test page sent.") if r[0]
+                                                     else _("Not printed: {error}").format(error=r[1])))
+
+        def make_default(self, printer):
+            ok, error = runner(vp.default_command(printer))
+            self.say(_("{printer} is the default printer.").format(printer=vp.printer_title(printer)) if ok
+                     else _("Not changed: {error}").format(error=error))
+            if ok:
+                self.refresh()
+
+        def scan(self, device):
+            folder = vp.scan_folder()
+            os.makedirs(folder, exist_ok=True)
+            path = vp.scan_path(folder)
+            self.say(_("Scanning: about a minute."))
+
+            def done(result):
+                ok, error = result
+                if not ok:
+                    self.say(_("Not scanned: {error}").format(error=error))
+                    return
+                self.say(_("Scanned. The reader opens and reads it."))
+                if shutil.which("vabaxos-reader"):
+                    opener(["vabaxos-reader", path])
+            self.background(lambda: runner(vp.scan_command(device, path)), done)
+
+    class PrintApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Print")
+            self.connect("activate", lambda app: (app.get_active_window() or PrintWindow(app)).present())
+
+    return PrintApp, PrintWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

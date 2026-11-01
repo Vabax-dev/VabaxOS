@@ -1,15 +1,24 @@
 #!/usr/bin/python3
-"""Updates VabaxOS, with every step said aloud (ADR-0020, proposed).
+"""VabaxOS updates, with every step said aloud (ADR-0020).
 
+    vabaxos-update --window     the window (the Start menu opens this)
     vabaxos-update              check, and say what there is
     vabaxos-update --now        download and install now
     vabaxos-update --at-restart download now, install at the next start
-    vabaxos-update --daily      the daily check: speaks only for security
+    vabaxos-update --daily      the automatic check (a user timer): it
+                                follows the settings of the window and
+                                speaks only for security, unless asked
 
-Uses PackageKit, the same service as GNOME Software; the administrator
-password is asked by GNOME (polkit), which Orca reads. Every message is
-printed and shown as a desktop notification, which Orca reads wherever the
-focus is. Flatpak applications are updated too.
+The window has three pages: Updates (security, system, applications,
+firmware, each group with its count; Check, Update now, Update at restart,
+with the progress said every 25 percent), History (what was installed,
+from APT's log) and Settings (how often to check, what to announce).
+
+System packages go through PackageKit, the same service as GNOME Software;
+the administrator password is asked by GNOME (polkit), which Orca reads.
+Applications through Flatpak, firmware through fwupd. Updates that change
+the desktop or the voice (GNOME Shell, Orca, PipeWire, the kernel...) are
+advised at the next start, so the voice does not stop in the middle.
 
 Nothing is installed unless the user asks (series 0.x, ADR-0020).
 """
@@ -19,9 +28,13 @@ import os
 import shutil
 import subprocess
 import sys
+import time
+
+from vabaxos_update import core, settings
 
 gettext.textdomain("vabaxos-update")
 _ = gettext.gettext
+ngettext = gettext.ngettext
 
 NOTE_SOURCES = ("/etc/apt/sources.list", "/etc/apt/sources.list.d")
 
@@ -60,7 +73,7 @@ def unchecked_sources():
 class Updater:
     """PackageKit through GObject introspection."""
 
-    def __init__(self, client=None):
+    def __init__(self, client=None, on_step=None):
         if client is None:
             import gi
             gi.require_version("PackageKitGlib", "1.0")
@@ -71,6 +84,11 @@ class Updater:
             self.pk = client.pk
         self.client = client
         self.last_step = -1
+        self.cancellable = None
+        self.restart = None
+        # on_step(percent): every 25 percent; by default a notification.
+        self.on_step = on_step or (lambda percent: notify(
+            _("Updating: {percent} percent.").format(percent=percent)))
 
     def progress(self, progress, kind, _data=None):
         if kind != self.pk.ProgressType.PERCENTAGE:
@@ -79,39 +97,72 @@ class Updater:
         step = percent // 25
         if 0 < percent < 100 and step > self.last_step:
             self.last_step = step
-            notify(_("Updating: {percent} percent.").format(percent=step * 25))
+            self.on_step(step * 25)
+
+    def packages(self):
+        self.client.refresh_cache(False, self.cancellable, lambda *a: None, None)
+        results = self.client.get_updates(1 << int(self.pk.FilterEnum.NONE), self.cancellable,
+                                          lambda *a: None, None)
+        return results.get_package_array()
 
     def updates(self):
-        self.client.refresh_cache(False, None, lambda *a: None, None)
-        results = self.client.get_updates(1 << int(self.pk.FilterEnum.NONE), None, lambda *a: None, None)
-        packages = results.get_package_array()
+        packages = self.packages()
         security = [p for p in packages if p.get_info() == self.pk.InfoEnum.SECURITY]
         return packages, security
 
-    def install(self, packages, at_restart=False):
-        ids = [p.get_id() for p in packages]
+    def install(self, ids, at_restart=False):
         flags = 1 << int(self.pk.TransactionFlagEnum.ONLY_TRUSTED)
         if at_restart:
             flags |= 1 << int(self.pk.TransactionFlagEnum.ONLY_DOWNLOAD)
         self.last_step = -1
-        self.client.update_packages(flags, ids, None, self.progress, None)
+        results = self.client.update_packages(flags, list(ids), self.cancellable, self.progress, None)
         if at_restart:
-            self.pk.offline_trigger(self.pk.OfflineAction.REBOOT, None)
+            self.pk.offline_trigger(self.pk.OfflineAction.REBOOT, self.cancellable)
+        self.restart = None
+        if results is not None and hasattr(results, "get_require_restart_worst"):
+            restart = self.pk.RestartEnum
+            worst = results.get_require_restart_worst()
+            if worst in (restart.SYSTEM, restart.SECURITY_SYSTEM):
+                self.restart = "system"
+            elif worst in (restart.SESSION, restart.SECURITY_SESSION):
+                self.restart = "session"
 
 
 def flatpak_updates():
-    if not shutil.which("flatpak"):
-        return 0
-    out = subprocess.run(["flatpak", "remote-ls", "--updates", "--columns=application"],
-                         capture_output=True, text=True, check=False).stdout
-    return len([line for line in out.splitlines() if line.strip()])
+    return len(core.flatpak_updates())
+
+
+def update_flatpak():
+    if shutil.which("flatpak"):
+        subprocess.run(["flatpak", "update", "--noninteractive", "-y"], capture_output=True, check=False)
+
+
+def update_firmware():
+    if shutil.which("fwupdmgr"):
+        subprocess.run(["fwupdmgr", "update", "-y", "--no-reboot-check"], capture_output=True, check=False)
+
+
+def summary(packages, security, apps, firmware=0):
+    parts = [ngettext("{count} update", "{count} updates", packages).format(count=packages)]
+    parts.append(ngettext("{count} for security", "{count} for security", security).format(count=security))
+    if apps:
+        parts.append(ngettext("{count} application", "{count} applications", apps).format(count=apps))
+    if firmware:
+        parts.append(ngettext("{count} firmware", "{count} firmware", firmware).format(count=firmware))
+    return ", ".join(parts) + "."
 
 
 def main(argv, updater=None):
+    if "--window" in argv:
+        from vabaxos_update.window import run_window
+        return run_window(sys.modules[__name__])
     mode = "check"
     for option, name in (("--now", "now"), ("--at-restart", "restart"), ("--daily", "daily")):
         if option in argv:
             mode = name
+    config = settings.load()
+    if mode == "daily" and not settings.check_due(config, settings.last_check(), time.time()):
+        return 0
     if mode != "daily":
         notify(_("Looking for updates. Please wait."))
     try:
@@ -121,17 +172,20 @@ def main(argv, updater=None):
         if mode != "daily":
             notify(_("Cannot look for updates: {error}. Check the network and try again.").format(error=error))
         return 1
+    settings.mark_checked(time.time())
     apps = flatpak_updates()
     if mode == "daily":
         if security:
             notify(_("{count} security updates are ready. Open Update VabaxOS to install them.").format(
                 count=len(security)), urgent=True)
+        elif config["notify"] == "all" and (packages or apps):
+            notify(_("{count} updates are ready. Open Update VabaxOS to install them.").format(
+                count=len(packages) + apps))
         return 0
     if not packages and not apps:
         notify(_("VabaxOS is up to date."))
         return 0
-    text = _("{count} updates, {security} for security; {apps} applications.").format(
-        count=len(packages), security=len(security), apps=apps)
+    text = summary(len(packages), len(security), apps)
     if unchecked_sources():
         text += " " + _("Note: in this test version updates come straight from Debian testing, "
                         "not yet checked by VabaxOS.")
@@ -141,14 +195,16 @@ def main(argv, updater=None):
     notify(text)
     try:
         if packages:
-            updater.install(packages, at_restart=(mode == "restart"))
+            updater.install([p.get_id() for p in packages], at_restart=(mode == "restart"))
         if apps:
-            subprocess.run(["flatpak", "update", "--noninteractive"], check=False)
+            update_flatpak()
     except Exception as error:  # noqa: BLE001
         notify(_("The update stopped: {error}.").format(error=error), urgent=True)
         return 1
     if mode == "restart":
         notify(_("Ready. The updates will be installed at the next start."))
+    elif updater.restart == "system":
+        notify(_("Update finished. Restart the computer to complete it."))
     else:
         notify(_("Update finished."))
     return 0

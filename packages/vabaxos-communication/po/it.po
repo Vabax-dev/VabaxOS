@@ -1,0 +1,95 @@
+# Italian translation of vabaxos-communication.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-communication\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Telegram for Orca"
+msgstr "Telegram per Orca"
+
+msgid "AccessGram"
+msgstr "AccessGram"
+
+msgid ""
+"A Telegram program made for screen readers, free (MIT). It is young and in "
+"English; it is not made by VabaxOS. Telegram Web, in the Start menu, works "
+"too."
+msgstr ""
+"Un programma Telegram fatto per i lettori di schermo, libero (MIT). È "
+"giovane e in inglese; non è fatto da VabaxOS. Funziona anche Telegram Web, "
+"nel menu Start."
+
+msgid "Remove"
+msgstr "Rimuovi"
+
+msgid "The first time"
+msgstr "La prima volta"
+
+msgid ""
+"AccessGram asks an API ID and an API hash: Telegram gives them to each "
+"person. Open my.telegram.org, enter with your phone number and the code "
+"Telegram sends you, choose API development tools, fill in the form (any name"
+" for the application), then copy the two values."
+msgstr ""
+"AccessGram chiede un «API ID» e un «API hash»: Telegram li dà a ogni "
+"persona. Apri my.telegram.org, entra con il tuo numero di telefono e il "
+"codice che Telegram ti manda, scegli «API development tools», compila il "
+"modulo (un nome qualsiasi per l'applicazione), poi copia i due valori."
+
+msgid "Open my.telegram.org"
+msgstr "Apri my.telegram.org"
+
+msgid "In the browser"
+msgstr "Nel browser"
+
+msgid "Installed. Open it from here or from the Start menu."
+msgstr "Installato. Aprilo da qui o dal menu Start."
+
+msgid "Open AccessGram"
+msgstr "Apri AccessGram"
+
+msgid ""
+"Not installed: about 1 MB, from GitHub, the version checked by VabaxOS."
+msgstr ""
+"Non installato: circa 1 MB, da GitHub, la versione controllata da VabaxOS."
+
+msgid "Download and install"
+msgstr "Scarica e installa"
+
+msgid "AccessGram opens."
+msgstr "AccessGram si apre."
+
+msgid "Downloading AccessGram."
+msgstr "Scarico AccessGram."
+
+msgid "The download is not the version VabaxOS checked: nothing installed."
+msgstr ""
+"Quello scaricato non è la versione controllata da VabaxOS: non ho installato"
+" niente."
+
+msgid "Download failed: is Internet connected? {error}"
+msgstr "Scaricamento non riuscito: Internet è collegato? {error}"
+
+msgid ""
+"AccessGram installed: it is also in the Start menu. Open it with Open "
+"AccessGram."
+msgstr ""
+"AccessGram installato: è anche nel menu Start. Aprilo con Apri AccessGram."
+
+msgid ""
+"AccessGram removed. Your Telegram session stays in AccessGram's folder."
+msgstr ""
+"AccessGram rimosso. La tua sessione di Telegram resta nella cartella di "
+"AccessGram."
+
+msgid "my.telegram.org opens in the browser."
+msgstr "my.telegram.org si apre nel browser."

@@ -56,7 +56,7 @@ prepare_config() {
     mkdir -p "$dir"
     cp -a "$IMAGE/auto" "$IMAGE/config" "$IMAGE/build.conf" "$dir/"
     if [[ "${2:-}" == packages ]]; then
-        "$REPO/scripts/build-packages.sh" "$dir/config/packages.chroot"
+        VABAXOS_ISO=1 "$REPO/scripts/build-packages.sh" "$dir/config/packages.chroot"
     fi
     (cd "$dir" && lb config)
 }

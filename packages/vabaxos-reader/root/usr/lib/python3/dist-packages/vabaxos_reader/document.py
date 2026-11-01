@@ -2,9 +2,13 @@
 paragraphs and sentences, and the reading position of each file.
 
 Formats: plain text and Markdown, PDF (pdftotext of poppler-utils), Word
-(.docx, python3-docx), EPUB (python3-ebooklib), HTML, and images and
-scanned PDFs through text recognition (tesseract, Italian and English).
-Only Debian packages.
+(.docx, python3-docx), EPUB (python3-ebooklib), HTML and saved web pages,
+OpenDocument text (.odt, LibreOffice), RTF, DAISY books with text (DAISY 3
+.xml, DAISY 2.02 ncc.html), and images and scanned PDFs through text
+recognition (tesseract, Italian and English). Only Debian packages.
+
+Headings (chapters, sections) are kept with their level, for the table of
+contents of the reader: read_structure() gives paragraphs and headings.
 """
 
 import hashlib
@@ -14,9 +18,12 @@ import os
 import re
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
+import zipfile
 
 IMAGES = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp")
-SUPPORTED = (".txt", ".md", ".pdf", ".docx", ".epub", ".html", ".htm") + IMAGES
+SUPPORTED = (".txt", ".md", ".pdf", ".docx", ".epub", ".html", ".htm", ".xhtml", ".odt", ".rtf",
+             ".xml") + IMAGES
 OCR_LANGUAGES = "ita+eng"
 
 
@@ -46,20 +53,25 @@ class _HTMLText(html.parser.HTMLParser):
 
     BLOCKS = {"p", "div", "li", "h1", "h2", "h3", "h4", "h5", "h6", "br", "tr", "blockquote", "section"}
 
+    HEADINGS = {"h1": 1, "h2": 2, "h3": 3, "h4": 4, "h5": 5, "h6": 6}
+
     def __init__(self):
         super().__init__()
         self.paragraphs = []
+        self.headings = []    # (paragraph index, level, title)
         self.current = []
         self.skip = 0
+        self.level = 0
 
     def handle_starttag(self, tag, attrs):
-        if tag in ("script", "style", "head"):
+        if tag in ("script", "style", "head", "nav"):
             self.skip += 1
         elif tag in self.BLOCKS:
             self._end()
+            self.level = self.HEADINGS.get(tag, 0)
 
     def handle_endtag(self, tag):
-        if tag in ("script", "style", "head"):
+        if tag in ("script", "style", "head", "nav"):
             self.skip = max(0, self.skip - 1)
         elif tag in self.BLOCKS:
             self._end()
@@ -71,19 +83,122 @@ class _HTMLText(html.parser.HTMLParser):
     def _end(self):
         text = " ".join("".join(self.current).split())
         if text:
+            if self.level:
+                self.headings.append((len(self.paragraphs), self.level, text))
             self.paragraphs.append(text)
         self.current = []
+        self.level = 0
 
     def close(self):
         super().close()
         self._end()
 
 
-def html_paragraphs(markup):
+def html_structure(markup):
     parser = _HTMLText()
     parser.feed(markup)
     parser.close()
-    return parser.paragraphs
+    return parser.paragraphs, parser.headings
+
+
+def html_paragraphs(markup):
+    return html_structure(markup)[0]
+
+
+def markdown_structure(text):
+    """Paragraphs of Markdown or plain text; lines starting with # are
+    headings."""
+    paragraphs, headings = [], []
+    for paragraph in text_paragraphs(re.sub(r"(?m)^(#{1,6}\s.*)$", "\n\\1\n", text)):
+        match = re.match(r"^(#{1,6})\s+(.*)$", paragraph)
+        if match:
+            headings.append((len(paragraphs), len(match.group(1)), match.group(2).strip()))
+            paragraphs.append(match.group(2).strip())
+        else:
+            paragraphs.append(paragraph)
+    return paragraphs, headings
+
+
+_ODF = {"text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0"}
+
+
+def odt_structure(path):
+    """OpenDocument text: text:h (with its outline level) and text:p, in
+    the order of the document, also inside lists and tables."""
+    with zipfile.ZipFile(path) as archive:
+        root = ET.fromstring(archive.read("content.xml"))
+    paragraphs, headings = [], []
+    heading_tag = f"{{{_ODF['text']}}}h"
+    paragraph_tag = f"{{{_ODF['text']}}}p"
+    for node in root.iter():
+        if node.tag not in (heading_tag, paragraph_tag):
+            continue
+        text = " ".join("".join(node.itertext()).split())
+        if not text:
+            continue
+        if node.tag == heading_tag:
+            level = int(node.get(f"{{{_ODF['text']}}}outline-level", "1") or 1)
+            headings.append((len(paragraphs), level, text))
+        paragraphs.append(text)
+    return paragraphs, headings
+
+
+def rtf_text(data):
+    """The text of an RTF file: control words out, \\par as a new line,
+    \\'hh and \\uN characters kept; tables of fonts, colours, styles out."""
+    data = re.sub(r"\{\\\*[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", "", data)
+    for group in ("fonttbl", "colortbl", "stylesheet", "info", "listtable", "listoverridetable"):
+        data = re.sub(r"\{\\" + group + r"(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}", "", data)
+    out = []
+    i = 0
+    while i < len(data):
+        char = data[i]
+        if char in "{}":
+            i += 1
+            continue
+        if char != "\\":
+            if char not in "\r\n":
+                out.append(char)
+            i += 1
+            continue
+        match = re.match(r"\\(?:'([0-9a-fA-F]{2})|u(-?\d+)\??|([a-zA-Z]+)(-?\d+)? ?|(.))", data[i:])
+        if not match:
+            i += 1
+            continue
+        hexa, uni, word, _num, other = match.groups()
+        if hexa:
+            out.append(bytes([int(hexa, 16)]).decode("cp1252", "replace"))
+        elif uni:
+            out.append(chr(int(uni) % 65536))
+        elif word in ("par", "line", "sect", "page"):
+            out.append("\n\n" if word != "line" else "\n")
+        elif word == "tab":
+            out.append("\t")
+        elif other in ("\\", "{", "}"):
+            out.append(other)
+        i += match.end()
+    return "".join(out)
+
+
+def daisy_structure(path):
+    """A DAISY 3 book (DTBook .xml): levels and headings, paragraphs."""
+    root = ET.parse(path).getroot()
+    if not root.tag.endswith("dtbook"):
+        raise ValueError("this XML file is not a DAISY book")
+    paragraphs, headings = [], []
+    for node in root.iter():
+        tag = node.tag.rsplit("}", 1)[-1]
+        if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "hd"):
+            text = " ".join("".join(node.itertext()).split())
+            if text:
+                level = int(tag[1]) if tag[0] == "h" and tag[1:].isdigit() else 6
+                headings.append((len(paragraphs), level, text))
+                paragraphs.append(text)
+        elif tag in ("p", "li", "dd", "dt", "caption"):
+            text = " ".join("".join(node.itertext()).split())
+            if text:
+                paragraphs.append(text)
+    return paragraphs, headings
 
 
 def text_paragraphs(text):
@@ -107,19 +222,68 @@ def text_paragraphs(text):
 def read_paragraphs(path, ocr=False):
     """The paragraphs of a document, or raises ValueError with a message.
     Images and scanned PDFs raise NeedsOCR unless ocr is true."""
+    return read_structure(path, ocr)[0]
+
+
+def read_structure(path, ocr=False):
+    """(paragraphs, headings) of a document; headings are (paragraph index,
+    level, title)."""
     ext = os.path.splitext(path)[1].lower()
-    if ext in IMAGES:
-        if not ocr:
-            raise NeedsOCR("the text of the image must be recognized")
-        return text_paragraphs(ocr_image(path))
-    if ext in (".txt", ".md", ""):
+    if ext == ".odt":
+        return odt_structure(path)
+    if ext == ".rtf":
+        with open(path, encoding="latin-1") as f:
+            return text_paragraphs(rtf_text(f.read())), []
+    if ext == ".xml":
+        return daisy_structure(path)
+    if ext == ".md" or ext in (".txt", ""):
         with open(path, "rb") as f:
             data = f.read()
         try:
             text = data.decode("utf-8")
         except UnicodeDecodeError:
             text = data.decode("latin-1")
-        return text_paragraphs(text)
+        return markdown_structure(text) if ext == ".md" else (text_paragraphs(text), [])
+    if ext in (".html", ".htm", ".xhtml"):
+        with open(path, encoding="utf-8", errors="replace") as f:
+            return html_structure(f.read())
+    if ext == ".docx":
+        import docx
+        document = docx.Document(path)
+        paragraphs, headings = [], []
+        for paragraph in document.paragraphs:
+            text = paragraph.text.strip()
+            if not text:
+                continue
+            style = (paragraph.style.name if paragraph.style is not None else "") or ""
+            match = re.match(r"^(?:Heading|Titolo|Title)\s*(\d?)$", style)
+            if match:
+                headings.append((len(paragraphs), int(match.group(1) or 1), text))
+            paragraphs.append(text)
+        return paragraphs, headings
+    if ext == ".epub":
+        import ebooklib
+        from ebooklib import epub
+        book = epub.read_epub(path, {"ignore_ncx": True})
+        paragraphs, headings = [], []
+        # The reading order of the book (spine), without its table of contents.
+        for item_id, _linear in book.spine:
+            item = book.get_item_with_id(item_id)
+            if item is None or item.get_type() != ebooklib.ITEM_DOCUMENT or "nav" in (item.get_name() or ""):
+                continue
+            more, more_headings = html_structure(item.get_content().decode("utf-8", "replace"))
+            headings += [(index + len(paragraphs), level, title) for index, level, title in more_headings]
+            paragraphs += more
+        return paragraphs, headings
+    return _read_paragraphs_only(path, ext, ocr), []
+
+
+def _read_paragraphs_only(path, ext, ocr):
+    """Images and PDF: text without headings."""
+    if ext in IMAGES:
+        if not ocr:
+            raise NeedsOCR("the text of the image must be recognized")
+        return text_paragraphs(ocr_image(path))
     if ext == ".pdf":
         result = subprocess.run(["pdftotext", "-enc", "UTF-8", path, "-"], capture_output=True, check=False)
         if result.returncode != 0:
@@ -130,25 +294,6 @@ def read_paragraphs(path, ocr=False):
                 raise NeedsOCR("the PDF has no text: it may be scanned images")
             paragraphs = text_paragraphs(ocr_pdf(path))
         return paragraphs
-    if ext == ".docx":
-        import docx
-        document = docx.Document(path)
-        return [p.text.strip() for p in document.paragraphs if p.text.strip()]
-    if ext == ".epub":
-        import ebooklib
-        from ebooklib import epub
-        book = epub.read_epub(path, {"ignore_ncx": True})
-        paragraphs = []
-        # The reading order of the book (spine), without its table of contents.
-        for item_id, _linear in book.spine:
-            item = book.get_item_with_id(item_id)
-            if item is None or item.get_type() != ebooklib.ITEM_DOCUMENT or "nav" in (item.get_name() or ""):
-                continue
-            paragraphs += html_paragraphs(item.get_content().decode("utf-8", "replace"))
-        return paragraphs
-    if ext in (".html", ".htm"):
-        with open(path, encoding="utf-8", errors="replace") as f:
-            return html_paragraphs(f.read())
     raise ValueError("this kind of file is not supported")
 
 
@@ -174,9 +319,10 @@ class Document:
     """A document as a list of sentences, each with its paragraph and its
     position in the text shown on the screen."""
 
-    def __init__(self, paragraphs, path=""):
+    def __init__(self, paragraphs, path="", headings=None):
         self.path = path
         self.paragraphs = paragraphs
+        self.headings = headings or []
         self.sentences = []   # (paragraph index, start offset, end offset, text)
         text = []
         offset = 0
@@ -199,7 +345,30 @@ class Document:
 
     @classmethod
     def open(cls, path, ocr=False):
-        return cls(read_paragraphs(path, ocr), path)
+        paragraphs, headings = read_structure(path, ocr)
+        document = cls(paragraphs, path)
+        document.headings = headings
+        return document
+
+    def heading_sentence(self, heading):
+        """The first sentence of a heading's paragraph."""
+        paragraph = heading[0]
+        for index, sentence in enumerate(self.sentences):
+            if sentence[0] >= paragraph:
+                return index
+        return max(0, len(self.sentences) - 1)
+
+    def next_heading(self, index, step):
+        """The heading after (step=1) or before (step=-1) the sentence at
+        index, or None."""
+        if not self.headings or not self.sentences:
+            return None
+        paragraph = self.sentences[index][0]
+        if step > 0:
+            after = [h for h in self.headings if h[0] > paragraph]
+            return after[0] if after else None
+        before = [h for h in self.headings if h[0] < paragraph]
+        return before[-1] if before else None
 
     def sentence_at(self, offset):
         for index, (_, start, end, _) in enumerate(self.sentences):

@@ -1,46 +1,21 @@
-# VabaxOS Start menu (ADR-0018): ArcMenu, "Redmond" layout (like the
-# Windows 7 Start menu), with the VabaxOS logo as its button. Super opens
-# it, Super+S too (then type to search, like Windows; Super+S comes from
-# vabaxos-keys: another key in arcmenu-hotkey makes ArcMenu bind Super
-# alone as a plain key, which then opens the menu with every Super key);
-# the GNOME overview
-# is on Super+Tab (30-windows-keys). Defaults: users can change them.
+# VabaxOS Start menu (ADR-0025, accepted by Vabax on 2026-11-01): the
+# VabaxOS program vabaxos-start, with its search field and its categories in
+# a tree. Super opens it, Super+S too, and so does the Start button at the
+# left of the taskbar (the VabaxOS logo and the word "Start"): all three
+# come from the extension vabaxos-keys@vabaxos.org. ArcMenu (ADR-0018) is
+# no longer installed. The GNOME overview is on Super+Tab (30-windows-keys).
 #
-# Accessibility (checked with vabaxos-a11y-check in test-boot.sh): the
-# button shows the logo and the word "Start", because an icon alone has no
-# name for Orca; the power commands are one "Power Off" item that opens a
-# menu with written names (Session: Log Out, Lock; System: Restart, Power
-# Off, Suspend), like the macOS Apple menu, because ArcMenu's icon-only
-# power buttons have no name either.
-# A dconf system database instead of a GSettings override, because the
-# Debian package 69.2-1 installs its schema only inside the extension.
-# All the extensions VabaxOS turns on (one list: blocks 3 and 8; the last
-# one is VabaxOS's own, for the Windows keys). Each one
-# must pass vabaxos-a11y-check in test-boot.sh, like ArcMenu.
+# All the extensions VabaxOS turns on (one list: blocks 8 and 12). Each one
+# must pass vabaxos-a11y-check in test-boot.sh.
 # button-names@vabaxos.org (vabaxos-accessibility, ADR-0022) names GNOME
 # Shell's icon-only buttons, such as Close and Expand on notifications.
 [org/gnome/shell]
-enabled-extensions=['button-names@vabaxos.org', 'arcmenu@arcmenu.com', 'dash-to-panel@jderose9.github.com', 'ubuntu-appindicators@ubuntu.com', 'ding@rastersoft.com', 'GPaste@gnome-shell-extensions.gnome.org', 'tiling-assistant@leleat-on-github', 'vabaxos-keys@vabaxos.org']
+enabled-extensions=['button-names@vabaxos.org', 'dash-to-panel@jderose9.github.com', 'ubuntu-appindicators@ubuntu.com', 'ding@rastersoft.com', 'GPaste@gnome-shell-extensions.gnome.org', 'tiling-assistant@leleat-on-github', 'vabaxos-keys@vabaxos.org']
 
-[org/gnome/shell/extensions/arcmenu]
-menu-layout='redmond'
-menu-button-icon='/usr/share/icons/hicolor/scalable/apps/vabaxos-logo.svg'
-position-in-panel='Left'
-# Super opens the VabaxOS Start menu (vabaxos-keys, block 12, ADR-0025 proposed);
-# ArcMenu stays on the taskbar, for the mouse.
-arcmenu-hotkey=@as []
-arcmenu-hotkey-overlay-key-enabled=false
-power-options=[(0, true), (1, true), (2, true), (3, true), (4, true), (5, false), (6, false), (7, false)]
-update-notifier-enabled=false
-# No user picture: it says nothing to a screen reader user.
-show-user-avatar=false
-# Folders and programs in one list on the right: with two lists ArcMenu
-# puts a separator between them that the keyboard reaches and that has no
-# name (found by vabaxos-a11y-check).
-directory-shortcuts=[{'id': 'ArcMenu_Home', 'name': 'Home', 'icon': 'ArcMenu_Home'}, {'id': 'ArcMenu_Documents', 'name': 'Documents', 'icon': 'ArcMenu_Documents'}, {'id': 'ArcMenu_Downloads', 'name': 'Downloads', 'icon': 'ArcMenu_Downloads'}, {'id': 'ArcMenu_Music', 'name': 'Music', 'icon': 'ArcMenu_Music'}, {'id': 'ArcMenu_Pictures', 'name': 'Pictures', 'icon': 'ArcMenu_Pictures'}, {'id': 'ArcMenu_Videos', 'name': 'Videos', 'icon': 'ArcMenu_Videos'}, {'id': 'org.gnome.Settings.desktop'}, {'id': 'org.gnome.Ptyxis.desktop'}, {'id': 'ArcMenu_Software', 'name': 'Software'}, {'id': 'ArcMenu_ActivitiesOverview', 'name': 'Activities Overview', 'icon': 'view-fullscreen-symbolic'}, {'id': 'org.vabaxos.Help.desktop'}]
-application-shortcuts=@aa{ss} []
-show-external-devices=false
-show-bookmarks=false
-menu-button-appearance='Icon_Text'
-menu-button-text='Start'
-power-display-style='Menu'
+# The taskbar has one Start button, ours: Dash to Panel's own "Show
+# Applications" button (GNOME's grid of icons) is hidden. The positions are
+# Dash to Panel's defaults otherwise, for the first four screens (keys "0"
+# to "3": the screen numbers, which Dash to Panel reads when it has no
+# setting for the screen's serial number).
+[org/gnome/shell/extensions/dash-to-panel]
+panel-element-positions='{"0":[{"element":"showAppsButton","visible":false,"position":"stackedTL"},{"element":"activitiesButton","visible":false,"position":"stackedTL"},{"element":"leftBox","visible":true,"position":"stackedTL"},{"element":"taskbar","visible":true,"position":"stackedTL"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}],"1":[{"element":"showAppsButton","visible":false,"position":"stackedTL"},{"element":"activitiesButton","visible":false,"position":"stackedTL"},{"element":"leftBox","visible":true,"position":"stackedTL"},{"element":"taskbar","visible":true,"position":"stackedTL"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}],"2":[{"element":"showAppsButton","visible":false,"position":"stackedTL"},{"element":"activitiesButton","visible":false,"position":"stackedTL"},{"element":"leftBox","visible":true,"position":"stackedTL"},{"element":"taskbar","visible":true,"position":"stackedTL"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}],"3":[{"element":"showAppsButton","visible":false,"position":"stackedTL"},{"element":"activitiesButton","visible":false,"position":"stackedTL"},{"element":"leftBox","visible":true,"position":"stackedTL"},{"element":"taskbar","visible":true,"position":"stackedTL"},{"element":"centerBox","visible":true,"position":"stackedBR"},{"element":"rightBox","visible":true,"position":"stackedBR"},{"element":"dateMenu","visible":true,"position":"stackedBR"},{"element":"systemMenu","visible":true,"position":"stackedBR"},{"element":"desktopButton","visible":true,"position":"stackedBR"}]}'

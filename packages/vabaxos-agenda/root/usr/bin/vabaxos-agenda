@@ -1,0 +1,282 @@
+#!/usr/bin/python3
+"""The agenda: the appointments of every calendar, said as sentences.
+
+    vabaxos-agenda             the window
+    vabaxos-agenda --summary   says today's and tomorrow's appointments (Super+Alt+A)
+
+The appointments of the next two weeks, day by day: Up and Down read them
+("10:30, Dentist, one hour, Via Roma 3, Personal"). Ctrl+N adds one with
+a sentence, as the reminders ("domani alle 10:30 dentista"): VabaxOS reads
+it back before saving. Delete removes the appointment under the cursor
+(after a question). F5 reads the calendars again. Accounts opens GNOME's
+Online Accounts, to add Google or Microsoft 365 / Outlook. Fifteen
+minutes before an appointment the reminders say it.
+"""
+
+import datetime
+import gettext
+import subprocess
+import sys
+import threading
+
+import vabaxos_agenda as va
+
+gettext.textdomain("vabaxos-agenda")
+_ = gettext.gettext
+
+DAYS = 14
+
+
+def present(text):
+    print(text, flush=True)
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca1.Service", "/org/gnome/Orca1/Service", "org.gnome.Orca1.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - printed anyway
+        pass
+
+
+def calendars_factory():
+    from vabaxos_agenda.calendars import Calendars
+    return Calendars()
+
+
+def open_accounts():
+    subprocess.Popen(["gnome-control-center", "online-accounts"], start_new_session=True,
+                     env={**__import__("os").environ, "XDG_CURRENT_DESKTOP": "GNOME"})
+
+
+def now():
+    return datetime.datetime.now().astimezone()
+
+
+def window_classes(speak=present, factory=calendars_factory, accounts=open_accounts, clock=now):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, GLib, Gtk
+
+    def run(work, done):
+        def thread():
+            try:
+                result = work()
+            except Exception as error:  # noqa: BLE001 - said to the user
+                result = error
+            GLib.idle_add(lambda: done(result) and False)
+        threading.Thread(target=thread, daemon=True).start()
+
+    class AgendaWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Agenda"))
+            self.set_default_size(680, 700)
+            self.cals = None
+            self.groups, self.rows = [], []
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            header = Adw.HeaderBar()
+            add = Gtk.Button(label=_("New appointment"))
+            add.set_tooltip_text(_("New appointment (Ctrl+N)"))
+            add.connect("clicked", lambda *_a: self.ask_new())
+            header.pack_start(add)
+            accounts_button = Gtk.Button(label=_("Accounts"))
+            accounts_button.set_tooltip_text(_("Add Google or Microsoft 365 / Outlook, in GNOME's Online Accounts"))
+            accounts_button.connect("clicked", lambda *_a: accounts())
+            header.pack_end(accounts_button)
+            view.add_top_bar(header)
+            self.page = Adw.PreferencesPage()
+            self.status = Adw.PreferencesGroup(description=_("Reading the calendars…"))
+            self.page.add(self.status)
+            view.set_content(self.page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            keys = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            for accel, action in (("<Control>n", self.ask_new), ("F5", self.load), ("Escape", self.close)):
+                keys.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(accel),
+                                                   Gtk.CallbackAction.new(lambda *_a, a=action: a() or True)))
+            self.add_controller(keys)
+            self.load()
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        # -- the list ------------------------------------------------------
+
+        def load(self, focus=None):
+            def work():
+                if self.cals is None:
+                    self.cals = factory()
+                return self.cals.events(DAYS)
+            run(work, lambda events: self.show(events, focus))
+
+        def show(self, events, focus=None):
+            for group in self.groups:
+                self.page.remove(group)
+            self.groups, self.rows = [], []
+            if isinstance(events, Exception):
+                self.status.set_description(_("The calendars cannot be read: {error}").format(error=events))
+                self.say(self.status.get_description())
+                return
+            moment = clock()
+            count = len(events)
+            self.status.set_description(
+                ngettext("{count} appointment in the next two weeks. Ctrl+N adds one.",
+                         "{count} appointments in the next two weeks. Ctrl+N adds one.", count).format(count=count)
+                if count else _("No appointments in the next two weeks. Ctrl+N adds one."))
+            for label, day_events in va.group_by_day(events, moment):
+                group = Adw.PreferencesGroup(title=label)
+                for event in day_events:
+                    text = va.describe(event, moment, with_day=False)
+                    first, _sep, rest = text.partition(", ")
+                    row = Adw.ActionRow(title=f"{first}, {rest.split(', ')[0]}" if rest else first,
+                                        subtitle=", ".join(rest.split(", ")[1:]), activatable=True)
+                    row.connect("activated", lambda *_a, e=event: self.details(e))
+                    keys = Gtk.EventControllerKey()
+                    keys.connect("key-pressed", lambda _c, keyval, *_a, e=event: self.row_key(keyval, e))
+                    row.add_controller(keys)
+                    group.add(row)
+                    self.rows.append((event, row))
+                self.page.add(group)
+                self.groups.append(group)
+            target = next((row for event, row in self.rows if focus and event.key == focus), None)
+            if target is None and self.rows:
+                target = self.rows[0][1]
+            if target is not None:
+                target.grab_focus()
+            self.say(self.status.get_description())
+
+        def row_key(self, keyval, event):
+            from gi.repository import Gdk
+            if keyval == Gdk.KEY_Delete:
+                self.ask_remove(event)
+                return True
+            return False
+
+        # -- an appointment ----------------------------------------------
+
+        def details(self, event):
+            dialog = Adw.AlertDialog(heading=event.title or _("Untitled"), body=va.describe(event, clock()) + ".")
+            dialog.add_response("close", _("Close"))
+            dialog.add_response("remove", _("Delete"))
+            dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("close")
+            dialog.set_close_response("close")
+            dialog.connect("response", lambda _d, r: r == "remove" and self.ask_remove(event))
+            dialog.present(self)
+            self.dialog = dialog
+
+        def ask_remove(self, event):
+            dialog = Adw.AlertDialog(heading=_("Delete the appointment?"), body=va.describe(event, clock()) + ".")
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("remove", _("Delete"))
+            dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+            dialog.connect("response", lambda _d, r: r == "remove" and self.remove(event))
+            dialog.present(self)
+            self.dialog = dialog
+
+        def remove(self, event):
+            def done(result):
+                if isinstance(result, Exception):
+                    self.say(_("The appointment was not deleted: {error}").format(error=result))
+                    return
+                self.say(_("Deleted: {title}.").format(title=event.title))
+                self.load()
+            run(lambda: self.cals.remove(event), done)
+
+        def ask_new(self):
+            dialog = Adw.AlertDialog(heading=_("New appointment"),
+                                     body=_("Write what and when, for example \"domani alle 10:30 dentista\" or "
+                                            "\"venerdì alle 18 riunione\"."))
+            what = Adw.EntryRow(title=_("What and when"))
+            where = Adw.EntryRow(title=_("Where (if you want)"))
+            calendar = Adw.ComboRow(title=_("Calendar"))
+            names = self.cals.names() if self.cals else []
+            calendar.set_model(Gtk.StringList.new([n for _u, n in names]))
+            default = self.cals.default_uid() if self.cals else None
+            uids = [u for u, _n in names]
+            if default in uids:
+                calendar.set_selected(uids.index(default))
+            box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+            box.add_css_class("boxed-list")
+            for row in (what, where, calendar):
+                box.append(row)
+            dialog.set_extra_child(box)
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("add", _("Add"))
+            dialog.set_response_appearance("add", Adw.ResponseAppearance.SUGGESTED)
+            dialog.set_default_response("add")
+            dialog.set_close_response("cancel")
+
+            def respond(_dialog, response):
+                if response != "add":
+                    return
+                event = va.from_sentence(what.get_text(), clock(), where.get_text().strip())
+                if event is None:
+                    self.say(_("I did not find the time: write for example \"domani alle 10:30 dentista\"."))
+                    return
+                uid = uids[calendar.get_selected()] if uids else None
+                self.confirm(event, uid)
+            dialog.connect("response", respond)
+            dialog.present(self)
+            what.grab_focus()
+            self.dialog = dialog
+
+        def confirm(self, event, uid):
+            dialog = Adw.AlertDialog(heading=_("Is it right?"), body=va.describe(event, clock()) + ".")
+            dialog.add_response("no", _("No, write again"))
+            dialog.add_response("yes", _("Yes, add it"))
+            dialog.set_response_appearance("yes", Adw.ResponseAppearance.SUGGESTED)
+            dialog.set_default_response("yes")
+            dialog.set_close_response("no")
+
+            def respond(_dialog, response):
+                if response == "no":
+                    self.ask_new()
+                    return
+
+                def done(result):
+                    if isinstance(result, Exception):
+                        self.say(_("The appointment was not added: {error}").format(error=result))
+                        return
+                    self.say(_("Added: {appointment}.").format(appointment=va.describe(result, clock())))
+                    self.load(focus=result.key)
+                run(lambda: self.cals.add(event, uid), done)
+            dialog.connect("response", respond)
+            dialog.present(self)
+            self.dialog = dialog
+
+    class AgendaApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Agenda")
+            self.connect("activate", lambda app: (app.get_active_window() or AgendaWindow(app)).present())
+
+    return AgendaApp, AgendaWindow
+
+
+def ngettext(singular, plural, count):
+    return gettext.ngettext(singular, plural, count)
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    if "--summary" in argv:
+        try:
+            present(va.summary(calendars_factory().events(2), now()))
+        except Exception as error:  # noqa: BLE001
+            present(_("The calendars cannot be read: {error}").format(error=error))
+            return 1
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

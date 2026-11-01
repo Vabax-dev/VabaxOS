@@ -1,0 +1,15 @@
+Package: vabaxos-vision
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: misc
+Priority: optional
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gsettings-desktop-schemas
+Recommends: libnotify-bin
+Description: Zoom and contrast, with one key, said aloud
+ For people who see a little: Super+Plus and Super+Minus zoom in and out
+ (as Win+Plus and Win+Minus), Super+Ctrl+C turns high contrast on and
+ off (as Win+Ctrl+C), Super+Ctrl+Plus and Super+Ctrl+Minus change the
+ size of the text; each change is said by Orca, or shown in a short
+ notification. The window adds inverted colours, black and white,
+ cross-hairs, how the zoom follows the focus and the size of the pointer.
+ Everything goes to GNOME's own settings.

@@ -1,0 +1,296 @@
+# Italian translation of vabaxos-lessons.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-lessons\n"
+"PO-Revision-Date: 2026-11-01 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Learn the keys"
+msgstr "Impara i tasti"
+
+msgid "Lessons"
+msgstr "Lezioni"
+
+msgid "Arrows to choose, Enter to start. Escape closes."
+msgstr "Frecce per scegliere, Invio per cominciare. Esc chiude."
+
+msgid "{count} exercises"
+msgstr "{count} esercizi"
+
+msgid "{lesson}: exercise {number} of {count}"
+msgstr "{lesson}: esercizio {number} di {count}"
+
+msgid "Lesson: {lesson}."
+msgstr "Lezione: {lesson}."
+
+msgid "Well done, the lesson is over! Escape goes back to the lessons."
+msgstr "Bravo, la lezione è finita! Esc torna alle lezioni."
+
+msgid "Lessons."
+msgstr "Lezioni."
+
+msgid "Good."
+msgstr "Bene."
+
+msgid "Right!"
+msgstr "Giusto!"
+
+msgid "That was {pressed}."
+msgstr "Hai premuto {pressed}."
+
+msgid "The key is {key}."
+msgstr "Il tasto è {key}."
+
+msgid "Try again."
+msgstr "Riprova."
+
+msgid "Try {key}: {does}. Then come back here and press Enter."
+msgstr "Prova {key}: {does}. Poi torna qui e premi Invio."
+
+msgid "Press {key}: {does}."
+msgstr "Premi {key}: {does}."
+
+msgid "Moving in a window"
+msgstr "Muoversi in una finestra"
+
+msgid "Tab"
+msgstr "Tab"
+
+msgid "goes to the next control"
+msgstr "va al comando successivo"
+
+msgid "Shift+Tab"
+msgstr "Maiusc+Tab"
+
+msgid "goes back to the control before"
+msgstr "torna al comando precedente"
+
+msgid "Down Arrow"
+msgstr "Freccia giù"
+
+msgid "moves down in a list or a menu"
+msgstr "scende in un elenco o in un menu"
+
+msgid "Up Arrow"
+msgstr "Freccia su"
+
+msgid "moves up"
+msgstr "sale"
+
+msgid "Space"
+msgstr "Spazio"
+
+msgid "presses a button or changes a switch"
+msgstr "preme un pulsante o cambia un interruttore"
+
+msgid "Enter"
+msgstr "Invio"
+
+msgid "opens or confirms"
+msgstr "apre o conferma"
+
+msgid "Escape"
+msgstr "Esc"
+
+msgid "closes a menu or a message, or goes back"
+msgstr "chiude un menu o un messaggio, oppure torna indietro"
+
+msgid "F6"
+msgstr "F6"
+
+msgid "goes to the next part of the window"
+msgstr "va alla parte successiva della finestra"
+
+msgid "Writing and correcting"
+msgstr "Scrivere e correggere"
+
+msgid "Home"
+msgstr "Inizio"
+
+msgid "goes to the start of the line"
+msgstr "va all'inizio della riga"
+
+msgid "End"
+msgstr "Fine"
+
+msgid "goes to the end of the line"
+msgstr "va alla fine della riga"
+
+msgid "Ctrl+Right Arrow"
+msgstr "Ctrl+Freccia destra"
+
+msgid "goes to the next word"
+msgstr "va alla parola successiva"
+
+msgid "Ctrl+Left Arrow"
+msgstr "Ctrl+Freccia sinistra"
+
+msgid "goes to the word before"
+msgstr "va alla parola precedente"
+
+msgid "Backspace"
+msgstr "Backspace"
+
+msgid "deletes the letter before the cursor"
+msgstr "cancella la lettera prima del cursore"
+
+msgid "Delete"
+msgstr "Canc"
+
+msgid "deletes the letter after the cursor"
+msgstr "cancella la lettera dopo il cursore"
+
+msgid "Ctrl+Z"
+msgstr "Ctrl+Z"
+
+msgid "undoes the last change"
+msgstr "annulla l'ultima modifica"
+
+msgid "Copy and paste"
+msgstr "Copia e incolla"
+
+msgid "Ctrl+A"
+msgstr "Ctrl+A"
+
+msgid "selects everything"
+msgstr "seleziona tutto"
+
+msgid "Ctrl+C"
+msgstr "Ctrl+C"
+
+msgid "copies"
+msgstr "copia"
+
+msgid "Ctrl+X"
+msgstr "Ctrl+X"
+
+msgid "cuts"
+msgstr "taglia"
+
+msgid "Ctrl+V"
+msgstr "Ctrl+V"
+
+msgid "pastes"
+msgstr "incolla"
+
+msgid "Ctrl+S"
+msgstr "Ctrl+S"
+
+msgid "saves"
+msgstr "salva"
+
+msgid "Windows and the desktop"
+msgstr "Le finestre e il desktop"
+
+msgid "Super"
+msgstr "Super"
+
+msgid "opens the Start menu; Escape closes it"
+msgstr "apre il menu Start; Esc lo chiude"
+
+msgid "Alt+Tab"
+msgstr "Alt+Tab"
+
+msgid "goes from one window to another"
+msgstr "passa da una finestra all'altra"
+
+msgid "Super+T"
+msgstr "Super+T"
+
+msgid "goes to the programs of the taskbar"
+msgstr "va ai programmi della barra delle applicazioni"
+
+msgid "Super+D"
+msgstr "Super+D"
+
+msgid "shows the desktop; again, the windows come back"
+msgstr "mostra il desktop; di nuovo, tornano le finestre"
+
+msgid "Super+Alt+I"
+msgstr "Super+Alt+I"
+
+msgid "says time, battery, network and volume"
+msgstr "dice ora, batteria, rete e volume"
+
+msgid "Super+Alt+D"
+msgstr "Super+Alt+D"
+
+msgid "says where you are"
+msgstr "dice dove sei"
+
+msgid "The screen reader"
+msgstr "Il lettore di schermo"
+
+msgid "Insert+T"
+msgstr "Ins+T"
+
+msgid "says the title of the window"
+msgstr "dice il titolo della finestra"
+
+msgid "Insert+Tab"
+msgstr "Ins+Tab"
+
+msgid "says the control that has the focus"
+msgstr "dice il comando che ha il focus"
+
+msgid "Insert+Up Arrow"
+msgstr "Ins+Freccia su"
+
+msgid "reads the current line"
+msgstr "legge la riga corrente"
+
+msgid "Insert+F12"
+msgstr "Ins+F12"
+
+msgid "says the time"
+msgstr "dice l'ora"
+
+msgid "Control"
+msgstr "Ctrl"
+
+msgid "stops the voice"
+msgstr "ferma la voce"
+
+msgid "Insert+1"
+msgstr "Ins+1"
+
+msgid "learn mode: every key says what it does, Escape goes out"
+msgstr "modalità apprendimento: ogni tasto dice cosa fa, Esc esce"
+
+msgid "VabaxOS tools"
+msgstr "Gli strumenti di VabaxOS"
+
+msgid "Super+H"
+msgstr "Super+H"
+
+msgid "dictation: speak, then Super+H again, and the text is written"
+msgstr "dettatura: parla, poi di nuovo Super+H, e il testo è scritto"
+
+msgid "Super+Alt+R"
+msgstr "Super+Alt+R"
+
+msgid "reads the text of the window when the screen reader finds nothing"
+msgstr ""
+"legge il testo della finestra quando il lettore di schermo non trova niente"
+
+msgid "Super+Alt+N"
+msgstr "Super+Alt+N"
+
+msgid "do not disturb on and off"
+msgstr "non disturbare, acceso e spento"
+
+msgid "Shift"
+msgstr "Maiusc"
+
+msgid "Left Arrow"
+msgstr "Freccia sinistra"
+
+msgid "Right Arrow"
+msgstr "Freccia destra"

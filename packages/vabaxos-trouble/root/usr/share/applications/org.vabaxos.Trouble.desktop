@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Something is wrong
+Name[it]=Qualcosa non va
+Comment=First checks of the system and a report of the logs, to ask for help
+Comment[it]=Primi controlli del sistema e un rapporto dei registri, per chiedere aiuto
+Exec=vabaxos-trouble
+Icon=help-browser-symbolic
+Terminal=false
+Categories=System;Utility;
+Keywords=problem;bug;report;log;help;problema;guasto;rapporto;registro;aiuto;

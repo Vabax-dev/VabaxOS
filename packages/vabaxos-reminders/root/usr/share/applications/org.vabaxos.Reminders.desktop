@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Reminders and alarms
+Name[it]=Promemoria e sveglie
+Comment=Write what and when, as you would say it; VabaxOS says it at the right time
+Comment[it]=Scrivi cosa e quando, come lo diresti; VabaxOS lo dice all'ora giusta
+Exec=vabaxos-reminders
+Icon=alarm-symbolic
+Terminal=false
+Categories=Utility;
+Keywords=reminder;alarm;clock;promemoria;sveglia;

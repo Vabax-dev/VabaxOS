@@ -67,7 +67,7 @@ def labelled_by_text(node, depth=5):
 
 def decoration(node):
     """A separator drawn as a menu item (GNOME Shell's popup separators, as
-    ArcMenu's line between its columns): exactly two empty panels inside,
+    the line between two columns, as ArcMenu drew): exactly two empty panels inside,
     and can_focus off in the code, so the keyboard never stops there. An
     icon-only button shows no children at all and is still reported."""
     if node.get_child_count() != 2:

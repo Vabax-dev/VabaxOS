@@ -23,5 +23,33 @@
       <default><![CDATA[['<Super><Alt>d']]]></default>
       <summary>Say the program, window, desktop and open windows</summary>
     </key>
+    <key name="recognize-window" type="as">
+      <default><![CDATA[['<Super><Alt>r']]]></default>
+      <summary>Recognize the text of the window in use (OCR) and show it as plain text</summary>
+    </key>
+    <key name="recognize-screen" type="as">
+      <default><![CDATA[['<Super><Alt><Shift>r']]]></default>
+      <summary>Recognize the text of the whole screen (OCR) and show it as plain text</summary>
+    </key>
+    <key name="dictation" type="as">
+      <default><![CDATA[['<Super>h']]]></default>
+      <summary>Dictation: listen, then write what was said where the cursor is (again: stop)</summary>
+    </key>
+    <key name="do-not-disturb" type="as">
+      <default><![CDATA[['<Super><Alt>n']]]></default>
+      <summary>Do not disturb on and off: notifications wait in the notification list</summary>
+    </key>
+    <key name="describe-window" type="as">
+      <default><![CDATA[['<Super><Alt>p']]]></default>
+      <summary>Describe the picture of the window in use, without Internet</summary>
+    </key>
+    <key name="describe-screen" type="as">
+      <default><![CDATA[['<Super><Alt><Shift>p']]]></default>
+      <summary>Describe the picture of the whole screen, without Internet</summary>
+    </key>
+    <key name="say-formula" type="as">
+      <default><![CDATA[['<Super><Alt>m']]]></default>
+      <summary>Say in words the formula copied with Ctrl+C (LaTeX, MathML or plain writing)</summary>
+    </key>
   </schema>
 </schemalist>

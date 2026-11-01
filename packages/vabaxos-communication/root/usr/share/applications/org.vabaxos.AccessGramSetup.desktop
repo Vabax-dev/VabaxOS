@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Telegram for Orca
+Name[it]=Telegram per Orca
+Comment=AccessGram, a Telegram program made for the screen reader, downloaded on request
+Comment[it]=AccessGram, un programma Telegram fatto per il lettore di schermo, scaricato a richiesta
+Exec=vabaxos-accessgram
+Icon=internet-chat-symbolic
+Terminal=false
+Categories=Network;InstantMessaging;
+Keywords=telegram;accessgram;chat;messages;messaggi;orca;

@@ -16,6 +16,11 @@ mythes-it
 thunderbird
 thunderbird-l10n-it
 
+# The browser in Italian, set up for Orca by vabaxos-settings
+# (/etc/firefox/policies/policies.json).
+firefox-esr
+firefox-esr-l10n-it
+
 # Braille displays: brltty starts by itself when a display is plugged in,
 # and Orca writes to it through BrlAPI.
 brltty
@@ -32,6 +37,16 @@ ocrmypdf
 rhythmbox
 daisy-player
 gnome-sound-recorder
+
+# Printers and scanners without drivers (IPP Everywhere, AirPrint, eSCL):
+# CUPS finds network printers through mDNS by itself; ipp-usb does the same
+# for USB ones; sane-airscan finds scanners. No cups-browsed: its old
+# browsing on UDP 631 was the door of CVE-2024-47176, and it is not needed.
+cups
+cups-client
+ipp-usb
+sane-airscan
+sane-utils
 
 # Backups, archives (zip and others), passwords and keys.
 deja-dup

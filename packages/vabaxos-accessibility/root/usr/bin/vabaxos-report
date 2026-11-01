@@ -8,6 +8,8 @@
 #
 # Without FILE it writes vabaxos-report-DATE.txt in the home folder (or in
 # /root when run with sudo). With sudo the full system log is included.
+# FILE "-" writes the report on the standard output, with no notification:
+# "Something is wrong" (vabaxos-trouble) reads it so, also through pkexec.
 # At the end it prints the file name, and in the desktop it also shows a
 # notification, which Orca reads.
 set -u
@@ -24,7 +26,7 @@ run() {
     "$@" 2>&1 || printf '(exit status %s)\n' "$?"
 }
 
-{
+report() {
     printf 'VabaxOS report, %s\n' "$(date --rfc-3339=seconds)"
     section 'System'
     run cat /etc/os-release
@@ -60,7 +62,13 @@ run() {
     run dmesg
     section 'System log of this start'
     run journalctl -b --no-pager -o short-monotonic
-} > "$file" 2>&1
+}
+
+if [ "$file" = - ]; then
+    report 2>&1
+    exit 0
+fi
+report > "$file" 2>&1
 
 printf '%s\n' "$file"
 if [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v gdbus >/dev/null; then
