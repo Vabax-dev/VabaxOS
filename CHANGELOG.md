@@ -64,6 +64,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Braille: l'utente della live e quello installato sono nel gruppo `brlapi`, senza il quale Orca non raggiunge il display; `vabaxos-braille-check` dice a voce cosa manca e `--fix` lo sistema; guida «Il Braille».
 - Descrizione delle immagini senza Internet (`vabaxos-describe`, ADR-0029 proposta): Super+Alt+P la finestra, Super+Alt+Maiusc+P lo schermo, con llama.cpp; pronta tranne il modello, che sceglie Vabax.
 - Matematica (`vabaxos-math`): calcolatrice parlante che accetta i calcoli scritti come sulla carta; Super+Alt+M dice a parole la formula copiata (LaTeX, MathML, scrittura semplice); guida «La matematica».
+- Lettore di documenti: formati ODT, RTF, DAISY con testo e pagine web salvate; indice dei capitoli (Ctrl+T) e capitolo successivo e precedente (Alt+Pagina giù e su), dai titoli di Markdown, HTML, Word, EPUB, ODT e DAISY.
 - Firewall come quello di Windows (`vabaxos-firewall`, ADR-0021): firewalld con reti private (si trovano stampanti, dispositivi, cartelle condivise, telefono) e pubbliche (non entra niente); le reti nuove sono private; tipo di rete e programmi consentiti nella configurazione, pagina Rete; Super+Alt+I dice «Firewall attivo»; guida «Il firewall».
 
 ### Cambiato
