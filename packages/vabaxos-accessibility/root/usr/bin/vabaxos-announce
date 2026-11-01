@@ -1,0 +1,117 @@
+#!/usr/bin/python3
+"""Short spoken messages of VabaxOS, started with the desktop.
+
+    vabaxos-announce ready      "VabaxOS is ready.", once the screen reader
+                                speaks (after the login sound)
+    vabaxos-announce battery    one warning when the battery goes down to
+                                10 percent; again only after charging
+
+Both speak through Orca (its D-Bus service, PresentMessage), so they
+follow its voice and are cut by any key. Without Orca: "ready" says
+nothing (the user turned the voice off), the battery warning becomes a
+notification.
+"""
+
+import gettext
+import sys
+import time
+
+gettext.textdomain("vabaxos-accessibility")
+_ = gettext.gettext
+
+ORCA = ("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service")
+LOW = 10          # percent: the warning
+RESET = 15        # percent: above this, the warning can come again
+DISCHARGING = 2   # UPower's state
+
+
+def battery_step(warned, percent, state):
+    """(speak now?, warned after this): one warning at LOW while on battery;
+    charging, or going back above RESET, allows the next one."""
+    if state != DISCHARGING or percent > RESET:
+        return False, False
+    if percent <= LOW and not warned:
+        return True, True
+    return False, warned
+
+
+class Bus:
+    def __init__(self):
+        from gi.repository import Gio
+        self.Gio = Gio
+        self.session = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+
+    def has_orca(self):
+        from gi.repository import GLib
+        reply = self.session.call_sync("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus",
+                                       "NameHasOwner", GLib.Variant("(s)", (ORCA[0],)), None,
+                                       self.Gio.DBusCallFlags.NONE, 2000, None)
+        return reply.unpack()[0]
+
+    def say(self, text):
+        from gi.repository import GLib
+        try:
+            self.session.call_sync(*ORCA, "PresentMessage", GLib.Variant("(s)", (text,)), None,
+                                   self.Gio.DBusCallFlags.NONE, 3000, None)
+            return True
+        except GLib.Error:
+            return False
+
+    def notify(self, title, text):
+        from gi.repository import GLib
+        self.session.call_sync("org.freedesktop.Notifications", "/org/freedesktop/Notifications",
+                               "org.freedesktop.Notifications", "Notify",
+                               GLib.Variant("(susssasa{sv}i)", ("VabaxOS", 0, "battery-caution-symbolic", title,
+                                                                text, [], {"urgency": GLib.Variant("y", 2)},
+                                                                -1)),
+                               None, self.Gio.DBusCallFlags.NONE, 3000, None)
+
+
+def ready(bus, wait=40, sleep=time.sleep):
+    for _i in range(wait * 2):
+        if bus.has_orca():
+            # Orca has just started, and the login sound plays: a moment.
+            sleep(3)
+            return bus.say(_("VabaxOS is ready."))
+        sleep(0.5)
+    return False
+
+
+def battery(bus):
+    from gi.repository import Gio, GLib
+    proxy = Gio.DBusProxy.new_for_bus_sync(Gio.BusType.SYSTEM, Gio.DBusProxyFlags.NONE, None,
+                                           "org.freedesktop.UPower", "/org/freedesktop/UPower/devices/DisplayDevice",
+                                           "org.freedesktop.UPower.Device", None)
+    state = {"warned": False}
+
+    def check(*_args):
+        present = proxy.get_cached_property("IsPresent")
+        percent = proxy.get_cached_property("Percentage")
+        device_state = proxy.get_cached_property("State")
+        if not present or not present.unpack() or percent is None or device_state is None:
+            return
+        speak, state["warned"] = battery_step(state["warned"], percent.unpack(), device_state.unpack())
+        if speak:
+            text = _("Battery at {percent} percent. Connect the charger.").format(percent=round(percent.unpack()))
+            if not bus.say(text):
+                bus.notify(_("Battery low"), text)
+
+    proxy.connect("g-properties-changed", check)
+    check()
+    GLib.MainLoop().run()
+
+
+def main(argv):
+    if len(argv) < 2 or argv[1] not in ("ready", "battery"):
+        print(__doc__)
+        return 2
+    bus = Bus()
+    if argv[1] == "ready":
+        ready(bus)
+        return 0
+    battery(bus)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

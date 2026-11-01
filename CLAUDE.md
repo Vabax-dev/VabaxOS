@@ -101,6 +101,8 @@ Aggiornato al 2026-11-01.
 
 - Fatti dopo la dettatura: sottotitoli dal vivo (`vabaxos-captions`, Super+Ctrl+L, parec del monitor o del microfono, frasi tagliate alle pause), Firefox e Thunderbird per Orca (`/etc/firefox/policies/policies.json`: accessibilità sempre accesa, niente autoplay audio, niente benvenuto; `test-boot.sh` cerca nel bus il testo di una pagina in Firefox), ripristino del sistema (**ADR-0027 Accettata**: Timeshift rsync ora, Btrfs nella v1.5; `vabaxos-restore` con aiutante pkexec, hook APT `DPkg::Pre-Install-Pkgs`, timer settimanale, comando `ripristino` anche dalla modalità R della chiavetta). Test: dettatura 17, sottotitoli 6, Firefox 3, ripristino 13.
 
+- Punti 7 e 8 fatti: `vabaxos-announce ready` e `battery` (avvio automatico di GNOME; Orca `PresentMessage`; batteria da UPower DisplayDevice, un avviso al 10%, di nuovo dopo la carica o sopra il 15%). Da controllare nelle prove: GNOME avvisa anche da solo alla soglia «low» di UPower (in GNOME 50 le soglie non sono più gsettings ma `/etc/UPower/UPower.conf`; verificare se UPower di forky legge `UPower.conf.d`, poi eventualmente portare la soglia di GNOME al 10% per non avere due avvisi).
+
 Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
 
 1. **Dettatura** senza Internet (priorità di Vabax), e con lo stesso motore i **sottotitoli in tempo reale**; prima le licenze dei modelli italiani.

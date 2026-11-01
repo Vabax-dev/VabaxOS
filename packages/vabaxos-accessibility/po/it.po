@@ -162,3 +162,12 @@ msgstr "Cestino"
 
 msgid "Show Apps"
 msgstr "Mostra applicazioni"
+
+msgid "VabaxOS is ready."
+msgstr "VabaxOS è pronto."
+
+msgid "Battery at {percent} percent. Connect the charger."
+msgstr "Batteria al {percent} per cento. Collega il caricatore."
+
+msgid "Battery low"
+msgstr "Batteria scarica"

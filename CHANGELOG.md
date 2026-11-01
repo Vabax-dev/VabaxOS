@@ -55,6 +55,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Sottotitoli dal vivo (`vabaxos-captions`, Super+Ctrl+L come in Windows): le parole di ciò che il computer riproduce, o del microfono, a caratteri grandi, senza Internet.
 - Firefox pronto per Orca, in italiano: accessibilità sempre accesa anche se Firefox parte prima di Orca, niente pagine di benvenuto e consigli, l'audio non parte da solo sopra la voce; Thunderbird con l'accessibilità sempre accesa; `test-boot.sh` controlla che Orca veda il testo delle pagine (problema noto di GNOME 50); guida «Internet con Orca».
 - Ripristino del sistema (`vabaxos-restore`, ADR-0027): copie con Timeshift prima di ogni installazione di pacchetti e ogni settimana; finestra «Ripristino del sistema»; il comando `ripristino` nella console di testo e nella modalità di recupero della chiavetta, anche con il disco cifrato; guida «Il ripristino del sistema».
+- «VabaxOS è pronto» detto da Orca all'avvio del desktop; un solo avviso a voce quando la batteria scende al 10 per cento (`vabaxos-announce`).
 - Firewall come quello di Windows (`vabaxos-firewall`, ADR-0021): firewalld con reti private (si trovano stampanti, dispositivi, cartelle condivise, telefono) e pubbliche (non entra niente); le reti nuove sono private; tipo di rete e programmi consentiti nella configurazione, pagina Rete; Super+Alt+I dice «Firewall attivo»; guida «Il firewall».
 
 ### Cambiato
