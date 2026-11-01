@@ -3,7 +3,7 @@
 # the GNOME accessibility shortcuts Super+Alt+S (screen reader) and
 # Super+Alt+8 (zoom).
 [org/gnome/settings-daemon/plugins/media-keys]
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-screen-reader/']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-screen-reader/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-captions/']
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status]
 name='VabaxOS: computer status'
@@ -29,3 +29,9 @@ binding='<Super>u'
 name='VabaxOS: screen reader settings'
 command='vabaxos-screen-reader'
 binding='<Super><Alt>o'
+
+# Super+Ctrl+L opens the live captions, as in Windows (vabaxos-dictation).
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-captions]
+name='VabaxOS: live captions'
+command='vabaxos-captions'
+binding='<Super><Control>l'

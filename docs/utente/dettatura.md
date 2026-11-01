@@ -24,4 +24,14 @@ Se non hai detto niente, VabaxOS dice «Non ho sentito niente». L'ascolto si fe
 - Funziona meglio con frasi intere che con parole singole, e in una stanza tranquilla.
 - I nomi rari e le sigle possono uscire sbagliati: rileggi con le frecce prima di inviare.
 
+## Sottotitoli dal vivo
+
+Per chi sente poco: **Super+Ctrl+L**, come in Windows, apre una finestra con le parole di quello che il computer sta riproducendo (un video, una chiamata, una lezione) a caratteri grandi, qualche secondo dopo che sono state dette. Anche questo funziona senza Internet.
+
+- **Ctrl+M:** ascolta il microfono invece del computer, per esempio una persona nella stanza; di nuovo, torna al computer.
+- **Ctrl+P:** pausa e ripresa.
+- **Ctrl+Più** e **Ctrl+Meno:** lettere più grandi o più piccole.
+- **Ctrl+S:** salva tutto il testo in un file, nella cartella Documenti.
+- **Esc:** chiude.
+
 La dettatura usa il modello Whisper «small» (licenza MIT) con whisper.cpp.

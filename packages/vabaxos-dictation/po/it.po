@@ -23,3 +23,56 @@ msgstr "Non sto ascoltando."
 
 msgid "Dictation failed: {error}"
 msgstr "La dettatura non è riuscita: {error}"
+
+msgid "What the computer plays"
+msgstr "Quello che il computer riproduce"
+
+msgid "The microphone"
+msgstr "Il microfono"
+
+msgid "Live captions"
+msgstr "Sottotitoli dal vivo"
+
+msgid "Save"
+msgstr "Salva"
+
+msgid "Save the text (Ctrl+S)"
+msgstr "Salva il testo (Ctrl+S)"
+
+msgid "Captions"
+msgstr "Sottotitoli"
+
+msgid "Listen to the microphone or to the computer (Ctrl+M)"
+msgstr "Ascolta il microfono o il computer (Ctrl+M)"
+
+msgid "Resume"
+msgstr "Riprendi"
+
+msgid "Pause"
+msgstr "Pausa"
+
+msgid "Pause or resume (Ctrl+P)"
+msgstr "Pausa o riprendi (Ctrl+P)"
+
+msgid "Captions need whisper.cpp and its model, which are not installed."
+msgstr ""
+"I sottotitoli hanno bisogno di whisper.cpp e del suo modello, che non sono "
+"installati."
+
+msgid "Listening to: {source}"
+msgstr "Ascolto: {source}"
+
+msgid "Captions paused."
+msgstr "Sottotitoli in pausa."
+
+msgid "Captions on."
+msgstr "Sottotitoli attivi."
+
+msgid "Captions stopped: {error}"
+msgstr "Sottotitoli fermati: {error}"
+
+msgid "Captions %Y-%m-%d %H-%M.txt"
+msgstr "Sottotitoli %Y-%m-%d %H-%M.txt"
+
+msgid "Saved in {folder}: {name}"
+msgstr "Salvato in {folder}: {name}"

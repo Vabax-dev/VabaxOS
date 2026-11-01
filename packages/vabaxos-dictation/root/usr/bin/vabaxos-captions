@@ -1,0 +1,248 @@
+#!/usr/bin/python3
+"""Live captions, without Internet (Super+Ctrl+L, as in Windows).
+
+    vabaxos-captions
+
+A window with the words of what the computer plays (a video, a call) or of
+the microphone, in large letters, a few seconds after they are said. For
+people who hear little. The recognition runs on the computer, with the
+same whisper.cpp and model as the dictation.
+
+Keys: Ctrl+M listens to the microphone or to the computer, Ctrl+P pauses,
+Ctrl+S saves the text, Ctrl+Plus and Ctrl+Minus change the size of the
+letters, Escape closes.
+"""
+
+import gettext
+import os
+import queue
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import wave
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Adw, GLib, Gtk  # noqa: E402
+
+from vabaxos_dictation import captions, core  # noqa: E402
+
+gettext.textdomain("vabaxos-dictation")
+_ = gettext.gettext
+
+SOURCES = [("computer", lambda: _("What the computer plays")), ("microphone", lambda: _("The microphone"))]
+SIZES = [18, 24, 32, 40, 52]
+
+
+class Listener:
+    """parec into the segmenter, each phrase into whisper.cpp, each text to
+    on_text (called in the main loop)."""
+
+    def __init__(self, on_text, on_error):
+        self.on_text = on_text
+        self.on_error = on_error
+        self.process = None
+        self.phrases = queue.Queue()
+        self.running = False
+
+    def start(self, source):
+        self.stop()
+        self.running = True
+        try:
+            self.process = subprocess.Popen(captions.capture_command(source), stdout=subprocess.PIPE,
+                                            stderr=subprocess.DEVNULL)
+        except OSError as error:
+            self.running = False
+            GLib.idle_add(self.on_error, str(error))
+            return
+        threading.Thread(target=self._read, args=(self.process,), daemon=True).start()
+        threading.Thread(target=self._recognize, daemon=True).start()
+
+    def stop(self):
+        self.running = False
+        if self.process is not None:
+            self.process.terminate()
+            self.process = None
+        self.phrases.put(None)
+        self.phrases = queue.Queue()
+
+    def _read(self, process):
+        segmenter = captions.Segmenter()
+        phrases = self.phrases
+        while self.running and process.poll() is None:
+            data = process.stdout.read(3200)
+            if not data:
+                break
+            for phrase in segmenter.feed(data):
+                phrases.put(phrase)
+
+    def _recognize(self):
+        phrases = self.phrases
+        language = core.user_language()
+        while True:
+            phrase = phrases.get()
+            if phrase is None or not self.running:
+                return
+            with tempfile.TemporaryDirectory(prefix="vabaxos-captions-") as tmp:
+                path = os.path.join(tmp, "phrase.wav")
+                with wave.open(path, "wb") as f:
+                    f.setnchannels(1)
+                    f.setsampwidth(2)
+                    f.setframerate(core.RATE)
+                    f.writeframes(phrase)
+                try:
+                    text = core.transcribe(path, language)
+                except Exception as error:  # noqa: BLE001 - shown in the window
+                    GLib.idle_add(self.on_error, str(error))
+                    return
+            if text and self.running:
+                GLib.idle_add(self.on_text, text)
+
+
+class CaptionsWindow(Adw.ApplicationWindow):
+
+    def __init__(self, app, listener_class=Listener):
+        super().__init__(application=app, title=_("Live captions"))
+        self.set_default_size(900, 320)
+        self.size = 2
+        self.source = 0
+        self.paused = False
+        self.toasts = Adw.ToastOverlay()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        header = Adw.HeaderBar()
+        self.source_button = Gtk.Button()
+        self.source_button.connect("clicked", lambda *_a: self.next_source())
+        header.pack_start(self.source_button)
+        self.pause_button = Gtk.Button()
+        self.pause_button.connect("clicked", lambda *_a: self.toggle_pause())
+        header.pack_start(self.pause_button)
+        save = Gtk.Button(label=_("Save"))
+        save.set_tooltip_text(_("Save the text (Ctrl+S)"))
+        save.connect("clicked", lambda *_a: self.save())
+        header.pack_end(save)
+        box.append(header)
+        self.view = Gtk.TextView(editable=False, cursor_visible=False, wrap_mode=Gtk.WrapMode.WORD_CHAR,
+                                 left_margin=24, right_margin=24, top_margin=16, bottom_margin=16)
+        self.view.update_property([Gtk.AccessibleProperty.LABEL], [_("Captions")])
+        self.buffer = self.view.get_buffer()
+        self.css = Gtk.CssProvider()
+        self.view.get_style_context().add_provider(self.css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        self.scroll = Gtk.ScrolledWindow(vexpand=True)
+        self.scroll.set_child(self.view)
+        box.append(self.scroll)
+        self.toasts.set_child(box)
+        self.set_content(self.toasts)
+        self.add_shortcuts()
+        self.apply_size()
+        self.listener = listener_class(self.add_text, self.failed)
+        self.update_buttons()
+        self.connect("close-request", self.closing)
+        self.listen()
+
+    def add_shortcuts(self):
+        controller = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+        keys = {"<Control>m": self.next_source, "<Control>p": self.toggle_pause, "<Control>s": self.save,
+                "<Control>plus": lambda: self.change_size(1), "<Control>equal": lambda: self.change_size(1),
+                "<Control>minus": lambda: self.change_size(-1), "Escape": self.close}
+        for accel, action in keys.items():
+            callback = Gtk.CallbackAction.new(lambda *_a, act=action: act() or True)
+            controller.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(accel), callback))
+        self.add_controller(controller)
+
+    def say(self, text):
+        self.toasts.add_toast(Adw.Toast.new(text))
+        return False
+
+    def update_buttons(self):
+        self.source_button.set_label(SOURCES[self.source][1]())
+        self.source_button.set_tooltip_text(_("Listen to the microphone or to the computer (Ctrl+M)"))
+        self.pause_button.set_label(_("Resume") if self.paused else _("Pause"))
+        self.pause_button.set_tooltip_text(_("Pause or resume (Ctrl+P)"))
+
+    def apply_size(self):
+        self.css.load_from_string(f"textview {{ font-size: {SIZES[self.size]}pt; }}")
+
+    def change_size(self, step):
+        self.size = max(0, min(len(SIZES) - 1, self.size + step))
+        self.apply_size()
+
+    def listen(self):
+        if not core.available():
+            self.add_text(_("Captions need whisper.cpp and its model, which are not installed."))
+            return
+        self.listener.start(SOURCES[self.source][0])
+
+    def next_source(self):
+        self.source = (self.source + 1) % len(SOURCES)
+        self.update_buttons()
+        self.say(_("Listening to: {source}").format(source=SOURCES[self.source][1]()))
+        if not self.paused:
+            self.listen()
+
+    def toggle_pause(self):
+        self.paused = not self.paused
+        self.update_buttons()
+        if self.paused:
+            self.listener.stop()
+            self.say(_("Captions paused."))
+        else:
+            self.listen()
+            self.say(_("Captions on."))
+
+    def add_text(self, text):
+        end = self.buffer.get_end_iter()
+        if self.buffer.get_char_count():
+            self.buffer.insert(end, "\n")
+        self.buffer.insert(self.buffer.get_end_iter(), text)
+        mark = self.buffer.create_mark(None, self.buffer.get_end_iter(), False)
+        self.view.scroll_mark_onscreen(mark)
+        self.buffer.delete_mark(mark)
+        return False
+
+    def failed(self, error):
+        self.add_text(_("Captions stopped: {error}").format(error=error))
+        return False
+
+    def text(self):
+        return self.buffer.get_text(self.buffer.get_start_iter(), self.buffer.get_end_iter(), False)
+
+    def save(self):
+        folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOCUMENTS) or GLib.get_home_dir()
+        name = time.strftime(_("Captions %Y-%m-%d %H-%M.txt"))
+        path = os.path.join(folder, name)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(self.text() + "\n")
+        self.say(_("Saved in {folder}: {name}").format(folder=os.path.basename(folder), name=name))
+        return path
+
+    def closing(self, *_args):
+        self.listener.stop()
+        return False
+
+
+class CaptionsApp(Adw.Application):
+
+    def __init__(self):
+        super().__init__(application_id="org.vabaxos.Captions")
+        self.connect("activate", self.on_activate)
+
+    def on_activate(self, _app):
+        window = self.get_active_window()
+        if window is None:
+            window = CaptionsWindow(self)
+        window.present()
+
+
+def main(argv):
+    if len(argv) > 1 and argv[1] in ("-h", "--help"):
+        print(__doc__)
+        return 0
+    return CaptionsApp().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
