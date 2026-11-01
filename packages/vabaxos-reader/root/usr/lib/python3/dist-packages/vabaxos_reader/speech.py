@@ -95,7 +95,7 @@ class Kokoro:
             from vabaxos_voice import engine
         except ImportError:
             return False
-        return os.path.exists(os.path.join(engine.DATA_DIR, "kokoro-v1.0.onnx"))
+        return engine.model_dir() is not None
 
     def voices(self):
         names = {"im_nicola": "Nicola", "if_sara": "Sara", "af_heart": "Heart", "am_michael": "Michael"}

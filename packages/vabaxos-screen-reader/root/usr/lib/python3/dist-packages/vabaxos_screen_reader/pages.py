@@ -12,9 +12,17 @@ them (N_ marks them for xgettext).
 
 import os
 
-# The natural voice is offered only when its package is installed: for now
-# the ISO has only eSpeak NG (ADR-0026).
+# The natural voice is offered only when its package is installed and its
+# model downloaded (program Natural voice, ADR-0030): Orca would be silent
+# with Kokoro chosen and no model.
 KOKORO_MODULE = "/usr/lib/speech-dispatcher-modules/sd_kokoro"
+KOKORO_MODEL = "kokoro-v1.0.onnx"
+
+
+def kokoro_ready():
+    data = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    folders = (os.path.join(data, "vabaxos", "kokoro"), "/usr/share/vabaxos/kokoro")
+    return os.path.exists(KOKORO_MODULE) and any(os.path.exists(os.path.join(f, KOKORO_MODEL)) for f in folders)
 
 
 def N_(text):
@@ -35,7 +43,7 @@ PAGES = [
             ("choice", SPEAK, "synthesizer", N_("Kind of voice"),
              N_("eSpeak NG answers at once; the natural voice sounds human but needs a fast computer"),
              [(N_("eSpeak NG, the default"), ""), (N_("Natural voice (Kokoro)"), "kokoro")]),
-        ] if os.path.exists(KOKORO_MODULE) else []) + [
+        ] if kokoro_ready() else []) + [
             ("number", VOICE, "rate", N_("Speed"), N_("From 0, slowest, to 100, fastest"), (0, 100, 5, 0)),
             ("number", VOICE, "pitch", N_("Pitch"), N_("From 0, lowest, to 10, highest"), (0, 10, 0.5, 1)),
             ("number", VOICE, "volume", N_("Volume"), N_("From 0, silent, to 10, loudest"), (0, 10, 0.5, 1)),

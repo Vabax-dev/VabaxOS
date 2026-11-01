@@ -16,7 +16,30 @@ import threading
 import numpy as np
 
 SAMPLE_RATE = 24000
-DATA_DIR = os.environ.get("VABAXOS_KOKORO_DIR", "/usr/share/vabaxos/kokoro")
+SYSTEM_DIR = "/usr/share/vabaxos/kokoro"
+# The text files (vocab.json, phrases-*.txt) are in the package; the model
+# can be in the package or downloaded by the user (model.py).
+DATA_DIR = os.environ.get("VABAXOS_KOKORO_DIR", SYSTEM_DIR)
+MODEL = "kokoro-v1.0.onnx"
+VOICES_FILE = "voices-v1.0.bin"
+
+
+def user_dir():
+    base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    return os.path.join(base, "vabaxos", "kokoro")
+
+
+def has_model(folder):
+    return all(os.path.exists(os.path.join(folder, name)) for name in (MODEL, VOICES_FILE))
+
+
+def model_dir():
+    """Where the model is: VABAXOS_KOKORO_DIR, the user's download, or the
+    package; None when there is none."""
+    for folder in (os.environ.get("VABAXOS_KOKORO_DIR"), user_dir(), SYSTEM_DIR):
+        if folder and has_model(folder):
+            return folder
+    return None
 MAX_PHONEMES = 510
 
 # The voices for each language; the first one is the default until the
@@ -127,19 +150,23 @@ def trim(pcm, threshold=330, keep=0.03):
 class Kokoro:
     """The model, loaded once and kept in memory."""
 
-    def __init__(self, data_dir=DATA_DIR, threads=None):
+    def __init__(self, data_dir=None, threads=None):
         import onnxruntime as ort
+        data_dir = data_dir or model_dir() or DATA_DIR
         options = ort.SessionOptions()
         options.intra_op_num_threads = threads or default_threads()
         options.inter_op_num_threads = 1
         options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        self.session = ort.InferenceSession(os.path.join(data_dir, "kokoro-v1.0.onnx"), options,
+        self.session = ort.InferenceSession(os.path.join(data_dir, MODEL), options,
                                             providers=["CPUExecutionProvider"])
         inputs = {i.name: i for i in self.session.get_inputs()}
         self.tokens_input = "tokens" if "tokens" in inputs else "input_ids"
         self.speed_int = "int" in inputs["speed"].type
-        self.voices = dict(np.load(os.path.join(data_dir, "voices-v1.0.bin")))
-        with open(os.path.join(data_dir, "vocab.json"), encoding="utf-8") as f:
+        self.voices = dict(np.load(os.path.join(data_dir, VOICES_FILE)))
+        vocab = os.path.join(data_dir, "vocab.json")
+        if not os.path.exists(vocab):
+            vocab = os.path.join(DATA_DIR, "vocab.json")
+        with open(vocab, encoding="utf-8") as f:
             self.vocab = json.load(f)
         self.phonemize = Phonemizer()
         self.sonic = Sonic()
@@ -176,8 +203,66 @@ def default_threads():
     return max(1, min(8, len(os.sched_getaffinity(0))))
 
 
-def split(text):
-    """Splits text at sentence and clause ends, so the first part is short
-    and starts playing while the rest is synthesized."""
-    parts = [p.strip() for p in re.split(r"(?<=[.!?;:])\s+|(?<=,)\s+", text) if p.strip()]
+# Kokoro needs about a third of the length of the audio it makes (measured
+# 2026-11-02: 1.4 s before a 4.8 s sentence starts on a 4-core 2.1 GHz CPU),
+# so the first words go alone: they play while the rest is made.
+FIRST_WORDS = 3
+MAX_WORDS = 12
+# A part never ends on these words: the voice would stop on "the" or "di".
+FUNCTION_WORDS = {
+    "il", "lo", "la", "i", "gli", "le", "l", "un", "uno", "una", "di", "a", "da", "in", "con", "su", "per",
+    "tra", "fra", "del", "della", "dei", "degli", "delle", "al", "alla", "ai", "agli", "alle", "dal", "dalla",
+    "nel", "nella", "nei", "sul", "sulla", "e", "o", "ma", "che", "non", "se", "come", "è",
+    "the", "a", "an", "of", "to", "in", "on", "at", "for", "with", "from", "by", "and", "or", "but", "that",
+    "is", "are", "not", "if", "as", "my", "your", "this",
+}
+
+
+def first_words_setting(path="/etc/vabaxos/voice.conf"):
+    """first_words= in voice.conf (0: the first part is a whole clause)."""
+    value = os.environ.get("VABAXOS_KOKORO_FIRST_WORDS")
+    if value is None:
+        try:
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.split("#", 1)[0].strip()
+                    if line.startswith("first_words="):
+                        value = line.split("=", 1)[1].strip()
+        except OSError:
+            pass
+    try:
+        return max(0, int(value)) if value is not None else FIRST_WORDS
+    except ValueError:
+        return FIRST_WORDS
+
+
+def _cut(words, size):
+    """Where to cut a list of words near size, never after a function word."""
+    cut = min(size, len(words))
+    while cut < len(words) - 1 and words[cut - 1].lower().strip("'’") in FUNCTION_WORDS:
+        cut += 1
+    return cut
+
+
+def split(text, first_words=None, max_words=MAX_WORDS):
+    """Splits text at sentence and clause ends, long clauses every
+    max_words words, and the first few words alone, so the first part
+    starts playing at once while the rest is synthesized. A short text
+    (up to first_words + 2 words) stays whole."""
+    first_words = first_words_setting() if first_words is None else first_words
+    clauses = [p.strip() for p in re.split(r"(?<=[.!?;:])\s+|(?<=,)\s+", text) if p.strip()]
+    parts = []
+    for clause in clauses:
+        words = clause.split()
+        while len(words) > max_words + 3:
+            cut = _cut(words, max_words)
+            parts.append(" ".join(words[:cut]))
+            words = words[cut:]
+        parts.append(" ".join(words))
+    if first_words and parts:
+        words = parts[0].split()
+        if len(words) > first_words + 2:
+            cut = _cut(words, first_words)
+            if cut < len(words) - 1:
+                parts[0:1] = [" ".join(words[:cut]), " ".join(words[cut:])]
     return parts or [text]

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Natural voice
+Name[it]=Voce naturale
+Comment=Download Kokoro, the natural voice, and see if this computer is fast enough
+Comment[it]=Scarica Kokoro, la voce naturale, e scopri se questo computer è abbastanza veloce
+Exec=vabaxos-natural-voice
+Icon=audio-speakers-symbolic
+Terminal=false
+Categories=Settings;Accessibility;
+Keywords=voice;kokoro;speech;natural;voce;naturale;sintesi;orca;

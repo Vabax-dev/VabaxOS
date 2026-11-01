@@ -1,0 +1,299 @@
+#!/usr/bin/python3
+"""Natural voice: download Kokoro, measure this computer, use it for Orca.
+
+    vabaxos-natural-voice
+
+eSpeak NG stays the voice of VabaxOS (ADR-0026); Kokoro, the natural voice,
+is the user's choice. This window downloads it (about 350 MB), plays an
+example, measures how quickly it answers on this computer and says whether
+it is fast enough for the screen reader, and turns it on or off for Orca.
+The document reader uses it by itself once downloaded.
+"""
+
+import gettext
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import wave
+
+gettext.textdomain("vabaxos-voice")
+_ = gettext.gettext
+
+EXAMPLE = {"it": "Ciao, sono la voce naturale di VabaxOS. Così leggo i tuoi documenti.",
+           "en": "Hello, I am the natural voice of VabaxOS. This is how I read your documents."}
+
+
+def present(text):
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - shown in the window anyway
+        pass
+
+
+def language():
+    for name in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        value = os.environ.get(name, "")
+        if value and value not in ("C", "POSIX") and not value.startswith("C."):
+            return "it" if value.startswith("it") else "en"
+    return "en"
+
+
+def seconds(ms):
+    text = f"{ms / 1000:.2f}".rstrip("0").rstrip(".")
+    return text.replace(".", ",") if language() == "it" else text
+
+
+def verdict_text(ms):
+    from vabaxos_voice import model
+    kind = model.verdict(ms)
+    if kind == "fast":
+        return _("It answers in {seconds} seconds: fast enough for the screen reader too.").format(
+            seconds=seconds(ms))
+    if kind == "slow":
+        return _("It answers in {seconds} seconds: a little late for the screen reader; good for "
+                 "reading documents.").format(seconds=seconds(ms))
+    return _("It answers in {seconds} seconds: too slow for the screen reader. Use it to read "
+             "documents; Orca keeps eSpeak NG.").format(seconds=seconds(ms))
+
+
+def play_example():
+    """Says the example with Kokoro at its natural speed."""
+    from vabaxos_voice import engine
+    kokoro = engine.Kokoro()
+    lang = language()
+    pcm = kokoro.synthesize(EXAMPLE[lang], engine.VOICES[lang][0], lang)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        path = f.name
+    with wave.open(path, "wb") as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(engine.SAMPLE_RATE)
+        out.writeframes(pcm.tobytes())
+    for player in ("pw-play", "paplay", "aplay"):
+        if shutil.which(player):
+            subprocess.run([player, path], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            break
+    os.remove(path)
+
+
+class OrcaVoice:
+    """Orca's synthesizer, through the screen reader settings of VabaxOS."""
+
+    def __init__(self):
+        from vabaxos_screen_reader.store import Store
+        self.store = Store()
+
+    def get(self):
+        return self.store.get("speech", "synthesizer") == "kokoro"
+
+    def set(self, on):
+        self.store.set("speech", "synthesizer", "kokoro" if on else "")
+        self.store.reload_orca_if_needed()
+
+
+def window_classes(speak=present, model_module=None, player=play_example, orca_class=OrcaVoice):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, GLib, Gtk
+
+    if model_module is None:
+        from vabaxos_voice import model as model_module
+    model = model_module
+
+    def run(work, done):
+        def thread():
+            try:
+                result = work()
+            except Exception as error:  # noqa: BLE001 - said to the user
+                result = error
+            GLib.idle_add(lambda: done(result) and False)
+        threading.Thread(target=thread, daemon=True).start()
+
+    class VoiceWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Natural voice"))
+            self.set_default_size(620, 520)
+            self.cancel = threading.Event()
+            self.busy = False
+            try:
+                self.orca = orca_class()
+            except Exception:  # noqa: BLE001 - the screen reader settings are not installed
+                self.orca = None
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+            group = Adw.PreferencesGroup(
+                title=_("Kokoro, the natural voice"),
+                description=_("A voice that sounds human, free (Apache-2.0), without Internet once downloaded. "
+                              "eSpeak NG stays the voice of VabaxOS; this one is your choice."))
+            self.status = Adw.ActionRow(title="", subtitle_lines=0, title_lines=0)
+            self.status.set_focusable(True)
+            group.add(self.status)
+            self.speed = Adw.ActionRow(title="", title_lines=0)
+            self.speed.set_focusable(True)
+            group.add(self.speed)
+            self.use = Adw.SwitchRow(title=_("Use it for the screen reader"),
+                                     subtitle=_("Orca speaks with the natural voice"))
+            self.use.connect("notify::active", lambda *_a: self.toggle_orca())
+            group.add(self.use)
+            buttons = Gtk.Box(spacing=8, margin_top=12, homogeneous=True)
+            self.download_button = Gtk.Button(label=_("Download"))
+            self.download_button.connect("clicked", lambda *_a: self.download_or_remove())
+            self.example_button = Gtk.Button(label=_("Listen to an example"))
+            self.example_button.connect("clicked", lambda *_a: self.example())
+            self.measure_button = Gtk.Button(label=_("Measure the speed"))
+            self.measure_button.set_tooltip_text(_("How quickly the natural voice answers on this computer"))
+            self.measure_button.connect("clicked", lambda *_a: self.measure())
+            for button in (self.download_button, self.example_button, self.measure_button):
+                buttons.append(button)
+            group.add(buttons)
+            page.add(group)
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            self.connect("close-request", lambda *_a: self.cancel.set() or False)
+            self.refresh()
+            GLib.idle_add(lambda: self.status.grab_focus() and False)
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        def refresh(self):
+            present_ = model.installed()
+            mine = model.downloaded()
+            if present_:
+                self.status.set_title(_("Downloaded."))
+                self.download_button.set_label(_("Delete"))
+            else:
+                self.status.set_title(_("Not downloaded: about {size} MB, from GitHub.").format(
+                    size=int(round(model.TOTAL / 1e6, -1))))
+                self.download_button.set_label(_("Download"))
+            speed = model.load_speed()
+            self.speed.set_title(verdict_text(speed["ms"]) if speed else _("Speed not measured yet."))
+            for widget in (self.example_button, self.measure_button, self.use):
+                widget.set_sensitive(present_ and not self.busy)
+            # A model that came with the system cannot be deleted here.
+            self.download_button.set_sensitive(mine or not present_)
+            self.use.set_visible(self.orca is not None)
+            self.updating = True
+            self.use.set_active(bool(self.orca and present_ and self.orca.get()))
+            self.updating = False
+
+        # -- download --------------------------------------------------------
+
+        def download_or_remove(self):
+            if self.busy:
+                self.cancel.set()
+                return
+            if model.installed():
+                if self.orca and self.orca.get():
+                    self.orca.set(False)
+                model.remove()
+                self.refresh()
+                self.say(_("Natural voice deleted. Orca speaks with eSpeak NG."))
+                return
+            self.busy = True
+            self.cancel.clear()
+            self.download_button.set_label(_("Stop the download"))
+            self.say(_("Downloading the natural voice: some minutes, depending on Internet."))
+            told = {"step": 0}
+
+            def progress(done, total):
+                step = int(done * 4 / total) if total else 0
+                if 0 < step < 4 and step > told["step"]:
+                    told["step"] = step
+                    GLib.idle_add(self.say, _("{percent} percent.").format(percent=step * 25))
+
+            def finished(result):
+                self.busy = False
+                if isinstance(result, Exception):
+                    if str(result) == "cancelled":
+                        self.say(_("Download stopped."))
+                    elif str(result) == "damaged":
+                        self.say(_("The file arrived damaged: try again."))
+                    else:
+                        self.say(_("Download failed: is Internet connected? {error}").format(error=result))
+                    self.refresh()
+                    return
+                self.refresh()
+                self.say(_("Natural voice downloaded. Now I measure the speed of this computer."))
+                self.measure()
+            run(lambda: model.install(progress, self.cancel.is_set), finished)
+
+        # -- example and speed ---------------------------------------------
+
+        def example(self):
+            self.say(_("Example of the natural voice."))
+            self.example_button.set_sensitive(False)
+
+            def done(result):
+                self.example_button.set_sensitive(True)
+                if isinstance(result, Exception):
+                    self.say(_("The example did not play: {error}").format(error=result))
+            GLib.timeout_add(1200, lambda: run(player, done) and False)
+
+        def measure(self):
+            self.busy = True
+            self.refresh()
+            self.say(_("Measuring: about half a minute."))
+
+            def done(result):
+                self.busy = False
+                if isinstance(result, Exception):
+                    self.refresh()
+                    self.say(_("The measurement did not work: {error}").format(error=result))
+                    return
+                model.save_speed(result)
+                self.refresh()
+                self.say(verdict_text(result))
+            run(model.measure, done)
+
+        # -- Orca -----------------------------------------------------------
+
+        def toggle_orca(self):
+            if getattr(self, "updating", False) or self.orca is None:
+                return
+            on = self.use.get_active()
+            try:
+                self.orca.set(on)
+            except Exception as error:  # noqa: BLE001
+                self.say(_("Orca did not change: {error}").format(error=error))
+                return
+            speed = model.load_speed()
+            if on and speed and model.verdict(speed["ms"]) == "too-slow":
+                self.say(_("Orca speaks with the natural voice, but on this computer it answers late. "
+                           "To go back, turn this off, or press Super+Alt+O."))
+            elif on:
+                self.say(_("Orca speaks with the natural voice."))
+            else:
+                self.say(_("Orca speaks with eSpeak NG."))
+
+    class VoiceApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.NaturalVoice")
+            self.connect("activate", lambda app: (app.get_active_window() or VoiceWindow(app)).present())
+
+    return VoiceApp, VoiceWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

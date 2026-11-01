@@ -213,9 +213,12 @@ def voice_page(rows):
 
 
 def natural_voice_rows(rows):
-    """The choice of Kokoro, only when it is installed: for now the ISO
-    speaks only with eSpeak NG (ADR-0026)."""
-    if not os.path.exists(KOKORO_MODULE):
+    """The choice of Kokoro, only when it is installed and its model is
+    downloaded (program Natural voice, ADR-0030)."""
+    data = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    models = [os.path.join(folder, "kokoro-v1.0.onnx")
+              for folder in (os.path.join(data, "vabaxos", "kokoro"), "/usr/share/vabaxos/kokoro")]
+    if not os.path.exists(KOKORO_MODULE) or not any(os.path.exists(m) for m in models):
         return []
     voice = "org.gnome.Orca.Voice"
     return [
