@@ -20,6 +20,9 @@
 //               Super+Alt+Shift+R the whole screen. The picture can only
 //               be taken here: GNOME Shell refuses its screenshot service
 //               to other programs.
+//   Super+Alt+N do not disturb on and off (GNOME's show-banners): no
+//               banner, so Orca stays quiet; the notifications wait in the
+//               list of Super+N; said aloud
 //   Super+H     dictation, as in Windows: vabaxos-dictation listens; Super+H
 //               again, and the text is written where the cursor is, the way
 //               the screen keyboard of GNOME writes (the input method, or
@@ -100,7 +103,7 @@ class StartButton extends PanelMenu.Button {
 });
 
 const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i',
-    'recognize-window', 'recognize-screen', 'dictation'];
+    'recognize-window', 'recognize-screen', 'dictation', 'do-not-disturb'];
 
 Gio._promisify(Shell.Screenshot.prototype, 'screenshot');
 Gio._promisify(Shell.Screenshot.prototype, 'screenshot_window');
@@ -118,6 +121,7 @@ export default class VabaxOSKeys extends Extension {
             'recognize-window': () => this._recognize(false),
             'recognize-screen': () => this._recognize(true),
             'dictation': () => this._dictation(),
+            'do-not-disturb': () => this._doNotDisturb(),
         };
         for (const key of KEYS) {
             Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE,
@@ -325,6 +329,20 @@ export default class VabaxOSKeys extends Extension {
         } catch (e) {
             logError(e, 'vabaxos-keys: text recognition');
             this._speak(_('Text recognition failed.'));
+        }
+    }
+
+    _doNotDisturb() {
+        const _ = this.gettext.bind(this);
+        const settings = new Gio.Settings({schema_id: 'org.gnome.desktop.notifications'});
+        const quiet = settings.get_boolean('show-banners');
+        if (quiet) {
+            // Said before the banners stop, so it is heard.
+            this._speak(_('Do not disturb on. Notifications wait in the list, Super+N.'));
+            settings.set_boolean('show-banners', false);
+        } else {
+            settings.set_boolean('show-banners', true);
+            this._speak(_('Do not disturb off.'));
         }
     }
 

@@ -35,5 +35,9 @@
       <default><![CDATA[['<Super>h']]]></default>
       <summary>Dictation: listen, then write what was said where the cursor is (again: stop)</summary>
     </key>
+    <key name="do-not-disturb" type="as">
+      <default><![CDATA[['<Super><Alt>n']]]></default>
+      <summary>Do not disturb on and off: notifications wait in the notification list</summary>
+    </key>
   </schema>
 </schemalist>
