@@ -417,16 +417,17 @@ if [[ "$WANT_DESKTOP" == yes && "$WANT_ORCA" == yes && "$HAVE_KOKORO" == yes ]];
     check 'voce naturale Kokoro caricata' "$(value kokoro)" yes
 fi
 
-# Start menu (ADR-0018): ArcMenu active; Super opens it and every control
-# must have a name for Orca. The full accessibility tree of GNOME Shell
+# Start menu (ADR-0025): no ArcMenu; the Start button of vabaxos-keys is on
+# the taskbar with its name; Super opens the menu and every control of
+# GNOME Shell must have a name for Orca. The full accessibility tree of GNOME Shell
 # goes to the serial log, to see what the screen reader finds.
 # A notification is on screen during the check (critical, so its banner
 # stays until it is closed): GNOME Shell 50 draws its Close and Expand
 # buttons with an icon only, and button-names@vabaxos.org must give them a
 # name (ADR-0022).
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    ask arcmenu "env $BUS gnome-extensions list --enabled --active | grep -c arcmenu@arcmenu.com" || exit 1
-    check 'menu Start (ArcMenu) attivo' "$(value arcmenu)" 1
+    ask arcmenu "env $BUS gnome-extensions list | grep -c arcmenu@arcmenu.com" || exit 1
+    check 'ArcMenu non installato' "$(value arcmenu)" 0
     ask buttonnames "env $BUS gnome-extensions list --enabled --active | grep -c button-names@vabaxos.org" || exit 1
     check 'nomi dei pulsanti di GNOME Shell attivi' "$(value buttonnames)" 1
     send "n=\$($NOTIFY.Notify VabaxOS 0 '' 'Test menu' 'VabaxOS test' '[]' '{\"urgency\": <byte 2>}' 0 | awk '{print \$2+0}')"
@@ -434,10 +435,12 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     sleep 3
     send "env $BUS vabaxos-a11y-check --list gnome-shell > /tmp/shell-a11y.txt 2>&1; sed 's/^/A11Y: /' /tmp/shell-a11y.txt"
     ask shella11y "tail -1 /tmp/shell-a11y.txt" || exit 1
+    ask startbutton "grep -c -E 'button: Start\$' /tmp/shell-a11y.txt" || exit 1
     ask bannernames "grep -A12 'notification:' /tmp/shell-a11y.txt | grep -c -E 'button: (Close|Chiudi)\$'" || exit 1
     press esc
     send "$NOTIFY.CloseNotification \"\$n\" >/dev/null"
     check 'menu Start: comandi senza nome' "$(value shella11y)" "gnome-shell: 0 controls without a name"
+    check 'pulsante Start sulla barra' "$(value startbutton)" 1
     printf 'INFO: pulsanti Chiudi nelle notifiche: %s\n' "$(value bannernames)"
 fi
 
@@ -488,8 +491,8 @@ fi
 # windows have Minimize and Maximize, Ctrl+Shift+Esc opens the System
 # Monitor, and the Programs window has a name on every control.
 if [[ "$WANT_DESKTOP" == yes ]]; then
-    ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|arcmenu|vabaxos-keys|button-names'" || exit 1
-    check 'estensioni attive (menu Start, barra, icone, appunti, finestre, tasti, nomi dei pulsanti)' "$(value extensions)" 8
+    ask extensions "env $BUS gnome-extensions list --enabled --active | grep -c -E 'dash-to-panel|ubuntu-appindicators|ding@|GPaste|tiling-assistant|vabaxos-keys|button-names'" || exit 1
+    check 'estensioni attive (barra, icone, appunti, finestre, tasti e pulsante Start, nomi dei pulsanti)' "$(value extensions)" 7
     ask buttons "env $BUS gsettings get org.gnome.desktop.wm.preferences button-layout" || exit 1
     check 'pulsanti delle finestre' "$(value buttons)" "'appmenu:minimize,maximize,close'"
     press ctrl-shift-esc

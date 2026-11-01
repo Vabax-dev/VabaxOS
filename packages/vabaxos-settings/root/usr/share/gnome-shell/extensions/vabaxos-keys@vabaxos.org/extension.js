@@ -19,6 +19,11 @@
 //               shut down, as in Windows (the desktop takes the focus when
 //               the last window closes)
 //
+// The Start button on the taskbar (ADR-0025, accepted by Vabax on
+// 2026-11-01): the VabaxOS logo and the word "Start", at the left; a click,
+// Enter or Space opens the VabaxOS Start menu, as Super does. ArcMenu is no
+// longer installed.
+//
 // A new window takes the focus even when it was started without a GNOME
 // "activation token" (from a terminal, a script, a program that opens a
 // second window): instead of the "is ready" notification, which a blind
@@ -29,6 +34,7 @@
 // does, so Orca reads it; then the arrows move, Enter opens and Escape goes
 // back to the window.
 
+import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -38,8 +44,51 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+
+const LOGO = '/usr/share/icons/hicolor/scalable/apps/vabaxos-logo.svg';
+
+// A plain button, not a menu: Orca says "Start, button". The key and click
+// signals of the actor work with every GNOME Shell 50 version (the menu
+// gestures of PanelMenu.Button changed between versions).
+const StartButton = GObject.registerClass(
+class StartButton extends PanelMenu.Button {
+    _init(label, onActivate) {
+        super._init(0.0, label, true);
+        this.accessible_role = Atk.Role.PUSH_BUTTON;
+        this.accessible_name = label;
+        const box = new St.BoxLayout({style_class: 'panel-status-menu-box'});
+        if (GLib.file_test(LOGO, GLib.FileTest.EXISTS)) {
+            box.add_child(new St.Icon({
+                gicon: Gio.FileIcon.new(Gio.File.new_for_path(LOGO)),
+                style_class: 'system-status-icon',
+            }));
+        }
+        box.add_child(new St.Label({text: label, y_align: Clutter.ActorAlign.CENTER}));
+        this.add_child(box);
+        this.connect('button-release-event', (actor, event) => {
+            if (event.get_button() !== Clutter.BUTTON_PRIMARY)
+                return Clutter.EVENT_PROPAGATE;
+            onActivate();
+            return Clutter.EVENT_STOP;
+        });
+        this.connect('touch-event', (actor, event) => {
+            if (event.type() !== Clutter.EventType.TOUCH_END)
+                return Clutter.EVENT_PROPAGATE;
+            onActivate();
+            return Clutter.EVENT_STOP;
+        });
+        this.connect('key-press-event', (actor, event) => {
+            const key = event.get_key_symbol();
+            if (key !== Clutter.KEY_Return && key !== Clutter.KEY_KP_Enter && key !== Clutter.KEY_space)
+                return Clutter.EVENT_PROPAGATE;
+            onActivate();
+            return Clutter.EVENT_STOP;
+        });
+    }
+});
 
 const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i'];
 const NEW_WINDOW_MS = 8000;
@@ -59,13 +108,15 @@ export default class VabaxOSKeys extends Extension {
                 Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW, handlers[key]);
         }
         // Super alone: GNOME's handler (the overview) is blocked, ours opens
-        // the Start menu, as ArcMenu does with its own.
+        // the Start menu.
         this._overlayDefault = GObject.signal_handler_find(global.display, {signalId: 'overlay-key'});
         if (this._overlayDefault)
             GObject.signal_handler_block(global.display, this._overlayDefault);
         this._overlayId = global.display.connect('overlay-key', () => this._toggleStart());
         Main.wm.allowKeybinding('overlay-key', Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW |
             Shell.ActionMode.POPUP);
+        this._startButton = new StartButton(this.gettext('Start'), () => this._toggleStart());
+        Main.panel.addToStatusArea('vabaxos-start', this._startButton, 0, 'left');
         Main.wm.setCustomKeybindingHandler('close', Shell.ActionMode.NORMAL,
             (display, window) => this._close(window));
         this._createdId = global.display.connect('window-created', (display, window) => {
@@ -94,6 +145,8 @@ export default class VabaxOSKeys extends Extension {
     disable() {
         for (const key of KEYS)
             Main.wm.removeKeybinding(key);
+        this._startButton?.destroy();
+        this._startButton = null;
         Meta.keybindings_set_custom_handler('close', null);
         global.display.disconnect(this._overlayId);
         if (this._overlayDefault)
