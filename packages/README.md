@@ -7,6 +7,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-accessibility` | Voce della console (Speakup con eSpeak NG) nella lingua del sistema, Orca attivo di default, «senza voce» che spegne entrambi, nomi dei pulsanti di GNOME Shell con la sola icona (ADR-0022), `vabaxos-a11y-check`, `vabaxos-status`, `vabaxos-report` |
 | `vabaxos-apps` | La finestra «Programmi»: avvio automatico, disinstalla |
 | `vabaxos-branding` | Nome, logo, sfondi, font Atkinson Hyperlegible Next |
+| `vabaxos-connections` | Wi-Fi e Bluetooth a voce: reti con protezione e segnale a parole, password, abbinamento con il codice detto cifra per cifra; Super+K |
 | `vabaxos-trouble` | «Qualcosa non va»: primi controlli detti a voce e rapporto dei registri con i dati personali nascosti, da allegare; niente invio, niente aiuto remoto |
 | `vabaxos-games` | Giochi audio: memory dei suoni, indovina il numero, tris contro il computer; tutto a voce e da tastiera |
 | `vabaxos-communication` | WhatsApp, Telegram e videochiamata (Jitsi Meet) nel menu Start, nelle finestre di Firefox |

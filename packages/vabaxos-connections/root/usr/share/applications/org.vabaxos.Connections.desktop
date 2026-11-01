@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Wi-Fi and Bluetooth
+Name[it]=Wi-Fi e Bluetooth
+Comment=Connect to a network, pair headphones, speakers and Braille displays
+Comment[it]=Collegati a una rete, abbina cuffie, altoparlanti e display Braille
+Exec=vabaxos-connections
+Icon=network-wireless-symbolic
+Terminal=false
+Categories=Settings;Network;HardwareSettings;
+Keywords=wifi;wireless;network;bluetooth;headphones;pair;rete;cuffie;abbina;braille;

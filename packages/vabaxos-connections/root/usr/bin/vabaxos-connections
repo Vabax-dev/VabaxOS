@@ -1,0 +1,612 @@
+#!/usr/bin/python3
+"""Wi-Fi and Bluetooth, said aloud.
+
+    vabaxos-connections               the Wi-Fi page
+    vabaxos-connections --bluetooth   the Bluetooth page (Super+K)
+    vabaxos-connections --status      says Wi-Fi and Bluetooth in a sentence
+
+Wi-Fi: the networks, the strongest first; Enter connects (the password is
+asked for protected networks), on the connected network Enter offers
+Disconnect and Forget. F5 searches again; Hidden network asks the name.
+Bluetooth: Search for devices, then Enter on a new device pairs it and
+connects it; the code to compare or to type is said. Enter on a paired
+device connects, disconnects or removes it.
+Ctrl+Page Down and Ctrl+Page Up change page; Escape closes.
+"""
+
+import gettext
+import sys
+import threading
+
+gettext.textdomain("vabaxos-connections")
+_ = gettext.gettext
+
+SEARCH_SECONDS = 30
+
+
+def present(text):
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - shown in the window anyway
+        pass
+
+
+def spaced(code):
+    """'123456' -> '1 2 3 4 5 6': Orca says the digits one by one."""
+    return " ".join(str(code))
+
+
+def window_classes(speak=present, wifi_factory=None, bluetooth_factory=None, agent_class=None):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, GLib, Gtk
+
+    from vabaxos_connections import bluetooth as btmod
+    from vabaxos_connections import error_text
+    from vabaxos_connections import wifi as wifimod
+
+    wifi_factory = wifi_factory or wifimod.Wifi
+    bluetooth_factory = bluetooth_factory or btmod.Bluetooth
+    agent_class = agent_class or btmod.Agent
+
+    def run(work, done):
+        """work() in a thread, done(result or exception) in the window."""
+        def thread():
+            try:
+                result = work()
+            except Exception as error:  # noqa: BLE001 - said to the user
+                result = error
+            GLib.idle_add(lambda: done(result) and False)
+        threading.Thread(target=thread, daemon=True).start()
+
+    class ConnectionsWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app, page="wifi"):
+            super().__init__(application=app, title=_("Wi-Fi and Bluetooth"))
+            self.set_default_size(640, 640)
+            self.wifi = self.bt = self.agent = None
+            try:
+                self.wifi = wifi_factory()
+            except Exception:  # noqa: BLE001 - no system bus or no NetworkManager
+                pass
+            try:
+                self.bt = bluetooth_factory()
+            except Exception:  # noqa: BLE001
+                pass
+            self.toasts = Adw.ToastOverlay()
+            self.stack = Adw.ViewStack()
+            self.stack.add_titled_with_icon(self.wifi_page(), "wifi", _("Wi-Fi"), "network-wireless-symbolic")
+            self.stack.add_titled_with_icon(self.bt_page(), "bluetooth", _("Bluetooth"), "bluetooth-symbolic")
+            header = Adw.HeaderBar(title_widget=Adw.ViewSwitcher(stack=self.stack,
+                                                                 policy=Adw.ViewSwitcherPolicy.WIDE))
+            view = Adw.ToolbarView()
+            view.add_top_bar(header)
+            view.set_content(self.stack)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            keys = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            for accel, action in (("F5", self.search), ("<Control>r", self.search),
+                                  ("<Control>Page_Down", lambda: self.switch(1)),
+                                  ("<Control>Page_Up", lambda: self.switch(-1)),
+                                  ("Escape", self.close)):
+                keys.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(accel),
+                                                   Gtk.CallbackAction.new(lambda *_a, act=action: act() or True)))
+            self.add_controller(keys)
+            self.connect("close-request", self.closing)
+            self.register_agent()
+            self.fill_wifi()
+            self.fill_bt()
+            self.stack.set_visible_child_name(page)
+            self.stack.connect("notify::visible-child-name", lambda *_a: self.page_changed())
+            GLib.idle_add(self.page_changed)
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            speak(text)
+            return False
+
+        def switch(self, step):
+            names = ["wifi", "bluetooth"]
+            current = names.index(self.stack.get_visible_child_name() or "wifi")
+            self.stack.set_visible_child_name(names[(current + step) % 2])
+
+        def page_changed(self):
+            if self.stack.get_visible_child_name() == "wifi":
+                self.say(self.wifi_status_text())
+                self.wifi_switch.grab_focus()
+            else:
+                self.say(self.bt_status_text())
+                self.bt_switch.grab_focus()
+            return False
+
+        def search(self):
+            if self.stack.get_visible_child_name() == "wifi":
+                self.scan_wifi()
+            else:
+                self.search_devices()
+
+        def closing(self, *_args):
+            if self.agent:
+                self.agent.unregister()
+            if self.bt:
+                self.bt.discover(False)
+            return False
+
+        # == Wi-Fi ===========================================================
+
+        def wifi_page(self):
+            page = Adw.PreferencesPage()
+            top = Adw.PreferencesGroup()
+            self.wifi_switch = Adw.SwitchRow(title=_("Wi-Fi"))
+            self.wifi_switch.connect("notify::active", lambda *_a: self.toggle_wifi())
+            top.add(self.wifi_switch)
+            self.wifi_status = Adw.ActionRow(title=_("Checking…"))
+            self.wifi_status.set_focusable(True)
+            top.add(self.wifi_status)
+            page.add(top)
+            self.networks_group = Adw.PreferencesGroup(title=_("Networks"),
+                                                       description=_("Enter connects; F5 searches again."))
+            buttons = Gtk.Box(spacing=6)
+            for label, tip, action in ((_("Search again"), _("Search the networks again (F5)"), self.scan_wifi),
+                                       (_("Hidden network"), _("Connect to a network that does not show its name"),
+                                        self.ask_hidden)):
+                button = Gtk.Button(label=label, valign=Gtk.Align.CENTER)
+                button.set_tooltip_text(tip)
+                button.connect("clicked", lambda *_a, act=action: act())
+                buttons.append(button)
+            self.networks_group.set_header_suffix(buttons)
+            page.add(self.networks_group)
+            self.network_rows = []
+            return page
+
+        def wifi_status_text(self):
+            if self.wifi is None:
+                return _("Wi-Fi cannot be read: NetworkManager does not answer.")
+            try:
+                return self.wifi.status()
+            except Exception as error:  # noqa: BLE001
+                return error_text(error)
+
+        def fill_wifi(self, focus_ssid=None):
+            for row in self.network_rows:
+                self.networks_group.remove(row)
+            self.network_rows = []
+            available = self.wifi is not None and self.wifi.device() is not None
+            self.wifi_switch.set_sensitive(available)
+            self.updating = True
+            self.wifi_switch.set_active(available and self.wifi.enabled())
+            self.updating = False
+            self.wifi_status.set_title(self.wifi_status_text())
+            networks = self.wifi.networks() if available and self.wifi.enabled() else []
+            self.networks = networks
+            if available and self.wifi.enabled() and not networks:
+                row = Adw.ActionRow(title=_("No network found: F5 searches again."))
+                row.set_focusable(True)
+                self.networks_group.add(row)
+                self.network_rows.append(row)
+            for network in networks:
+                rest = network.describe()[len(network.ssid) + 2:]
+                row = Adw.ActionRow(title=network.ssid, subtitle=rest, activatable=True)
+                row.connect("activated", lambda *_a, n=network: self.network_activated(n))
+                self.networks_group.add(row)
+                self.network_rows.append(row)
+                if network.ssid == focus_ssid:
+                    row.grab_focus()
+            self.networks_group.set_description(
+                gettext.ngettext("{count} network. Enter connects; F5 searches again.",
+                                 "{count} networks. Enter connects; F5 searches again.",
+                                 len(networks)).format(count=len(networks)))
+
+        def toggle_wifi(self):
+            if getattr(self, "updating", False) or self.wifi is None:
+                return
+            on = self.wifi_switch.get_active()
+            try:
+                self.wifi.set_enabled(on)
+            except Exception as error:  # noqa: BLE001
+                self.say(_("Wi-Fi did not change: {error}").format(error=error_text(error)))
+                return
+            self.say(_("Wi-Fi on: searching the networks.") if on else _("Wi-Fi off."))
+            GLib.timeout_add(3000 if on else 500, lambda: self.fill_wifi() or False)
+
+        def scan_wifi(self):
+            if self.wifi is None:
+                return
+            self.wifi.scan()
+            self.say(_("Searching the networks."))
+
+            def done():
+                self.fill_wifi()
+                self.say(gettext.ngettext("{count} network found.", "{count} networks found.",
+                                          len(self.networks)).format(count=len(self.networks)))
+                return False
+            GLib.timeout_add(3000, done)
+
+        def network_activated(self, network):
+            if network.active:
+                self.network_menu(network)
+            elif network.known or not network.protected:
+                if not network.protected:
+                    self.say(_("{network} is open: what you do on it can be seen by others.").format(
+                        network=network.ssid))
+                self.start_connect(network, None)
+            elif network.security == "enterprise":
+                self.say(_("This network needs a user name: connect it once from the GNOME Settings, "
+                           "Wi-Fi page."))
+            else:
+                self.ask_password(network)
+
+        def ask_password(self, network, again=False):
+            dialog = Adw.AlertDialog(
+                heading=_("Password of {network}").format(network=network.ssid),
+                body=(_("The password was not right. Write it again.") if again
+                      else _("Write the password of the network, then Enter.")))
+            entry = Adw.PasswordEntryRow(title=_("Password"))
+            box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+            box.add_css_class("boxed-list")
+            box.append(entry)
+            dialog.set_extra_child(box)
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("connect", _("Connect"))
+            dialog.set_response_appearance("connect", Adw.ResponseAppearance.SUGGESTED)
+            dialog.set_default_response("connect")
+            dialog.set_close_response("cancel")
+
+            def respond(_dialog, response):
+                if response == "connect":
+                    self.start_connect(network, entry.get_text())
+            dialog.connect("response", respond)
+            entry.connect("entry-activated", lambda *_a: (dialog.close(), self.start_connect(network,
+                                                                                               entry.get_text())))
+            dialog.present(self)
+            entry.grab_focus()
+            self.dialog = dialog
+
+        def ask_hidden(self):
+            dialog = Adw.AlertDialog(heading=_("Hidden network"),
+                                     body=_("Write the name of the network and its password. Leave the password "
+                                            "empty for an open network."))
+            name = Adw.EntryRow(title=_("Name of the network"))
+            password = Adw.PasswordEntryRow(title=_("Password"))
+            box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+            box.add_css_class("boxed-list")
+            box.append(name)
+            box.append(password)
+            dialog.set_extra_child(box)
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("connect", _("Connect"))
+            dialog.set_default_response("connect")
+            dialog.set_close_response("cancel")
+
+            def respond(_dialog, response):
+                ssid = name.get_text().strip()
+                if response != "connect" or not ssid:
+                    return
+                secret = password.get_text()
+                self.watch(lambda: self.wifi.connect_hidden(ssid, "psk" if secret else "open", secret or None),
+                           ssid, None)
+            dialog.connect("response", respond)
+            dialog.present(self)
+            name.grab_focus()
+            self.dialog = dialog
+
+        def start_connect(self, network, password):
+            self.watch(lambda: self.wifi.connect(network, password), network.ssid, network)
+
+        def watch(self, start, ssid, network):
+            self.say(_("Connecting to {network}.").format(network=ssid))
+
+            def started(active):
+                if isinstance(active, Exception):
+                    self.say(_("Not connected: {error}").format(error=error_text(active)))
+                    return
+                self.poll(active, ssid, network, 0)
+            run(start, started)
+
+        def poll(self, active, ssid, network, tries):
+            result = self.wifi.result(active)
+            if result == "waiting" and tries < 60:
+                GLib.timeout_add(500, lambda: self.poll(active, ssid, network, tries + 1) or False)
+                return
+            if result == "activated":
+                self.say(_("Connected to {network}.").format(network=ssid))
+            elif network is not None and network.protected and not network.known:
+                self.say(_("Not connected to {network}: the password may be wrong, or the network is too far.")
+                         .format(network=ssid))
+            else:
+                self.say(_("Not connected to {network}: the network is too far or does not answer.").format(
+                    network=ssid))
+            self.fill_wifi(focus_ssid=ssid)
+
+        def network_menu(self, network):
+            dialog = Adw.AlertDialog(heading=network.ssid, body=network.describe())
+            dialog.add_response("close", _("Close"))
+            dialog.add_response("forget", _("Forget"))
+            dialog.add_response("disconnect", _("Disconnect"))
+            dialog.set_response_appearance("forget", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("disconnect")
+            dialog.set_close_response("close")
+
+            def respond(_dialog, response):
+                try:
+                    if response == "disconnect":
+                        self.wifi.disconnect()
+                        self.say(_("Disconnected from {network}.").format(network=network.ssid))
+                    elif response == "forget":
+                        self.wifi.forget(network)
+                        self.say(_("{network} forgotten: the password is no longer saved.").format(
+                            network=network.ssid))
+                except Exception as error:  # noqa: BLE001
+                    self.say(error_text(error))
+                GLib.timeout_add(500, lambda: self.fill_wifi(focus_ssid=network.ssid) or False)
+            dialog.connect("response", respond)
+            dialog.present(self)
+            self.dialog = dialog
+
+        # == Bluetooth =======================================================
+
+        def bt_page(self):
+            page = Adw.PreferencesPage()
+            top = Adw.PreferencesGroup()
+            self.bt_switch = Adw.SwitchRow(title=_("Bluetooth"))
+            self.bt_switch.connect("notify::active", lambda *_a: self.toggle_bt())
+            top.add(self.bt_switch)
+            self.bt_status = Adw.ActionRow(title=_("Checking…"))
+            self.bt_status.set_focusable(True)
+            top.add(self.bt_status)
+            page.add(top)
+            self.paired_group = Adw.PreferencesGroup(
+                title=_("My devices"), description=_("Enter connects or disconnects."))
+            page.add(self.paired_group)
+            self.new_group = Adw.PreferencesGroup(
+                title=_("New devices"),
+                description=_("Put the device in pairing mode, then Search for devices."))
+            self.search_button = Gtk.Button(label=_("Search for devices"), valign=Gtk.Align.CENTER)
+            self.search_button.set_tooltip_text(_("Search for new devices for 30 seconds (F5)"))
+            self.search_button.connect("clicked", lambda *_a: self.search_devices())
+            self.new_group.set_header_suffix(self.search_button)
+            page.add(self.new_group)
+            self.device_rows = []
+            return page
+
+        def bt_status_text(self):
+            if self.bt is None:
+                return _("Bluetooth cannot be read: the Bluetooth service does not answer.")
+            try:
+                return self.bt.status()
+            except Exception as error:  # noqa: BLE001
+                return error_text(error)
+
+        def fill_bt(self, focus=None):
+            for group, row in self.device_rows:
+                group.remove(row)
+            self.device_rows = []
+            available = self.bt is not None and self.bt.adapter() is not None
+            powered = available and self.bt.powered()
+            self.bt_switch.set_sensitive(available)
+            self.updating = True
+            self.bt_switch.set_active(powered)
+            self.updating = False
+            self.bt_status.set_title(self.bt_status_text())
+            self.search_button.set_sensitive(powered)
+            devices = self.bt.devices() if powered else []
+            self.devices = devices
+            for device in devices:
+                group = self.paired_group if device.paired else self.new_group
+                rest = device.describe()[len(device.name) + 2:]
+                row = Adw.ActionRow(title=device.name, subtitle=rest, activatable=True)
+                row.connect("activated", lambda *_a, d=device: self.device_activated(d))
+                group.add(row)
+                self.device_rows.append((group, row))
+                if device.path == focus:
+                    row.grab_focus()
+            if powered and not any(d.paired for d in devices):
+                row = Adw.ActionRow(title=_("No device paired yet."))
+                row.set_focusable(True)
+                self.paired_group.add(row)
+                self.device_rows.append((self.paired_group, row))
+
+        def toggle_bt(self):
+            if getattr(self, "updating", False) or self.bt is None:
+                return
+            on = self.bt_switch.get_active()
+            try:
+                self.bt.set_powered(on)
+            except Exception as error:  # noqa: BLE001
+                self.say(_("Bluetooth did not change: {error}").format(error=error_text(error)))
+                return
+            self.say(_("Bluetooth on.") if on else _("Bluetooth off."))
+            GLib.timeout_add(1000, lambda: self.fill_bt() or False)
+
+        def search_devices(self):
+            if self.bt is None or not self.bt.powered():
+                self.say(_("Turn Bluetooth on first."))
+                return
+            self.bt.discover(True)
+            self.search_button.set_sensitive(False)
+            self.say(_("Searching for devices for 30 seconds. Put the device in pairing mode."))
+            self.searching = 0
+
+            def tick():
+                self.searching += 5
+                before = {d.path for d in self.devices}
+                self.fill_bt()
+                new = [d for d in self.devices if d.path not in before and not d.paired]
+                if new:
+                    self.say(_("Found: {devices}.").format(devices=", ".join(d.name for d in new)))
+                if self.searching >= SEARCH_SECONDS:
+                    self.bt.discover(False)
+                    self.search_button.set_sensitive(True)
+                    count = len([d for d in self.devices if not d.paired])
+                    self.say(gettext.ngettext("Search finished: {count} new device.",
+                                              "Search finished: {count} new devices.", count).format(count=count))
+                    return False
+                return True
+            GLib.timeout_add_seconds(5, tick)
+
+        def device_activated(self, device):
+            if not device.paired:
+                self.say(_("Pairing {device}.").format(device=device.name))
+                self.bt.discover(False)
+
+                def done(result):
+                    if isinstance(result, Exception):
+                        self.say(_("{device} not paired. {error}").format(device=device.name,
+                                                                          error=error_text(result)))
+                    else:
+                        self.say(_("{device} paired and connected.").format(device=device.name))
+                    self.fill_bt(focus=device.path)
+                run(lambda: self.bt.pair(device), done)
+                return
+            dialog = Adw.AlertDialog(heading=device.name, body=device.describe())
+            dialog.add_response("close", _("Close"))
+            dialog.add_response("remove", _("Remove"))
+            dialog.set_response_appearance("remove", Adw.ResponseAppearance.DESTRUCTIVE)
+            if device.connected:
+                dialog.add_response("disconnect", _("Disconnect"))
+                dialog.set_default_response("disconnect")
+            else:
+                dialog.add_response("connect", _("Connect"))
+                dialog.set_default_response("connect")
+            dialog.set_close_response("close")
+
+            def respond(_dialog, response):
+                if response == "close":
+                    return
+                if response == "remove":
+                    try:
+                        self.bt.remove(device)
+                        self.say(_("{device} removed.").format(device=device.name))
+                    except Exception as error:  # noqa: BLE001
+                        self.say(error_text(error))
+                    self.fill_bt()
+                    return
+                connect = response == "connect"
+                self.say(_("Connecting {device}.").format(device=device.name) if connect
+                         else _("Disconnecting {device}.").format(device=device.name))
+
+                def done(result):
+                    if isinstance(result, Exception):
+                        self.say(error_text(result))
+                    elif connect:
+                        self.say(_("{device} connected.").format(device=device.name))
+                    else:
+                        self.say(_("{device} disconnected.").format(device=device.name))
+                    self.fill_bt(focus=device.path)
+                run(lambda: self.bt.connect(device) if connect else self.bt.disconnect(device), done)
+            dialog.connect("response", respond)
+            dialog.present(self)
+            self.dialog = dialog
+
+        # -- the pairing questions (Agent) ----------------------------------
+
+        def register_agent(self):
+            if self.bt is None or self.bt.adapter() is None:
+                return
+            try:
+                names = {d.path: d.name for d in self.bt.devices()}
+                self.agent = agent_class(self.bt.bus, self, lambda path: names.get(path) or next(
+                    (d.name for d in self.bt.devices() if d.path == path), path.rsplit("/", 1)[-1]))
+                self.agent.register()
+            except Exception:  # noqa: BLE001 - another agent stays: GNOME's questions
+                self.agent = None
+
+        def confirm(self, name, code, answer):
+            dialog = Adw.AlertDialog(
+                heading=_("Same code?"),
+                body=_("{device} shows the code {code}? If it is the same, choose Yes, then confirm on the "
+                       "device too.").format(device=name, code=spaced(code)))
+            dialog.add_response("no", _("No"))
+            dialog.add_response("yes", _("Yes"))
+            dialog.set_default_response("yes")
+            dialog.set_close_response("no")
+            dialog.connect("response", lambda _d, r: answer(r == "yes"))
+            dialog.present(self)
+            self.dialog = dialog
+
+        def ask_pin(self, name, numeric, answer):
+            dialog = Adw.AlertDialog(
+                heading=_("Code of {device}").format(device=name),
+                body=_("Write the code of the device, often 0000 or 1234, or the one written in its manual."))
+            entry = Adw.EntryRow(title=_("Code"))
+            if numeric:
+                entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
+            box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+            box.add_css_class("boxed-list")
+            box.append(entry)
+            dialog.set_extra_child(box)
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("ok", _("Pair"))
+            dialog.set_default_response("ok")
+            dialog.set_close_response("cancel")
+            answered = []
+
+            def respond(_dialog, response):
+                if not answered:
+                    answered.append(response)
+                    answer(entry.get_text() if response == "ok" else None)
+            dialog.connect("response", respond)
+            entry.connect("entry-activated", lambda *_a: (respond(dialog, "ok"), dialog.close()))
+            dialog.present(self)
+            entry.grab_focus()
+            self.dialog = dialog
+
+        def show_code(self, name, code):
+            self.say(_("Type {code} on {device}, then Enter.").format(code=spaced(code), device=name))
+
+        def cancelled(self):
+            dialog = getattr(self, "dialog", None)
+            if dialog is not None:
+                dialog.close()
+            self.say(_("The pairing was cancelled."))
+
+    class ConnectionsApp(Adw.Application):
+        """One window: a second vabaxos-connections (for example Super+K
+        while the window is open) shows the page asked."""
+
+        def __init__(self):
+            from gi.repository import Gio
+            super().__init__(application_id="org.vabaxos.Connections",
+                             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+            self.connect("command-line", self.on_command_line)
+
+        def on_command_line(self, app, command_line):
+            page = "bluetooth" if "--bluetooth" in command_line.get_arguments() else "wifi"
+            window = app.get_active_window()
+            if window is None:
+                window = ConnectionsWindow(app, page)
+            else:
+                window.stack.set_visible_child_name(page)
+            window.present()
+            return 0
+
+    return ConnectionsApp, ConnectionsWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    if "--status" in argv:
+        from vabaxos_connections.bluetooth import Bluetooth
+        from vabaxos_connections.wifi import Wifi
+        sentences = []
+        for factory in (Wifi, Bluetooth):
+            try:
+                sentences.append(factory().status())
+            except Exception:  # noqa: BLE001 - no system bus
+                pass
+        text = " ".join(sentences)
+        print(text)
+        present(text)
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run(argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

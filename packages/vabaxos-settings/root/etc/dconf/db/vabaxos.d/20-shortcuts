@@ -3,7 +3,7 @@
 # the GNOME accessibility shortcuts Super+Alt+S (screen reader) and
 # Super+Alt+8 (zoom).
 [org/gnome/settings-daemon/plugins/media-keys]
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-screen-reader/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-captions/']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-screen-reader/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-captions/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-connections/']
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status]
 name='VabaxOS: computer status'
@@ -35,3 +35,10 @@ binding='<Super><Alt>o'
 name='VabaxOS: live captions'
 command='vabaxos-captions'
 binding='<Super><Control>l'
+
+# Super+K opens Bluetooth (pair headphones, speakers, Braille displays), as
+# Win+K connects devices in Windows (vabaxos-connections).
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-connections]
+name='VabaxOS: Bluetooth devices'
+command='vabaxos-connections --bluetooth'
+binding='<Super>k'

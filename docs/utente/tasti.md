@@ -36,6 +36,7 @@ Il tasto **Super** è il tasto con il logo, quello che su Windows si chiama tast
 - **Super+L**: blocca lo schermo.
 - **Super+P**: gli schermi, per esempio un proiettore.
 - **Super+Spazio**: cambia la lingua della tastiera.
+- **Super+K**: Bluetooth: abbina e collega cuffie, altoparlanti, tastiere, display Braille. Vedi [Wi-Fi e Bluetooth](wifi-bluetooth.md).
 - **Super+Alt+I**: VabaxOS dice lo stato del computer: ora, batteria, rete, firewall, Bluetooth, volume.
 - **Super+Alt+D**: dove sei: il programma e la finestra, l'area di lavoro, quante finestre sono aperte. Vedi [Muoversi con la tastiera](navigazione.md).
 - **Super+Alt+N**: non disturbare, acceso o spento. Vedi [Le notifiche](notifiche.md).
@@ -66,7 +67,7 @@ Funzionano come su Windows in tutti i programmi: **Ctrl+C** copia, **Ctrl+X** ta
 
 ## Cosa manca rispetto a Windows
 
-- La dettatura (Super+H su Windows), la trasmissione a uno schermo (Super+K), i widget (Super+W) e il menu dei collegamenti rapidi (Super+X) non ci sono ancora.
-- In VabaxOS **Super+H** riduce a icona la finestra, come in GNOME.
+- La trasmissione a uno schermo senza fili, i widget (Super+W) e il menu dei collegamenti rapidi (Super+X) non ci sono ancora.
+- **Super+K** apre il Bluetooth: su Windows apre anche la trasmissione a uno schermo.
 
 Tutti i tasti si possono cambiare in Impostazioni, Tastiera, Scorciatoie da tastiera.
