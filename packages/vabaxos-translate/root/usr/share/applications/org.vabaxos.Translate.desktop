@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Translator
+Name[it]=Traduttore
+Comment=Translate a text without Internet
+Comment[it]=Traduci un testo senza Internet
+Exec=vabaxos-translate
+Icon=accessories-dictionary-symbolic
+Terminal=false
+Categories=Office;Utility;
+Keywords=translate;translation;language;traduci;traduzione;lingua;inglese;

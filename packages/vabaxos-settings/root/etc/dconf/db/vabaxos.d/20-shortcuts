@@ -3,7 +3,7 @@
 # the GNOME accessibility shortcuts Super+Alt+S (screen reader) and
 # Super+Alt+8 (zoom).
 [org/gnome/settings-daemon/plugins/media-keys]
-custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-screen-reader/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-captions/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-connections/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-zoom-in/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-zoom-in-keypad/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-zoom-out/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-zoom-out-keypad/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-contrast/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-text-bigger/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-text-smaller/']
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-task-manager/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-accessibility/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-screen-reader/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-captions/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-connections/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-zoom-in/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-zoom-in-keypad/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-zoom-out/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-zoom-out-keypad/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-contrast/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-text-bigger/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-text-smaller/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-translate/']
 
 [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-status]
 name='VabaxOS: computer status'
@@ -81,3 +81,10 @@ binding='<Super><Control>plus'
 name='VabaxOS: smaller text'
 command='vabaxos-vision text-smaller'
 binding='<Super><Control>minus'
+
+# Super+Alt+T translates the text copied with Ctrl+C, without Internet
+# (vabaxos-translate).
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vabaxos-translate]
+name='VabaxOS: translate the copied text'
+command='vabaxos-translate --clipboard'
+binding='<Super><Alt>t'

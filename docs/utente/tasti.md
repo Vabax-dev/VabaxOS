@@ -40,6 +40,7 @@ Il tasto **Super** è il tasto con il logo, quello che su Windows si chiama tast
 - **Super+Alt+I**: VabaxOS dice lo stato del computer: ora, batteria, rete, firewall, Bluetooth, volume.
 - **Super+Alt+D**: dove sei: il programma e la finestra, l'area di lavoro, quante finestre sono aperte. Vedi [Muoversi con la tastiera](navigazione.md).
 - **Super+Alt+N**: non disturbare, acceso o spento. Vedi [Le notifiche](notifiche.md).
+- **Super+Alt+T**: traduce il testo copiato con Ctrl+C, senza Internet. Vedi [Tradurre senza Internet](traduzione.md).
 - **Super+Alt+M**: dice a parole la formula copiata con Ctrl+C. Vedi [La matematica](matematica.md).
 - **Super+Alt+P**: descrive l'immagine della finestra in uso, senza Internet. Vedi [Descrivere le immagini](immagini.md).
 - **Super+H**: dettatura: parli e VabaxOS scrive dove c'è il cursore; di nuovo Super+H per finire. Vedi [La dettatura](dettatura.md).
