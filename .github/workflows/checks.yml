@@ -77,6 +77,8 @@ jobs:
           key: downloads-${{ hashFiles('packages/*/fetch') }}
       - name: Trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Translations compiler tests (contexts, plurals, without msgfmt)
+        run: python3 tests/po2mo/test_po2mo.py
       - name: Build the packages
         run: ./scripts/build-packages.sh /tmp/packages
       - name: Python programs compile
