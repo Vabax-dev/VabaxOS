@@ -133,6 +133,8 @@ jobs:
         run: python3 tests/news/test_news.py
       - name: Messages and video calls entries tests
         run: python3 tests/communication/test_communication.py
+      - name: Audio games tests (the rules, the sounds, a game of each in the window)
+        run: python3 tests/games/test_games.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

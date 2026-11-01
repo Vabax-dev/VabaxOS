@@ -1,0 +1,265 @@
+#!/usr/bin/python3
+"""Audio games, played with the keyboard and the voice.
+
+    vabaxos-games
+
+Sound memory: VabaxOS plays notes; repeat them with the keys 1, 2, 3, 4;
+each round adds one. Enter starts, R plays the notes again.
+Guess the number: from 1 to 100; write a number, Enter; the voice says
+higher or lower.
+Tic-tac-toe: you are X; the keys 1 to 9 are the cells as on the number
+pad (7 8 9 the top row); R reads the board, N starts again.
+Escape goes back to the list of games.
+"""
+
+import gettext
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+import vabaxos_games as vg
+
+gettext.textdomain("vabaxos-games")
+_ = gettext.gettext
+ngettext = gettext.ngettext
+
+SOUNDS = {}
+
+
+def sound(name, data):
+    """A WAV file for a sound, made once."""
+    if name not in SOUNDS:
+        folder = os.path.join(tempfile.gettempdir(), f"vabaxos-games-{os.getuid()}")
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, name + ".wav")
+        with open(path, "wb") as f:
+            f.write(data)
+        SOUNDS[name] = path
+    return SOUNDS[name]
+
+
+def play(path, wait=False):
+    for player in ("pw-play", "paplay", "aplay"):
+        if shutil.which(player):
+            process = subprocess.Popen([player, path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if wait:
+                process.wait()
+            return
+
+
+def present(text):
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - shown in the window anyway
+        pass
+
+
+def window_classes(speak=present, player=play):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gdk, GLib, Gtk
+
+    def note(n):
+        return sound(f"note{n}", vg.tone(vg.NOTES[n]))
+
+    class GamesWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app):
+            super().__init__(application=app, title=_("Audio games"))
+            self.set_default_size(640, 480)
+            self.game = None
+            self.stack = Gtk.Stack()
+            page = Adw.PreferencesPage()
+            group = Adw.PreferencesGroup(title=_("Games"), description=_("Arrows to choose, Enter to play."))
+            self.rows = []
+            for ident, title, subtitle in (
+                    ("simon", _("Sound memory"), _("Repeat the notes with the keys 1 to 4")),
+                    ("guess", _("Guess the number"), _("From 1 to 100: higher or lower")),
+                    ("tris", _("Tic-tac-toe"), _("Against the computer, keys 1 to 9"))):
+                row = Adw.ActionRow(title=title, subtitle=subtitle, activatable=True)
+                row.connect("activated", lambda *_a, i=ident: self.start(i))
+                group.add(row)
+                self.rows.append(row)
+            page.add(group)
+            self.stack.add_named(page, "list")
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16, margin_start=32, margin_end=32,
+                          margin_top=32, margin_bottom=32, valign=Gtk.Align.CENTER)
+            self.message = Gtk.Label(xalign=0, wrap=True, selectable=True)
+            self.message.add_css_class("title-2")
+            self.entry = Gtk.Entry(visible=False, input_purpose=Gtk.InputPurpose.DIGITS)
+            self.entry.update_property([Gtk.AccessibleProperty.LABEL], [_("Your number")])
+            self.entry.connect("activate", lambda *_a: self.guess())
+            box.append(self.message)
+            box.append(self.entry)
+            self.stack.add_named(box, "game")
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            view.set_content(self.stack)
+            self.set_content(view)
+            keys = Gtk.EventControllerKey()
+            keys.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+            keys.connect("key-pressed", self.key)
+            self.add_controller(keys)
+            self.Gdk = Gdk
+            self.GLib = GLib
+
+        def say(self, text):
+            self.message.set_text(text)
+            speak(text)
+
+        def start(self, ident):
+            self.game = ident
+            self.stack.set_visible_child_name("game")
+            self.entry.set_visible(ident == "guess")
+            if ident == "simon":
+                self.simon = vg.Simon()
+                self.say(_("Sound memory. The notes are 1, 2, 3, 4, from low to high. Press Enter to start."))
+                self.message.grab_focus()
+            elif ident == "guess":
+                self.number = vg.Guess()
+                self.say(_("I thought of a number from 1 to 100. Write a number, then Enter."))
+                self.entry.set_text("")
+                self.entry.grab_focus()
+            else:
+                self.tris = vg.TicTacToe()
+                self.say(_("Tic-tac-toe. You are X. Keys 1 to 9 as on the number pad: 7, 8, 9 the top row. "
+                           "R reads the board."))
+                self.message.grab_focus()
+
+        def back(self):
+            self.game = None
+            self.entry.set_visible(False)
+            self.stack.set_visible_child_name("list")
+            self.rows[0].grab_focus()
+            speak(_("Games."))
+
+        # -- keys ---------------------------------------------------------------
+
+        def key(self, _controller, keyval, _code, _state):
+            if self.game is None:
+                return False
+            name = self.Gdk.keyval_name(keyval) or ""
+            if name == "Escape":
+                self.back()
+                return True
+            if self.game == "guess":
+                return False
+            number = name[-1] if name.startswith("KP_") else name
+            if self.game == "simon":
+                if name in ("Return", "KP_Enter") and not self.simon.sequence:
+                    self.simon_round()
+                elif name.lower() == "r" and self.simon.sequence:
+                    self.play_sequence()
+                elif number in ("1", "2", "3", "4") and self.simon.sequence:
+                    self.simon_press(int(number))
+                return True
+            if number.isdigit() and number != "0":
+                self.tris_move(int(number))
+            elif name.lower() == "r":
+                self.say(self.board_text())
+            elif name.lower() == "n":
+                self.start("tris")
+            return True
+
+        # -- sound memory ---------------------------------------------------
+
+        def play_sequence(self):
+            for i, n in enumerate(self.simon.sequence):
+                self.GLib.timeout_add(500 * i + 300, lambda n=n: player(note(n)) or False)
+
+        def simon_round(self):
+            self.simon.next_round()
+            self.message.set_text(_("Round {number}: listen.").format(number=len(self.simon.sequence)))
+            self.play_sequence()
+
+        def simon_press(self, n):
+            player(note(n))
+            result = self.simon.press(n)
+            if result == "wrong":
+                player(sound("wrong", vg.chord([392, 330, 262])))
+                score = self.simon.score()
+                self.say(ngettext("Wrong. You remembered {score} note. Enter plays again.",
+                                  "Wrong. You remembered {score} notes. Enter plays again.", score).format(score=score))
+                self.simon = vg.Simon()
+            elif result == "round":
+                self.GLib.timeout_add(600, lambda: self.simon_round() or False)
+
+        # -- guess the number -------------------------------------------------
+
+        def guess(self):
+            text = self.entry.get_text().strip()
+            if not text.isdigit():
+                self.say(_("Write a number from 1 to 100."))
+                return
+            result = self.number.guess(int(text))
+            self.entry.set_text("")
+            if result == "higher":
+                self.say(_("{number}: higher.").format(number=text))
+            elif result == "lower":
+                self.say(_("{number}: lower.").format(number=text))
+            else:
+                player(sound("win", vg.chord([523, 659, 784, 1047])))
+                tries = self.number.tries
+                self.say(ngettext("Right, it is {number}! {tries} try. Write a number to play again.",
+                                  "Right, it is {number}! {tries} tries. Write a number to play again.",
+                                  tries).format(number=text, tries=tries))
+                self.number = vg.Guess()
+
+        # -- tic-tac-toe -------------------------------------------------------
+
+        def cell_name(self, cell):
+            return (_("top left"), _("top centre"), _("top right"),
+                    _("middle left"), _("centre"), _("middle right"),
+                    _("bottom left"), _("bottom centre"), _("bottom right"))[cell]
+
+        def board_text(self):
+            empty = _("empty")
+            return ", ".join("{} {}".format(vg.CELL_TO_KEY[cell], mark or empty)
+                             for cell, mark in enumerate(self.tris.cells))
+
+        def tris_move(self, key):
+            cell = vg.KEY_TO_CELL[key]
+            if self.tris.winner():
+                self.start("tris")
+                return
+            if not self.tris.place(cell):
+                self.say(_("Taken: {cell}.").format(cell=self.cell_name(cell)))
+                return
+            text = _("X {cell}.").format(cell=self.cell_name(cell))
+            if not self.tris.winner():
+                answer = self.tris.computer()
+                text += " " + _("O {cell}.").format(cell=self.cell_name(answer))
+            winner = self.tris.winner()
+            if winner == "X":
+                player(sound("win", vg.chord([523, 659, 784, 1047])))
+                text += " " + _("You win! N plays again.")
+            elif winner == "O":
+                text += " " + _("The computer wins. N plays again.")
+            elif winner == "draw":
+                text += " " + _("A draw. N plays again.")
+            self.say(text)
+
+    class GamesApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Games")
+            self.connect("activate", lambda app: (app.get_active_window() or GamesWindow(app)).present())
+
+    return GamesApp, GamesWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
