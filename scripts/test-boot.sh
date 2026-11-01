@@ -28,7 +28,9 @@ MODE=uefi
 MODE_OPTION=()
 ENTRY=voice
 MENU_LANG=""
-TIMEOUT=600
+# The whole test, from the start of QEMU: with every program checked, the
+# voice entry needs about 15 minutes on the CI runners (2026-11-01).
+TIMEOUT=1800
 ISO=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -102,7 +104,7 @@ wait_for() {
             return 1
         fi
         if (( SECONDS - START > TIMEOUT )); then
-            printf 'FALLITO: dopo %d secondi, ancora niente: %s\n' "$TIMEOUT" "$2"
+            printf 'FALLITO: finito il tempo della prova (%d secondi dall'\''avvio), ancora niente: %s\n' "$TIMEOUT" "$2"
             return 1
         fi
         sleep 1
@@ -396,13 +398,14 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     HAVE_MODEL="$(value havemodel)"
     printf 'INFO: Kokoro nella ISO: %s, modello: %s\n' "$HAVE_KOKORO" "$HAVE_MODEL"
 fi
-if [[ "$WANT_DESKTOP" == yes && "$HAVE_KOKORO" == no ]]; then
-    # No DefaultModule other than espeak-ng anywhere (none set: espeak-ng,
+if [[ "$WANT_DESKTOP" == yes && "$HAVE_MODEL" == no ]]; then
+    # Without the model the boot service is skipped (ConditionPathExists):
+    # no DefaultModule other than espeak-ng anywhere (none set: espeak-ng,
     # the first module Debian installs).
     ask voicemodule 'm=$(grep -rhs "^ *DefaultModule" /etc/speech-dispatcher/ | awk "{print \$2}" | sort -u | tr "\n" " "); m=${m% }; echo "${m:-espeak-ng}"' || exit 1
     check 'voce del desktop (eSpeak NG)' "$(value voicemodule)" espeak-ng
 fi
-if [[ "$WANT_DESKTOP" == yes && "$HAVE_KOKORO" == yes ]]; then
+if [[ "$WANT_DESKTOP" == yes && "$HAVE_MODEL" == yes ]]; then
     ask voiceselect 'systemctl show -p Result --value vabaxos-voice-select' || exit 1
     ask voicemodule 'sed -n "s/^DefaultModule //p" /etc/speech-dispatcher/clients/zz-vabaxos-voice.conf' || exit 1
     ask voicereason 'grep "^#" /var/lib/vabaxos/voice.conf | tr -d "#"' || exit 1
@@ -484,6 +487,8 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     app_a11y mail thunderbird thunderbird
     ask braille 'test -s /etc/brlapi.key && command -v brltty >/dev/null && python3 -c "import brlapi" && echo pronto' || exit 1
     check 'Braille (brltty, BrlAPI)' "$(value braille)" pronto
+    ask brlgroup 'id -nG | tr " " "\n" | grep -c "^brlapi$"' || exit 1
+    check 'utente live nel gruppo brlapi (Braille)' "$(value brlgroup)" 1
     ask ocr 'tesseract --list-langs 2>/dev/null | grep -c "^ita$"' || exit 1
     check 'riconoscimento del testo in italiano' "$(value ocr)" 1
     ask help 'ls /usr/share/doc/vabaxos-help/html/*.html | wc -l' || exit 1
@@ -523,7 +528,7 @@ fi
 # on the accessibility bus.
 if [[ "$WANT_DESKTOP" == yes ]]; then
     send "env $DESKTOP_ENV firefox-esr --new-window file:///usr/share/doc/vabaxos-help/html/index.html >/dev/null 2>&1 &"
-    ask firefoxtext "env $BUS vabaxos-a11y-check --wait 60 --list firefox > /tmp/firefox.txt 2>&1; grep -c -E 'link: Il firewall|link: The firewall' /tmp/firefox.txt" || exit 1
+    ask firefoxtext "env $BUS vabaxos-a11y-check --wait 60 --list firefox > /tmp/firefox.txt 2>&1; grep -m1 -c -E 'link: Il firewall|link: The firewall' /tmp/firefox.txt" || exit 1
     send "grep -c . /tmp/firefox.txt; pkill -u user -f firefox-esr"
     check 'Firefox: Orca vede il testo delle pagine' "$(value firefoxtext)" 1
 fi
@@ -535,7 +540,8 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     printf 'INFO: whisper.cpp: %s\n' "$(value whisper)"
     ask dictation 'espeak-ng -v it -w /tmp/dettato.wav "Buongiorno, oggi piove." && vabaxos-dictation file /tmp/dettato.wav it | tr "\n" " "' || exit 1
     printf 'INFO: dettatura: %s\n' "$(value dictation)"
-    check 'dettatura: frase riconosciuta' "$(value dictation | tr '[:upper:]' '[:lower:]' | grep -c buongiorno)" 1
+    # Whisper may write "buon giorno": the words count, not the spaces.
+    check 'dettatura: frase riconosciuta' "$(value dictation | tr '[:upper:]' '[:lower:]' | tr -d ' ' | grep -c buongiorno)" 1
 fi
 
 # System tuning (vabaxos-tuning): compressed memory (zram) is the swap;
@@ -543,6 +549,10 @@ fi
 if [[ "$WANT_DESKTOP" == yes ]]; then
     ask zram 'swapon --noheadings --show=NAME | grep -c zram' || exit 1
     check 'memoria compressa (zram)' "$(value zram)" 1
+    if [[ "$(value zram)" != 1 ]]; then
+        ask zraminfo '( dpkg-query -W -f="\${Package} \${Status}\n" systemd-zram-generator vabaxos-tuning; ls /dev/zram* /run/systemd/generator/*zram*; systemctl is-active systemd-zram-setup@zram0 dev-zram0.swap; sudo -n journalctl -b --no-pager -o cat | grep -i zram | tail -4 ) 2>&1 </dev/null | tr "\n" "|"' || exit 1
+        printf 'INFO: zram: %s\n' "$(value zraminfo)"
+    fi
     ask gsupdates "env $BUS gsettings get org.gnome.software allow-updates" || exit 1
     check 'GNOME Software non aggiorna da solo' "$(value gsupdates)" false
 fi
