@@ -1,0 +1,10 @@
+Package: vabaxos-communication
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: net
+Priority: optional
+Depends: firefox-esr
+Description: WhatsApp, Telegram and video calls, in the Start menu
+ WhatsApp Web, Telegram Web and Jitsi Meet, each in its own Firefox window,
+ the versions that work best with the screen reader on Linux; the guide
+ "Messaggi e videochiamate" gives their keys.

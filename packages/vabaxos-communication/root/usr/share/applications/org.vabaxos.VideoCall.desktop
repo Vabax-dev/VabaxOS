@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Video call
+Name[it]=Videochiamata
+Comment=A video call with Jitsi Meet: free, no account, a link to send to the others
+Comment[it]=Una videochiamata con Jitsi Meet: libera, senza account, un link da mandare agli altri
+Exec=firefox-esr --new-window https://meet.jit.si/
+Icon=camera-video-symbolic
+Terminal=false
+Categories=Network;VideoConference;
+Keywords=video;call;meeting;jitsi;videochiamata;riunione;

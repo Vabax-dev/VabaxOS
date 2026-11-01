@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Telegram
+Comment=Telegram in its own Firefox window (Telegram Web)
+Comment[it]=Telegram in una finestra di Firefox (Telegram Web)
+Exec=firefox-esr --new-window https://web.telegram.org/a/
+Icon=internet-chat-symbolic
+Terminal=false
+Categories=Network;Chat;InstantMessaging;
+Keywords=telegram;chat;messages;messaggi;
