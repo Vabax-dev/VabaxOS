@@ -1,0 +1,116 @@
+# Italian translation of vabaxos-news.
+# SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+msgid ""
+msgstr ""
+"Project-Id-Version: vabaxos-news\n"
+"PO-Revision-Date: 2026-11-02 00:00+0100\n"
+"Last-Translator: VabaxOS <https://github.com/Vabax-dev/VabaxOS>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "News and podcasts"
+msgstr "Notizie e podcast"
+
+msgid "Sources"
+msgstr "Fonti"
+
+msgid "Enter opens a source; Ctrl+N adds one."
+msgstr "Invio apre una fonte; Ctrl+N ne aggiunge una."
+
+msgid "Add a source"
+msgstr "Aggiungi una fonte"
+
+msgid "A news site or a podcast (Ctrl+N)"
+msgstr "Un sito di notizie o un podcast (Ctrl+N)"
+
+msgid "No source yet: Ctrl+N adds one."
+msgstr "Nessuna fonte per ora: Ctrl+N ne aggiunge una."
+
+msgid "Delete"
+msgstr "Elimina"
+
+msgid "Delete: {source}"
+msgstr "Elimina: {source}"
+
+msgid "Source deleted."
+msgstr "Fonte eliminata."
+
+msgid ""
+"Write the address of a news site or a podcast, for example ilpost.it, then "
+"Enter. Or choose a suggestion."
+msgstr ""
+"Scrivi l'indirizzo di un sito di notizie o di un podcast, per esempio "
+"ilpost.it, poi Invio. Oppure scegli un suggerimento."
+
+msgid "Address"
+msgstr "Indirizzo"
+
+msgid "Add {source}"
+msgstr "Aggiungi {source}"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Add"
+msgstr "Aggiungi"
+
+msgid "Looking for the source."
+msgstr "Cerco la fonte."
+
+msgid "No source found: {error}"
+msgstr "Nessuna fonte trovata: {error}"
+
+msgid "Added: {source}, {count} items."
+msgstr "Aggiunta: {source}, {count} elementi."
+
+msgid "Reading {source}."
+msgstr "Leggo {source}."
+
+msgid "The source cannot be read: {error}"
+msgstr "La fonte non si può leggere: {error}"
+
+msgid "Untitled"
+msgstr "Senza titolo"
+
+msgid "{count} items, newest first."
+msgstr "{count} elementi, dal più recente."
+
+msgid "{count} items."
+msgstr "{count} elementi."
+
+msgid "Playing: {title}. Ctrl+P pauses."
+msgstr "In riproduzione: {title}. Ctrl+P mette in pausa."
+
+msgid "No summary."
+msgstr "Nessun riassunto."
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Open in the browser"
+msgstr "Apri nel browser"
+
+msgid "Playing."
+msgstr "In riproduzione."
+
+msgid "Paused."
+msgstr "In pausa."
+
+msgid "Forward 30 seconds."
+msgstr "Avanti di 30 secondi."
+
+msgid "Back 30 seconds."
+msgstr "Indietro di 30 secondi."
+
+msgid "Speed {rate}."
+msgstr "Velocità {rate}."
+
+msgid "podcast"
+msgstr "podcast"
+
+msgid "no news feed at this address"
+msgstr "nessuna fonte di notizie a questo indirizzo"

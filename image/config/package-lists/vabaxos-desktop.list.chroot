@@ -36,7 +36,8 @@ console-setup
 # vabaxos-branding, vabaxos-reader, vabaxos-screen-reader, vabaxos-settings, vabaxos-setup, vabaxos-sounds, vabaxos-start,
 # vabaxos-update, vabaxos-welcome, vabaxos-ocr, vabaxos-unlock, vabaxos-tuning,
 # vabaxos-firewall, vabaxos-dictation, vabaxos-restore, vabaxos-lessons,
-# vabaxos-reminders, vabaxos-print, vabaxos-math, vabaxos-describe)
+# vabaxos-reminders, vabaxos-print, vabaxos-math, vabaxos-describe,
+# vabaxos-news)
 # are built from packages/ by
 # scripts/build-packages.sh and installed by live-build automatically.
 # vabaxos-voice (Kokoro) stays out of the ISO for now: only eSpeak NG (ADR-0026).

@@ -129,6 +129,8 @@ jobs:
           python3 tests/describe/test_model.py
       - name: Mathematics tests (calculator, formulas in words, the window)
         run: python3 tests/math/test_math.py
+      - name: News and podcasts tests (RSS, Atom, the feed of a site, the window)
+        run: python3 tests/news/test_news.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

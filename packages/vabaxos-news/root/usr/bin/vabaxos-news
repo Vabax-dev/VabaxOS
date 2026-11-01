@@ -1,0 +1,293 @@
+#!/usr/bin/python3
+"""News and podcasts, read and played.
+
+    vabaxos-news
+
+Sources: the list of your news sites and podcasts; Enter opens one, Delete
+removes it, Ctrl+N adds one (a feed address, or simply the site, such as
+ilpost.it: VabaxOS finds its feed). Escape goes back.
+
+Items: newest first, with date. Enter on a news item opens its summary,
+with Open in the browser; on a podcast episode it plays. While it plays:
+Ctrl+P pause and play, Ctrl+Right and Ctrl+Left 30 seconds forward and
+back, Ctrl+Up and Ctrl+Down faster and slower (from 1 to 2 times).
+"""
+
+import gettext
+import sys
+import threading
+
+import vabaxos_news as vn
+
+gettext.textdomain("vabaxos-news")
+_ = gettext.gettext
+
+RATES = [1.0, 1.25, 1.5, 1.75, 2.0]
+
+
+class Player:
+    """GStreamer's playbin: play, pause, 30 seconds jumps, speed."""
+
+    def __init__(self):
+        import gi
+        gi.require_version("Gst", "1.0")
+        from gi.repository import Gst
+        Gst.init(None)
+        self.Gst = Gst
+        self.bin = Gst.ElementFactory.make("playbin", "vabaxos-news")
+        self.rate = 1.0
+        self.playing = False
+
+    def play(self, url):
+        self.bin.set_state(self.Gst.State.NULL)
+        self.bin.set_property("uri", url)
+        self.rate = 1.0
+        self.bin.set_state(self.Gst.State.PLAYING)
+        self.playing = True
+
+    def toggle(self):
+        self.playing = not self.playing
+        self.bin.set_state(self.Gst.State.PLAYING if self.playing else self.Gst.State.PAUSED)
+        return self.playing
+
+    def position(self):
+        ok, now = self.bin.query_position(self.Gst.Format.TIME)
+        return now if ok else 0
+
+    def _seek(self, position):
+        Gst = self.Gst
+        self.bin.seek(self.rate, Gst.Format.TIME, Gst.SeekFlags.FLUSH | Gst.SeekFlags.ACCURATE,
+                      Gst.SeekType.SET, max(0, position), Gst.SeekType.NONE, -1)
+
+    def jump(self, seconds):
+        self._seek(self.position() + seconds * self.Gst.SECOND)
+
+    def set_rate(self, rate):
+        self.rate = rate
+        self._seek(self.position())
+
+    def stop(self):
+        self.bin.set_state(self.Gst.State.NULL)
+        self.playing = False
+
+
+def window_classes(fetcher=vn.fetch, player_class=Player, speak=None):
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gio, GLib, Gtk
+
+    class NewsWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app, store=None):
+            super().__init__(application=app, title=_("News and podcasts"))
+            self.set_default_size(720, 600)
+            self.store = store
+            self.player = None
+            self.items = []
+            self.toasts = Adw.ToastOverlay()
+            self.view = Adw.NavigationView()
+            self.toasts.set_child(self.view)
+            self.set_content(self.toasts)
+            self.sources_page()
+            keys = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+            for accel, action in (("<Control>n", self.ask_source), ("<Control>p", self.toggle),
+                                  ("<Control>Right", lambda: self.jump(30)), ("<Control>Left", lambda: self.jump(-30)),
+                                  ("<Control>Up", lambda: self.speed(1)), ("<Control>Down", lambda: self.speed(-1))):
+                keys.add_shortcut(Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(accel),
+                                                   Gtk.CallbackAction.new(lambda *_a, act=action: act() or True)))
+            self.add_controller(keys)
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            if speak:
+                speak(text)
+            return False
+
+        # -- sources -------------------------------------------------------
+
+        def sources_page(self):
+            page = Adw.PreferencesPage()
+            self.sources = Adw.PreferencesGroup(title=_("Sources"),
+                                                description=_("Enter opens a source; Ctrl+N adds one."))
+            add = Gtk.Button(label=_("Add a source"))
+            add.set_tooltip_text(_("A news site or a podcast (Ctrl+N)"))
+            add.connect("clicked", lambda *_a: self.ask_source())
+            self.sources.set_header_suffix(add)
+            page.add(self.sources)
+            self.source_rows = []
+            toolbar = Adw.ToolbarView()
+            toolbar.add_top_bar(Adw.HeaderBar())
+            toolbar.set_content(page)
+            self.view.add(Adw.NavigationPage(title=_("News and podcasts"), child=toolbar, tag="sources"))
+            self.fill_sources()
+
+        def fill_sources(self):
+            for row in self.source_rows:
+                self.sources.remove(row)
+            self.source_rows = []
+            sources = vn.load(self.store)
+            if not sources:
+                row = Adw.ActionRow(title=_("No source yet: Ctrl+N adds one."))
+                row.set_focusable(True)
+                self.sources.add(row)
+                self.source_rows.append(row)
+            for title, url in sources:
+                row = Adw.ActionRow(title=title, activatable=True)
+                row.connect("activated", lambda *_a, t=title, u=url: self.open_source(t, u))
+                delete = Gtk.Button(label=_("Delete"), valign=Gtk.Align.CENTER)
+                delete.update_property([Gtk.AccessibleProperty.LABEL], [_("Delete: {source}").format(source=title)])
+                delete.connect("clicked", lambda *_a, u=url: self.delete_source(u))
+                row.add_suffix(delete)
+                self.sources.add(row)
+                self.source_rows.append(row)
+
+        def delete_source(self, url):
+            vn.save([s for s in vn.load(self.store) if s[1] != url], self.store)
+            self.fill_sources()
+            self.say(_("Source deleted."))
+
+        def ask_source(self):
+            dialog = Adw.AlertDialog(heading=_("Add a source"),
+                                     body=_("Write the address of a news site or a podcast, for example "
+                                            "ilpost.it, then Enter. Or choose a suggestion."))
+            entry = Adw.EntryRow(title=_("Address"))
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            box.append(entry)
+            for name, url in vn.SUGGESTIONS:
+                button = Gtk.Button(label=name)
+                button.set_tooltip_text(_("Add {source}").format(source=name))
+                button.connect("clicked", lambda *_a, u=url: (dialog.close(), self.add_source(u)))
+                box.append(button)
+            dialog.set_extra_child(box)
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("add", _("Add"))
+            dialog.set_default_response("add")
+            dialog.set_close_response("cancel")
+            entry.connect("entry-activated", lambda *_a: (dialog.close(), self.add_source(entry.get_text())))
+            dialog.connect("response", lambda _d, r: r == "add" and self.add_source(entry.get_text()))
+            dialog.present(self)
+            entry.grab_focus()
+            self.dialog = dialog
+
+        def add_source(self, address):
+            if not address.strip():
+                return
+            self.say(_("Looking for the source."))
+
+            def work():
+                try:
+                    result = fetcher(address)
+                except Exception as error:  # noqa: BLE001 - said to the user
+                    result = error
+                GLib.idle_add(done, result)
+
+            def done(result):
+                if isinstance(result, Exception):
+                    self.say(_("No source found: {error}").format(error=result))
+                    return False
+                url, title, items = result
+                sources = [s for s in vn.load(self.store) if s[1] != url]
+                sources.append((title or url, url))
+                vn.save(sources, self.store)
+                self.fill_sources()
+                self.say(_("Added: {source}, {count} items.").format(source=title or url, count=len(items)))
+                return False
+            threading.Thread(target=work, daemon=True).start()
+
+        # -- items -----------------------------------------------------------
+
+        def open_source(self, title, url):
+            page = Adw.PreferencesPage()
+            group = Adw.PreferencesGroup(title=title)
+            page.add(group)
+            toolbar = Adw.ToolbarView()
+            toolbar.add_top_bar(Adw.HeaderBar())
+            toolbar.set_content(page)
+            self.view.push(Adw.NavigationPage(title=title, child=toolbar, tag="items"))
+            self.say(_("Reading {source}.").format(source=title))
+
+            def work():
+                try:
+                    result = fetcher(url)
+                except Exception as error:  # noqa: BLE001
+                    result = error
+                GLib.idle_add(done, result)
+
+            def done(result):
+                if isinstance(result, Exception):
+                    self.say(_("The source cannot be read: {error}").format(error=result))
+                    return False
+                _url, _title, items = result
+                items = sorted(items, key=lambda i: i.date.timestamp() if i.date else 0, reverse=True)
+                self.items = items
+                first = None
+                for item in items:
+                    row = Adw.ActionRow(title=item.title or _("Untitled"), subtitle=item.describe(), activatable=True)
+                    row.connect("activated", lambda *_a, i=item: self.open_item(i))
+                    group.add(row)
+                    first = first or row
+                group.set_description(_("{count} items, newest first.").format(count=len(items)))
+                if first:
+                    first.grab_focus()
+                self.say(_("{count} items.").format(count=len(items)))
+                return False
+            threading.Thread(target=work, daemon=True).start()
+
+        def open_item(self, item):
+            if item.audio:
+                if self.player is None:
+                    self.player = player_class()
+                self.player.play(item.audio)
+                self.say(_("Playing: {title}. Ctrl+P pauses.").format(title=item.title))
+                return
+            dialog = Adw.AlertDialog(heading=item.title, body=item.summary or _("No summary."))
+            dialog.add_response("close", _("Close"))
+            if item.link:
+                dialog.add_response("open", _("Open in the browser"))
+                dialog.set_default_response("open")
+            dialog.set_close_response("close")
+            dialog.connect("response", lambda _d, r: r == "open" and Gio.AppInfo.launch_default_for_uri(
+                item.link, None))
+            dialog.present(self)
+            self.dialog = dialog
+
+        # -- player ----------------------------------------------------------
+
+        def toggle(self):
+            if self.player is None:
+                return
+            self.say(_("Playing.") if self.player.toggle() else _("Paused."))
+
+        def jump(self, seconds):
+            if self.player is None:
+                return
+            self.player.jump(seconds)
+            self.say(_("Forward 30 seconds.") if seconds > 0 else _("Back 30 seconds."))
+
+        def speed(self, step):
+            if self.player is None:
+                return
+            index = min(range(len(RATES)), key=lambda i: abs(RATES[i] - self.player.rate))
+            rate = RATES[max(0, min(len(RATES) - 1, index + step))]
+            self.player.set_rate(rate)
+            self.say(_("Speed {rate}.").format(rate=f"{rate:g}".replace(".", ",")))
+
+    class NewsApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.News")
+            self.connect("activate", lambda app: (app.get_active_window() or NewsWindow(app)).present())
+
+    return NewsApp, NewsWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

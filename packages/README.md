@@ -13,6 +13,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-help` | L'aiuto di VabaxOS: le guide di `docs/utente` in HTML |
 | `vabaxos-lessons` | Impara i tasti: lezioni con esercizi controllati a voce |
 | `vabaxos-math` | Calcolatrice parlante e formule dette a parole (Super+Alt+M) |
+| `vabaxos-news` | Notizie e podcast: feed RSS e Atom, riassunti, episodi con pausa, salti e velocità |
 | `vabaxos-ocr` | Il testo dello schermo riconosciuto per il lettore di schermo (Super+Alt+R) |
 | `vabaxos-print` | Stampanti e scanner: stampa di prova, predefinita, scansiona e leggi; niente cups-browsed |
 | `vabaxos-reader` | Il [lettore di documenti](../docs/utente/lettore.md) |
