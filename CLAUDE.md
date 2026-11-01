@@ -8,6 +8,8 @@ Sei il **Principal Software Engineer** di VabaxOS (DOC-19): scrivi il codice, co
 
 **Si lavora a blocchi** (decisione di Vabax, 2026-09-24): si decidono insieme 3-5 punti della roadmap, si sviluppano su un solo ramo con un commit per punto, si verificano insieme (test automatici, una costruzione della ISO, una sola sessione di ascolto con un elenco di cosa Vabax deve sentire), poi una pull request per blocco. Non rifare la ISO per ogni piccola modifica.
 
+**Nuova fase (decisione di Vabax, 2026-11-01): prima le funzionalità, poi le prove, poi la ISO.** Si aggiungono funzionalità una dopo l'altra (sempre un commit per funzionalità, test unitari scritti insieme al codice). Le prove automatiche complete (`test-boot.sh`, `test-install.sh`, giri di Tab) si fanno dopo, tutte insieme, per trovare i problemi. La ISO si costruisce solo quando la versione è ricca. Fino ad allora niente costruzioni della ISO e niente sessioni di ascolto, salvo richiesta di Vabax.
+
 ## Chi è l'utente
 
 - Vabax è **non vedente**. Su Windows usa **NVDA**, sul Mac VoiceOver. Non può vedere lo schermo: non chiedergli mai di guardare qualcosa.
@@ -47,7 +49,9 @@ Non installare mai VabaxOS sulla postazione (il Galaxy Book). Non chiedere mai p
 
 ## Stato
 
-Aggiornato al 2026-09-25.
+Aggiornato al 2026-11-01.
+
+- 2026-11-01: si riprende dopo i blocchi 3-12, tutti uniti a `main` (ultimo merge: PR #17). Nuova fase «prima le funzionalità» (vedi sopra). Sessione nel cloud (ramo `claude/beautiful-rubin-2thpuw`): qui mancano live-build, QEMU, ShellCheck e `reuse`, e il Python di sistema non carica GTK; le prove con la ISO si fanno poi sulla postazione.
 
 - Fatto: repository pubblico `Vabax-dev/VabaxOS`, ADR-0001–0017, guida e script della postazione Windows, CI (REUSE, ShellCheck, pacchetti Debian, PowerShell, `lb config`, pacchetti VabaxOS e test del benvenuto). La postazione è pronta: `verifica-postazione.sh` passa, KVM e audio WSLg funzionano, `sudo` senza password per `/usr/bin/lb`, live-build da Git (commit fisso 531cdb98, 2026-09-13) installato con `scripts/install-live-build.sh`: la versione di Debian 1:20250814 non costruisce l'installer su forky (chiede `libfuse2`).
 - Fatto e unito a `main`: lavoro 2 (ISO con live-build, `build.sh`, `run-qemu.sh`, `test-boot.sh`), lavoro 4 (menu GRUB con due bip, lettere V, N, R, L, T, attesa di 10 secondi). Letti tutti i documenti DOC-01–32.
