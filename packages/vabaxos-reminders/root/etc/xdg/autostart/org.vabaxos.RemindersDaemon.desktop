@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=VabaxOS reminders
+Name[it]=Promemoria di VabaxOS
+Exec=vabaxos-reminders --daemon
+NoDisplay=true
+OnlyShowIn=GNOME;
+X-GNOME-Autostart-Phase=Applications
+X-GNOME-AutoRestart=true

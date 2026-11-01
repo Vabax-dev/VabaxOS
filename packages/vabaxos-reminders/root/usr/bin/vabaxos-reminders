@@ -1,0 +1,248 @@
+#!/usr/bin/python3
+"""Reminders and alarms said aloud.
+
+    vabaxos-reminders            the window
+    vabaxos-reminders --daemon   the part that keeps time (started with the
+                                 desktop): at the right time Orca says the
+                                 reminder, a notification stays on screen,
+                                 an alarm rings until it is stopped
+    vabaxos-reminders add TEXT   from the terminal, as in the window
+
+Write as you would say it: "alle 15 chiama Marco", "tra 10 minuti scola la
+pasta", "domani alle 7 sveglia", "ogni giorno alle 8 medicine". Enter adds
+it and VabaxOS says when it will ring. The list below: Delete on each.
+An alarm rings for a minute, or until Stop in its notification (or the
+notification is closed).
+"""
+
+import datetime
+import gettext
+import os
+import shutil
+import subprocess
+import sys
+
+import vabaxos_reminders as vr
+
+gettext.textdomain("vabaxos-reminders")
+_ = gettext.gettext
+
+ALARM_SOUND = "/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga"
+BELL_SOUND = "/usr/share/sounds/freedesktop/stereo/complete.oga"
+ALARM_SECONDS = 60
+
+
+def now():
+    return datetime.datetime.now().replace(second=0, microsecond=0)
+
+
+def play(path):
+    if not os.path.exists(path):
+        return
+    for player in ("pw-play", "paplay"):
+        if shutil.which(player):
+            subprocess.Popen([player, path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return
+
+
+class Daemon:
+    """Checks the list every 15 seconds; fires what is due."""
+
+    def __init__(self):
+        from gi.repository import Gio, GLib
+        self.Gio, self.GLib = Gio, GLib
+        self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        self.ringing = {}   # notification id -> seconds left
+        self.bus.signal_subscribe("org.freedesktop.Notifications", "org.freedesktop.Notifications",
+                                  "ActionInvoked", "/org/freedesktop/Notifications", None,
+                                  Gio.DBusSignalFlags.NONE, self.action, None)
+        self.bus.signal_subscribe("org.freedesktop.Notifications", "org.freedesktop.Notifications",
+                                  "NotificationClosed", "/org/freedesktop/Notifications", None,
+                                  Gio.DBusSignalFlags.NONE, self.closed, None)
+
+    def say(self, text):
+        GLib = self.GLib
+        try:
+            self.bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                               "PresentMessage", GLib.Variant("(s)", (text,)), None,
+                               self.Gio.DBusCallFlags.NONE, 2000, None)
+        except GLib.Error:
+            pass
+
+    def notify(self, title, text, alarm):
+        GLib = self.GLib
+        actions = ["stop", _("Stop")] if alarm else []
+        hints = {"urgency": GLib.Variant("y", 2), "resident": GLib.Variant("b", True)}
+        try:
+            reply = self.bus.call_sync("org.freedesktop.Notifications", "/org/freedesktop/Notifications",
+                                       "org.freedesktop.Notifications", "Notify",
+                                       GLib.Variant("(susssasa{sv}i)", ("VabaxOS", 0, "alarm-symbolic", title,
+                                                                        text, actions, hints, 0)),
+                                       GLib.VariantType("(u)"), self.Gio.DBusCallFlags.NONE, 3000, None)
+            return reply.unpack()[0]
+        except GLib.Error:
+            return 0
+
+    def fire(self, reminder):
+        title = _("Alarm") if reminder.alarm else _("Reminder")
+        text = reminder.text or title
+        self.say(f"{title}: {text}")
+        ident = self.notify(title, text, reminder.alarm)
+        if reminder.alarm:
+            self.ringing[ident] = ALARM_SECONDS
+            play(ALARM_SOUND)
+        else:
+            play(BELL_SOUND)
+
+    def tick(self):
+        reminders = vr.load()
+        fired = vr.due(reminders, now())
+        if fired:
+            keep = [r for r in reminders if r not in fired]
+            for reminder in fired:
+                self.fire(reminder)
+                again = vr.after_firing(reminder)
+                if again:
+                    keep.append(again)
+            vr.save(keep)
+        return True
+
+    def ring(self):
+        for ident in list(self.ringing):
+            self.ringing[ident] -= 3
+            if self.ringing[ident] <= 0:
+                del self.ringing[ident]
+            else:
+                play(ALARM_SOUND)
+        return True
+
+    def action(self, _conn, _sender, _path, _iface, _signal, params, _data):
+        ident, action = params.unpack()
+        if action == "stop":
+            self.ringing.pop(ident, None)
+
+    def closed(self, _conn, _sender, _path, _iface, _signal, params, _data):
+        self.ringing.pop(params.unpack()[0], None)
+
+    def run(self):
+        self.GLib.timeout_add_seconds(15, self.tick)
+        self.GLib.timeout_add_seconds(3, self.ring)
+        self.tick()
+        self.GLib.MainLoop().run()
+
+
+def window_classes():
+    import gi
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gtk
+
+    class RemindersWindow(Adw.ApplicationWindow):
+
+        def __init__(self, app, store=None, speak=None):
+            super().__init__(application=app, title=_("Reminders and alarms"))
+            self.set_default_size(680, 560)
+            self.store = store
+            self.speak = speak
+            self.toasts = Adw.ToastOverlay()
+            view = Adw.ToolbarView()
+            view.add_top_bar(Adw.HeaderBar())
+            page = Adw.PreferencesPage()
+            new = Adw.PreferencesGroup(
+                title=_("New reminder"),
+                description=_("Write what and when, as you would say it: \"alle 15 chiama Marco\", "
+                              "\"tra 10 minuti scola la pasta\", \"domani alle 7 sveglia\", "
+                              "\"ogni giorno alle 8 medicine\". Then Enter."))
+            self.entry = Adw.EntryRow(title=_("What and when"))
+            self.entry.connect("entry-activated", lambda *_a: self.add())
+            self.alarm = Adw.SwitchRow(title=_("Alarm"),
+                                       subtitle=_("It rings for a minute, until you stop it"))
+            add = Gtk.Button(label=_("Add"), halign=Gtk.Align.START, margin_top=8)
+            add.connect("clicked", lambda *_a: self.add())
+            for widget in (self.entry, self.alarm, add):
+                new.add(widget)
+            self.group = Adw.PreferencesGroup(title=_("Coming"))
+            self.rows = []
+            page.add(new)
+            page.add(self.group)
+            view.set_content(page)
+            self.toasts.set_child(view)
+            self.set_content(self.toasts)
+            self.fill()
+
+        def say(self, text):
+            self.toasts.add_toast(Adw.Toast.new(text))
+            if self.speak:
+                self.speak(text)
+
+        def fill(self):
+            for row in self.rows:
+                self.group.remove(row)
+            self.rows = []
+            reminders = sorted(vr.load(self.store), key=lambda r: r.when)
+            if not reminders:
+                row = Adw.ActionRow(title=_("Nothing planned."))
+                row.set_focusable(True)
+                self.group.add(row)
+                self.rows.append(row)
+            for reminder in reminders:
+                text = reminder.describe(now())
+                row = Adw.ActionRow(title=text)
+                delete = Gtk.Button(label=_("Delete"), valign=Gtk.Align.CENTER)
+                delete.update_property([Gtk.AccessibleProperty.LABEL], [_("Delete: {item}").format(item=text)])
+                delete.connect("clicked", lambda *_a, r=reminder: self.delete(r))
+                row.add_suffix(delete)
+                self.group.add(row)
+                self.rows.append(row)
+
+        def add(self):
+            reminder = vr.parse(self.entry.get_text(), now())
+            if reminder is None:
+                self.say(_("When? Write a time, for example \"alle 15\" or \"tra 10 minuti\"."))
+                return
+            reminder.alarm = reminder.alarm or self.alarm.get_active()
+            reminders = vr.load(self.store)
+            reminders.append(reminder)
+            vr.save(reminders, self.store)
+            self.entry.set_text("")
+            self.alarm.set_active(False)
+            self.fill()
+            self.say(_("Added: {item}.").format(item=reminder.describe(now())))
+
+        def delete(self, reminder):
+            vr.save([r for r in vr.load(self.store) if r.ident != reminder.ident], self.store)
+            self.fill()
+            self.say(_("Deleted."))
+
+    class RemindersApp(Adw.Application):
+        def __init__(self):
+            super().__init__(application_id="org.vabaxos.Reminders")
+            self.connect("activate",
+                         lambda app: (app.get_active_window() or RemindersWindow(app)).present())
+
+    return RemindersApp, RemindersWindow
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    if "--daemon" in argv:
+        Daemon().run()
+        return 0
+    if len(argv) > 2 and argv[1] == "add":
+        reminder = vr.parse(" ".join(argv[2:]), now())
+        if reminder is None:
+            print(_("When? Write a time, for example \"alle 15\" or \"tra 10 minuti\"."))
+            return 1
+        reminders = vr.load()
+        reminders.append(reminder)
+        vr.save(reminders)
+        print(_("Added: {item}.").format(item=reminder.describe(now())))
+        return 0
+    app_class, _window = window_classes()
+    return app_class().run([argv[0]])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

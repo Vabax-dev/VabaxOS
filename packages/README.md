@@ -13,6 +13,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-lessons` | Impara i tasti: lezioni con esercizi controllati a voce |
 | `vabaxos-ocr` | Il testo dello schermo riconosciuto per il lettore di schermo (Super+Alt+R) |
 | `vabaxos-reader` | Il [lettore di documenti](../docs/utente/lettore.md) |
+| `vabaxos-reminders` | Promemoria e sveglie scritti come si dicono, detti all'ora giusta |
 | `vabaxos-restore` | Il ripristino del sistema con Timeshift: copie prima di ogni aggiornamento e ogni settimana (ADR-0027) |
 | `vabaxos-screen-reader` | Le impostazioni e i tasti di Orca (blocchi 9 e 10) |
 | `vabaxos-settings` | Impostazioni di GNOME: niente tour, niente sospensione automatica, niente blocco dello schermo con password, tasti di Windows e pulsante Start (`vabaxos-keys@vabaxos.org`) |
