@@ -648,6 +648,9 @@ if [[ "$WANT_ORCA" == yes ]]; then
     check 'velocità letta da Orca (D-Bus)' "$(value orcarate)" 63
     ask orcadconf "env $BUS gsettings get org.gnome.Orca.Voice:/org/gnome/orca/default/voices/default/ rate" || exit 1
     check 'velocità salvata nelle impostazioni' "$(value orcadconf)" 63
+    # Orca fell silent after this point in two runs of eight (CI,
+    # 2026-11-01): does it still speak right after the change?
+    printf 'INFO: Orca udibile subito dopo il cambio di velocità: %s\n' "$(orca_speaks orca-after-rate)"
 fi
 
 # Orca's keys (block 10): the NVDA scheme is the default, with Insert and
@@ -672,6 +675,15 @@ if [[ "$WANT_ORCA" == yes ]]; then
         printf 'INFO: Orca muto dopo Ins+F12: %s; notifica letta: %s\n' "$(value orcaalive)" "$(orca_speaks orca-after-f12)"
         ask orcalog 'sudo -n journalctl -b --no-pager -o cat _COMM=orca _COMM=speech-dispatch _COMM=sd_espeak-ng _COMM=pipewire _COMM=wireplumber 2>&1 </dev/null | grep -v "^ *[~^]*$" | grep -A12 Traceback | head -40 | tr "\n" "|"' || exit 1
         printf 'INFO: registro di Orca: %s\n' "$(value orcalog)"
+        # Is speech-dispatcher itself still able to speak, without Orca?
+        send "env $BUS spd-say -w 'speech dispatcher test' &"
+        printf 'INFO: speech-dispatcher da solo udibile: %s\n' "$(record spd-alone 6)"
+        ask spdstate 'ps -o pid=,stat=,wchan:16=,etime=,comm= -u user | grep -E "orca|speech-dis|sd_" | tr -s " " | tr "\n" "|"' || exit 1
+        printf 'INFO: processi della voce: %s\n' "$(value spdstate)"
+        ask spdlog 'tail -n 12 /home/user/.cache/speech-dispatcher/log/speech-dispatcher.log 2>&1 | tr "\n" "|"' || exit 1
+        printf 'INFO: registro di speech-dispatcher: %s\n' "$(value spdlog)"
+        ask sinks "env $BUS XDG_RUNTIME_DIR=/run/user/1000 pactl list sink-inputs 2>&1 | grep -E 'application.name|Corked|Mute' | tr -s ' \t' ' ' | tr '\n' '|'" || exit 1
+        printf 'INFO: flussi audio aperti: %s\n' "$(value sinks)"
     fi
 fi
 

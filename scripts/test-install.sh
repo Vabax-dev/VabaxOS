@@ -282,6 +282,12 @@ if [[ "$CONSOLE_SPEECH" != yes ]]; then
     CONSOLE_SPEECH="$(record console-again 10)"
     printf 'INFO: voce della console dopo la schermata di accesso: le prime parole perse, dopo Invio: %s\n' "$CONSOLE_SPEECH"
 fi
+# Still silent: which sound server espeakup speaks through, who holds the
+# sound card, which session is active on the seat.
+if [[ "$CONSOLE_SPEECH" != yes ]]; then
+    ask consolediag 'echo test | sudo -S sh -c "tr \"\\0\" \"\\n\" < /proc/\$(pidof espeakup)/environ | grep PULSE; fuser -v /dev/snd/* 2>&1 | grep -v \"^ *USER\"; loginctl list-sessions --no-legend; loginctl show-seat seat0 -p ActiveSession" 2>/dev/null | tr -s " " | tr "\n" "|"'
+    printf 'INFO: voce della console muta: %s\n' "$(value consolediag)"
+fi
 check 'voce della console udibile' "$CONSOLE_SPEECH" yes
 send 'echo test | sudo -S poweroff'
 for _ in $(seq 120); do kill -0 "$QEMU_WRAPPER" 2>/dev/null || break; sleep 1; done
