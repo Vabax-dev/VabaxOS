@@ -121,6 +121,8 @@ jobs:
         run: python3 tests/reminders/test_reminders.py
       - name: Printers and scanners tests (CUPS and SANE answers, the window)
         run: python3 tests/print/test_print.py
+      - name: Braille check tests (made-up BRLTTY states, the groups of the user)
+        run: python3 tests/braille/test_braille_check.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

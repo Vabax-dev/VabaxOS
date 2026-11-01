@@ -244,6 +244,7 @@ ask gdm 'systemctl is-active gdm'
 ask kokoro 'dpkg-query -W -f "\${db:Status-Abbrev}" vabaxos-voice 2>/dev/null | grep -c "^ii" || true'
 ask user 'id -un'
 ask crypt 'lsblk -n -o TYPE | grep -c crypt'
+ask brlapi 'id -nG | tr " " "\n" | grep -c "^brlapi$"'
 # The installer saved the choices for the welcome, which applied them.
 ask choices 'tr "\n" " " < /var/lib/vabaxos/installer-choices | sed "s/ $//"'
 ask contrast 'gsettings get org.gnome.desktop.a11y.interface high-contrast'
@@ -255,6 +256,7 @@ send 'echo test | sudo -S journalctl -b --no-pager -o short-monotonic -u vabaxos
 sleep 5
 check 'pacchetti VabaxOS installati' "$(value packages)" 6
 check 'pacchetti della live rimossi' "$(value live)" 0
+check 'utente nel gruppo brlapi (Braille)' "$(value brlapi)" 1
 if [[ "$ENCRYPT" == true ]]; then
     check 'disco cifrato' "$(value crypt)" 1
 fi

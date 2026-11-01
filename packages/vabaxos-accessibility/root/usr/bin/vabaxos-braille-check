@@ -1,0 +1,150 @@
+#!/usr/bin/python3
+"""Is the braille display ready? Each step said aloud.
+
+    vabaxos-braille-check          checks and says what is wrong
+    vabaxos-braille-check --fix    also mends what it can: braille on in the
+                                   screen reader, the user in the brlapi
+                                   group (the administrator password is
+                                   asked), brltty started again
+
+Orca writes to braille displays through BRLTTY and its BrlAPI (Debian
+accessibility wiki): brltty must run, /etc/brlapi.key must exist and be
+readable, the user must be in the brlapi group, and braille must be on in
+Orca. USB displays are found by themselves; Bluetooth ones are paired in
+the Bluetooth settings first.
+"""
+
+import gettext
+import grp
+import os
+import pwd
+import shutil
+import subprocess
+import sys
+
+gettext.textdomain("vabaxos-accessibility")
+_ = gettext.gettext
+
+KEY = os.environ.get("VABAXOS_BRLAPI_KEY", "/etc/brlapi.key")
+ORCA_BRAILLE = ("org.gnome.Orca.Braille", "/org/gnome/orca/default/braille/")
+
+
+def output(*command):
+    try:
+        return subprocess.run(command, capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def user_groups():
+    user = pwd.getpwuid(os.getuid()).pw_name
+    names = {grp.getgrgid(g).gr_name for g in os.getgroups() if _exists(g)}
+    names.update(g.gr_name for g in grp.getgrall() if user in g.gr_mem)
+    return names
+
+
+def _exists(gid):
+    try:
+        grp.getgrgid(gid)
+        return True
+    except KeyError:
+        return False
+
+
+def display():
+    """(driver, columns) of the display BRLTTY has, or None."""
+    try:
+        import brlapi
+        connection = brlapi.Connection()
+    except Exception:  # noqa: BLE001 - no daemon, no key, no display
+        return None
+    try:
+        columns, _rows = connection.displaySize
+        return connection.driverName, columns
+    finally:
+        connection.closeConnection()
+
+
+def orca_braille_on():
+    out = output("gsettings", "get", f"{ORCA_BRAILLE[0]}:{ORCA_BRAILLE[1]}", "enabled").strip()
+    return None if not out else out == "true"
+
+
+def checks(probe=None):
+    """[(ok, sentence)] in the order a person would fix them."""
+    probe = probe or {
+        "brltty": lambda: shutil.which("brltty") is not None,
+        "running": lambda: bool(output("systemctl", "list-units", "brltty*", "--state=active", "--no-legend").strip()),
+        "key": lambda: os.access(KEY, os.R_OK) and os.path.getsize(KEY) > 0,
+        "group": lambda: "brlapi" in user_groups(),
+        "display": display,
+        "orca": orca_braille_on,
+    }
+    results = []
+    if not probe["brltty"]():
+        return [(False, _("BRLTTY is not installed: braille cannot work."))]
+    results.append((probe["running"](), _("BRLTTY is running.") if probe["running"]()
+                    else _("BRLTTY is not running. Connect the display, or use --fix to start it.")))
+    key = probe["key"]()
+    results.append((key, _("The BrlAPI key is there.") if key
+                    else _("The BrlAPI key {key} is missing or cannot be read.").format(key=KEY)))
+    group = probe["group"]()
+    results.append((group, _("You are in the brlapi group.") if group
+                    else _("You are not in the brlapi group: --fix adds you, then log out and in again.")))
+    found = probe["display"]()
+    if found:
+        driver, columns = found
+        results.append((True, _("Display connected: {columns} cells ({driver}).").format(columns=columns,
+                                                                                      driver=driver)))
+    else:
+        results.append((False, _("No display found. A USB display: connect it. A Bluetooth one: pair it in "
+                                 "the Bluetooth settings, then turn it on.")))
+    orca = probe["orca"]()
+    if orca is not None:
+        results.append((orca, _("Braille is on in the screen reader.") if orca
+                        else _("Braille is off in the screen reader: --fix turns it on.")))
+    return results
+
+
+def summary(results):
+    if all(ok for ok, _s in results):
+        return _("Braille is ready.") + " " + " ".join(s for _ok, s in results)
+    problems = [s for ok, s in results if not ok]
+    return _("Braille: {count} things to fix.").format(count=len(problems)) + " " + " ".join(problems)
+
+
+def fix(results):
+    if orca_braille_on() is False:
+        output("gsettings", "set", f"{ORCA_BRAILLE[0]}:{ORCA_BRAILLE[1]}", "enabled", "true")
+    if "brlapi" not in user_groups():
+        subprocess.run(["pkexec", "usermod", "-aG", "brlapi", pwd.getpwuid(os.getuid()).pw_name], check=False)
+    if not output("systemctl", "list-units", "brltty*", "--state=active", "--no-legend").strip():
+        subprocess.run(["pkexec", "systemctl", "restart", "brltty"], check=False)
+
+
+def say(text):
+    try:
+        from gi.repository import Gio, GLib
+        bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        bus.call_sync("org.gnome.Orca.Service", "/org/gnome/Orca/Service", "org.gnome.Orca.Service",
+                      "PresentMessage", GLib.Variant("(s)", (text,)), None, Gio.DBusCallFlags.NONE, 2000, None)
+    except Exception:  # noqa: BLE001 - printed anyway
+        pass
+
+
+def main(argv):
+    if "--help" in argv or "-h" in argv:
+        print(__doc__)
+        return 0
+    results = checks()
+    if "--fix" in argv:
+        fix(results)
+        results = checks()
+    text = summary(results)
+    print(text)
+    say(text)
+    return 0 if all(ok for ok, _s in results) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

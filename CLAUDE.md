@@ -108,6 +108,8 @@ Aggiornato al 2026-11-01.
 
 - Punto 4 fatto: `vabaxos-lessons` (esercizi «press» controllati con un EventControllerKey in fase di cattura, esercizi «try» per i tasti presi da GNOME Shell e Orca, prima volta con `--first-run` non nella live). Restano i punti 9-18.
 
+- Punti 9-11 fatti: `vabaxos-reminders` (frasi italiane e inglesi, servizio con Orca, notifica e sveglia), `vabaxos-print` (CUPS senza driver, SANE airscan, «Scansiona e leggi» con il lettore; niente cups-browsed per CVE-2024-47176, UDP 631 tolta dalla zona privata), Braille (gruppo `brlapi` per l'utente live con `LIVE_USER_DEFAULT_GROUPS` e per l'installato con `passwd/user-default-groups`, **da verificare con i modelli dell'installer**; `vabaxos-braille-check`). **Prova del Braille con il display di Vabax** nella fase delle prove.
+
 Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
 
 1. **Dettatura** senza Internet (priorità di Vabax), e con lo stesso motore i **sottotitoli in tempo reale**; prima le licenze dei modelli italiani.
