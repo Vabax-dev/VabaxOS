@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Describe pictures
+Name[it]=Descrizione delle immagini
+Comment=Download or delete the model that describes pictures without Internet (Super+Alt+P)
+Comment[it]=Scarica o elimina il modello che descrive le immagini senza Internet (Super+Alt+P)
+Exec=vabaxos-describe
+Icon=image-x-generic-symbolic
+Terminal=false
+Categories=Utility;Accessibility;
+Keywords=describe;picture;image;photo;descrivi;immagine;foto;

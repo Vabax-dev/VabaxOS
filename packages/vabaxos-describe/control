@@ -9,5 +9,6 @@ Description: Descriptions of pictures without Internet
  Super+Alt+P describes the window in use, Super+Alt+Shift+P the whole
  screen, and "Open With" a picture file: a vision model runs on the
  computer with llama.cpp and the description, with the text written in the
- picture, opens in a plain window the screen reader reads (ADR-0029,
- proposed).
+ picture, opens in a plain window the screen reader reads (ADR-0029). The
+ model (Qwen3.5 0.8B, about 1 GB) is downloaded once, when the user asks,
+ and checked; it is not in the ISO.

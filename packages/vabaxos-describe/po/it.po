@@ -35,3 +35,55 @@ msgstr "La descrizione non è riuscita: {error}"
 
 msgid "no answer"
 msgstr "nessuna risposta"
+
+msgid "Describe pictures"
+msgstr "Descrizione delle immagini"
+
+msgid "Download"
+msgstr "Scarica"
+
+msgid "Delete the model"
+msgstr "Elimina il modello"
+
+msgid "Not now"
+msgstr "Non ora"
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "The engine of the descriptions (llama.cpp) is not installed."
+msgstr "Il motore delle descrizioni (llama.cpp) non è installato."
+
+msgid ""
+"The model is ready: Super+Alt+P describes the window in use, "
+"Super+Alt+Shift+P the screen."
+msgstr ""
+"Il modello è pronto: Super+Alt+P descrive la finestra in uso, "
+"Super+Alt+Maiusc+P lo schermo."
+
+msgid ""
+"To describe pictures without Internet, VabaxOS needs a model of about 1 GB, "
+"downloaded once. It stays on this computer; pictures never leave it. "
+"Download it now?"
+msgstr ""
+"Per descrivere le immagini senza Internet, VabaxOS ha bisogno di un modello "
+"di circa 1 GB, da scaricare una volta sola. Resta su questo computer; le "
+"immagini non escono mai. Scaricarlo adesso?"
+
+msgid "Downloading the model. The progress is said every 25 percent."
+msgstr "Scarico il modello. Dico l'avanzamento ogni 25 per cento."
+
+msgid "Downloaded {percent} percent."
+msgstr "Scaricato il {percent} per cento."
+
+msgid "The download stopped: {error}"
+msgstr "Lo scaricamento si è fermato: {error}"
+
+msgid "The model is ready."
+msgstr "Il modello è pronto."
+
+msgid "Model deleted."
+msgstr "Modello eliminato."

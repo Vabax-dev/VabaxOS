@@ -1,2 +1,0 @@
-The model is chosen by Vabax first (ADR-0029, proposed): Qwen2-VL 2B in Italian, or SmolVLM 500M.
-Then its files go in packages/vabaxos-describe/fetch (model.gguf, mmproj.gguf) and this file goes away.

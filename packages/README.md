@@ -7,7 +7,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-accessibility` | Voce della console (Speakup con eSpeak NG) nella lingua del sistema, Orca attivo di default, «senza voce» che spegne entrambi, nomi dei pulsanti di GNOME Shell con la sola icona (ADR-0022), `vabaxos-a11y-check`, `vabaxos-status`, `vabaxos-report` |
 | `vabaxos-apps` | La finestra «Programmi»: avvio automatico, disinstalla |
 | `vabaxos-branding` | Nome, logo, sfondi, font Atkinson Hyperlegible Next |
-| `vabaxos-describe` | Descrizione delle immagini senza Internet (Super+Alt+P); fuori dalla ISO finché non si sceglie il modello (ADR-0029) |
+| `vabaxos-describe` | Descrizione delle immagini senza Internet (Super+Alt+P); il modello (Qwen3.5 0,8B) si scarica a richiesta (ADR-0029) |
 | `vabaxos-dictation` | La dettatura senza Internet (Super+H), con whisper.cpp |
 | `vabaxos-firewall` | Il firewall come quello di Windows: reti private e pubbliche (ADR-0021) |
 | `vabaxos-help` | L'aiuto di VabaxOS: le guide di `docs/utente` in HTML |

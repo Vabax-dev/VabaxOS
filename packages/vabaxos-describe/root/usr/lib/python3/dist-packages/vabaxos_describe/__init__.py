@@ -1,5 +1,7 @@
-"""Descriptions of pictures, on the computer (ADR-0029, proposed): a
-llama.cpp server with a vision model is started, asked, and stopped.
+"""Descriptions of pictures, on the computer (ADR-0029): a llama.cpp
+server with a vision model (Qwen3.5 0.8B) is started, asked, and stopped.
+The model is not in the ISO: it is downloaded once, when the user asks
+(vabaxos_describe.model), into the user's data folder.
 
 The server speaks the OpenAI chat format: the picture goes in a message as
 a data URL. Pure functions here, so the request and the answer are tested
@@ -16,7 +18,7 @@ import subprocess
 import time
 import urllib.request
 
-MODEL_DIR = os.environ.get("VABAXOS_DESCRIBE_DIR", "/usr/share/vabaxos/describe")
+SYSTEM_DIR = "/usr/share/vabaxos/describe"
 MODEL = "model.gguf"
 PROJECTOR = "mmproj.gguf"
 
@@ -30,9 +32,32 @@ PROMPTS = {
 }
 
 
-def available(model_dir=MODEL_DIR):
-    return (shutil.which("llama-server") is not None and os.path.exists(os.path.join(model_dir, MODEL))
-            and os.path.exists(os.path.join(model_dir, PROJECTOR)))
+def user_dir():
+    base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    return os.path.join(base, "vabaxos", "describe")
+
+
+def has_model(folder):
+    return os.path.exists(os.path.join(folder, MODEL)) and os.path.exists(os.path.join(folder, PROJECTOR))
+
+
+def model_dir():
+    """Where the model is: VABAXOS_DESCRIBE_DIR, the user's folder (where
+    it is downloaded), or a system folder; the user's folder if none."""
+    if os.environ.get("VABAXOS_DESCRIBE_DIR"):
+        return os.environ["VABAXOS_DESCRIBE_DIR"]
+    for folder in (user_dir(), SYSTEM_DIR):
+        if has_model(folder):
+            return folder
+    return user_dir()
+
+
+def engine_installed():
+    return shutil.which("llama-server") is not None
+
+
+def available(folder=None):
+    return engine_installed() and has_model(folder or model_dir())
 
 
 def prompt(language):
@@ -73,13 +98,14 @@ def free_port():
         return s.getsockname()[1]
 
 
-def server_command(port, model_dir=MODEL_DIR, threads=None):
+def server_command(port, folder=None, threads=None):
+    folder = folder or model_dir()
     threads = threads or max(1, (os.cpu_count() or 2) - 1)
-    return ["llama-server", "-m", os.path.join(model_dir, MODEL), "--mmproj", os.path.join(model_dir, PROJECTOR),
+    return ["llama-server", "-m", os.path.join(folder, MODEL), "--mmproj", os.path.join(folder, PROJECTOR),
             "--host", "127.0.0.1", "--port", str(port), "-t", str(threads), "-c", "4096"]
 
 
-def describe(path, language, model_dir=MODEL_DIR, timeout=300):
+def describe(path, language, model_dir=None, timeout=300):
     """The description of a picture; starts and stops the server."""
     port = free_port()
     server = subprocess.Popen(server_command(port, model_dir), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

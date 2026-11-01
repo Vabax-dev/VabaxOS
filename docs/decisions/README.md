@@ -50,4 +50,4 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0026](0026-solo-espeak.md) | Per ora solo eSpeak NG, Kokoro fuori dalla ISO | Accettata |
 | [0027](0027-ripristino-del-sistema.md) | Ripristino del sistema: Timeshift ora, Btrfs nella v1.5 | Accettata |
 | [0028](0028-prima-uscita-1-0.md) | La prima versione pubblica è la 1.0 | Accettata |
-| [0029](0029-descrizione-delle-immagini.md) | Descrizione delle immagini senza Internet | Proposta |
+| [0029](0029-descrizione-delle-immagini.md) | Descrizione delle immagini senza Internet | Accettata |

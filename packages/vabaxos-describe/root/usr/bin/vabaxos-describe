@@ -1,7 +1,13 @@
 #!/usr/bin/python3
-"""Describes a picture without Internet (ADR-0029, proposed).
+"""Describes a picture without Internet (ADR-0029).
 
     vabaxos-describe [--title TITLE] [--keep] PICTURE
+    vabaxos-describe             the model: download it, or delete it
+
+The model (Qwen3.5 0.8B, about 1 GB) is not in the ISO: the first time,
+VabaxOS asks whether to download it, says the progress every 25 percent,
+then describes the picture. From the Start menu, "Describe pictures"
+downloads or deletes it.
 
 Super+Alt+P describes the window in use, Super+Alt+Shift+P the whole
 screen: the extension vabaxos-keys takes the picture in GNOME Shell, as for
@@ -24,6 +30,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
 
 import vabaxos_describe as vd  # noqa: E402
+from vabaxos_describe import model as vm  # noqa: E402
 
 gettext.textdomain("vabaxos-describe")
 _ = gettext.gettext
@@ -86,6 +93,105 @@ class ResultWindow(Adw.ApplicationWindow):
         self.view.grab_focus()
 
 
+class ModelWindow(Adw.ApplicationWindow):
+    """Download or delete the model; after a download, then() goes on."""
+
+    def __init__(self, app, then=None, installer=vm.install, remover=vm.remove, say=speak):
+        super().__init__(application=app, title=_("Describe pictures"))
+        self.set_default_size(560, 360)
+        self.then, self.installer, self.remover, self.speak = then, installer, remover, say
+        self.cancel_flag = False
+        view = Adw.ToolbarView()
+        view.add_top_bar(Adw.HeaderBar())
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin_start=24, margin_end=24,
+                      margin_top=24, margin_bottom=24)
+        self.state = Gtk.Label(xalign=0, wrap=True, selectable=True)
+        self.progress = Gtk.ProgressBar(show_text=True, visible=False)
+        self.progress.update_property([Gtk.AccessibleProperty.LABEL], [_("Download")])
+        buttons = Gtk.Box(spacing=8)
+        self.download_button = Gtk.Button(label=_("Download"))
+        self.download_button.add_css_class("suggested-action")
+        self.download_button.connect("clicked", lambda *_a: self.download())
+        self.delete_button = Gtk.Button(label=_("Delete the model"))
+        self.delete_button.connect("clicked", lambda *_a: self.delete())
+        self.close_button = Gtk.Button(label=_("Not now"))
+        self.close_button.connect("clicked", lambda *_a: self.stop_or_close())
+        for widget in (self.download_button, self.delete_button, self.close_button):
+            buttons.append(widget)
+        for widget in (self.state, self.progress, buttons):
+            box.append(widget)
+        view.set_content(box)
+        self.set_content(view)
+        self.refresh()
+
+    def refresh(self):
+        ready = vd.has_model(vd.model_dir())
+        if not vd.engine_installed():
+            text = _("The engine of the descriptions (llama.cpp) is not installed.")
+        elif ready:
+            text = _("The model is ready: Super+Alt+P describes the window in use, Super+Alt+Shift+P the screen.")
+        else:
+            text = _("To describe pictures without Internet, VabaxOS needs a model of about 1 GB, downloaded "
+                     "once. It stays on this computer; pictures never leave it. Download it now?")
+        self.state.set_text(text)
+        self.download_button.set_visible(not ready and vd.engine_installed())
+        self.delete_button.set_visible(ready)
+        self.close_button.set_label(_("Close") if ready else _("Not now"))
+        (self.download_button if self.download_button.get_visible() else self.close_button).grab_focus()
+        return text
+
+    def download(self):
+        self.download_button.set_sensitive(False)
+        self.close_button.set_label(_("Cancel"))
+        self.progress.set_visible(True)
+        self.speak(_("Downloading the model. The progress is said every 25 percent."))
+        self.cancel_flag = False
+        said = [0]
+
+        def progress(done, total):
+            fraction = done / total if total else 0
+            GLib.idle_add(self.progress.set_fraction, fraction)
+            step = int(fraction * 4)
+            if 0 < step < 4 and step > said[0]:
+                said[0] = step
+                GLib.idle_add(self.speak, _("Downloaded {percent} percent.").format(percent=step * 25))
+
+        def work():
+            try:
+                self.installer(progress=progress, cancelled=lambda: self.cancel_flag)
+                error = None
+            except Exception as problem:  # noqa: BLE001 - said to the user
+                error = problem
+            GLib.idle_add(self.finished, error)
+        threading.Thread(target=work, daemon=True).start()
+
+    def finished(self, error):
+        self.progress.set_visible(False)
+        self.download_button.set_sensitive(True)
+        if error is not None:
+            self.speak(_("The download stopped: {error}").format(error=error))
+            self.refresh()
+            return False
+        self.speak(_("The model is ready."))
+        self.refresh()
+        if self.then:
+            then, self.then = self.then, None
+            self.close()
+            then()
+        return False
+
+    def delete(self):
+        self.remover()
+        self.speak(_("Model deleted."))
+        self.refresh()
+
+    def stop_or_close(self):
+        if self.progress.get_visible():
+            self.cancel_flag = True
+            return
+        self.close()
+
+
 class DescribeApp(Adw.Application):
 
     def __init__(self, title, keep, path):
@@ -94,12 +200,21 @@ class DescribeApp(Adw.Application):
         self.connect("activate", self.on_activate)
 
     def on_activate(self, _app):
-        if not self.path or not os.path.exists(self.path):
+        if not self.path:
+            ModelWindow(self).present()
+            return
+        if not os.path.exists(self.path):
             speak(_("No picture to describe."))
             return
-        if not vd.available():
-            speak(_("The description of pictures is not installed yet."))
+        if not vd.engine_installed():
+            speak(_("The engine of the descriptions (llama.cpp) is not installed."))
             return
+        if not vd.available():
+            ModelWindow(self, then=self.start).present()
+            return
+        self.start()
+
+    def start(self):
         speak(_("Describing the picture: it can take a minute."))
         self.hold()
         threading.Thread(target=self.work, daemon=True).start()
