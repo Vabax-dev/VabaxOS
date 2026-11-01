@@ -1,49 +1,76 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <schemalist>
   <enum id="org.gnome.Orca.BrailleIndicator">
-    <value nick="none" value="0"/>
-    <value nick="dot7" value="64"/>
-    <value nick="dot8" value="128"/>
-    <value nick="dots78" value="192"/>
+    <value nick="none" value="0" />
+    <value nick="dot7" value="64" />
+    <value nick="dot8" value="128" />
+    <value nick="dots78" value="192" />
   </enum>
   <enum id="org.gnome.Orca.CapitalizationStyle">
-    <value nick="none" value="0"/>
-    <value nick="spell" value="1"/>
-    <value nick="icon" value="2"/>
+    <value nick="none" value="0" />
+    <value nick="spell" value="1" />
+    <value nick="icon" value="2" />
   </enum>
   <enum id="org.gnome.Orca.ChatMessageVerbosity">
-    <value nick="all" value="0"/>
-    <value nick="all-if-focused" value="1"/>
-    <value nick="focused-channel" value="2"/>
-    <value nick="active-channel" value="3"/>
+    <value nick="all" value="0" />
+    <value nick="all-if-focused" value="1" />
+    <value nick="focused-channel" value="2" />
+    <value nick="active-channel" value="3" />
   </enum>
   <enum id="org.gnome.Orca.FindResultsVerbosity">
-    <value nick="none" value="0"/>
-    <value nick="if-line-changed" value="1"/>
-    <value nick="all" value="2"/>
+    <value nick="none" value="0" />
+    <value nick="if-line-changed" value="1" />
+    <value nick="all" value="2" />
+  </enum>
+  <enum id="org.gnome.Orca.FocusTracking">
+    <value nick="off" value="0" />
+    <value nick="auto" value="1" />
+    <value nick="on" value="2" />
   </enum>
   <enum id="org.gnome.Orca.KeyboardLayout">
-    <value nick="desktop" value="1"/>
-    <value nick="laptop" value="2"/>
+    <value nick="desktop" value="1" />
+    <value nick="laptop" value="2" />
+  </enum>
+  <enum id="org.gnome.Orca.MathBrailleNavHighlight">
+    <value nick="off" value="0" />
+    <value nick="first-char" value="1" />
+    <value nick="end-points" value="2" />
+    <value nick="all" value="3" />
+  </enum>
+  <enum id="org.gnome.Orca.MathCopyFormat">
+    <value nick="mathml" value="0" />
+    <value nick="latex" value="1" />
+    <value nick="asciimath" value="2" />
+    <value nick="speech" value="3" />
+  </enum>
+  <enum id="org.gnome.Orca.MathNavMode">
+    <value nick="enhanced" value="0" />
+    <value nick="simple" value="1" />
+    <value nick="character" value="2" />
   </enum>
   <enum id="org.gnome.Orca.ProgressBarVerbosity">
-    <value nick="all" value="0"/>
-    <value nick="application" value="1"/>
-    <value nick="window" value="2"/>
+    <value nick="all" value="0" />
+    <value nick="application" value="1" />
+    <value nick="window" value="2" />
   </enum>
   <enum id="org.gnome.Orca.PunctuationStyle">
-    <value nick="all" value="0"/>
-    <value nick="most" value="1"/>
-    <value nick="some" value="2"/>
-    <value nick="none" value="3"/>
+    <value nick="all" value="0" />
+    <value nick="most" value="1" />
+    <value nick="some" value="2" />
+    <value nick="none" value="3" />
   </enum>
   <enum id="org.gnome.Orca.SayAllStyle">
-    <value nick="line" value="0"/>
-    <value nick="sentence" value="1"/>
+    <value nick="line" value="0" />
+    <value nick="sentence" value="1" />
+  </enum>
+  <enum id="org.gnome.Orca.TextAttributeChangeMode">
+    <value nick="off" value="0" />
+    <value nick="editable-only" value="1" />
+    <value nick="always" value="2" />
   </enum>
   <enum id="org.gnome.Orca.VerbosityLevel">
-    <value nick="brief" value="0"/>
-    <value nick="verbose" value="1"/>
+    <value nick="brief" value="0" />
+    <value nick="verbose" value="1" />
   </enum>
   <schema id="org.gnome.Orca.Braille">
     <key name="monitor-cell-count" type="i">
@@ -148,6 +175,10 @@
       <default>true</default>
       <summary>Enable caret navigation</summary>
     </key>
+    <key name="selection-enabled" type="b">
+      <default>false</default>
+      <summary>Enable Orca-controlled text selection</summary>
+    </key>
     <key name="triggers-focus-mode" type="b">
       <default>false</default>
       <summary>Caret navigation triggers focus mode</summary>
@@ -205,10 +236,36 @@
       <summary>Minimum length for find results to be spoken</summary>
     </key>
   </schema>
+  <schema id="org.gnome.Orca.Extensions">
+    <key name="disabled-extensions" type="as">
+      <default>@as []</default>
+      <summary>Extensions disabled by the user (by MODULE_NAME)</summary>
+    </key>
+    <key name="approved-user-extensions" type="a{ss}">
+      <default>@a{ss} {}</default>
+      <summary>Approved user extensions (filename to SHA256 hash)</summary>
+    </key>
+    <key name="settings" type="a{sv}">
+      <default>@a{sv} {}</default>
+      <summary>Settings for a user extension</summary>
+    </key>
+  </schema>
   <schema id="org.gnome.Orca.FlatReview">
     <key name="restricted" type="b">
       <default>false</default>
       <summary>Restrict flat review to current object</summary>
+    </key>
+    <key name="speak-updates" type="b">
+      <default>false</default>
+      <summary>Speak content changes at the flat review location</summary>
+    </key>
+    <key name="display-updates" type="b">
+      <default>true</default>
+      <summary>Refresh braille for content changes at the flat review location</summary>
+    </key>
+    <key name="focus-tracking" enum="org.gnome.Orca.FocusTracking">
+      <default>'auto'</default>
+      <summary>When flat review should follow the focus/caret location</summary>
     </key>
   </schema>
   <schema id="org.gnome.Orca.Keybindings">
@@ -239,6 +296,40 @@
       <summary>Present live regions from inactive tabs</summary>
     </key>
   </schema>
+  <schema id="org.gnome.Orca.MathPresentation">
+    <key name="language" type="s">
+      <default>'Auto'</default>
+      <summary>Math speech language (Auto uses system locale)</summary>
+    </key>
+    <key name="speech-style" type="s">
+      <default>'ClearSpeak'</default>
+      <summary>Math speech style</summary>
+    </key>
+    <key name="verbosity" type="s">
+      <default>'Medium'</default>
+      <summary>Math speech verbosity</summary>
+    </key>
+    <key name="braille-code" type="s">
+      <default>'Nemeth'</default>
+      <summary>Math braille code</summary>
+    </key>
+    <key name="copy-format" enum="org.gnome.Orca.MathCopyFormat">
+      <default>'mathml'</default>
+      <summary>Format for copying math content to clipboard</summary>
+    </key>
+    <key name="nav-mode" enum="org.gnome.Orca.MathNavMode">
+      <default>'enhanced'</default>
+      <summary>Math navigation granularity (enhanced, simple, character)</summary>
+    </key>
+    <key name="braille-nav-highlight" enum="org.gnome.Orca.MathBrailleNavHighlight">
+      <default>'off'</default>
+      <summary>Braille navigation highlight style (off, first-char, end-points, all)</summary>
+    </key>
+    <key name="auto-zoom-out" type="b">
+      <default>false</default>
+      <summary>Automatically exit 2D math structures when moving past the edge</summary>
+    </key>
+  </schema>
   <schema id="org.gnome.Orca.ProfileMetadata">
     <key name="display-name" type="s">
       <default>''</default>
@@ -266,9 +357,21 @@
     </key>
   </schema>
   <schema id="org.gnome.Orca.SayAll">
+    <key name="announce-article" type="b">
+      <default>true</default>
+      <summary>Announce articles</summary>
+    </key>
     <key name="announce-blockquote" type="b">
       <default>true</default>
       <summary>Announce blockquotes</summary>
+    </key>
+    <key name="announce-code-block" type="b">
+      <default>true</default>
+      <summary>Announce code blocks</summary>
+    </key>
+    <key name="announce-document" type="b">
+      <default>true</default>
+      <summary>Announce embedded documents</summary>
     </key>
     <key name="announce-form" type="b">
       <default>true</default>
@@ -290,6 +393,10 @@
       <default>true</default>
       <summary>Announce tables</summary>
     </key>
+    <key name="announce-tracked-changes" type="b">
+      <default>true</default>
+      <summary>Announce tracked changes</summary>
+    </key>
     <key name="only-speak-displayed-text" type="b">
       <default>false</default>
       <summary>Only speak displayed text</summary>
@@ -305,6 +412,16 @@
     <key name="rewind-and-fast-forward" type="b">
       <default>false</default>
       <summary>Enable rewind and fast forward in Say All</summary>
+    </key>
+    <key name="text-attribute-change-mode" enum="org.gnome.Orca.TextAttributeChangeMode">
+      <default>'off'</default>
+      <summary>When to speak text attribute changes during Say All</summary>
+    </key>
+  </schema>
+  <schema id="org.gnome.Orca.SleepMode">
+    <key name="apps" type="as">
+      <default>@as []</default>
+      <summary>Applications that automatically use sleep mode</summary>
     </key>
   </schema>
   <schema id="org.gnome.Orca.Sound">
@@ -372,7 +489,15 @@
     </key>
     <key name="auto-language-switching" type="b">
       <default>true</default>
-      <summary>Automatically switch voice based on text language</summary>
+      <summary>Automatically switch voice based on document content language</summary>
+    </key>
+    <key name="auto-language-switching-ui" type="b">
+      <default>false</default>
+      <summary>Automatically switch voice based on UI element language</summary>
+    </key>
+    <key name="only-switch-configured-languages" type="b">
+      <default>false</default>
+      <summary>Only switch languages that have a configured voice set</summary>
     </key>
     <key name="speak-misspelled-indicator" type="b">
       <default>true</default>
@@ -434,9 +559,17 @@
       <default>true</default>
       <summary>Announce cell headers</summary>
     </key>
+    <key name="announce-article" type="b">
+      <default>true</default>
+      <summary>Announce articles</summary>
+    </key>
     <key name="announce-blockquote" type="b">
       <default>true</default>
       <summary>Announce blockquotes</summary>
+    </key>
+    <key name="announce-code-block" type="b">
+      <default>true</default>
+      <summary>Announce code blocks</summary>
     </key>
     <key name="announce-form" type="b">
       <default>true</default>
@@ -454,9 +587,17 @@
       <default>true</default>
       <summary>Announce lists</summary>
     </key>
+    <key name="announce-document" type="b">
+      <default>true</default>
+      <summary>Announce embedded documents</summary>
+    </key>
     <key name="announce-table" type="b">
       <default>true</default>
       <summary>Announce tables</summary>
+    </key>
+    <key name="announce-tracked-changes" type="b">
+      <default>true</default>
+      <summary>Announce tracked changes</summary>
     </key>
     <key name="only-speak-displayed-text" type="b">
       <default>false</default>
@@ -482,13 +623,17 @@
       <default>'verbose'</default>
       <summary>Speech verbosity level (brief, verbose)</summary>
     </key>
-    <key name="speak-indentation-and-justification" type="b">
+    <key name="speak-indentation" type="b">
       <default>false</default>
-      <summary>Speak indentation and justification</summary>
+      <summary>Speak indentation</summary>
     </key>
     <key name="speak-indentation-only-if-changed" type="b">
       <default>false</default>
       <summary>Speak indentation only if changed</summary>
+    </key>
+    <key name="speak-text-attribute-changes" enum="org.gnome.Orca.TextAttributeChangeMode">
+      <default>'off'</default>
+      <summary>When to speak text attribute changes during navigation</summary>
     </key>
     <key name="monitor-font-size" type="i">
       <default>14</default>
@@ -533,6 +678,10 @@
     <key name="triggers-focus-mode" type="b">
       <default>false</default>
       <summary>Structural navigation triggers focus mode</summary>
+    </key>
+    <key name="skip-unlabeled-images" type="b">
+      <default>false</default>
+      <summary>Skip unlabeled images during navigation</summary>
     </key>
   </schema>
   <schema id="org.gnome.Orca.SystemInformation">
@@ -651,6 +800,10 @@
     <key name="pitch" type="d">
       <default>5.0</default>
       <summary>Speech pitch (0.0-10.0)</summary>
+    </key>
+    <key name="pitch-range" type="d">
+      <default>5.0</default>
+      <summary>Speech inflection / pitch range (0.0-10.0)</summary>
     </key>
     <key name="volume" type="d">
       <default>10.0</default>

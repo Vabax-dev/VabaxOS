@@ -80,7 +80,7 @@ precedence = "override"
 SPDX-FileCopyrightText = "freesound user horsthorstensen"
 SPDX-License-Identifier = "CC-BY-SA-3.0"
 
-# Orca 50.2's settings schema, copied for the tests of vabaxos-screen-reader.
+# Orca 51.0's settings schema (tools/generate_gsettings_schemas.py), for the tests of vabaxos-screen-reader.
 [[annotations]]
 path = "tests/screen-reader/org.gnome.Orca.gschema.xml"
 precedence = "override"

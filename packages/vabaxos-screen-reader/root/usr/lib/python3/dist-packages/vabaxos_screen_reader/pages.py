@@ -82,7 +82,7 @@ PAGES = [
             ("switch", SPEAK, "use-color-names", N_("Color names"), N_("Names instead of codes"), None),
             ("switch", SPEAK, "speak-blank-lines", N_("Blank lines"), N_("Say “blank” on empty lines"), None),
             ("switch", SPEAK, "speak-misspelled-indicator", N_("Spelling mistakes"), N_("Say when a word is misspelled"), None),
-            ("switch", SPEAK, "speak-indentation-and-justification", N_("Indentation"),
+            ("switch", SPEAK, "speak-indentation", N_("Indentation"),
              N_("Spaces at the start of a line, useful for code"), None),
             ("switch", SPEAK, "only-speak-displayed-text", N_("Only the text on the screen"),
              N_("Do not say roles, states and other information"), None),

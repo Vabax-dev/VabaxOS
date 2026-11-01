@@ -85,6 +85,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 
 ### Cambiato
 
+- Orca 51 (ADR-0031 accettata): l'istantanea di Debian passa al 2026-10-04, con le estensioni di Orca (i suoni del lettore di schermo) e la matematica con MathCAT; GNOME resta 50. La finestra delle impostazioni del lettore di schermo usa i nomi di Orca 51 (rientro).
 - Per ora solo eSpeak NG (ADR-0026): Kokoro esce dalla ISO (circa 1 GB in meno); il lettore di documenti legge con eSpeak NG.
 - Menu Start (ADR-0025 accettata): il pulsante Start sulla barra apre il menu di VabaxOS; ArcMenu non è più installato.
 - GNOME Software non cerca e non installa più aggiornamenti da solo: c'è un solo programma per gli aggiornamenti.

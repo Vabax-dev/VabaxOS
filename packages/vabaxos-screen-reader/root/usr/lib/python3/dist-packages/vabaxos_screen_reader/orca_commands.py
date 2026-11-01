@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2026 Vabax and VabaxOS contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Orca 50.2's keyboard commands (block 10), read from Orca itself in the
+"""Orca's keyboard commands (block 10), read from Orca 50.2 itself in the
 VabaxOS live system (every module's set_up_commands, plus the default
-script): (name, group, description, desktop key, laptop key). A key is
+script), with the names Orca 51 changed (ADR-0031: the indentation command,
+2026-11-01): (name, group, description, desktop key, laptop key). A key is
 (keysym, modifiers, clicks); modifiers: 1 Shift, 4 Ctrl, 8 Alt, 256 the
 screen reader key. Group and description are Orca's English strings:
 Orca's own translations are used for them (gettext domain "orca").
@@ -118,7 +119,7 @@ COMMANDS = [
     ('increaseSpeechRateHandler', 'Speech and verbosity', 'Increase the speech rate', None, None),
     ('increaseSpeechVolumeHandler', 'Speech and verbosity', 'Increase the speech volume', None, None),
     ('toggleSilenceSpeechHandler', 'Speech and verbosity', 'Toggle the silencing of speech', ('s', 256, 1), ('s', 256, 1)),
-    ('toggleSpeakingIndentationJustificationHandler', 'Speech and verbosity', 'Toggle the speaking of indentation and justification', None, None),
+    ('toggleSpeakingIndentationHandler', 'Speech and verbosity', 'Toggle spoken indentation', None, None),
     ('toggleSpeechVerbosityHandler', 'Speech and verbosity', 'Toggle speech verbosity level', ('v', 256, 1), ('v', 256, 1)),
     ('toggleTableCellReadModeHandler', 'Speech and verbosity', 'Toggle whether to read just the current table cell or the whole row', ('F11', 256, 1), ('F11', 256, 1)),
     ('toggle_speech_monitor', 'Speech and verbosity', 'Toggle the on-screen speech display on and off', ('d', 257, 1), ('d', 257, 1)),

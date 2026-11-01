@@ -18,4 +18,4 @@ Dal terminale: `vabaxos-orca-sounds on`, `off`, `status`.
 
 ## Serve Orca 51
 
-I suoni passano da un'estensione di Orca, e le estensioni ci sono da Orca 51 in poi. Se questo VabaxOS ha un Orca più vecchio, l'interruttore è spento e lo dice; i suoni si possono già ascoltare e imparare. Il passaggio a Orca 51 è proposto in [ADR-0031](../decisions/0031-orca-51.md).
+I suoni passano da un'estensione di Orca, e le estensioni ci sono da Orca 51 in poi. VabaxOS ha Orca 51 ([ADR-0031](../decisions/0031-orca-51.md)). Con un Orca più vecchio l'interruttore resta spento e lo dice; i suoni si possono comunque ascoltare e imparare.

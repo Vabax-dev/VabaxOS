@@ -311,6 +311,10 @@ check 'modalità di recupero' "$(value recovery)" "$WANT_RECOVERY"
 check 'voce della console (espeakup)' "$(value speech)" "$WANT_SPEECH"
 check 'desktop GNOME' "$(value desktop)" "$WANT_DESKTOP"
 check 'Orca' "$(value orca)" "$WANT_ORCA"
+# Orca 51 or later (ADR-0031): its extensions give the screen reader sounds.
+ask orcaversion 'v=$(dpkg-query -W -f "\${Version}" orca 2>/dev/null); [ "${v%%.*}" -ge 51 ] 2>/dev/null && echo "yes ($v)" || echo "no ($v)"' || exit 1
+check 'Orca 51 o successivo' "$(value orcaversion | cut -d' ' -f1)" yes
+printf 'INFO: versione di Orca: %s\n' "$(value orcaversion)"
 check lingua "$(value lang)" "$WANT_LANG"
 printf 'INFO: kernel %s\n' "$(value kernel)"
 printf 'INFO: sistema %s\n' "$(value os)"

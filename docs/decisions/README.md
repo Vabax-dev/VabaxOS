@@ -52,4 +52,4 @@ Queste decisioni chiudono le dieci «decisioni da prendere prima della v0.1» de
 | [0028](0028-prima-uscita-1-0.md) | La prima versione pubblica è la 1.0 | Accettata |
 | [0029](0029-descrizione-delle-immagini.md) | Descrizione delle immagini senza Internet | Accettata |
 | [0030](0030-voce-naturale-su-richiesta.md) | La voce naturale su richiesta, più rapida | Accettata |
-| [0031](0031-orca-51.md) | Orca 51, con un'istantanea di Debian più recente | Proposta |
+| [0031](0031-orca-51.md) | Orca 51, con un'istantanea di Debian più recente | Accettata |
