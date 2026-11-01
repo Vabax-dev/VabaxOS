@@ -49,7 +49,7 @@ Non installare mai VabaxOS sulla postazione (il Galaxy Book). Non chiedere mai p
 
 ## Stato
 
-Aggiornato al 2026-11-01 (piano delle 18 funzioni completo).
+Aggiornato al 2026-11-02 (18 funzioni e i primi 5 punti del nuovo piano fatti).
 
 - 2026-11-01: si riprende dopo i blocchi 3-12, tutti uniti a `main` (ultimo merge: PR #17). Nuova fase «prima le funzionalità» (vedi sopra). Sessione nel cloud, ramo `claude/beautiful-rubin-2thpuw` (un commit per funzionalità, nessuna PR ancora). Nel contenitore cloud: Ubuntu 24.04, GTK 4.14 e libadwaita 1.5 (usare `python3.12`; i programmi con `Adw.ButtonRow`, cioè setup e impostazioni del lettore di schermo, si provano solo nella CI), `reuse` recente con `pip install --user reuse`; deb.debian.org, salsa e packages.debian.org bloccati dalla rete (niente chroot forky), GitHub raggiungibile.
 - **ADR-0028 Accettata (Vabax, 2026-11-01): la prima versione pubblica è la 1.0**, niente 0.x pubbliche; la 1.0 esce solo con tutti i criteri (PC fisici, persone cieche, Debian 14 stabile, repository e somme firmati). ISO di prova come nightly o `1.0.0-alpha.N`.
@@ -127,6 +127,8 @@ Piano delle prossime funzioni, scelto da Vabax il 2026-11-02 (stessa regola: un 
 3. **Kokoro più veloce**: sotto circa 0,3 s per frase; eSpeak resta predefinita, Kokoro si sceglie nelle impostazioni e VabaxOS dice se il computer è abbastanza veloce (cambia ADR-0026: nuovo ADR «Proposta»).
 4. **Controllo del computer** al primo avvio: scheda audio, Wi-Fi, batteria, Braille, detto a voce.
 5. **Fotocamera che legge**: webcam con guida a voce per inquadrare, lettura del testo e anche descrizione con Qwen3.5.
+
+**I 5 punti sono fatti (2026-11-02), sul ramo della PR bozza #22:** `vabaxos-connections` (Wi-Fi via D-Bus di NetworkManager, Bluetooth via BlueZ con un agente di abbinamento VabaxOS che dice il codice cifra per cifra, Super+K; test con python-dbusmock, in CI); `vabaxos-store` (appstreamcli `search --details` nella lingua dell'utente, PackageKit per Debian, «Anche Flathub» con `--user`, ADR-0008); Kokoro più rapido (primo pezzo di 3 parole, `first_words=`, da 1,85 a 0,64 s; `vabaxos-natural-voice` scarica il modello da GitHub con SHA-256, misura e giudica; senza modello parla eSpeak; **ADR-0030 Proposta**: `vabaxos-voice` nella ISO senza modello, da approvare); `vabaxos-checkup` (al primo accesso, poi le lezioni dei tasti, la cui autostart è tolta); `vabaxos-camera` (GStreamer, Tesseract psm 11 su ogni immagine, lati detti dal punto di vista dell'utente, scatto da solo, `vabaxos-ocr` e `vabaxos-describe`). Correzione trovata dalla CI: `scripts/lib/po2mo.py` (usato senza msgfmt) ora gestisce plurali e contesti, con `tests/po2mo`. Lezioni: `Adw.AlertDialog` in Adw 1.5 non ha `response()` (nei test `emit("response", id)`); dbusmock: `DBusTestCase.start_system_bus()`, la sicurezza degli access point solo 0 o 0x100, `org.bluez.Mock` per AddAdapter; `appstreamcli search` senza `--details` non dà la descrizione, e i programmi installati non hanno `Package` (lo si trova con `dpkg-query -S` del file .desktop).
 
 Dopo: suoni di Orca (al posto di «pulsante», «collegamento»), calendario e agenda (con promemoria, Google e Outlook), radio via Internet, libri e biblioteche (LibriVox, Liber Liber, Gutenberg), traduzione senza Internet, Telegram per Orca (AccessGram), ingranditore e contrasto.
 
