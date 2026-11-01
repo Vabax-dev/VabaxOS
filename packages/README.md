@@ -12,6 +12,7 @@ Pacchetti Debian di VabaxOS, uno per cartella, con prefisso `vabaxos-` ([ADR-000
 | `vabaxos-firewall` | Il firewall come quello di Windows: reti private e pubbliche (ADR-0021) |
 | `vabaxos-help` | L'aiuto di VabaxOS: le guide di `docs/utente` in HTML |
 | `vabaxos-lessons` | Impara i tasti: lezioni con esercizi controllati a voce |
+| `vabaxos-math` | Calcolatrice parlante e formule dette a parole (Super+Alt+M) |
 | `vabaxos-ocr` | Il testo dello schermo riconosciuto per il lettore di schermo (Super+Alt+R) |
 | `vabaxos-print` | Stampanti e scanner: stampa di prova, predefinita, scansiona e leggi; niente cups-browsed |
 | `vabaxos-reader` | Il [lettore di documenti](../docs/utente/lettore.md) |

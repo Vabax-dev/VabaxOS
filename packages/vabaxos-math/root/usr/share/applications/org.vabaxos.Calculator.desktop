@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Talking calculator
+Name[it]=Calcolatrice parlante
+Comment=Write the calculation as on paper, hear the result
+Comment[it]=Scrivi il calcolo come sulla carta, ascolta il risultato
+Exec=vabaxos-calc
+Icon=accessories-calculator-symbolic
+Terminal=false
+Categories=Utility;Calculator;Education;
+Keywords=calculator;math;calcolatrice;matematica;

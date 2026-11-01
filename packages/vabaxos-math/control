@@ -1,0 +1,12 @@
+Package: vabaxos-math
+Architecture: all
+Maintainer: VabaxOS <https://github.com/Vabax-dev/VabaxOS>
+Section: math
+Priority: optional
+Depends: python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1
+Recommends: vabaxos-settings
+Description: Talking calculator, and formulas said in words
+ The calculator takes calculations as written on paper (3+4*2, 2,5 × 4,
+ 2^10, radice di 2, 20% di 150) and says the result. Super+Alt+M says in
+ words the formula copied with Ctrl+C, in LaTeX, MathML or plain writing:
+ fractions, powers, indices, roots, sums, integrals, limits, Greek letters.

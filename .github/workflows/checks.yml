@@ -125,6 +125,8 @@ jobs:
         run: python3 tests/braille/test_braille_check.py
       - name: Picture description tests (the request, a made-up llama-server)
         run: python3 tests/describe/test_describe.py
+      - name: Mathematics tests (calculator, formulas in words, the window)
+        run: python3 tests/math/test_math.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

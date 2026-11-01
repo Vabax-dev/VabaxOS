@@ -22,6 +22,7 @@
 //               to other programs.
 //   Super+Alt+P a description of the window in use (vabaxos-describe,
 //               without Internet), Super+Alt+Shift+P of the whole screen
+//   Super+Alt+M the formula copied with Ctrl+C, said in words (vabaxos-calc)
 //   Super+Alt+N do not disturb on and off (GNOME's show-banners): no
 //               banner, so Orca stays quiet; the notifications wait in the
 //               list of Super+N; said aloud
@@ -106,7 +107,7 @@ class StartButton extends PanelMenu.Button {
 
 const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i',
     'recognize-window', 'recognize-screen', 'dictation', 'do-not-disturb', 'describe-window',
-    'describe-screen'];
+    'describe-screen', 'say-formula'];
 
 Gio._promisify(Shell.Screenshot.prototype, 'screenshot');
 Gio._promisify(Shell.Screenshot.prototype, 'screenshot_window');
@@ -125,6 +126,7 @@ export default class VabaxOSKeys extends Extension {
             'recognize-screen': () => this._recognize(true),
             'describe-window': () => this._recognize(false, 'vabaxos-describe'),
             'describe-screen': () => this._recognize(true, 'vabaxos-describe'),
+            'say-formula': () => this._sayFormula(),
             'dictation': () => this._dictation(),
             'do-not-disturb': () => this._doNotDisturb(),
         };
@@ -354,6 +356,16 @@ export default class VabaxOSKeys extends Extension {
             settings.set_boolean('show-banners', true);
             this._speak(_('Do not disturb off.'));
         }
+    }
+
+    _sayFormula() {
+        if (!GLib.find_program_in_path('vabaxos-calc')) {
+            this._speak(this.gettext('Formulas are not installed.'));
+            return;
+        }
+        St.Clipboard.get_default().get_text(St.ClipboardType.CLIPBOARD, (clipboard, text) => {
+            Util.spawn(['vabaxos-calc', '--say', text ?? '']);
+        });
     }
 
     // Runs a program; resolves with [exit status, standard output].

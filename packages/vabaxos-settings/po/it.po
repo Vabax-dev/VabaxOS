@@ -56,3 +56,6 @@ msgstr "Non disturbare disattivato."
 
 msgid "The description of pictures is not installed."
 msgstr "La descrizione delle immagini non è installata."
+
+msgid "Formulas are not installed."
+msgstr "Le formule non sono installate."
