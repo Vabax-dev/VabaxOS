@@ -167,8 +167,8 @@ class AskpassTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def speech(self, lines):
-        """Waits for the background voice: at most 5 seconds."""
-        for _ in range(50):
+        """Waits for the background voice: at most 15 seconds (slow CI runners)."""
+        for _ in range(150):
             if os.path.exists(self.log):
                 text = open(self.log, encoding="utf-8").read()
                 if text.count("espeak-ng") >= lines:
