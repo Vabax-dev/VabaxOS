@@ -6,3 +6,5 @@ set -e
 mkdir -p "$1/etc/dconf/db/vabaxos.d"
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$1/usr/lib/python3/dist-packages" python3 -m vabaxos_screen_reader.keymaps --dconf \
     > "$1/etc/dconf/db/vabaxos.d/40-orca-keys"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$1/usr/lib/python3/dist-packages" python3 -m vabaxos_screen_reader.pronunciation --dconf \
+    > "$1/etc/dconf/db/vabaxos.d/45-orca-pronunciations"

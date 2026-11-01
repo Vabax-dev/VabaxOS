@@ -57,6 +57,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Ripristino del sistema (`vabaxos-restore`, ADR-0027): copie con Timeshift prima di ogni installazione di pacchetti e ogni settimana; finestra «Ripristino del sistema»; il comando `ripristino` nella console di testo e nella modalità di recupero della chiavetta, anche con il disco cifrato; guida «Il ripristino del sistema».
 - «VabaxOS è pronto» detto da Orca all'avvio del desktop; un solo avviso a voce quando la batteria scende al 10 per cento (`vabaxos-announce`).
 - Notifiche: Super+Alt+N accende e spegne il non disturbare, detto a voce; guida «Le notifiche» con la cronologia di Orca (Ins+Ctrl+Maiusc+N) e l'ultima notifica (Ins+Maiusc+N).
+- Dizionario di pronuncia: VabaxOS parte con le sigle lette lettera per lettera (txt, PDF, USB...) e la finestra «Pronuncia del lettore di schermo» aggiunge, ascolta ed elimina parole.
 - Firewall come quello di Windows (`vabaxos-firewall`, ADR-0021): firewalld con reti private (si trovano stampanti, dispositivi, cartelle condivise, telefono) e pubbliche (non entra niente); le reti nuove sono private; tipo di rete e programmi consentiti nella configurazione, pagina Rete; Super+Alt+I dice «Firewall attivo»; guida «Il firewall».
 
 ### Cambiato

@@ -43,6 +43,7 @@ SCHEMAS = {
     "spellcheck": "org.gnome.Orca.Spellcheck",
     "flat-review": "org.gnome.Orca.FlatReview",
     "metadata": "org.gnome.Orca.ProfileMetadata",
+    "pronunciations": "org.gnome.Orca.Pronunciations",
 }
 
 

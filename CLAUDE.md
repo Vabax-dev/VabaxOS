@@ -103,6 +103,8 @@ Aggiornato al 2026-11-01.
 
 - Punti 7 e 8 fatti: `vabaxos-announce ready` e `battery` (avvio automatico di GNOME; Orca `PresentMessage`; batteria da UPower DisplayDevice, un avviso al 10%, di nuovo dopo la carica o sopra il 15%). Da controllare nelle prove: GNOME avvisa anche da solo alla soglia «low» di UPower (in GNOME 50 le soglie non sono più gsettings ma `/etc/UPower/UPower.conf`; verificare se UPower di forky legge `UPower.conf.d`, poi eventualmente portare la soglia di GNOME al 10% per non avere due avvisi).
 
+- Punti 5 e 6 fatti: Super+Alt+N non disturbare (`show-banners`), guida «Le notifiche» (cronologia di Orca Ins+Ctrl+Maiusc+N); dizionario di pronuncia (`vabaxos_screen_reader.pronunciation`, dconf `45-orca-pronunciations` su `/org/gnome/orca/default/pronunciations/` **da verificare con Orca vero**: percorso e chiavi minuscole; finestra `vabaxos-pronunciation`).
+
 Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
 
 1. **Dettatura** senza Internet (priorità di Vabax), e con lo stesso motore i **sottotitoli in tempo reale**; prima le licenze dei modelli italiani.

@@ -37,3 +37,12 @@ Con **Impostazioni per** scegli un programma, per esempio il Terminale: da quel 
 ## Portare le impostazioni su un altro computer
 
 Nel menu della finestra: **Esporta le impostazioni su un file** e **Importa le impostazioni da un file**. Il file contiene tutti i profili e le impostazioni per programma.
+
+## La pronuncia
+
+Alcune parole il lettore di schermo le legge male: sigle, nomi stranieri. **Pronuncia del lettore di schermo**, nel menu Start, ha l'elenco delle parole con come si dicono:
+
+- su ogni parola, **Ascolta** e **Elimina**;
+- in alto, **Parola** e **Come si dice**, poi **Aggiungi** (o Invio nel secondo campo).
+
+Le modifiche valgono subito. VabaxOS parte con le sigle più comuni lette lettera per lettera: txt, PDF, USB, HTML, CPU e altre. Le sigle che in italiano si dicono come una parola, come IVA, SPID e ZIP, restano come sono.
