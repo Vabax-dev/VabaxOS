@@ -528,7 +528,9 @@ fi
 # on the accessibility bus.
 if [[ "$WANT_DESKTOP" == yes ]]; then
     send "env $DESKTOP_ENV firefox-esr --new-window file:///usr/share/doc/vabaxos-help/html/index.html >/dev/null 2>&1 &"
-    ask firefoxtext "env $BUS vabaxos-a11y-check --wait 60 --list firefox > /tmp/firefox.txt 2>&1; grep -m1 -c -E 'link: Il firewall|link: The firewall' /tmp/firefox.txt" || exit 1
+    # The page may still be loading when Firefox appears on the bus: look
+    # again for up to half a minute (0 found once in eight runs, CI 2026-11-01).
+    ask firefoxtext "for i in \$(seq 10); do env $BUS vabaxos-a11y-check --wait 60 --list firefox > /tmp/firefox.txt 2>&1; grep -q -E 'link: Il firewall|link: The firewall' /tmp/firefox.txt && break; sleep 3; done; grep -m1 -c -E 'link: Il firewall|link: The firewall' /tmp/firefox.txt" || exit 1
     send "grep -c . /tmp/firefox.txt; pkill -u user -f firefox-esr"
     check 'Firefox: Orca vede il testo delle pagine' "$(value firefoxtext)" 1
 fi
@@ -668,7 +670,7 @@ if [[ "$WANT_ORCA" == yes ]]; then
     if [[ "$F12_HEARD" != "$WANT_SOUND" ]]; then
         ask orcaalive 'printf "orca %s, speech-dispatcher %s, moduli %s" "$(pgrep -u user -x orca >/dev/null && echo yes || echo no)" "$(pgrep -u user -x speech-dispatch >/dev/null && echo yes || echo no)" "$(pgrep -u user -l sd_ | awk "{print \$2}" | tr "\n" " ")"' || exit 1
         printf 'INFO: Orca muto dopo Ins+F12: %s; notifica letta: %s\n' "$(value orcaalive)" "$(orca_speaks orca-after-f12)"
-        ask orcalog 'sudo -n journalctl -b --no-pager -o cat _COMM=orca _COMM=speech-dispatch _COMM=sd_espeak-ng _COMM=pipewire _COMM=wireplumber 2>&1 </dev/null | tail -15 | tr "\n" "|"' || exit 1
+        ask orcalog 'sudo -n journalctl -b --no-pager -o cat _COMM=orca _COMM=speech-dispatch _COMM=sd_espeak-ng _COMM=pipewire _COMM=wireplumber 2>&1 </dev/null | grep -v "^ *[~^]*$" | grep -A12 Traceback | head -40 | tr "\n" "|"' || exit 1
         printf 'INFO: registro di Orca: %s\n' "$(value orcalog)"
     fi
 fi
