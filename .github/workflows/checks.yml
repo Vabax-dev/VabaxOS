@@ -107,6 +107,8 @@ jobs:
         run: |
           python3 tests/dictation/test_dictation.py
           python3 tests/dictation/test_captions.py
+      - name: Firefox and Thunderbird settings for Orca
+        run: python3 tests/firefox/test_policies.py
       - name: Firewall tests (zones, made-up firewalld and NetworkManager, the setup group)
         run: python3 tests/firewall/test_firewall.py
       - name: Disk unlock voice tests (initramfs hook and askpass, made-up tools)

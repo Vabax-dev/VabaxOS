@@ -16,6 +16,11 @@ mythes-it
 thunderbird
 thunderbird-l10n-it
 
+# The browser in Italian, set up for Orca by vabaxos-settings
+# (/etc/firefox/policies/policies.json).
+firefox-esr
+firefox-esr-l10n-it
+
 # Braille displays: brltty starts by itself when a display is plugged in,
 # and Orca writes to it through BrlAPI.
 brltty

@@ -11,4 +11,7 @@ Description: VabaxOS default settings for GNOME
  that asks for a password, a quick shutdown of the user session, the
  Start button of the taskbar and the Super key, which open the VabaxOS
  Start menu (ADR-0025), and the keys of Windows 11 (the extension
- vabaxos-keys@vabaxos.org).
+ vabaxos-keys@vabaxos.org). Firefox and Thunderbird ready for Orca
+ (/etc/firefox/policies, /etc/thunderbird/policies): accessibility always
+ on, also when they start before the screen reader; no welcome pages and
+ no tips; no sound that starts by itself over the voice.

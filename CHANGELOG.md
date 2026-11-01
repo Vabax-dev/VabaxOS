@@ -53,6 +53,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Ottimizzazioni (`vabaxos-tuning`): memoria compressa (zram) prima del disco.
 - Dettatura senza Internet (`vabaxos-dictation`): Super+H come in Windows, poi parli, Super+H di nuovo e il testo è scritto dove c'è il cursore e letto ad alta voce; whisper.cpp con il modello Whisper «small» (MIT); «a capo» e «nuovo paragrafo»; niente silenzio al modello e niente frasi inventate; guida «La dettatura».
 - Sottotitoli dal vivo (`vabaxos-captions`, Super+Ctrl+L come in Windows): le parole di ciò che il computer riproduce, o del microfono, a caratteri grandi, senza Internet.
+- Firefox pronto per Orca, in italiano: accessibilità sempre accesa anche se Firefox parte prima di Orca, niente pagine di benvenuto e consigli, l'audio non parte da solo sopra la voce; Thunderbird con l'accessibilità sempre accesa; `test-boot.sh` controlla che Orca veda il testo delle pagine (problema noto di GNOME 50); guida «Internet con Orca».
 - Firewall come quello di Windows (`vabaxos-firewall`, ADR-0021): firewalld con reti private (si trovano stampanti, dispositivi, cartelle condivise, telefono) e pubbliche (non entra niente); le reti nuove sono private; tipo di rete e programmi consentiti nella configurazione, pagina Rete; Super+Alt+I dice «Firewall attivo»; guida «Il firewall».
 
 ### Cambiato

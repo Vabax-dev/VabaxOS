@@ -513,6 +513,17 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     printf 'INFO: %s\n' "$(value fwstatus)"
 fi
 
+# Firefox for Orca (vabaxos-settings policies): the GNOME 50 known issue,
+# where Orca finds only labels, is checked directly: the help of VabaxOS
+# opens in Firefox and the text of the page (a link of its index) must be
+# on the accessibility bus.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    send "env $DESKTOP_ENV firefox-esr --new-window file:///usr/share/doc/vabaxos-help/html/index.html >/dev/null 2>&1 &"
+    ask firefoxtext "env $BUS vabaxos-a11y-check --wait 60 --list firefox > /tmp/firefox.txt 2>&1; grep -c -E 'link: Il firewall|link: The firewall' /tmp/firefox.txt" || exit 1
+    send "grep -c . /tmp/firefox.txt; pkill -u user -f firefox-esr"
+    check 'Firefox: Orca vede il testo delle pagine' "$(value firefoxtext)" 1
+fi
+
 # Dictation (vabaxos-dictation): whisper.cpp and the model are there, and
 # a sentence said by eSpeak NG comes back as text, with the real model.
 if [[ "$WANT_DESKTOP" == yes ]]; then

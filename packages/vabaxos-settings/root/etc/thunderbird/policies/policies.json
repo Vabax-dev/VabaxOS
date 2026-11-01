@@ -1,0 +1,13 @@
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "Preferences": {
+      "accessibility.force_disabled": {
+        "Value": -1,
+        "Status": "default"
+      }
+    }
+  }
+}
