@@ -7,7 +7,9 @@
 #   postinst, postrm  maintainer scripts (optional)
 #   triggers          dpkg triggers (optional)
 #   fetch             large files downloaded at build time, one per line:
-#                     URL SHA256 PATH (optional; kept in cache/downloads)
+#                     URL SHA PATH (optional; kept in cache/downloads); SHA
+#                     is a SHA-256, or a SHA-1 when upstream publishes only
+#                     that (the whisper.cpp models)
 #   copyright         licence of the contents (optional, default GPL-3.0+)
 #   build             a program run with the package tree, to make files
 #                     (optional; REPO is set, for example the HTML help)
@@ -67,7 +69,9 @@ for dir in "$REPO"/packages/*/; do
                 curl -fsSL --retry 3 -o "$file.part" "$url"
                 mv "$file.part" "$file"
             fi
-            if ! printf '%s  %s\n' "$sha" "$file" | sha256sum -c --quiet; then
+            sum=sha256sum
+            [[ ${#sha} -eq 40 ]] && sum=sha1sum
+            if ! printf '%s  %s\n' "$sha" "$file" | "$sum" -c --quiet; then
                 rm -f "$file"
                 printf 'ERRORE: %s non corrisponde all'\''impronta attesa.\n' "$url" >&2
                 exit 1

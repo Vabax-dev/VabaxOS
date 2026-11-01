@@ -1,0 +1,6 @@
+# Files downloaded by scripts/build-packages.sh.
+# URL  SHA  path in the package
+# OpenAI Whisper "small", multilingual (MIT), converted to ggml by the
+# whisper.cpp project (MIT). SHA-1 as published in whisper.cpp's
+# models/README.md.
+https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin 55356645c2b361a969dfd0ef2c5a50d530afd8d5 usr/share/vabaxos/whisper/ggml-small.bin

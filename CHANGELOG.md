@@ -51,6 +51,7 @@ Tutte le modifiche importanti a VabaxOS sono registrate qui, secondo [Keep a Cha
 - Programma degli aggiornamenti: «Aggiorna VabaxOS» è una finestra con tre schede (Aggiornamenti: sicurezza, sistema, applicazioni Flatpak, firmware, aggiorna ora o al riavvio, avanzamento detto ogni 25%; Cronologia; Impostazioni del controllo automatico); gli aggiornamenti che toccano desktop o voce sono consigliati al riavvio.
 - Disco cifrato con la voce (`vabaxos-unlock`, ADR-0021): all'avvio due note e «Scrivi la password del disco», «Password sbagliata», «Disco aperto»; `test-install.sh --encrypt`.
 - Ottimizzazioni (`vabaxos-tuning`): memoria compressa (zram) prima del disco.
+- Dettatura senza Internet (`vabaxos-dictation`): Super+H come in Windows, poi parli, Super+H di nuovo e il testo è scritto dove c'è il cursore e letto ad alta voce; whisper.cpp con il modello Whisper «small» (MIT); «a capo» e «nuovo paragrafo»; niente silenzio al modello e niente frasi inventate; guida «La dettatura».
 - Firewall come quello di Windows (`vabaxos-firewall`, ADR-0021): firewalld con reti private (si trovano stampanti, dispositivi, cartelle condivise, telefono) e pubbliche (non entra niente); le reti nuove sono private; tipo di rete e programmi consentiti nella configurazione, pagina Rete; Super+Alt+I dice «Firewall attivo»; guida «Il firewall».
 
 ### Cambiato

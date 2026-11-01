@@ -97,6 +97,8 @@ Aggiornato al 2026-11-01.
 - Da decidere con Vabax: come ufficializzare la 0.1 (ADR-0015 chiede la firma di `SHA256SUMS` con una chiave OpenPGP del progetto e la ROADMAP una prova su PC fisico: A, chiave e mini PC prima; B, `v0.1.0-alpha.1` subito con un ADR che rimanda la firma); ADR-0020 (aggiornamenti: il programma c'è, manca la decisione sulle istantanee controllate); se segnalare a Debian e GNOME i difetti trovati.
 - Prossimo: ascolto di Vabax dei blocchi 3-12 e merge in ordine (#8 → #17); prova su PC fisico; repository APT VabaxOS (v0.2).
 
+- Dettatura (punto 1 del piano) fatta: `vabaxos-dictation` (start, stop, cancel, file; registra con pw-record a 16 kHz, `timeout` di 120 s; controllo del silenzio prima di Whisper, frasi inventate tolte, «a capo», conversione a 16 kHz mono), whisper.cpp di Debian (da verificare il nome del comando: cerca `whisper-cli`, `whisper-cpp`...), modello `ggml-small.bin` scaricato alla costruzione con SHA-1 ufficiale (`fetch` accetta ora SHA-1 o SHA-256); Super+H nell'estensione (`Main.inputMethod.commit` come la tastiera sullo schermo, altrimenti tastiera virtuale; GNOME `minimize` tolto da Super+H); 17 test; `test-boot.sh` trascrive una frase di eSpeak con il modello vero. Hugging Face è bloccato in questa sessione: il modello si scarica sulla postazione o nella CI.
+
 Piano delle funzioni scelte da Vabax il 2026-11-01 (domande a batterie; «tutte, una dopo l'altra», in ordine di importanza; un commit per funzione, test unitari, prove e ISO alla fine):
 
 1. **Dettatura** senza Internet (priorità di Vabax), e con lo stesso motore i **sottotitoli in tempo reale**; prima le licenze dei modelli italiani.

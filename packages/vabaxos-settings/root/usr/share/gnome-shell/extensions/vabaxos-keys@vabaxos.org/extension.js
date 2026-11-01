@@ -20,6 +20,10 @@
 //               Super+Alt+Shift+R the whole screen. The picture can only
 //               be taken here: GNOME Shell refuses its screenshot service
 //               to other programs.
+//   Super+H     dictation, as in Windows: vabaxos-dictation listens; Super+H
+//               again, and the text is written where the cursor is, the way
+//               the screen keyboard of GNOME writes (the input method, or
+//               key presses for programs without one), then said aloud.
 //   Alt+F4      closes the window; on the desktop or the taskbar asks to
 //               shut down, as in Windows (the desktop takes the focus when
 //               the last window closes)
@@ -96,7 +100,7 @@ class StartButton extends PanelMenu.Button {
 });
 
 const KEYS = ['focus-taskbar', 'focus-tray', 'open-start-menu', 'minimize-or-restore', 'where-am-i',
-    'recognize-window', 'recognize-screen'];
+    'recognize-window', 'recognize-screen', 'dictation'];
 
 Gio._promisify(Shell.Screenshot.prototype, 'screenshot');
 Gio._promisify(Shell.Screenshot.prototype, 'screenshot_window');
@@ -113,6 +117,7 @@ export default class VabaxOSKeys extends Extension {
             'where-am-i': () => this._whereAmI(),
             'recognize-window': () => this._recognize(false),
             'recognize-screen': () => this._recognize(true),
+            'dictation': () => this._dictation(),
         };
         for (const key of KEYS) {
             Main.wm.addKeybinding(key, this._settings, Meta.KeyBindingFlags.NONE,
@@ -158,6 +163,11 @@ export default class VabaxOSKeys extends Extension {
             Main.wm.removeKeybinding(key);
         this._startButton?.destroy();
         this._startButton = null;
+        if (this._dictating)
+            this._run(['vabaxos-dictation', 'cancel']);
+        this._dictating = false;
+        this._keyboard?.run_dispose();
+        this._keyboard = null;
         Meta.keybindings_set_custom_handler('close', null);
         global.display.disconnect(this._overlayId);
         if (this._overlayDefault)
@@ -316,6 +326,86 @@ export default class VabaxOSKeys extends Extension {
             logError(e, 'vabaxos-keys: text recognition');
             this._speak(_('Text recognition failed.'));
         }
+    }
+
+    // Runs a program; resolves with [exit status, standard output].
+    _run(argv) {
+        return new Promise(resolve => {
+            try {
+                const process = Gio.Subprocess.new(argv,
+                    Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_SILENCE);
+                process.communicate_utf8_async(null, null, (proc, result) => {
+                    try {
+                        const [, stdout] = proc.communicate_utf8_finish(result);
+                        resolve([proc.get_exit_status(), stdout ?? '']);
+                    } catch {
+                        resolve([-1, '']);
+                    }
+                });
+            } catch {
+                resolve([-1, '']);
+            }
+        });
+    }
+
+    async _dictation() {
+        const _ = this.gettext.bind(this);
+        if (!GLib.find_program_in_path('vabaxos-dictation')) {
+            this._speak(_('Dictation is not installed.'));
+            return;
+        }
+        if (this._dictatingBusy)
+            return;
+        this._dictatingBusy = true;
+        try {
+            if (!this._dictating) {
+                const [status] = await this._run(['vabaxos-dictation', 'start']);
+                this._dictating = status === 0;
+                if (!this._dictating)
+                    this._speak(_('Dictation cannot start.'));
+                return;
+            }
+            this._dictating = false;
+            const [status, text] = await this._run(['vabaxos-dictation', 'stop']);
+            if (status === 3) {
+                this._speak(_('Nothing heard.'));
+            } else if (status !== 0 || !text.trim()) {
+                this._speak(_('Dictation failed.'));
+            } else {
+                this._type(text.replace(/\n$/, ''));
+                this._speak(text.trim());
+            }
+        } finally {
+            this._dictatingBusy = false;
+        }
+    }
+
+    // Writes text where the focus is, as GNOME's screen keyboard does: through
+    // the input method when the program has one, else with key presses.
+    _type(text) {
+        const lines = text.split('\n');
+        lines.forEach((line, i) => {
+            if (i > 0)
+                this._key(Clutter.KEY_Return);
+            if (!line)
+                return;
+            if (Main.inputMethod.currentFocus) {
+                Main.inputMethod.commit(line);
+            } else {
+                for (const char of line)
+                    this._key(Clutter.unicode_to_keysym(char.codePointAt(0)));
+            }
+        });
+    }
+
+    _key(keyval) {
+        if (!this._keyboard) {
+            const seat = Clutter.get_default_backend().get_default_seat();
+            this._keyboard = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+        }
+        const time = Clutter.get_current_event_time() * 1000;
+        this._keyboard.notify_keyval(time, keyval, Clutter.KeyState.PRESSED);
+        this._keyboard.notify_keyval(time, keyval, Clutter.KeyState.RELEASED);
     }
 
     // Orca says it at once; without Orca, a notification.

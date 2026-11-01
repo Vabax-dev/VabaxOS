@@ -31,5 +31,9 @@
       <default><![CDATA[['<Super><Alt><Shift>r']]]></default>
       <summary>Recognize the text of the whole screen (OCR) and show it as plain text</summary>
     </key>
+    <key name="dictation" type="as">
+      <default><![CDATA[['<Super>h']]]></default>
+      <summary>Dictation: listen, then write what was said where the cursor is (again: stop)</summary>
+    </key>
   </schema>
 </schemalist>

@@ -35,3 +35,15 @@ msgstr "Schermo"
 
 msgid "Text recognition failed."
 msgstr "Il riconoscimento del testo non è riuscito."
+
+msgid "Dictation is not installed."
+msgstr "La dettatura non è installata."
+
+msgid "Dictation cannot start."
+msgstr "La dettatura non può partire."
+
+msgid "Nothing heard."
+msgstr "Non ho sentito niente."
+
+msgid "Dictation failed."
+msgstr "La dettatura non è riuscita."

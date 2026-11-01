@@ -513,6 +513,16 @@ if [[ "$WANT_DESKTOP" == yes ]]; then
     printf 'INFO: %s\n' "$(value fwstatus)"
 fi
 
+# Dictation (vabaxos-dictation): whisper.cpp and the model are there, and
+# a sentence said by eSpeak NG comes back as text, with the real model.
+if [[ "$WANT_DESKTOP" == yes ]]; then
+    ask whisper 'command -v whisper-cli || command -v whisper-cpp || echo none' || exit 1
+    printf 'INFO: whisper.cpp: %s\n' "$(value whisper)"
+    ask dictation 'espeak-ng -v it -w /tmp/dettato.wav "Buongiorno, oggi piove." && vabaxos-dictation file /tmp/dettato.wav it | tr "\n" " "' || exit 1
+    printf 'INFO: dettatura: %s\n' "$(value dictation)"
+    check 'dettatura: frase riconosciuta' "$(value dictation | tr '[:upper:]' '[:lower:]' | grep -c buongiorno)" 1
+fi
+
 # System tuning (vabaxos-tuning): compressed memory (zram) is the swap;
 # one program for the updates: GNOME Software does not update by itself.
 if [[ "$WANT_DESKTOP" == yes ]]; then
